@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { fabric } from 'fabric';
 import { Box } from '@mui/material';
 
 const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedElement, onElementSelect }) => {
     const canvasRef = useRef(null);
     const fabricCanvasRef = useRef(null);
+    const [isRecordingKeyframe, setIsRecordingKeyframe] = useState(false);
 
     // Initialize fabric canvas
     useEffect(() => {
@@ -22,53 +23,101 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
 
     // Function to apply animation effects based on current time
     const applyAnimationEffects = (fabricObject, element) => {
-        if (!element.animation || !element.animation.effects) return;
+        if (!element.keyframes || element.keyframes.length < 2) return;
 
-        element.animation.effects.forEach(effect => {
-            if (currentTime >= effect.startTime && currentTime <= effect.endTime) {
-                const progress = (currentTime - effect.startTime) / (effect.endTime - effect.startTime);
+        // Find the two keyframes we're between
+        let prevKeyframe = null;
+        let nextKeyframe = null;
 
-                switch (effect.type) {
-                    case 'fade':
-                        if (effect.params && 'startOpacity' in effect.params && 'endOpacity' in effect.params) {
-                            const currentOpacity = effect.params.startOpacity +
-                                (effect.params.endOpacity - effect.params.startOpacity) * progress;
-                            fabricObject.set('opacity', currentOpacity);
-                        }
-                        break;
+        // Sort keyframes by time
+        const sortedKeyframes = [...element.keyframes].sort((a, b) => a.time - b.time);
 
-                    case 'move':
-                        if (effect.params && effect.params.startPosition && effect.params.endPosition) {
-                            const currentX = effect.params.startPosition.x +
-                                (effect.params.endPosition.x - effect.params.startPosition.x) * progress;
-                            const currentY = effect.params.startPosition.y +
-                                (effect.params.endPosition.y - effect.params.startPosition.y) * progress;
-
-                            fabricObject.set({
-                                left: currentX,
-                                top: currentY
-                            });
-                        }
-                        break;
-
-                    case 'scale':
-                        if (effect.params && 'startScale' in effect.params && 'endScale' in effect.params) {
-                            const currentScale = effect.params.startScale +
-                                (effect.params.endScale - effect.params.startScale) * progress;
-
-                            fabricObject.set({
-                                scaleX: currentScale,
-                                scaleY: currentScale
-                            });
-                        }
-                        break;
-
-                    default:
-                        break;
-                }
+        for (let i = 0; i < sortedKeyframes.length; i++) {
+            if (sortedKeyframes[i].time <= currentTime) {
+                prevKeyframe = sortedKeyframes[i];
             }
+
+            if (sortedKeyframes[i].time > currentTime && !nextKeyframe) {
+                nextKeyframe = sortedKeyframes[i];
+            }
+        }
+
+        // If we don't have both keyframes, use the closest one
+        if (!prevKeyframe) {
+            prevKeyframe = sortedKeyframes[0];
+        }
+
+        if (!nextKeyframe) {
+            // Use the last keyframe's properties
+            fabricObject.set({
+                left: prevKeyframe.position.x,
+                top: prevKeyframe.position.y,
+                opacity: prevKeyframe.opacity,
+                scaleX: prevKeyframe.scale,
+                scaleY: prevKeyframe.scale
+            });
+            return;
+        }
+
+        // Calculate progress between keyframes
+        const totalDuration = nextKeyframe.time - prevKeyframe.time;
+        if (totalDuration === 0) return;
+
+        const progress = (currentTime - prevKeyframe.time) / totalDuration;
+
+        // Interpolate position
+        const currentX = prevKeyframe.position.x + (nextKeyframe.position.x - prevKeyframe.position.x) * progress;
+        const currentY = prevKeyframe.position.y + (nextKeyframe.position.y - prevKeyframe.position.y) * progress;
+
+        // Interpolate opacity
+        const currentOpacity = prevKeyframe.opacity + (nextKeyframe.opacity - prevKeyframe.opacity) * progress;
+
+        // Interpolate scale
+        const currentScale = prevKeyframe.scale + (nextKeyframe.scale - prevKeyframe.scale) * progress;
+
+        // Apply properties
+        fabricObject.set({
+            left: currentX,
+            top: currentY,
+            opacity: currentOpacity,
+            scaleX: currentScale,
+            scaleY: currentScale
         });
     };
+
+    // Helper to add or update a keyframe for an element
+    const addOrUpdateKeyframe = useCallback((element, time, properties) => {
+        // Create a deep copy of the element
+        const updatedElement = JSON.parse(JSON.stringify(element));
+
+        // Initialize keyframes array if it doesn't exist
+        if (!updatedElement.keyframes) {
+            updatedElement.keyframes = [];
+        }
+
+        // Check if a keyframe already exists at this time
+        const existingKeyframeIndex = updatedElement.keyframes.findIndex(k => Math.abs(k.time - time) < 0.01);
+
+        if (existingKeyframeIndex >= 0) {
+            // Update existing keyframe
+            updatedElement.keyframes[existingKeyframeIndex] = {
+                ...updatedElement.keyframes[existingKeyframeIndex],
+                ...properties,
+                time
+            };
+        } else {
+            // Add new keyframe
+            updatedElement.keyframes.push({
+                time,
+                ...properties
+            });
+        }
+
+        // Sort keyframes by time
+        updatedElement.keyframes.sort((a, b) => a.time - b.time);
+
+        return updatedElement;
+    }, []);
 
     // Update canvas when elements change or time changes
     useEffect(() => {
@@ -142,7 +191,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                             // Add data attribute to identify the element
                             img.data = { elementId: element.id };
 
-                            // Apply animation effects
+                            // Apply animation effects based on keyframes
                             applyAnimationEffects(img, element);
 
                             fabricCanvasRef.current.add(img);
@@ -163,7 +212,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                 // Add data attribute to identify the element
                 fabricObject.data = { elementId: element.id };
 
-                // Apply animation effects based on current time
+                // Apply animation effects based on keyframes
                 applyAnimationEffects(fabricObject, element);
 
                 // Add to canvas
@@ -201,7 +250,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
         };
     }, [isPlaying]);
 
-    // Handle object modifications
+    // Handle object modifications for keyframe recording
     useEffect(() => {
         if (!fabricCanvasRef.current) return;
 
@@ -210,22 +259,54 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
             if (!modifiedObject || !modifiedObject.data || !modifiedObject.data.elementId) return;
 
             const elementId = modifiedObject.data.elementId;
-            const updatedElements = elements.map(element => {
-                if (element.id === elementId) {
-                    return {
-                        ...element,
-                        position: {
-                            x: modifiedObject.left,
-                            y: modifiedObject.top
-                        },
-                        size: {
-                            width: modifiedObject.width * (modifiedObject.scaleX || 1),
-                            height: modifiedObject.height * (modifiedObject.scaleY || 1)
-                        }
-                    };
+            const element = elements.find(el => el.id === elementId);
+
+            if (!element) return;
+
+            // Create updatedElements array
+            let updatedElements;
+
+            // Normal update (position, size)
+            const basicUpdate = {
+                position: {
+                    x: modifiedObject.left,
+                    y: modifiedObject.top
+                },
+                size: {
+                    width: modifiedObject.width * (modifiedObject.scaleX || 1),
+                    height: modifiedObject.height * (modifiedObject.scaleY || 1)
                 }
-                return element;
-            });
+            };
+
+            // If we're recording a keyframe, also update the keyframes array
+            if (isRecordingKeyframe) {
+                // Create properties to save in the keyframe
+                const keyframeProps = {
+                    position: {
+                        x: modifiedObject.left,
+                        y: modifiedObject.top
+                    },
+                    opacity: modifiedObject.opacity,
+                    scale: modifiedObject.scaleX || 1
+                };
+
+                // Add or update keyframe for the current time
+                const updatedElement = addOrUpdateKeyframe(
+                    element,
+                    currentTime,
+                    keyframeProps
+                );
+
+                // Update elements list with the modified element
+                updatedElements = elements.map(elem =>
+                    elem.id === elementId ? updatedElement : elem
+                );
+            } else {
+                // Just update the basic properties
+                updatedElements = elements.map(elem =>
+                    elem.id === elementId ? { ...elem, ...basicUpdate } : elem
+                );
+            }
 
             onElementsChange(updatedElements);
         };
@@ -237,7 +318,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                 fabricCanvasRef.current.off('object:modified', handleObjectModified);
             }
         };
-    }, [elements, onElementsChange]);
+    }, [elements, onElementsChange, isRecordingKeyframe, currentTime, addOrUpdateKeyframe]);
 
     // Handle element selection
     useEffect(() => {
@@ -268,6 +349,11 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
         };
     }, [elements, onElementSelect]);
 
+    // Toggle keyframe recording
+    const toggleKeyframeRecording = () => {
+        setIsRecordingKeyframe(prev => !prev);
+    };
+
     return (
         <Box
             sx={{
@@ -279,6 +365,23 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                 borderRadius: 1
             }}
         >
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    zIndex: 100,
+                    backgroundColor: isRecordingKeyframe ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: 1,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer'
+                }}
+                onClick={toggleKeyframeRecording}
+            >
+                {isRecordingKeyframe ? 'Запись ключевых кадров (ВКЛ)' : 'Запись ключевых кадров (ВЫКЛ)'}
+            </Box>
             <canvas ref={canvasRef} />
         </Box>
     );

@@ -16,8 +16,13 @@ import {
     AccordionDetails,
     Button,
     IconButton,
+    List,
+    ListItem,
+    ListItemText,
+    ListItemSecondaryAction,
+    Chip,
 } from '@mui/material';
-import { ExpandMore, Timeline, Delete } from '@mui/icons-material';
+import { ExpandMore, Delete, AccessTime } from '@mui/icons-material';
 
 const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
     const [properties, setProperties] = useState(null);
@@ -64,262 +69,81 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
         onElementUpdate(updatedProperties);
     };
 
-    // Handle changes to animation timing
-    const handleAnimationChange = (name, value) => {
+    // Create a keyframe at the current time
+    const createKeyframeAtCurrentTime = () => {
         // Create a deep copy of the properties
         const updatedProperties = JSON.parse(JSON.stringify(properties));
 
-        // Ensure animation object exists
-        if (!updatedProperties.animation) {
-            updatedProperties.animation = {
-                startTime: 0,
-                endTime: null,
-                effects: []
-            };
+        // Ensure keyframes array exists
+        if (!updatedProperties.keyframes) {
+            updatedProperties.keyframes = [];
         }
 
-        // Update the animation property
-        updatedProperties.animation[name] = value;
+        // Check if a keyframe already exists at this time
+        const existingKeyframeIndex = updatedProperties.keyframes.findIndex(
+            k => Math.abs(k.time - currentTime) < 0.01
+        );
 
-        // Update local state
-        setProperties(updatedProperties);
-
-        // Notify parent component
-        onElementUpdate(updatedProperties);
-    };
-
-    // Handle changes to an animation effect
-    const handleEffectChange = (index, name, value) => {
-        // Create a deep copy of the properties
-        const updatedProperties = JSON.parse(JSON.stringify(properties));
-
-        // Ensure animation and effects array exist
-        if (!updatedProperties.animation) {
-            return; // Should not happen, but just in case
-        }
-
-        if (!updatedProperties.animation.effects || !updatedProperties.animation.effects[index]) {
-            return; // Should not happen, but just in case
-        }
-
-        // Update the specified property of the effect
-        if (name.includes('.')) {
-            const [paramName, subParamName] = name.split('.');
-            if (!updatedProperties.animation.effects[index][paramName]) {
-                updatedProperties.animation.effects[index][paramName] = {};
-            }
-            updatedProperties.animation.effects[index][paramName][subParamName] = value;
-        } else {
-            updatedProperties.animation.effects[index][name] = value;
-        }
-
-        // Update local state
-        setProperties(updatedProperties);
-
-        // Notify parent component
-        onElementUpdate(updatedProperties);
-    };
-
-    // Delete an animation effect
-    const handleDeleteEffect = (index) => {
-        // Create a deep copy of the properties
-        const updatedProperties = JSON.parse(JSON.stringify(properties));
-
-        // Remove the effect at the specified index
-        updatedProperties.animation.effects.splice(index, 1);
-
-        // Update local state
-        setProperties(updatedProperties);
-
-        // Notify parent component
-        onElementUpdate(updatedProperties);
-    };
-
-    // Add a new animation effect
-    const handleAddEffect = (type) => {
-        // Create a deep copy of the properties
-        const updatedProperties = JSON.parse(JSON.stringify(properties));
-
-        // Ensure animation and effects array exist
-        if (!updatedProperties.animation) {
-            updatedProperties.animation = {
-                startTime: 0,
-                endTime: null,
-                effects: []
-            };
-        }
-
-        if (!updatedProperties.animation.effects) {
-            updatedProperties.animation.effects = [];
-        }
-
-        // Create a new effect based on type
-        let newEffect = {
-            type,
-            startTime: currentTime,
-            endTime: currentTime + 3
+        // Properties to save in the keyframe
+        const keyframeProps = {
+            position: {
+                x: updatedProperties.position.x,
+                y: updatedProperties.position.y
+            },
+            opacity: updatedProperties.style.opacity,
+            scale: 1 // Default scale
         };
 
-        // Add type-specific parameters
-        switch (type) {
-            case 'fade':
-                newEffect.params = {
-                    startOpacity: 0,
-                    endOpacity: 1
-                };
-                break;
-            case 'move':
-                newEffect.params = {
-                    startPosition: { ...updatedProperties.position },
-                    endPosition: {
-                        x: updatedProperties.position.x + 100,
-                        y: updatedProperties.position.y + 100
-                    }
-                };
-                break;
-            case 'scale':
-                newEffect.params = {
-                    startScale: 1,
-                    endScale: 2
-                };
-                break;
-            default:
-                break;
+        if (existingKeyframeIndex >= 0) {
+            // Update existing keyframe
+            updatedProperties.keyframes[existingKeyframeIndex] = {
+                ...updatedProperties.keyframes[existingKeyframeIndex],
+                ...keyframeProps,
+                time: currentTime
+            };
+        } else {
+            // Add new keyframe
+            updatedProperties.keyframes.push({
+                time: currentTime,
+                ...keyframeProps
+            });
+
+            // Sort keyframes by time
+            updatedProperties.keyframes.sort((a, b) => a.time - b.time);
         }
 
-        // Add the new effect
-        updatedProperties.animation.effects.push(newEffect);
-
-        // Update local state
+        // Update state and notify parent
         setProperties(updatedProperties);
-
-        // Notify parent component
         onElementUpdate(updatedProperties);
     };
 
-    // Render effect params editor based on effect type
-    const renderEffectParams = (effect, index) => {
-        switch (effect.type) {
-            case 'fade':
-                return (
-                    <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                            <TextField
-                                label="Начальная прозрачность"
-                                type="number"
-                                value={effect.params?.startOpacity || 0}
-                                onChange={(e) => handleEffectChange(index, 'params.startOpacity', Number(e.target.value))}
-                                fullWidth
-                                margin="dense"
-                                size="small"
-                                inputProps={{ min: 0, max: 1, step: 0.1 }}
-                            />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField
-                                label="Конечная прозрачность"
-                                type="number"
-                                value={effect.params?.endOpacity || 1}
-                                onChange={(e) => handleEffectChange(index, 'params.endOpacity', Number(e.target.value))}
-                                fullWidth
-                                margin="dense"
-                                size="small"
-                                inputProps={{ min: 0, max: 1, step: 0.1 }}
-                            />
-                        </Grid>
-                    </Grid>
-                );
+    // Delete a keyframe
+    const deleteKeyframe = (index) => {
+        // Create a deep copy of the properties
+        const updatedProperties = JSON.parse(JSON.stringify(properties));
 
-            case 'move':
-                return (
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            <Typography variant="subtitle2">Начальная позиция</Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField
-                                label="X"
-                                type="number"
-                                value={effect.params?.startPosition?.x || properties.position.x}
-                                onChange={(e) => handleEffectChange(index, 'params.startPosition.x', Number(e.target.value))}
-                                fullWidth
-                                margin="dense"
-                                size="small"
-                            />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField
-                                label="Y"
-                                type="number"
-                                value={effect.params?.startPosition?.y || properties.position.y}
-                                onChange={(e) => handleEffectChange(index, 'params.startPosition.y', Number(e.target.value))}
-                                fullWidth
-                                margin="dense"
-                                size="small"
-                            />
-                        </Grid>
+        // Remove the keyframe
+        updatedProperties.keyframes.splice(index, 1);
 
-                        <Grid item xs={12}>
-                            <Typography variant="subtitle2">Конечная позиция</Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField
-                                label="X"
-                                type="number"
-                                value={effect.params?.endPosition?.x || properties.position.x + 100}
-                                onChange={(e) => handleEffectChange(index, 'params.endPosition.x', Number(e.target.value))}
-                                fullWidth
-                                margin="dense"
-                                size="small"
-                            />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField
-                                label="Y"
-                                type="number"
-                                value={effect.params?.endPosition?.y || properties.position.y + 100}
-                                onChange={(e) => handleEffectChange(index, 'params.endPosition.y', Number(e.target.value))}
-                                fullWidth
-                                margin="dense"
-                                size="small"
-                            />
-                        </Grid>
-                    </Grid>
-                );
+        // Update state and notify parent
+        setProperties(updatedProperties);
+        onElementUpdate(updatedProperties);
+    };
 
-            case 'scale':
-                return (
-                    <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                            <TextField
-                                label="Начальный масштаб"
-                                type="number"
-                                value={effect.params?.startScale || 1}
-                                onChange={(e) => handleEffectChange(index, 'params.startScale', Number(e.target.value))}
-                                fullWidth
-                                margin="dense"
-                                size="small"
-                                inputProps={{ min: 0.1, step: 0.1 }}
-                            />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField
-                                label="Конечный масштаб"
-                                type="number"
-                                value={effect.params?.endScale || 2}
-                                onChange={(e) => handleEffectChange(index, 'params.endScale', Number(e.target.value))}
-                                fullWidth
-                                margin="dense"
-                                size="small"
-                                inputProps={{ min: 0.1, step: 0.1 }}
-                            />
-                        </Grid>
-                    </Grid>
-                );
-
-            default:
-                return null;
+    // Jump to a keyframe's time
+    const jumpToKeyframeTime = (time) => {
+        // This will be handled by a parent component via props
+        if (window.jumpToTime) {
+            window.jumpToTime(time);
         }
+    };
+
+    // Format time in MM:SS.ms
+    const formatTime = (timeInSeconds) => {
+        const minutes = Math.floor(timeInSeconds / 60);
+        const seconds = Math.floor(timeInSeconds % 60);
+        const ms = Math.floor((timeInSeconds % 1) * 100);
+        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}.${ms < 10 ? '0' : ''}${ms}`;
     };
 
     return (
@@ -472,10 +296,90 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                 </AccordionDetails>
             </Accordion>
 
-            {/* Animation properties */}
+            {/* Animation keyframes */}
             <Accordion defaultExpanded>
                 <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Typography>Анимация</Typography>
+                    <Typography>Анимация (Ключевые кадры)</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                            Текущее время: {formatTime(currentTime)}
+                        </Typography>
+
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            onClick={createKeyframeAtCurrentTime}
+                            startIcon={<AccessTime />}
+                            fullWidth
+                            sx={{ mt: 1 }}
+                        >
+                            Создать ключевой кадр
+                        </Button>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 1 }}>
+                            Для создания анимации:
+                        </Typography>
+                        <ol>
+                            <li>Переместите плеер на начальное время</li>
+                            <li>Установите элемент в начальное положение</li>
+                            <li>Нажмите "Создать ключевой кадр"</li>
+                            <li>Переместите плеер на другое время</li>
+                            <li>Измените положение элемента</li>
+                            <li>Снова нажмите "Создать ключевой кадр"</li>
+                        </ol>
+                    </Box>
+
+                    <Divider />
+
+                    <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+                        Список ключевых кадров:
+                    </Typography>
+
+                    {properties.keyframes && properties.keyframes.length > 0 ? (
+                        <List dense>
+                            {properties.keyframes
+                                .sort((a, b) => a.time - b.time)
+                                .map((keyframe, index) => (
+                                    <ListItem
+                                        key={index}
+                                        sx={{
+                                            bgcolor: Math.abs(keyframe.time - currentTime) < 0.01 ? 'rgba(25, 118, 210, 0.1)' : 'transparent',
+                                            borderRadius: 1
+                                        }}
+                                    >
+                                        <ListItemText
+                                            primary={`${formatTime(keyframe.time)}`}
+                                            secondary={`X: ${Math.round(keyframe.position.x)}, Y: ${Math.round(keyframe.position.y)}, Прозрачность: ${Math.round(keyframe.opacity * 100)}%`}
+                                            sx={{ cursor: 'pointer' }}
+                                            onClick={() => jumpToKeyframeTime(keyframe.time)}
+                                        />
+                                        <ListItemSecondaryAction>
+                                            <IconButton
+                                                edge="end"
+                                                size="small"
+                                                onClick={() => deleteKeyframe(index)}
+                                            >
+                                                <Delete fontSize="small" />
+                                            </IconButton>
+                                        </ListItemSecondaryAction>
+                                    </ListItem>
+                                ))}
+                        </List>
+                    ) : (
+                        <Typography variant="body2" color="text.secondary">
+                            Нет ключевых кадров. Создайте первый ключевой кадр.
+                        </Typography>
+                    )}
+                </AccordionDetails>
+            </Accordion>
+
+            {/* Element visibility timing */}
+            <Accordion>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Typography>Время появления на сцене</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                     <Grid container spacing={2}>
@@ -484,7 +388,18 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                             <TextField
                                 type="number"
                                 value={properties.animation?.startTime || 0}
-                                onChange={(e) => handleAnimationChange('startTime', Number(e.target.value))}
+                                onChange={(e) => {
+                                    const updatedProperties = JSON.parse(JSON.stringify(properties));
+                                    if (!updatedProperties.animation) {
+                                        updatedProperties.animation = {
+                                            startTime: 0,
+                                            endTime: null
+                                        };
+                                    }
+                                    updatedProperties.animation.startTime = Number(e.target.value);
+                                    setProperties(updatedProperties);
+                                    onElementUpdate(updatedProperties);
+                                }}
                                 fullWidth
                                 margin="dense"
                                 size="small"
@@ -498,8 +413,16 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                                 type="number"
                                 value={properties.animation?.endTime === null ? '' : properties.animation?.endTime}
                                 onChange={(e) => {
-                                    const value = e.target.value === '' ? null : Number(e.target.value);
-                                    handleAnimationChange('endTime', value);
+                                    const updatedProperties = JSON.parse(JSON.stringify(properties));
+                                    if (!updatedProperties.animation) {
+                                        updatedProperties.animation = {
+                                            startTime: 0,
+                                            endTime: null
+                                        };
+                                    }
+                                    updatedProperties.animation.endTime = e.target.value === '' ? null : Number(e.target.value);
+                                    setProperties(updatedProperties);
+                                    onElementUpdate(updatedProperties);
                                 }}
                                 fullWidth
                                 margin="dense"
@@ -507,90 +430,6 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                                 inputProps={{ min: 0, step: 0.1 }}
                                 placeholder="Без исчезновения"
                             />
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <Typography gutterBottom sx={{ mt: 2 }}>Эффекты анимации</Typography>
-                            <Box sx={{ mb: 1 }}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>Добавить эффект</InputLabel>
-                                    <Select
-                                        label="Добавить эффект"
-                                        value=""
-                                        onChange={(e) => {
-                                            if (e.target.value) {
-                                                handleAddEffect(e.target.value);
-                                            }
-                                        }}
-                                    >
-                                        <MenuItem value="">Выберите тип эффекта</MenuItem>
-                                        <MenuItem value="fade">Появление/исчезновение</MenuItem>
-                                        <MenuItem value="move">Перемещение</MenuItem>
-                                        <MenuItem value="scale">Масштабирование</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Box>
-
-                            {properties.animation?.effects && properties.animation.effects.length > 0 ? (
-                                properties.animation.effects.map((effect, index) => (
-                                    <Accordion key={index} sx={{ mb: 1 }}>
-                                        <AccordionSummary expandIcon={<ExpandMore />}>
-                                            <Typography variant="body2" sx={{ flexGrow: 1 }}>
-                                                {effect.type === 'fade' && 'Появление/исчезновение'}
-                                                {effect.type === 'move' && 'Перемещение'}
-                                                {effect.type === 'scale' && 'Масштабирование'}
-                                                : {effect.startTime}с - {effect.endTime}с
-                                            </Typography>
-                                            <IconButton
-                                                size="small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteEffect(index);
-                                                }}
-                                                sx={{ ml: 1 }}
-                                            >
-                                                <Delete fontSize="small" />
-                                            </IconButton>
-                                        </AccordionSummary>
-                                        <AccordionDetails>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={6}>
-                                                    <TextField
-                                                        label="Начало (сек)"
-                                                        type="number"
-                                                        value={effect.startTime}
-                                                        onChange={(e) => handleEffectChange(index, 'startTime', Number(e.target.value))}
-                                                        fullWidth
-                                                        margin="dense"
-                                                        size="small"
-                                                        inputProps={{ min: 0, step: 0.1 }}
-                                                    />
-                                                </Grid>
-                                                <Grid item xs={6}>
-                                                    <TextField
-                                                        label="Конец (сек)"
-                                                        type="number"
-                                                        value={effect.endTime}
-                                                        onChange={(e) => handleEffectChange(index, 'endTime', Number(e.target.value))}
-                                                        fullWidth
-                                                        margin="dense"
-                                                        size="small"
-                                                        inputProps={{ min: effect.startTime, step: 0.1 }}
-                                                    />
-                                                </Grid>
-                                                <Grid item xs={12}>
-                                                    <Divider sx={{ my: 1 }} />
-                                                    {renderEffectParams(effect, index)}
-                                                </Grid>
-                                            </Grid>
-                                        </AccordionDetails>
-                                    </Accordion>
-                                ))
-                            ) : (
-                                <Typography variant="body2" color="text.secondary">
-                                    Нет эффектов. Добавьте эффект из списка выше.
-                                </Typography>
-                            )}
                         </Grid>
                     </Grid>
                 </AccordionDetails>

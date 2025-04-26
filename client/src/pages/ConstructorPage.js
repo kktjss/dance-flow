@@ -32,6 +32,18 @@ const ConstructorPage = () => {
     const [showProjects, setShowProjects] = useState(false);
     const [error, setError] = useState(null);
     const [isEditingDuration, setIsEditingDuration] = useState(false);
+    const [isRecordingKeyframes, setIsRecordingKeyframes] = useState(false);
+
+    // Expose jumpToTime function to the window for PropertyPanel's keyframe navigation
+    useEffect(() => {
+        window.jumpToTime = (time) => {
+            setCurrentTime(Math.min(project.duration, Math.max(0, time)));
+        };
+
+        return () => {
+            delete window.jumpToTime;
+        };
+    }, [project.duration]);
 
     // Handle time update from player
     const handleTimeUpdate = (time) => {
@@ -123,6 +135,11 @@ const ConstructorPage = () => {
         if (currentTime > newDuration) {
             setCurrentTime(0);
         }
+    };
+
+    // Toggle keyframe recording mode
+    const toggleKeyframeRecording = () => {
+        setIsRecordingKeyframes(prev => !prev);
     };
 
     // Handle saving the project
@@ -318,6 +335,14 @@ const ConstructorPage = () => {
                             selectedElement={selectedElement}
                             onElementSelect={handleElementSelect}
                         />
+                    </Box>
+
+                    {/* Animation tips */}
+                    <Box sx={{ mt: 1, p: 1, bgcolor: 'rgba(25, 118, 210, 0.08)', borderRadius: 1 }}>
+                        <Typography variant="body2" color="primary">
+                            Совет по анимации: для создания анимации переместите плеер на нужное время,
+                            затем перетащите объект в нужное положение.
+                        </Typography>
                     </Box>
                 </Grid>
 

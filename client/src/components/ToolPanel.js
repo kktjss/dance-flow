@@ -38,9 +38,9 @@ const ToolPanel = ({ onAddElement }) => {
                 },
                 animation: {
                     startTime: 0,
-                    endTime: null,
-                    effects: []
-                }
+                    endTime: null
+                },
+                keyframes: []
             }
         },
         {
@@ -60,9 +60,9 @@ const ToolPanel = ({ onAddElement }) => {
                 },
                 animation: {
                     startTime: 0,
-                    endTime: null,
-                    effects: []
-                }
+                    endTime: null
+                },
+                keyframes: []
             }
         },
         {
@@ -82,9 +82,9 @@ const ToolPanel = ({ onAddElement }) => {
                 },
                 animation: {
                     startTime: 0,
-                    endTime: null,
-                    effects: []
-                }
+                    endTime: null
+                },
+                keyframes: []
             }
         },
         {
@@ -102,9 +102,9 @@ const ToolPanel = ({ onAddElement }) => {
                 },
                 animation: {
                     startTime: 0,
-                    endTime: null,
-                    effects: []
-                }
+                    endTime: null
+                },
+                keyframes: []
             }
         }
     ];
@@ -116,6 +116,16 @@ const ToolPanel = ({ onAddElement }) => {
             ...tool.defaults,
             id: uuidv4()
         };
+
+        // Add initial keyframe at time 0
+        const initialKeyframe = {
+            time: 0,
+            position: { ...newElement.position },
+            opacity: newElement.style.opacity,
+            scale: 1
+        };
+
+        newElement.keyframes = [initialKeyframe];
 
         // Store the element data as a string in the drag data
         e.dataTransfer.setData('application/json', JSON.stringify(newElement));
@@ -145,6 +155,16 @@ const ToolPanel = ({ onAddElement }) => {
             ...tool.defaults,
             id: uuidv4()
         };
+
+        // Add initial keyframe at time 0
+        const initialKeyframe = {
+            time: 0,
+            position: { ...newElement.position },
+            opacity: newElement.style.opacity,
+            scale: 1
+        };
+
+        newElement.keyframes = [initialKeyframe];
 
         // Add to canvas
         onAddElement(newElement);
