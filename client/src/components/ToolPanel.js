@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -19,6 +19,24 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 const ToolPanel = ({ onAddElement }) => {
+    const dragImageRef = useRef(null);
+
+    // Create a container for drag images
+    useEffect(() => {
+        dragImageRef.current = document.createElement('div');
+        dragImageRef.current.style.position = 'absolute';
+        dragImageRef.current.style.pointerEvents = 'none';
+        dragImageRef.current.style.top = '-1000px';
+        dragImageRef.current.style.left = '-1000px';
+        document.body.appendChild(dragImageRef.current);
+
+        return () => {
+            if (dragImageRef.current && document.body.contains(dragImageRef.current)) {
+                document.body.removeChild(dragImageRef.current);
+            }
+        };
+    }, []);
+
     // Define available tools
     const tools = [
         {
@@ -130,22 +148,26 @@ const ToolPanel = ({ onAddElement }) => {
         // Store the element data as a string in the drag data
         e.dataTransfer.setData('application/json', JSON.stringify(newElement));
 
-        // Set drag image
-        const dragImage = document.createElement('div');
-        dragImage.style.width = `${tool.defaults.size.width}px`;
-        dragImage.style.height = `${tool.defaults.size.height}px`;
-        dragImage.style.backgroundColor = tool.defaults.style.backgroundColor || '#ccc';
-        dragImage.style.opacity = '0.5';
-        dragImage.style.position = 'absolute';
-        dragImage.style.top = '-1000px';
-        document.body.appendChild(dragImage);
+        // Set drag image safely using the ref
+        if (dragImageRef.current) {
+            // Clear previous content
+            while (dragImageRef.current.firstChild) {
+                dragImageRef.current.removeChild(dragImageRef.current.firstChild);
+            }
 
-        e.dataTransfer.setDragImage(dragImage, 0, 0);
+            // Create drag image
+            const dragImage = document.createElement('div');
+            dragImage.style.width = `${tool.defaults.size.width}px`;
+            dragImage.style.height = `${tool.defaults.size.height}px`;
+            dragImage.style.backgroundColor = tool.defaults.style.backgroundColor || '#ccc';
+            dragImage.style.opacity = '0.5';
 
-        // Remove the drag image element after the drag is complete
-        setTimeout(() => {
-            document.body.removeChild(dragImage);
-        }, 0);
+            // Append to our ref container instead of body
+            dragImageRef.current.appendChild(dragImage);
+
+            // Use the drag image
+            e.dataTransfer.setDragImage(dragImage, 0, 0);
+        }
     };
 
     // Handle element creation via drag and drop

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment } from '@mui/material';
-import { Save, FolderOpen, Upload as UploadIcon, AccessTime } from '@mui/icons-material';
+import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment, Menu, MenuItem } from '@mui/material';
+import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
@@ -33,6 +33,9 @@ const ConstructorPage = () => {
     const [error, setError] = useState(null);
     const [isEditingDuration, setIsEditingDuration] = useState(false);
     const [isRecordingKeyframes, setIsRecordingKeyframes] = useState(false);
+    const [copyMenuAnchor, setCopyMenuAnchor] = useState(null);
+    const [clipboardElement, setClipboardElement] = useState(null);
+    const [clipboardKeyframes, setClipboardKeyframes] = useState(null);
 
     // Expose jumpToTime function to the window for PropertyPanel's keyframe navigation
     useEffect(() => {
@@ -75,6 +78,79 @@ const ConstructorPage = () => {
         setSelectedElement(element);
         setTabIndex(1);
     };
+
+    // Open Copy menu
+    const handleOpenCopyMenu = (event) => {
+        if (selectedElement) {
+            setCopyMenuAnchor(event.currentTarget);
+        }
+    };
+
+    // Close Copy menu
+    const handleCloseCopyMenu = () => {
+        setCopyMenuAnchor(null);
+    };
+
+    // Copy element properties (without animations)
+    const handleCopyElementProperties = () => {
+        if (selectedElement) {
+            const elementProperties = {
+                type: selectedElement.type,
+                size: { ...selectedElement.size },
+                style: { ...selectedElement.style },
+                content: selectedElement.content
+            };
+
+            setClipboardElement(elementProperties);
+            handleCloseCopyMenu();
+        }
+    };
+
+    // Copy element animations (keyframes)
+    const handleCopyElementAnimations = () => {
+        if (selectedElement && selectedElement.keyframes) {
+            // Deep copy keyframes
+            const keyframesCopy = JSON.parse(JSON.stringify(selectedElement.keyframes));
+            setClipboardKeyframes(keyframesCopy);
+            handleCloseCopyMenu();
+        }
+    };
+
+    // Paste element properties to selected element
+    const handlePasteElementProperties = () => {
+        if (selectedElement && clipboardElement) {
+            const updatedElement = {
+                ...selectedElement,
+                size: { ...clipboardElement.size },
+                style: { ...clipboardElement.style }
+            };
+
+            // Paste content only if types match
+            if (selectedElement.type === clipboardElement.type &&
+                (selectedElement.type === 'text' || selectedElement.type === 'image')) {
+                updatedElement.content = clipboardElement.content;
+            }
+
+            handleElementUpdate(updatedElement);
+        }
+    };
+
+    // Paste animations to selected element
+    const handlePasteElementAnimations = () => {
+        if (selectedElement && clipboardKeyframes) {
+            // Create a new version of the element with copied keyframes
+            const updatedElement = {
+                ...selectedElement,
+                keyframes: JSON.parse(JSON.stringify(clipboardKeyframes))
+            };
+
+            handleElementUpdate(updatedElement);
+        }
+    };
+
+    // Check if we can paste properties or animations
+    const canPasteProperties = Boolean(clipboardElement && selectedElement);
+    const canPasteAnimations = Boolean(clipboardKeyframes && selectedElement);
 
     // Handle drag and drop from tool panel
     const handleDrop = (e) => {
@@ -316,6 +392,71 @@ const ConstructorPage = () => {
 
                 {/* Canvas and tools */}
                 <Grid item xs={12} md={9}>
+                    {/* Canvas controls */}
+                    <Box
+                        sx={{
+                            mb: 1,
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <Box sx={{ flexGrow: 1 }}>
+                            {selectedElement && (
+                                <Typography variant="body2" color="text.secondary">
+                                    Выбран: {selectedElement.type}
+                                </Typography>
+                            )}
+                        </Box>
+
+                        {selectedElement && (
+                            <>
+                                <IconButton
+                                    color="primary"
+                                    aria-label="copy"
+                                    onClick={handleOpenCopyMenu}
+                                    title="Копировать свойства"
+                                >
+                                    <ContentCopy />
+                                </IconButton>
+
+                                <Menu
+                                    anchorEl={copyMenuAnchor}
+                                    open={Boolean(copyMenuAnchor)}
+                                    onClose={handleCloseCopyMenu}
+                                >
+                                    <MenuItem onClick={handleCopyElementProperties}>
+                                        Копировать стиль и размер
+                                    </MenuItem>
+                                    {selectedElement && selectedElement.keyframes && selectedElement.keyframes.length > 0 && (
+                                        <MenuItem onClick={handleCopyElementAnimations}>
+                                            Копировать анимацию
+                                        </MenuItem>
+                                    )}
+                                </Menu>
+
+                                {canPasteProperties && (
+                                    <Button
+                                        size="small"
+                                        onClick={handlePasteElementProperties}
+                                        sx={{ mr: 1 }}
+                                    >
+                                        Вставить стиль
+                                    </Button>
+                                )}
+
+                                {canPasteAnimations && (
+                                    <Button
+                                        size="small"
+                                        onClick={handlePasteElementAnimations}
+                                    >
+                                        Вставить анимацию
+                                    </Button>
+                                )}
+                            </>
+                        )}
+                    </Box>
+
                     {/* Canvas */}
                     <Box
                         sx={{
