@@ -2,10 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
 import { Box } from '@mui/material';
 
-const Canvas = ({ elements, currentTime, isPlaying, onElementsChange }) => {
+const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedElement, onElementSelect }) => {
     const canvasRef = useRef(null);
     const fabricCanvasRef = useRef(null);
-    const [selectedElement, setSelectedElement] = useState(null);
 
     // Initialize fabric canvas
     useEffect(() => {
@@ -21,9 +20,62 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange }) => {
         };
     }, []);
 
-    // Update canvas when elements change
+    // Function to apply animation effects based on current time
+    const applyAnimationEffects = (fabricObject, element) => {
+        if (!element.animation || !element.animation.effects) return;
+
+        element.animation.effects.forEach(effect => {
+            if (currentTime >= effect.startTime && currentTime <= effect.endTime) {
+                const progress = (currentTime - effect.startTime) / (effect.endTime - effect.startTime);
+
+                switch (effect.type) {
+                    case 'fade':
+                        if (effect.params && 'startOpacity' in effect.params && 'endOpacity' in effect.params) {
+                            const currentOpacity = effect.params.startOpacity +
+                                (effect.params.endOpacity - effect.params.startOpacity) * progress;
+                            fabricObject.set('opacity', currentOpacity);
+                        }
+                        break;
+
+                    case 'move':
+                        if (effect.params && effect.params.startPosition && effect.params.endPosition) {
+                            const currentX = effect.params.startPosition.x +
+                                (effect.params.endPosition.x - effect.params.startPosition.x) * progress;
+                            const currentY = effect.params.startPosition.y +
+                                (effect.params.endPosition.y - effect.params.startPosition.y) * progress;
+
+                            fabricObject.set({
+                                left: currentX,
+                                top: currentY
+                            });
+                        }
+                        break;
+
+                    case 'scale':
+                        if (effect.params && 'startScale' in effect.params && 'endScale' in effect.params) {
+                            const currentScale = effect.params.startScale +
+                                (effect.params.endScale - effect.params.startScale) * progress;
+
+                            fabricObject.set({
+                                scaleX: currentScale,
+                                scaleY: currentScale
+                            });
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        });
+    };
+
+    // Update canvas when elements change or time changes
     useEffect(() => {
         if (!fabricCanvasRef.current) return;
+
+        // Store the currently selected object ID before clearing the canvas
+        const selectedObjectId = fabricCanvasRef.current.getActiveObject()?.data?.elementId;
 
         // Clear canvas
         fabricCanvasRef.current.clear();
@@ -90,7 +142,16 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange }) => {
                             // Add data attribute to identify the element
                             img.data = { elementId: element.id };
 
+                            // Apply animation effects
+                            applyAnimationEffects(img, element);
+
                             fabricCanvasRef.current.add(img);
+
+                            // If this was the selected element, select it again
+                            if (selectedElement && element.id === selectedElement.id) {
+                                fabricCanvasRef.current.setActiveObject(img);
+                            }
+
                             fabricCanvasRef.current.renderAll();
                         });
                         return; // Skip the rest for images as they're added asynchronously
@@ -102,44 +163,43 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange }) => {
                 // Add data attribute to identify the element
                 fabricObject.data = { elementId: element.id };
 
+                // Apply animation effects based on current time
+                applyAnimationEffects(fabricObject, element);
+
                 // Add to canvas
                 fabricCanvasRef.current.add(fabricObject);
+
+                // If this was the selected element, select it again
+                if (selectedElement && element.id === selectedElement.id) {
+                    fabricCanvasRef.current.setActiveObject(fabricObject);
+                }
             }
         });
 
-        // Apply animation effects if playing
-        if (isPlaying) {
-            elements.forEach(element => {
-                if (element.animation && element.animation.effects) {
-                    element.animation.effects.forEach(effect => {
-                        if (currentTime >= effect.startTime && currentTime <= effect.endTime) {
-                            // Find the fabric object for this element
-                            const fabricObject = fabricCanvasRef.current.getObjects().find(
-                                obj => obj.data && obj.data.elementId === element.id
-                            );
+        fabricCanvasRef.current.renderAll();
+    }, [elements, currentTime, selectedElement]);
 
-                            if (fabricObject) {
-                                // Apply animation effect
-                                switch (effect.type) {
-                                    case 'fade':
-                                        const progress = (currentTime - effect.startTime) / (effect.endTime - effect.startTime);
-                                        fabricObject.set('opacity', effect.params.startOpacity +
-                                            (effect.params.endOpacity - effect.params.startOpacity) * progress);
-                                        break;
-                                    case 'move':
-                                        // Similar implementation for move animation
-                                        break;
-                                    // Add more effect types as needed
-                                }
-                            }
-                        }
-                    });
-                }
-            });
+    // Setup animation timer if playing
+    useEffect(() => {
+        let animationFrame;
+
+        const updateCanvas = () => {
+            if (isPlaying) {
+                fabricCanvasRef.current.renderAll();
+                animationFrame = requestAnimationFrame(updateCanvas);
+            }
+        };
+
+        if (isPlaying) {
+            animationFrame = requestAnimationFrame(updateCanvas);
         }
 
-        fabricCanvasRef.current.renderAll();
-    }, [elements, currentTime, isPlaying]);
+        return () => {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+        };
+    }, [isPlaying]);
 
     // Handle object modifications
     useEffect(() => {
@@ -181,23 +241,23 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange }) => {
 
     // Handle element selection
     useEffect(() => {
-        if (!fabricCanvasRef.current) return;
+        if (!fabricCanvasRef.current || !onElementSelect) return;
 
         const handleSelection = (e) => {
             if (e.selected && e.selected.length > 0) {
                 const selectedObject = e.selected[0];
                 if (selectedObject.data && selectedObject.data.elementId) {
                     const element = elements.find(el => el.id === selectedObject.data.elementId);
-                    setSelectedElement(element);
+                    onElementSelect(element);
                 }
             } else {
-                setSelectedElement(null);
+                onElementSelect(null);
             }
         };
 
         fabricCanvasRef.current.on('selection:created', handleSelection);
         fabricCanvasRef.current.on('selection:updated', handleSelection);
-        fabricCanvasRef.current.on('selection:cleared', () => setSelectedElement(null));
+        fabricCanvasRef.current.on('selection:cleared', () => onElementSelect(null));
 
         return () => {
             if (fabricCanvasRef.current) {
@@ -206,7 +266,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange }) => {
                 fabricCanvasRef.current.off('selection:cleared');
             }
         };
-    }, [elements]);
+    }, [elements, onElementSelect]);
 
     return (
         <Box

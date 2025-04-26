@@ -45,6 +45,10 @@ const ConstructorPage = () => {
     // Handle element selection
     const handleElementSelect = (element) => {
         setSelectedElement(element);
+        // Switch to properties tab when an element is selected
+        if (element) {
+            setTabIndex(1);
+        }
     };
 
     // Handle adding a new element to the canvas
@@ -53,6 +57,10 @@ const ConstructorPage = () => {
             ...prev,
             elements: [...prev.elements, element]
         }));
+
+        // Auto-select the newly added element
+        setSelectedElement(element);
+        setTabIndex(1);
     };
 
     // Handle drag and drop from tool panel
@@ -85,11 +93,24 @@ const ConstructorPage = () => {
 
             return { ...prev, elements: updatedElements };
         });
+
+        // Update the selected element as well
+        if (selectedElement && selectedElement.id === updatedElement.id) {
+            setSelectedElement(updatedElement);
+        }
     };
 
     // Handle bulk update to all elements
     const handleElementsUpdate = (updatedElements) => {
         setProject(prev => ({ ...prev, elements: updatedElements }));
+
+        // Update selected element if it's in the updated list
+        if (selectedElement) {
+            const updatedSelectedElement = updatedElements.find(elem => elem.id === selectedElement.id);
+            if (updatedSelectedElement) {
+                setSelectedElement(updatedSelectedElement);
+            }
+        }
     };
 
     // Handle saving the project
@@ -129,7 +150,28 @@ const ConstructorPage = () => {
     const handleSelectProject = (selectedProject) => {
         setProject(selectedProject);
         setShowProjects(false);
+        setSelectedElement(null); // Clear selected element when switching projects
     };
+
+    // Auto-update project duration based on audio
+    useEffect(() => {
+        const audioElement = document.createElement('audio');
+        if (project.audioUrl) {
+            audioElement.src = project.audioUrl;
+            audioElement.addEventListener('loadedmetadata', () => {
+                if (audioElement.duration) {
+                    setProject(prev => ({
+                        ...prev,
+                        duration: Math.ceil(audioElement.duration)
+                    }));
+                }
+            });
+        }
+
+        return () => {
+            audioElement.src = '';
+        };
+    }, [project.audioUrl]);
 
     return (
         <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
@@ -229,6 +271,8 @@ const ConstructorPage = () => {
                             currentTime={currentTime}
                             isPlaying={isPlaying}
                             onElementsChange={handleElementsUpdate}
+                            selectedElement={selectedElement}
+                            onElementSelect={handleElementSelect}
                         />
                     </Box>
                 </Grid>

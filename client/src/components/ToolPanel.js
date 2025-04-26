@@ -38,7 +38,8 @@ const ToolPanel = ({ onAddElement }) => {
                 },
                 animation: {
                     startTime: 0,
-                    endTime: null
+                    endTime: null,
+                    effects: []
                 }
             }
         },
@@ -59,7 +60,8 @@ const ToolPanel = ({ onAddElement }) => {
                 },
                 animation: {
                     startTime: 0,
-                    endTime: null
+                    endTime: null,
+                    effects: []
                 }
             }
         },
@@ -80,7 +82,8 @@ const ToolPanel = ({ onAddElement }) => {
                 },
                 animation: {
                     startTime: 0,
-                    endTime: null
+                    endTime: null,
+                    effects: []
                 }
             }
         },
@@ -99,7 +102,8 @@ const ToolPanel = ({ onAddElement }) => {
                 },
                 animation: {
                     startTime: 0,
-                    endTime: null
+                    endTime: null,
+                    effects: []
                 }
             }
         }
