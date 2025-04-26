@@ -9,6 +9,7 @@ import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard';
 import AuthHome from './pages/AuthHome';
+import ChoreographyConstructor from './components/ChoreographyConstructor';
 
 const theme = createTheme({
     palette: {
@@ -102,6 +103,14 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <TeamManagement />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/constructor"
+                        element={
+                            <ProtectedRoute>
+                                <ChoreographyConstructor />
                             </ProtectedRoute>
                         }
                     />

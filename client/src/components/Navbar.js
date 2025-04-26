@@ -77,8 +77,8 @@ function Navbar() {
                                 <NavButton
                                     color="primary"
                                     variant="text"
-                                    onClick={() => navigate('/builder')}
-                                    active={isActive('/builder')}
+                                    onClick={() => navigate('/constructor')}
+                                    active={isActive('/constructor')}
                                 >
                                     Конструктор
                                 </NavButton>
