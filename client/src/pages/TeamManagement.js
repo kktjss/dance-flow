@@ -1,7 +1,6 @@
 import React from 'react';
 import { Container, Typography, Box } from '@mui/material';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 
 function TeamManagement() {
     return (
@@ -17,7 +16,6 @@ function TeamManagement() {
                     </Typography>
                 </Container>
             </Box>
-            <Footer />
         </Box>
     );
 }

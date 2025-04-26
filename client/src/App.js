@@ -8,6 +8,7 @@ import TeamManagement from './pages/TeamManagement';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard';
+import AuthHome from './pages/AuthHome';
 
 const theme = createTheme({
     palette: {
@@ -36,7 +37,7 @@ const PublicRoute = ({ children }) => {
     const isAuthenticated = !!localStorage.getItem('token');
 
     if (isAuthenticated) {
-        return <Navigate to="/dashboard" />;
+        return <Navigate to="/auth-home" />;
     }
 
     return children;
@@ -54,6 +55,14 @@ function App() {
                             <PublicRoute>
                                 <Home />
                             </PublicRoute>
+                        }
+                    />
+                    <Route
+                        path="/auth-home"
+                        element={
+                            <ProtectedRoute>
+                                <AuthHome />
+                            </ProtectedRoute>
                         }
                     />
                     <Route

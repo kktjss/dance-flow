@@ -7,22 +7,23 @@ import {
     Grid,
     Card,
     CardContent,
-    CardActions,
-    Button,
-    Paper,
-    Tabs,
-    Tab,
     List,
     ListItem,
     ListItemText,
-    ListItemIcon,
     Divider,
+    Button,
+    IconButton,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Paper,
 } from '@mui/material';
 import {
-    VideoLibrary as VideoIcon,
-    Group as GroupIcon,
-    Create as CreateIcon,
-    History as HistoryIcon,
+    Delete as DeleteIcon,
+    Settings as SettingsIcon,
+    Logout as LogoutIcon,
 } from '@mui/icons-material';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -30,20 +31,45 @@ import Footer from '../components/Footer';
 function Dashboard() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
-    const [activeTab, setActiveTab] = useState(0);
+    const [openSettings, setOpenSettings] = useState(false);
+    const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false);
+    const [settings, setSettings] = useState({
+        username: '',
+        email: '',
+        notifications: true,
+    });
 
     useEffect(() => {
-        // Получаем данные пользователя из localStorage
         const userData = localStorage.getItem('user');
         if (userData) {
-            setUser(JSON.parse(userData));
+            const parsedUser = JSON.parse(userData);
+            setUser(parsedUser);
+            setSettings({
+                username: parsedUser.username,
+                email: parsedUser.email,
+                notifications: true,
+            });
         } else {
             navigate('/login');
         }
     }, [navigate]);
 
-    const handleTabChange = (event, newValue) => {
-        setActiveTab(newValue);
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+    };
+
+    const handleDeleteAccount = () => {
+        // TODO: Implement account deletion
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+    };
+
+    const handleSettingsSave = () => {
+        // TODO: Implement settings save
+        setOpenSettings(false);
     };
 
     if (!user) {
@@ -55,176 +81,143 @@ function Dashboard() {
             <Navbar />
             <Box sx={{ flexGrow: 1, pt: 8 }}>
                 <Container maxWidth="lg">
-                    <Box sx={{ mb: 4 }}>
-                        <Typography variant="h4" component="h1" gutterBottom>
-                            Добро пожаловать, {user.username}!
+                    <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="h4" component="h1">
+                            Личный кабинет
                         </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                            Управляйте своими хореографиями и командами
-                        </Typography>
+                        <Box>
+                            <IconButton color="primary" onClick={() => setOpenSettings(true)}>
+                                <SettingsIcon />
+                            </IconButton>
+                        </Box>
                     </Box>
 
                     <Grid container spacing={4}>
-                        {/* Левая панель с навигацией */}
-                        <Grid item xs={12} md={3}>
-                            <Paper sx={{ p: 2 }}>
-                                <Tabs
-                                    orientation="vertical"
-                                    value={activeTab}
-                                    onChange={handleTabChange}
-                                    sx={{ borderRight: 1, borderColor: 'divider' }}
-                                >
-                                    <Tab icon={<VideoIcon />} label="Мои хореографии" />
-                                    <Tab icon={<GroupIcon />} label="Мои команды" />
-                                    <Tab icon={<CreateIcon />} label="Создать новую" />
-                                    <Tab icon={<HistoryIcon />} label="История" />
-                                </Tabs>
+                        {/* Мои хореографии */}
+                        <Grid item xs={12} md={8}>
+                            <Paper sx={{ p: 4, minHeight: '500px' }}>
+                                <Typography variant="h5" gutterBottom>
+                                    Мои хореографии
+                                </Typography>
+                                <List>
+                                    <ListItem>
+                                        <ListItemText
+                                            primary="Современный танец"
+                                            secondary="Последнее обновление: 2 часа назад"
+                                        />
+                                        <Button size="small" onClick={() => navigate('/builder')}>
+                                            Редактировать
+                                        </Button>
+                                    </ListItem>
+                                    <Divider />
+                                    <ListItem>
+                                        <ListItemText
+                                            primary="Классический балет"
+                                            secondary="Последнее обновление: 1 день назад"
+                                        />
+                                        <Button size="small" onClick={() => navigate('/builder')}>
+                                            Редактировать
+                                        </Button>
+                                    </ListItem>
+                                </List>
                             </Paper>
                         </Grid>
 
-                        {/* Основной контент */}
-                        <Grid item xs={12} md={9}>
-                            {activeTab === 0 && (
-                                <Box>
-                                    <Typography variant="h5" gutterBottom>
-                                        Мои хореографии
-                                    </Typography>
-                                    <Grid container spacing={3}>
-                                        <Grid item xs={12} md={6}>
-                                            <Card>
-                                                <CardContent>
-                                                    <Typography variant="h6" gutterBottom>
-                                                        Современный танец
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Последнее обновление: 2 часа назад
-                                                    </Typography>
-                                                </CardContent>
-                                                <CardActions>
-                                                    <Button size="small" onClick={() => navigate('/builder')}>
-                                                        Редактировать
-                                                    </Button>
-                                                    <Button size="small" color="primary">
-                                                        Поделиться
-                                                    </Button>
-                                                </CardActions>
-                                            </Card>
-                                        </Grid>
-                                        <Grid item xs={12} md={6}>
-                                            <Card>
-                                                <CardContent>
-                                                    <Typography variant="h6" gutterBottom>
-                                                        Классический балет
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Последнее обновление: 1 день назад
-                                                    </Typography>
-                                                </CardContent>
-                                                <CardActions>
-                                                    <Button size="small" onClick={() => navigate('/builder')}>
-                                                        Редактировать
-                                                    </Button>
-                                                    <Button size="small" color="primary">
-                                                        Поделиться
-                                                    </Button>
-                                                </CardActions>
-                                            </Card>
-                                        </Grid>
-                                    </Grid>
-                                </Box>
-                            )}
-
-                            {activeTab === 1 && (
-                                <Box>
-                                    <Typography variant="h5" gutterBottom>
-                                        Мои команды
-                                    </Typography>
-                                    <List>
-                                        <ListItem>
-                                            <ListItemIcon>
-                                                <GroupIcon />
-                                            </ListItemIcon>
-                                            <ListItemText
-                                                primary="Команда А"
-                                                secondary="5 участников"
-                                            />
-                                            <Button size="small" onClick={() => navigate('/teams')}>
-                                                Управлять
-                                            </Button>
-                                        </ListItem>
-                                        <Divider />
-                                        <ListItem>
-                                            <ListItemIcon>
-                                                <GroupIcon />
-                                            </ListItemIcon>
-                                            <ListItemText
-                                                primary="Команда Б"
-                                                secondary="3 участника"
-                                            />
-                                            <Button size="small" onClick={() => navigate('/teams')}>
-                                                Управлять
-                                            </Button>
-                                        </ListItem>
-                                    </List>
-                                </Box>
-                            )}
-
-                            {activeTab === 2 && (
-                                <Box>
-                                    <Typography variant="h5" gutterBottom>
-                                        Создать новую хореографию
-                                    </Typography>
-                                    <Card>
-                                        <CardContent>
-                                            <Typography variant="body1" paragraph>
-                                                Начните создавать новую хореографию с помощью нашего конструктора
-                                            </Typography>
-                                            <Button
-                                                variant="contained"
-                                                startIcon={<CreateIcon />}
-                                                onClick={() => navigate('/builder')}
-                                            >
-                                                Создать
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                </Box>
-                            )}
-
-                            {activeTab === 3 && (
-                                <Box>
-                                    <Typography variant="h5" gutterBottom>
-                                        История действий
-                                    </Typography>
-                                    <List>
-                                        <ListItem>
-                                            <ListItemText
-                                                primary="Создана хореография 'Современный танец'"
-                                                secondary="2 часа назад"
-                                            />
-                                        </ListItem>
-                                        <Divider />
-                                        <ListItem>
-                                            <ListItemText
-                                                primary="Обновлена хореография 'Классический балет'"
-                                                secondary="1 день назад"
-                                            />
-                                        </ListItem>
-                                        <Divider />
-                                        <ListItem>
-                                            <ListItemText
-                                                primary="Создана команда 'Команда А'"
-                                                secondary="3 дня назад"
-                                            />
-                                        </ListItem>
-                                    </List>
-                                </Box>
-                            )}
+                        {/* История */}
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 4, minHeight: '500px' }}>
+                                <Typography variant="h5" gutterBottom>
+                                    История
+                                </Typography>
+                                <List>
+                                    <ListItem>
+                                        <ListItemText
+                                            primary="Создана хореография 'Современный танец'"
+                                            secondary="2 часа назад"
+                                        />
+                                    </ListItem>
+                                    <Divider />
+                                    <ListItem>
+                                        <ListItemText
+                                            primary="Обновлена хореография 'Классический балет'"
+                                            secondary="1 день назад"
+                                        />
+                                    </ListItem>
+                                </List>
+                            </Paper>
                         </Grid>
                     </Grid>
                 </Container>
             </Box>
-            <Footer />
+
+            {/* Диалог настроек */}
+            <Dialog open={openSettings} onClose={() => setOpenSettings(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Настройки</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mb: 3 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Профиль
+                        </Typography>
+                        <TextField
+                            margin="dense"
+                            label="Имя пользователя"
+                            fullWidth
+                            value={settings.username}
+                            onChange={(e) => setSettings({ ...settings, username: e.target.value })}
+                        />
+                        <TextField
+                            margin="dense"
+                            label="Email"
+                            fullWidth
+                            value={settings.email}
+                            onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                        />
+                    </Box>
+                    <Divider sx={{ my: 2 }} />
+                    <Box sx={{ mb: 3 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Управление аккаунтом
+                        </Typography>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            color="primary"
+                            onClick={handleLogout}
+                            sx={{ mb: 2 }}
+                        >
+                            Выйти из аккаунта
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            color="error"
+                            onClick={() => setOpenDeleteConfirm(true)}
+                        >
+                            Удалить аккаунт
+                        </Button>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenSettings(false)}>Отмена</Button>
+                    <Button onClick={handleSettingsSave} variant="contained">Сохранить</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Диалог подтверждения удаления */}
+            <Dialog open={openDeleteConfirm} onClose={() => setOpenDeleteConfirm(false)}>
+                <DialogTitle>Удаление аккаунта</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenDeleteConfirm(false)}>Отмена</Button>
+                    <Button onClick={handleDeleteAccount} color="error" variant="contained">
+                        Удалить
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

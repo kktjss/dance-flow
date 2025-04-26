@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     AppBar,
     Toolbar,
@@ -24,10 +24,31 @@ const StyledButton = styled(Button)(({ theme }) => ({
     fontWeight: 500,
 }));
 
+const NavButton = styled(Button)(({ theme, active }) => ({
+    marginLeft: theme.spacing(2),
+    borderRadius: '20px',
+    textTransform: 'none',
+    fontWeight: 500,
+    backgroundColor: active ? theme.palette.primary.light : 'transparent',
+    color: active ? theme.palette.primary.main : theme.palette.primary.main,
+    '&:hover': {
+        backgroundColor: active ? theme.palette.primary.light : theme.palette.action.hover,
+    },
+}));
+
 function Navbar() {
     const navigate = useNavigate();
-    // TODO: Добавить реальную проверку авторизации
-    const isAuthenticated = false;
+    const location = useLocation();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        setIsAuthenticated(!!token);
+    }, []);
+
+    const isActive = (path) => {
+        return location.pathname === path;
+    };
 
     return (
         <StyledAppBar position="fixed">
@@ -37,7 +58,7 @@ function Navbar() {
                         variant="h6"
                         component="div"
                         sx={{ flexGrow: 1, color: 'primary.main', fontWeight: 700 }}
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate(isAuthenticated ? '/auth-home' : '/')}
                         style={{ cursor: 'pointer' }}
                     >
                         DanceFlow
@@ -45,15 +66,30 @@ function Navbar() {
                     <Box>
                         {isAuthenticated ? (
                             <>
-                                <StyledButton color="primary" variant="text" onClick={() => navigate('/builder')}>
-                                    Конструктор
-                                </StyledButton>
-                                <StyledButton color="primary" variant="text" onClick={() => navigate('/teams')}>
+                                <NavButton
+                                    color="primary"
+                                    variant="text"
+                                    onClick={() => navigate('/teams')}
+                                    active={isActive('/teams')}
+                                >
                                     Команды
-                                </StyledButton>
-                                <StyledButton color="primary" variant="contained">
-                                    Выйти
-                                </StyledButton>
+                                </NavButton>
+                                <NavButton
+                                    color="primary"
+                                    variant="text"
+                                    onClick={() => navigate('/builder')}
+                                    active={isActive('/builder')}
+                                >
+                                    Конструктор
+                                </NavButton>
+                                <NavButton
+                                    color="primary"
+                                    variant="text"
+                                    onClick={() => navigate('/dashboard')}
+                                    active={isActive('/dashboard')}
+                                >
+                                    Личный кабинет
+                                </NavButton>
                             </>
                         ) : (
                             <>
