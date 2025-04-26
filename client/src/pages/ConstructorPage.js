@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton } from '@mui/material';
-import { Save, FolderOpen, Upload as UploadIcon } from '@mui/icons-material';
+import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment } from '@mui/material';
+import { Save, FolderOpen, Upload as UploadIcon, AccessTime } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
@@ -31,6 +31,7 @@ const ConstructorPage = () => {
     const [tabIndex, setTabIndex] = useState(0);
     const [showProjects, setShowProjects] = useState(false);
     const [error, setError] = useState(null);
+    const [isEditingDuration, setIsEditingDuration] = useState(false);
 
     // Handle time update from player
     const handleTimeUpdate = (time) => {
@@ -110,6 +111,17 @@ const ConstructorPage = () => {
             if (updatedSelectedElement) {
                 setSelectedElement(updatedSelectedElement);
             }
+        }
+    };
+
+    // Handle project duration change
+    const handleDurationChange = (e) => {
+        const newDuration = Math.max(1, parseInt(e.target.value) || 1);
+        setProject(prev => ({ ...prev, duration: newDuration }));
+
+        // If current time is beyond the new duration, reset it
+        if (currentTime > newDuration) {
+            setCurrentTime(0);
         }
     };
 
@@ -221,17 +233,43 @@ const ConstructorPage = () => {
 
                 {/* Audio player */}
                 <Grid item xs={12}>
-                    <Player
-                        audioUrl={project.audioUrl}
-                        duration={project.duration}
-                        currentTime={currentTime}
-                        onTimeUpdate={handleTimeUpdate}
-                        isPlaying={isPlaying}
-                        onPlayPause={handlePlayPause}
-                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                        {!project.audioUrl && (
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <AccessTime color="action" sx={{ mr: 1 }} />
+                                {isEditingDuration ? (
+                                    <TextField
+                                        label="Длительность"
+                                        type="number"
+                                        size="small"
+                                        value={project.duration}
+                                        onChange={handleDurationChange}
+                                        onBlur={() => setIsEditingDuration(false)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                setIsEditingDuration(false);
+                                            }
+                                        }}
+                                        autoFocus
+                                        InputProps={{
+                                            endAdornment: <InputAdornment position="end">сек</InputAdornment>,
+                                        }}
+                                        sx={{ width: 150 }}
+                                    />
+                                ) : (
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        onClick={() => setIsEditingDuration(true)}
+                                        sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                                    >
+                                        Длительность: {project.duration} сек (нажмите чтобы изменить)
+                                    </Typography>
+                                )}
+                            </Box>
+                        )}
 
-                    {!project.audioUrl && (
-                        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
+                        {!project.audioUrl && (
                             <Button
                                 variant="outlined"
                                 component="label"
@@ -246,11 +284,17 @@ const ConstructorPage = () => {
                                     onChange={handleAudioUpload}
                                 />
                             </Button>
-                            <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
-                                Загрузите аудиофайл для синхронизации с анимацией
-                            </Typography>
-                        </Box>
-                    )}
+                        )}
+                    </Box>
+
+                    <Player
+                        audioUrl={project.audioUrl}
+                        duration={project.duration}
+                        currentTime={currentTime}
+                        onTimeUpdate={handleTimeUpdate}
+                        isPlaying={isPlaying}
+                        onPlayPause={handlePlayPause}
+                    />
                 </Grid>
 
                 {/* Canvas and tools */}
