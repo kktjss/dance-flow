@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
     Box,
     Typography,
@@ -8,18 +8,22 @@ import {
     ListItemText,
     ListItemIcon,
     Paper,
-    Tooltip
+    Tooltip,
+    Button
 } from '@mui/material';
 import {
     SquareOutlined,
     CircleOutlined,
     TextFields,
-    Image as ImageIcon
+    Image as ImageIcon,
+    ViewInAr
 } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
+import ModelViewer from './ModelViewer';
 
 const ToolPanel = ({ onAddElement }) => {
     const dragImageRef = useRef(null);
+    const [showModelViewer, setShowModelViewer] = useState(false);
 
     // Create a container for drag images
     useEffect(() => {
@@ -240,11 +244,27 @@ const ToolPanel = ({ onAddElement }) => {
                 ))}
             </List>
 
-            <Box sx={{ mt: 2 }}>
+            <Divider sx={{ my: 2 }} />
+
+            <Button
+                variant="outlined"
+                startIcon={<ViewInAr />}
+                onClick={() => setShowModelViewer(true)}
+                sx={{ mb: 2 }}
+            >
+                Показать 3D модель
+            </Button>
+
+            <Box sx={{ mt: 'auto' }}>
                 <Typography variant="caption" color="text.secondary">
                     Перетащите элемент на доску или кликните для добавления
                 </Typography>
             </Box>
+
+            <ModelViewer
+                isVisible={showModelViewer}
+                onClose={() => setShowModelViewer(false)}
+            />
         </Paper>
     );
 };

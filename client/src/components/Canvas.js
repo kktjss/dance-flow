@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback, createRef } from 'react';
 import { fabric } from 'fabric';
-import { Box, IconButton, Modal, Typography } from '@mui/material';
-import { ContentCopy, Delete, Visibility } from '@mui/icons-material';
+import { Box, IconButton, Modal, Typography, Grid, Button } from '@mui/material';
+import { ContentCopy, Delete, Visibility, ThreeDRotation, Videocam } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import ReactDOM from 'react-dom';
-import ChoreographyViewer from './ChoreographyViewer';
+import ModelViewer from './ModelViewer';
 
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
@@ -17,6 +17,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
     const [initialized, setInitialized] = useState(false);
     const buttonContainerRef = useRef(null);
     const [showChoreoModal, setShowChoreoModal] = useState(false);
+    const [viewMode, setViewMode] = useState('3d'); // '3d' or 'video'
 
     // Инициализация canvas и контейнера
     useEffect(() => {
@@ -541,6 +542,12 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
         setShowChoreoModal(false);
     }, []);
 
+    // Функция для переключения между 3D моделью и видео
+    const handleViewModeChange = useCallback((mode) => {
+        setViewMode(mode);
+        setShowChoreoModal(true);
+    }, []);
+
     // Используем ReactDOM.createPortal для рендеринга кнопок в отдельном контейнере
     const renderButtons = () => {
         if (!buttonContainerRef.current) return null;
@@ -604,7 +611,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                         </IconButton>
 
                         <IconButton
-                            onClick={handleShowChoreography}
+                            onClick={() => handleViewModeChange('3d')}
                             sx={{
                                 backgroundColor: 'rgba(52, 152, 219, 0.7)',
                                 '&:hover': {
@@ -612,9 +619,23 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                                 },
                                 pointerEvents: 'auto'
                             }}
-                            title="Посмотреть хореографию"
+                            title="Просмотр 3D модели"
                         >
-                            <Visibility fontSize="small" />
+                            <ThreeDRotation fontSize="small" />
+                        </IconButton>
+
+                        <IconButton
+                            onClick={() => handleViewModeChange('video')}
+                            sx={{
+                                backgroundColor: 'rgba(76, 175, 80, 0.7)',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(76, 175, 80, 0.9)',
+                                },
+                                pointerEvents: 'auto'
+                            }}
+                            title="Просмотр видео"
+                        >
+                            <Videocam fontSize="small" />
                         </IconButton>
                     </div>
                 )}
@@ -658,13 +679,12 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                     flexDirection: 'column'
                 }}>
                     <Typography id="choreography-modal-title" variant="h6" component="h2" gutterBottom>
-                        3D хореография для {selectedElement?.title || 'танцора'}
+                        {viewMode === '3d' ? '3D модель' : 'Видео'} для {selectedElement?.title || 'танцора'}
                     </Typography>
                     <Box sx={{ flexGrow: 1 }}>
-                        <ChoreographyViewer
-                            dancerId={selectedElement?.id}
-                            dancerName={selectedElement?.title || 'Танцор'}
-                            videoUrl={selectedElement?.videoUrl}
+                        <ModelViewer
+                            isVisible={true}
+                            onClose={() => setShowChoreoModal(false)}
                         />
                     </Box>
                 </Box>

@@ -21,8 +21,10 @@ import {
     ListItemText,
     ListItemSecondaryAction,
     Chip,
+    LinearProgress,
+    Alert,
 } from '@mui/material';
-import { ExpandMore, Delete, AccessTime } from '@mui/icons-material';
+import { ExpandMore, Delete, AccessTime, ThreeDRotation } from '@mui/icons-material';
 
 const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
     const [properties, setProperties] = useState(null);
@@ -509,6 +511,139 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                                             Выбрать файл
                                         </Button>
                                     </label>
+                                </>
+                            )}
+                        </Grid>
+                    </Grid>
+                </AccordionDetails>
+            </Accordion>
+
+            {/* After Video Choreography accordion */}
+            <Accordion
+                sx={{ mt: 2 }}
+                defaultExpanded={false}
+            >
+                <AccordionSummary
+                    expandIcon={<ExpandMore />}
+                >
+                    <Typography variant="subtitle1">3D модель</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            {properties.modelPath ? (
+                                <>
+                                    <Typography variant="body2" gutterBottom>
+                                        Загружена 3D модель
+                                    </Typography>
+                                    <Box sx={{ mb: 2, width: '100%', height: '120px', display: 'flex', justifyContent: 'center', alignItems: 'center', bgcolor: '#f0f0f0', borderRadius: 1 }}>
+                                        <ThreeDRotation sx={{ fontSize: 60, color: 'rgba(0,0,0,0.4)' }} />
+                                    </Box>
+                                    <Typography variant="body2" color="text.secondary" gutterBottom noWrap>
+                                        {properties.modelPath.split('/').pop()}
+                                    </Typography>
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        fullWidth
+                                        onClick={() => handlePropertyChange('modelPath', null)}
+                                    >
+                                        Удалить 3D модель
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Typography variant="body2" gutterBottom>
+                                        Загрузите 3D модель (.glb, .gltf):
+                                    </Typography>
+                                    {properties.modelUploading ? (
+                                        <Box sx={{ width: '100%', mt: 2, mb: 2 }}>
+                                            <Typography variant="body2" gutterBottom>
+                                                Загрузка 3D модели...
+                                            </Typography>
+                                            <LinearProgress />
+                                        </Box>
+                                    ) : (
+                                        <>
+                                            <input
+                                                type="file"
+                                                accept=".glb,.gltf"
+                                                style={{ display: 'none' }}
+                                                id="model-upload"
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        // Check file size
+                                                        const fileSizeMB = file.size / (1024 * 1024);
+                                                        if (fileSizeMB > 10) {
+                                                            alert(`Внимание: Файл размером ${fileSizeMB.toFixed(2)}MB может замедлить работу приложения.`);
+                                                        }
+
+                                                        // Show uploading state
+                                                        setProperties(prev => ({
+                                                            ...prev,
+                                                            modelUploading: true
+                                                        }));
+
+                                                        // Create form data for upload
+                                                        const formData = new FormData();
+                                                        formData.append('model', file);
+
+                                                        // Upload file to server
+                                                        fetch('/api/upload/model', {
+                                                            method: 'POST',
+                                                            body: formData,
+                                                        })
+                                                            .then(response => {
+                                                                if (!response.ok) {
+                                                                    throw new Error(`Ошибка загрузки: ${response.status}`);
+                                                                }
+                                                                return response.json();
+                                                            })
+                                                            .then(data => {
+                                                                if (data.success) {
+                                                                    console.log("Model uploaded successfully:", data);
+
+                                                                    // Update with the path returned from server
+                                                                    // We're adding a timestamp query parameter to bypass caching
+                                                                    const modelPathWithCache = `${data.modelPath}?t=${Date.now()}`;
+                                                                    handlePropertyChange('modelPath', modelPathWithCache);
+
+                                                                    // Log success to help user track completion
+                                                                    console.log("3D model loaded and ready to use!");
+                                                                } else {
+                                                                    console.error("Server returned error:", data);
+                                                                    alert('Ошибка загрузки модели: ' + (data.message || 'Неизвестная ошибка'));
+                                                                }
+                                                            })
+                                                            .catch(error => {
+                                                                console.error('Error uploading model:', error);
+                                                                alert(`Ошибка при загрузке модели: ${error.message}`);
+                                                            })
+                                                            .finally(() => {
+                                                                // Clear uploading state
+                                                                setProperties(prev => ({
+                                                                    ...prev,
+                                                                    modelUploading: false
+                                                                }));
+                                                            });
+                                                    }
+                                                }}
+                                            />
+                                            <label htmlFor="model-upload">
+                                                <Button
+                                                    variant="contained"
+                                                    component="span"
+                                                    fullWidth
+                                                >
+                                                    Выбрать 3D модель
+                                                </Button>
+                                            </label>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                                                Поддерживаются модели любого размера, включая тяжелые (более 10MB).
+                                            </Typography>
+                                        </>
+                                    )}
                                 </>
                             )}
                         </Grid>

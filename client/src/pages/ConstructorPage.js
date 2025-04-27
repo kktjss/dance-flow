@@ -10,6 +10,7 @@ import Canvas from '../components/Canvas';
 import ToolPanel from '../components/ToolPanel';
 import PropertyPanel from '../components/PropertyPanel';
 import ProjectList from '../components/ProjectList';
+import ModelViewer from '../components/ModelViewer';
 
 const API_URL = 'http://localhost:5000/api';
 
