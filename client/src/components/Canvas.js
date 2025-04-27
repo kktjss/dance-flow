@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback, createRef } from 'react';
 import { fabric } from 'fabric';
-import { Box, IconButton } from '@mui/material';
-import { ContentCopy, Delete } from '@mui/icons-material';
+import { Box, IconButton, Modal, Typography } from '@mui/material';
+import { ContentCopy, Delete, Visibility } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import ReactDOM from 'react-dom';
+import ChoreographyViewer from './ChoreographyViewer';
 
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
@@ -15,6 +16,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
     const [isRecordingKeyframe, setIsRecordingKeyframe] = useState(false);
     const [initialized, setInitialized] = useState(false);
     const buttonContainerRef = useRef(null);
+    const [showChoreoModal, setShowChoreoModal] = useState(false);
 
     // Инициализация canvas и контейнера
     useEffect(() => {
@@ -529,6 +531,16 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
         setIsRecordingKeyframe(prev => !prev);
     }, []);
 
+    // Функция для открытия модального окна с хореографией
+    const handleShowChoreography = useCallback(() => {
+        setShowChoreoModal(true);
+    }, []);
+
+    // Функция для закрытия модального окна с хореографией
+    const handleCloseChoreography = useCallback(() => {
+        setShowChoreoModal(false);
+    }, []);
+
     // Используем ReactDOM.createPortal для рендеринга кнопок в отдельном контейнере
     const renderButtons = () => {
         if (!buttonContainerRef.current) return null;
@@ -590,6 +602,20 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                         >
                             <Delete fontSize="small" />
                         </IconButton>
+
+                        <IconButton
+                            onClick={handleShowChoreography}
+                            sx={{
+                                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(52, 152, 219, 0.9)',
+                                },
+                                pointerEvents: 'auto'
+                            }}
+                            title="Посмотреть хореографию"
+                        >
+                            <Visibility fontSize="small" />
+                        </IconButton>
                     </div>
                 )}
             </>,
@@ -610,6 +636,39 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
             }}
         >
             {initialized && renderButtons()}
+
+            {/* Модальное окно для просмотра хореографии */}
+            <Modal
+                open={showChoreoModal}
+                onClose={handleCloseChoreography}
+                aria-labelledby="choreography-modal-title"
+            >
+                <Box sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '80%',
+                    height: '80%',
+                    bgcolor: 'background.paper',
+                    boxShadow: 24,
+                    p: 4,
+                    borderRadius: 2,
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <Typography id="choreography-modal-title" variant="h6" component="h2" gutterBottom>
+                        3D хореография для {selectedElement?.title || 'танцора'}
+                    </Typography>
+                    <Box sx={{ flexGrow: 1 }}>
+                        <ChoreographyViewer
+                            dancerId={selectedElement?.id}
+                            dancerName={selectedElement?.title || 'Танцор'}
+                            videoUrl={selectedElement?.videoUrl}
+                        />
+                    </Box>
+                </Box>
+            </Modal>
         </Box>
     );
 };

@@ -45,6 +45,7 @@ const ToolPanel = ({ onAddElement }) => {
             icon: <SquareOutlined />,
             defaults: {
                 type: 'rectangle',
+                title: 'Танцор',
                 position: { x: 100, y: 100 },
                 size: { width: 150, height: 100 },
                 style: {
@@ -58,7 +59,8 @@ const ToolPanel = ({ onAddElement }) => {
                     startTime: 0,
                     endTime: null
                 },
-                keyframes: []
+                keyframes: [],
+                videoUrl: null
             }
         },
         {
@@ -67,6 +69,7 @@ const ToolPanel = ({ onAddElement }) => {
             icon: <CircleOutlined />,
             defaults: {
                 type: 'circle',
+                title: 'Танцор',
                 position: { x: 100, y: 100 },
                 size: { width: 100, height: 100 },
                 style: {
@@ -80,7 +83,8 @@ const ToolPanel = ({ onAddElement }) => {
                     startTime: 0,
                     endTime: null
                 },
-                keyframes: []
+                keyframes: [],
+                videoUrl: null
             }
         },
         {
@@ -89,6 +93,7 @@ const ToolPanel = ({ onAddElement }) => {
             icon: <TextFields />,
             defaults: {
                 type: 'text',
+                title: 'Текст',
                 position: { x: 100, y: 100 },
                 size: { width: 200, height: 50 },
                 content: 'Двойной клик для редактирования',
@@ -102,7 +107,8 @@ const ToolPanel = ({ onAddElement }) => {
                     startTime: 0,
                     endTime: null
                 },
-                keyframes: []
+                keyframes: [],
+                videoUrl: null
             }
         },
         {
@@ -111,6 +117,7 @@ const ToolPanel = ({ onAddElement }) => {
             icon: <ImageIcon />,
             defaults: {
                 type: 'image',
+                title: 'Изображение',
                 position: { x: 100, y: 100 },
                 size: { width: 200, height: 150 },
                 content: 'https://via.placeholder.com/200x150',
@@ -122,7 +129,8 @@ const ToolPanel = ({ onAddElement }) => {
                     startTime: 0,
                     endTime: null
                 },
-                keyframes: []
+                keyframes: [],
+                videoUrl: null
             }
         }
     ];
