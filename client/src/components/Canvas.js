@@ -5,6 +5,7 @@ import { ContentCopy, Delete, Visibility, ThreeDRotation, Videocam } from '@mui/
 import { v4 as uuidv4 } from 'uuid';
 import ReactDOM from 'react-dom';
 import ModelViewer from './ModelViewer';
+import VideoViewer from './VideoViewer';
 
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
@@ -682,10 +683,18 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                         {viewMode === '3d' ? '3D модель' : 'Видео'} для {selectedElement?.title || 'танцора'}
                     </Typography>
                     <Box sx={{ flexGrow: 1 }}>
-                        <ModelViewer
-                            isVisible={true}
-                            onClose={() => setShowChoreoModal(false)}
-                        />
+                        {viewMode === '3d' ? (
+                            <ModelViewer
+                                isVisible={true}
+                                onClose={() => setShowChoreoModal(false)}
+                            />
+                        ) : (
+                            <VideoViewer
+                                isVisible={true}
+                                videoUrl={selectedElement?.videoUrl}
+                                onClose={() => setShowChoreoModal(false)}
+                            />
+                        )}
                     </Box>
                 </Box>
             </Modal>
