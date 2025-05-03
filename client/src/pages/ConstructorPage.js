@@ -464,7 +464,9 @@ const ConstructorPage = () => {
                             position: 'relative',
                             backgroundColor: '#f5f5f5',
                             borderRadius: 1,
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            height: 'calc(100vh - 300px)', // Adjust for header, player, and other UI elements
+                            minHeight: '600px'
                         }}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}

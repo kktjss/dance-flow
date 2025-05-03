@@ -39,9 +39,84 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
         // Создаем canvas
         const canvas = document.createElement('canvas');
         canvas.id = canvasId.current;
-        canvas.width = 800;
-        canvas.height = 600;
-        canvasContainer.appendChild(canvas);
+
+        // Ждем, пока контейнер будет полностью инициализирован
+        setTimeout(() => {
+            canvas.width = canvasContainer.clientWidth;
+            canvas.height = canvasContainer.clientHeight;
+            canvasContainer.appendChild(canvas);
+
+            // Инициализируем Fabric
+            const fabricCanvas = new fabric.Canvas(canvasId.current, {
+                width: canvasContainer.clientWidth,
+                height: canvasContainer.clientHeight,
+                backgroundColor: '#ffffff',
+                preserveObjectStacking: true
+            });
+
+            fabricInstances.set(canvasId.current, fabricCanvas);
+
+            // Устанавливаем обработчики событий
+            setupEventHandlers(fabricCanvas);
+
+            // Добавляем обработчик клавиши Delete для удаления элементов
+            const handleKeyDown = (e) => {
+                if (e.key === 'Delete' && fabricCanvas.getActiveObject()) {
+                    e.preventDefault();
+                    handleDeleteElement();
+                }
+            };
+
+            document.addEventListener('keydown', handleKeyDown);
+
+            // Добавляем обработчик изменения размера окна
+            const handleResize = () => {
+                if (canvasContainer) {
+                    const width = canvasContainer.clientWidth;
+                    const height = canvasContainer.clientHeight;
+
+                    // Сохраняем текущие объекты и их позиции
+                    const objects = fabricCanvas.getObjects();
+                    const oldWidth = fabricCanvas.width;
+                    const oldHeight = fabricCanvas.height;
+
+                    // Обновляем размеры canvas
+                    canvas.width = width;
+                    canvas.height = height;
+                    fabricCanvas.setWidth(width);
+                    fabricCanvas.setHeight(height);
+
+                    // Масштабируем позиции объектов
+                    objects.forEach(obj => {
+                        const scaleX = width / oldWidth;
+                        const scaleY = height / oldHeight;
+
+                        obj.set({
+                            left: obj.left * scaleX,
+                            top: obj.top * scaleY,
+                            scaleX: obj.scaleX * scaleX,
+                            scaleY: obj.scaleY * scaleY
+                        });
+                    });
+
+                    fabricCanvas.renderAll();
+                }
+            };
+
+            window.addEventListener('resize', handleResize);
+            setInitialized(true);
+
+            // Очистка при размонтировании
+            return () => {
+                document.removeEventListener('keydown', handleKeyDown);
+                window.removeEventListener('resize', handleResize);
+                if (fabricInstances.has(canvasId.current)) {
+                    const instance = fabricInstances.get(canvasId.current);
+                    instance.dispose();
+                    fabricInstances.delete(canvasId.current);
+                }
+            };
+        }, 0);
 
         // Создаем контейнер для кнопок
         const btnContainer = document.createElement('div');
@@ -56,42 +131,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
         containerRef.current.appendChild(btnContainer);
         buttonContainerRef.current = btnContainer;
 
-        // Инициализируем Fabric
-        const fabricCanvas = new fabric.Canvas(canvasId.current, {
-            width: 800,
-            height: 600,
-            backgroundColor: '#ffffff',
-            preserveObjectStacking: true
-        });
-
-        fabricInstances.set(canvasId.current, fabricCanvas);
-
-        // Устанавливаем обработчики событий
-        setupEventHandlers(fabricCanvas);
-
-        // Добавляем обработчик клавиши Delete для удаления элементов
-        const handleKeyDown = (e) => {
-            if (e.key === 'Delete' && fabricCanvas.getActiveObject()) {
-                e.preventDefault();
-                handleDeleteElement();
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-
-        setInitialized(true);
-
         return () => {
-            // Удаляем обработчик клавиш
-            document.removeEventListener('keydown', handleKeyDown);
-
-            // Удаляем все обработчики при размонтировании
-            if (fabricInstances.has(canvasId.current)) {
-                const instance = fabricInstances.get(canvasId.current);
-                instance.dispose();
-                fabricInstances.delete(canvasId.current);
-            }
-
             // Удаляем DOM элементы
             if (canvasContainerRef.current && containerRef.current) {
                 containerRef.current.removeChild(canvasContainerRef.current);
@@ -650,11 +690,12 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
             ref={containerRef}
             sx={{
                 width: '100%',
-                height: 600,
+                height: '100%',
                 border: '1px solid #ccc',
                 position: 'relative',
                 overflow: 'hidden',
-                borderRadius: 1
+                borderRadius: 1,
+                backgroundColor: '#ffffff'
             }}
         >
             {initialized && renderButtons()}
