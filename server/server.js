@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const projectRoutes = require('./routes/projectRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const authRoutes = require('./src/routes/authRoutes');
 const path = require('path');
 
 const app = express();
@@ -24,6 +25,7 @@ mongoose.connect('mongodb://localhost:27017/dance-flow', {
 });
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/upload', uploadRoutes);
 
