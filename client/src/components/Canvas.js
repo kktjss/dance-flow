@@ -153,32 +153,37 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
         // Обработчик модификации объекта
         fabricCanvas.on('object:modified', (e) => {
             const modifiedObject = e.target;
-            if (!modifiedObject || !modifiedObject.data || !modifiedObject.data.elementId) return;
+            console.log('Object modified event fired');
+
+            if (!modifiedObject || !modifiedObject.data || !modifiedObject.data.elementId) {
+                console.warn('Modified object is missing data or elementId');
+                return;
+            }
 
             const elementId = modifiedObject.data.elementId;
+            console.log('Modified element ID:', elementId);
+
             const element = elements.find(el => el.id === elementId);
 
-            if (!element) return;
+            if (!element) {
+                console.warn('Element not found in elements array:', elementId);
+                return;
+            }
+
+            console.log('Found element in array:', element.id);
+            console.log('Current element position:', element.position);
+            console.log('Modified object position:', { left: modifiedObject.left, top: modifiedObject.top });
 
             // Создаем обновленный массив элементов
             let updatedElements;
 
-            // Базовое обновление (позиция, размер)
-            const basicUpdate = {
-                position: {
-                    x: modifiedObject.left,
-                    y: modifiedObject.top
-                },
-                size: {
-                    width: modifiedObject.width * (modifiedObject.scaleX || 1),
-                    height: modifiedObject.height * (modifiedObject.scaleY || 1)
-                }
-            };
-
-            // Если запись кадров активна, также обновляем keyframes
+            // Если запись кадров активна, обновляем keyframes
             if (isRecordingKeyframe) {
+                console.log('Recording keyframe mode is active, creating keyframe');
+
                 // Создаем свойства для сохранения в кадре
                 const keyframeProps = {
+                    time: currentTime,
                     position: {
                         x: modifiedObject.left,
                         y: modifiedObject.top
@@ -187,6 +192,8 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                     scale: modifiedObject.scaleX || 1
                 };
 
+                console.log('Creating keyframe with time:', currentTime, 'props:', keyframeProps);
+
                 // Добавляем или обновляем кадр для текущего времени
                 const updatedElement = addOrUpdateKeyframe(
                     element,
@@ -194,19 +201,61 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                     keyframeProps
                 );
 
+                console.log('Updated element keyframes count:', updatedElement.keyframes?.length || 0);
+
                 // Обновляем список элементов измененным элементом
                 updatedElements = elements.map(elem =>
                     elem.id === elementId ? updatedElement : elem
                 );
             } else {
-                // Просто обновляем базовые свойства
-                updatedElements = elements.map(elem =>
-                    elem.id === elementId ? { ...elem, ...basicUpdate } : elem
-                );
+                console.log('Recording keyframe mode is NOT active, updating base properties');
+
+                // Если запись кадров не активна, обновляем только базовые свойства,
+                // но сохраняем существующие keyframes
+                updatedElements = elements.map(elem => {
+                    if (elem.id === elementId) {
+                        // Ensure we don't lose existing keyframes
+                        const updatedElement = {
+                            ...elem,
+                            position: {
+                                x: modifiedObject.left,
+                                y: modifiedObject.top
+                            },
+                            size: {
+                                width: modifiedObject.width * (modifiedObject.scaleX || 1),
+                                height: modifiedObject.height * (modifiedObject.scaleY || 1)
+                            },
+                            style: {
+                                ...elem.style,
+                                opacity: modifiedObject.opacity
+                            }
+                        };
+
+                        // Make sure we keep the keyframes array
+                        if (!updatedElement.keyframes && elem.keyframes) {
+                            console.log('Preserving existing keyframes array');
+                            updatedElement.keyframes = [...elem.keyframes];
+                        }
+
+                        return updatedElement;
+                    }
+                    return elem;
+                });
             }
+
+            // Log the keyframes count before update
+            const keyframesCountBefore = elements.reduce((total, el) =>
+                total + (el.keyframes?.length || 0), 0);
+
+            // Log the keyframes count after update
+            const keyframesCountAfter = updatedElements.reduce((total, el) =>
+                total + (el.keyframes?.length || 0), 0);
+
+            console.log(`Total keyframes before: ${keyframesCountBefore}, after: ${keyframesCountAfter}`);
 
             // Используем setTimeout для безопасного обновления состояния
             setTimeout(() => {
+                console.log('Updating elements state');
                 onElementsChange(updatedElements);
             }, 0);
         });
@@ -249,15 +298,97 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
 
     // Функция для применения эффектов анимации
     const applyAnimationEffects = useCallback((fabricObject, element) => {
-        if (!element.keyframes || element.keyframes.length < 2) return;
+        // Проверка на существование keyframes и элемента
+        if (!element) {
+            console.warn('Cannot apply animation: element is null or undefined');
+            return;
+        }
+
+        if (!element.keyframes || !Array.isArray(element.keyframes) || element.keyframes.length === 0) {
+            console.log(`No keyframes for element ${element?.id}, using base properties`);
+
+            // Если нет keyframes, используем базовые свойства элемента
+            if (element.position) {
+                fabricObject.set({
+                    left: element.position.x,
+                    top: element.position.y,
+                    opacity: element.style?.opacity || 1,
+                    scaleX: 1,
+                    scaleY: 1
+                });
+            } else {
+                console.warn(`Element ${element.id} has invalid position data`);
+            }
+            return;
+        }
+
+        console.log(`Applying animation effects for element ${element.id} at time ${currentTime}. Keyframes count: ${element.keyframes.length}`);
+
+        // Dump first keyframe for debugging
+        if (element.keyframes.length > 0) {
+            console.log(`First keyframe sample: ${JSON.stringify(element.keyframes[0])}`);
+        }
 
         // Находим два keyframe между которыми находимся
         let prevKeyframe = null;
         let nextKeyframe = null;
 
-        // Сортируем keyframes по времени
-        const sortedKeyframes = [...element.keyframes].sort((a, b) => a.time - b.time);
+        // Фильтруем и сортируем keyframes по времени
+        const sortedKeyframes = [...element.keyframes]
+            .filter(kf => {
+                const isValid = kf &&
+                    typeof kf.time === 'number' && !isNaN(kf.time) &&
+                    kf.position &&
+                    typeof kf.position.x === 'number' && !isNaN(kf.position.x) &&
+                    typeof kf.position.y === 'number' && !isNaN(kf.position.y) &&
+                    typeof kf.opacity === 'number' && !isNaN(kf.opacity);
 
+                if (!isValid) {
+                    console.warn(`Filtering out invalid keyframe for element ${element.id}:`, kf);
+                }
+
+                return isValid;
+            })
+            .sort((a, b) => a.time - b.time);
+
+        // Проверяем, есть ли у нас ключевые кадры с временем
+        if (sortedKeyframes.length === 0) {
+            console.log(`No valid keyframes for element ${element.id}`);
+            // Если нет валидных ключевых кадров, используем базовые свойства
+            fabricObject.set({
+                left: element.position.x,
+                top: element.position.y,
+                opacity: element.style.opacity,
+                scaleX: 1,
+                scaleY: 1
+            });
+            return;
+        }
+
+        // Если текущее время точно соответствует ключевому кадру, используем его без интерполяции
+        const exactKeyframe = sortedKeyframes.find(k => Math.abs(k.time - currentTime) < 0.01);
+        if (exactKeyframe) {
+            console.log(`Using exact keyframe at time ${exactKeyframe.time}`);
+
+            // Make sure all properties exist and are valid
+            const posX = exactKeyframe.position?.x ?? element.position.x;
+            const posY = exactKeyframe.position?.y ?? element.position.y;
+            const opacity = exactKeyframe.opacity !== undefined ? exactKeyframe.opacity : element.style.opacity;
+            const scale = exactKeyframe.scale || 1;
+
+            fabricObject.set({
+                left: posX,
+                top: posY,
+                opacity: opacity,
+                scaleX: scale,
+                scaleY: scale
+            });
+
+            console.log(`Applied keyframe properties: x=${posX}, y=${posY}, opacity=${opacity}, scale=${scale}`);
+            return;
+        }
+
+        // Находим предыдущий и следующий ключевые кадры
         for (let i = 0; i < sortedKeyframes.length; i++) {
             if (sortedKeyframes[i].time <= currentTime) {
                 prevKeyframe = sortedKeyframes[i];
@@ -269,37 +400,72 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
         }
 
         // Если у нас нет обоих keyframes, используем ближайший
-        if (!prevKeyframe) {
-            prevKeyframe = sortedKeyframes[0];
-        }
-
-        if (!nextKeyframe) {
-            // Используем свойства последнего кадра
+        if (!prevKeyframe && !nextKeyframe) {
+            console.log(`No applicable keyframes for element ${element.id} at time ${currentTime}`);
+            // Если нет keyframes вообще, используем базовые свойства
             fabricObject.set({
-                left: prevKeyframe.position.x,
-                top: prevKeyframe.position.y,
-                opacity: prevKeyframe.opacity,
-                scaleX: prevKeyframe.scale,
-                scaleY: prevKeyframe.scale
+                left: element.position.x,
+                top: element.position.y,
+                opacity: element.style.opacity,
+                scaleX: 1,
+                scaleY: 1
             });
             return;
         }
 
+        if (!prevKeyframe) {
+            // Если нет предыдущего кадра, используем первый с базовыми свойствами элемента для предыдущего
+            prevKeyframe = {
+                time: 0,
+                position: { x: element.position.x, y: element.position.y },
+                opacity: element.style.opacity,
+                scale: 1
+            };
+        }
+
+        if (!nextKeyframe) {
+            // Если нет следующего кадра, используем последний с его же свойствами
+            nextKeyframe = sortedKeyframes[sortedKeyframes.length - 1];
+        }
+
         // Вычисляем прогресс между keyframes
         const totalDuration = nextKeyframe.time - prevKeyframe.time;
-        if (totalDuration === 0) return;
+        if (totalDuration === 0 || prevKeyframe === nextKeyframe) {
+            console.log(`Using single keyframe at time ${prevKeyframe.time}`);
+            // Если кадры совпадают по времени, используем свойства кадра
+            fabricObject.set({
+                left: prevKeyframe.position?.x ?? element.position.x,
+                top: prevKeyframe.position?.y ?? element.position.y,
+                opacity: prevKeyframe.opacity !== undefined ? prevKeyframe.opacity : element.style.opacity,
+                scaleX: prevKeyframe.scale || 1,
+                scaleY: prevKeyframe.scale || 1
+            });
+            return;
+        }
 
         const progress = (currentTime - prevKeyframe.time) / totalDuration;
 
+        console.log(`Interpolating between keyframes at ${prevKeyframe.time} and ${nextKeyframe.time} (progress: ${progress})`);
+
+        // Обеспечиваем существование свойств position или используем базовые свойства элемента
+        const prevX = prevKeyframe.position?.x ?? element.position.x;
+        const prevY = prevKeyframe.position?.y ?? element.position.y;
+        const nextX = nextKeyframe.position?.x ?? element.position.x;
+        const nextY = nextKeyframe.position?.y ?? element.position.y;
+
         // Интерполируем позицию
-        const currentX = prevKeyframe.position.x + (nextKeyframe.position.x - prevKeyframe.position.x) * progress;
-        const currentY = prevKeyframe.position.y + (nextKeyframe.position.y - prevKeyframe.position.y) * progress;
+        const currentX = prevX + (nextX - prevX) * progress;
+        const currentY = prevY + (nextY - prevY) * progress;
 
         // Интерполируем прозрачность
-        const currentOpacity = prevKeyframe.opacity + (nextKeyframe.opacity - prevKeyframe.opacity) * progress;
+        const prevOpacity = prevKeyframe.opacity !== undefined ? prevKeyframe.opacity : element.style.opacity;
+        const nextOpacity = nextKeyframe.opacity !== undefined ? nextKeyframe.opacity : element.style.opacity;
+        const currentOpacity = prevOpacity + (nextOpacity - prevOpacity) * progress;
 
         // Интерполируем масштаб
-        const currentScale = prevKeyframe.scale + (nextKeyframe.scale - prevKeyframe.scale) * progress;
+        const prevScale = prevKeyframe.scale || 1;
+        const nextScale = nextKeyframe.scale || 1;
+        const currentScale = prevScale + (nextScale - prevScale) * progress;
 
         // Применяем свойства
         fabricObject.set({
@@ -309,41 +475,134 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
             scaleX: currentScale,
             scaleY: currentScale
         });
+
+        console.log(`Applied interpolated properties: x=${currentX}, y=${currentY}, opacity=${currentOpacity}, scale=${currentScale}`);
     }, [currentTime]);
 
     // Функция добавления или обновления keyframe
-    const addOrUpdateKeyframe = useCallback((element, time, properties) => {
+    const addOrUpdateKeyframe = (element, time, properties = {}) => {
+        console.log('Adding/updating keyframe for element:', element.id);
+
+        if (!element) {
+            console.error('Cannot add keyframe: element is null or undefined');
+            return element;
+        }
+
         // Создаем глубокую копию элемента
         const updatedElement = JSON.parse(JSON.stringify(element));
 
-        // Инициализируем массив keyframes если он не существует
-        if (!updatedElement.keyframes) {
+        // Убедимся, что у элемента есть массив keyframes
+        if (!updatedElement.keyframes || !Array.isArray(updatedElement.keyframes)) {
+            console.log('Element has no keyframes array, creating one');
             updatedElement.keyframes = [];
         }
 
-        // Проверяем существует ли keyframe на данное время
-        const existingKeyframeIndex = updatedElement.keyframes.findIndex(k => Math.abs(k.time - time) < 0.01);
+        // Текущие свойства элемента
+        const defaultProps = {
+            position: { ...(updatedElement.position || { x: 0, y: 0 }) },
+            opacity: updatedElement.style?.opacity || 1,
+            scale: updatedElement.scale || 1
+        };
 
-        if (existingKeyframeIndex >= 0) {
-            // Обновляем существующий keyframe
-            updatedElement.keyframes[existingKeyframeIndex] = {
-                ...updatedElement.keyframes[existingKeyframeIndex],
-                ...properties,
-                time
-            };
+        // Validate default properties to prevent NaN
+        if (typeof defaultProps.position.x !== 'number' || isNaN(defaultProps.position.x)) {
+            console.warn('Invalid position.x in properties, using 0 instead');
+            defaultProps.position.x = 0;
+        }
+
+        if (typeof defaultProps.position.y !== 'number' || isNaN(defaultProps.position.y)) {
+            console.warn('Invalid position.y in properties, using 0 instead');
+            defaultProps.position.y = 0;
+        }
+
+        if (typeof defaultProps.opacity !== 'number' || isNaN(defaultProps.opacity)) {
+            console.warn('Invalid opacity in properties, using 1 instead');
+            defaultProps.opacity = 1;
+        }
+
+        // Extract properties correctly from the provided object
+        const posX = properties.position ? properties.position.x : (properties.left !== undefined ? properties.left : defaultProps.position.x);
+        const posY = properties.position ? properties.position.y : (properties.top !== undefined ? properties.top : defaultProps.position.y);
+
+        // Создаем новый keyframe на основе текущих свойств и переданных изменений
+        const newKeyframe = {
+            time,
+            position: {
+                x: posX,
+                y: posY
+            },
+            opacity: properties.opacity !== undefined ? properties.opacity : defaultProps.opacity,
+            scale: properties.scale !== undefined ? properties.scale : defaultProps.scale
+        };
+
+        console.log('New keyframe data:', JSON.stringify(newKeyframe));
+
+        // ВАЖНОЕ ДИАГНОСТИЧЕСКОЕ СООБЩЕНИЕ - ПРОВЕРКА ВАЛИДНОСТИ KEYFRAME
+        if (isNaN(newKeyframe.time) ||
+            isNaN(newKeyframe.position.x) ||
+            isNaN(newKeyframe.position.y) ||
+            isNaN(newKeyframe.opacity) ||
+            isNaN(newKeyframe.scale)) {
+            console.error('INVALID KEYFRAME DATA DETECTED:', newKeyframe);
+            console.error('This will cause problems when saving to the server!');
+
+            // Fix invalid values
+            if (isNaN(newKeyframe.time)) newKeyframe.time = 0;
+            if (isNaN(newKeyframe.position.x)) newKeyframe.position.x = 0;
+            if (isNaN(newKeyframe.position.y)) newKeyframe.position.y = 0;
+            if (isNaN(newKeyframe.opacity)) newKeyframe.opacity = 1;
+            if (isNaN(newKeyframe.scale)) newKeyframe.scale = 1;
+
+            console.log('Corrected keyframe data:', newKeyframe);
+        }
+
+        // Проверяем существует ли keyframe на данное время с погрешностью 0.01 секунды
+        const existingKeyframeIndex = updatedElement.keyframes.findIndex(kf =>
+            Math.abs(kf.time - time) < 0.01
+        );
+
+        if (existingKeyframeIndex !== -1) {
+            console.log(`Updating existing keyframe at index ${existingKeyframeIndex}`);
+            updatedElement.keyframes[existingKeyframeIndex] = newKeyframe;
         } else {
-            // Добавляем новый keyframe
-            updatedElement.keyframes.push({
-                time,
-                ...properties
+            console.log('Adding new keyframe to array');
+            updatedElement.keyframes.push(newKeyframe);
+        }
+
+        // Фильтрация невалидных keyframes
+        const oldLength = updatedElement.keyframes.length;
+        updatedElement.keyframes = updatedElement.keyframes
+            .filter(kf => {
+                const isValid = kf &&
+                    typeof kf.time === 'number' &&
+                    kf.position &&
+                    typeof kf.position.x === 'number' &&
+                    typeof kf.position.y === 'number' &&
+                    typeof kf.opacity === 'number';
+
+                if (!isValid) {
+                    console.warn('Filtering out invalid keyframe:', kf);
+                }
+
+                return isValid;
             });
+
+        const validKeyframesCount = updatedElement.keyframes.length;
+        if (oldLength > validKeyframesCount) {
+            console.warn(`Removed ${oldLength - validKeyframesCount} invalid keyframes!`);
         }
 
         // Сортируем keyframes по времени
         updatedElement.keyframes.sort((a, b) => a.time - b.time);
 
+        console.log(`Element ${element.id} now has ${validKeyframesCount} valid keyframes`);
+        console.log('First keyframe:',
+            updatedElement.keyframes.length > 0
+                ? JSON.stringify(updatedElement.keyframes[0])
+                : 'none');
+
         return updatedElement;
-    }, []);
+    };
 
     // Функция дублирования выбранного элемента
     const handleDuplicateElement = useCallback(() => {
@@ -456,12 +715,11 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                                 break;
 
                             case 'text':
-                                fabricObject = new fabric.Textbox(element.content, {
+                                fabricObject = new fabric.Text(element.content, {
                                     left: element.position.x,
                                     top: element.position.y,
-                                    width: element.size.width,
+                                    fontSize: element.size.height,
                                     fill: element.style.color,
-                                    fontSize: 20,
                                     opacity: element.style.opacity,
                                     selectable: true,
                                     hasControls: true
@@ -469,7 +727,6 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                                 break;
 
                             case 'image':
-                                // Обрабатываем загрузку изображения с promise
                                 const promise = new Promise((resolve) => {
                                     fabric.Image.fromURL(element.content, (img) => {
                                         img.set({
@@ -482,8 +739,11 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                                         img.scaleToWidth(element.size.width);
                                         img.scaleToHeight(element.size.height);
 
-                                        // Добавляем data атрибут для идентификации элемента
-                                        img.data = { elementId: element.id };
+                                        // Сохраняем полные данные об элементе для доступа к keyframes
+                                        img.data = {
+                                            elementId: element.id,
+                                            element: element // Сохраняем полный элемент для доступа к keyframes
+                                        };
 
                                         // Применяем эффекты анимации на основе keyframes
                                         applyAnimationEffects(img, element);
@@ -500,8 +760,11 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                                 return; // Пропускаем неизвестные типы
                         }
 
-                        // Добавляем data атрибут для идентификации элемента
-                        fabricObject.data = { elementId: element.id };
+                        // Сохраняем полные данные об элементе для доступа к keyframes
+                        fabricObject.data = {
+                            elementId: element.id,
+                            element: element // Сохраняем полный элемент для доступа к keyframes
+                        };
 
                         // Применяем эффекты анимации на основе keyframes
                         applyAnimationEffects(fabricObject, element);
@@ -558,19 +821,23 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                 cancelAnimationFrame(animationFrame);
             }
         };
-    }, [
-        initialized,
-        elements,
-        currentTime,
-        selectedElement,
-        isPlaying,
-        setupEventHandlers,
-        applyAnimationEffects
-    ]);
+    }, [initialized, elements, currentTime, selectedElement, isPlaying, setupEventHandlers, applyAnimationEffects]);
 
     // Переключение записи keyframe
     const toggleKeyframeRecording = useCallback(() => {
-        setIsRecordingKeyframe(prev => !prev);
+        setIsRecordingKeyframe(prev => {
+            const newState = !prev;
+            console.log(`Recording mode toggled from ${prev} to ${newState}`);
+
+            // Display alert about the mode change
+            if (newState) {
+                alert('Режим записи ключевых кадров ВКЛЮЧЕН. Перемещайте элементы для создания ключевых кадров.');
+            } else {
+                alert('Режим записи ключевых кадров ВЫКЛЮЧЕН.');
+            }
+
+            return newState;
+        });
     }, []);
 
     // Функция для открытия модального окна с хореографией

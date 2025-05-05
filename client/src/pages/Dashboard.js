@@ -19,14 +19,21 @@ import {
     DialogActions,
     TextField,
     Paper,
+    CircularProgress,
+    Alert
 } from '@mui/material';
 import {
     Delete as DeleteIcon,
     Settings as SettingsIcon,
     Logout as LogoutIcon,
+    Add as AddIcon
 } from '@mui/icons-material';
+import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ChoreographyList from '../components/ChoreographyList';
+
+const API_URL = 'http://localhost:5000/api';
 
 function Dashboard() {
     const navigate = useNavigate();
@@ -38,6 +45,9 @@ function Dashboard() {
         email: '',
         notifications: true,
     });
+    const [choreographies, setChoreographies] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
@@ -49,10 +59,35 @@ function Dashboard() {
                 email: parsedUser.email,
                 notifications: true,
             });
+            fetchChoreographies();
         } else {
             navigate('/login');
         }
     }, [navigate]);
+
+    const fetchChoreographies = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${API_URL}/projects`);
+            setChoreographies(response.data);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching choreographies:', err);
+            setError('Не удалось загрузить хореографии. Пожалуйста, попробуйте позже.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteChoreography = async (id) => {
+        try {
+            await axios.delete(`${API_URL}/projects/${id}`);
+            setChoreographies(choreographies.filter(choreo => choreo._id !== id));
+        } catch (err) {
+            console.error('Error deleting choreography:', err);
+            setError('Не удалось удалить хореографию. Пожалуйста, попробуйте позже.');
+        }
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -92,34 +127,38 @@ function Dashboard() {
                         </Box>
                     </Box>
 
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
+
                     <Grid container spacing={4}>
                         {/* Мои хореографии */}
                         <Grid item xs={12} md={8}>
                             <Paper sx={{ p: 4, minHeight: '500px' }}>
-                                <Typography variant="h5" gutterBottom>
-                                    Мои хореографии
-                                </Typography>
-                                <List>
-                                    <ListItem>
-                                        <ListItemText
-                                            primary="Современный танец"
-                                            secondary="Последнее обновление: 2 часа назад"
-                                        />
-                                        <Button size="small" onClick={() => navigate('/builder')}>
-                                            Редактировать
-                                        </Button>
-                                    </ListItem>
-                                    <Divider />
-                                    <ListItem>
-                                        <ListItemText
-                                            primary="Классический балет"
-                                            secondary="Последнее обновление: 1 день назад"
-                                        />
-                                        <Button size="small" onClick={() => navigate('/builder')}>
-                                            Редактировать
-                                        </Button>
-                                    </ListItem>
-                                </List>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Typography variant="h5">
+                                        Мои хореографии
+                                    </Typography>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<AddIcon />}
+                                        onClick={() => navigate('/constructor')}
+                                    >
+                                        Создать
+                                    </Button>
+                                </Box>
+                                {loading ? (
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                                        <CircularProgress />
+                                    </Box>
+                                ) : (
+                                    <ChoreographyList
+                                        choreographies={choreographies}
+                                        onDelete={handleDeleteChoreography}
+                                    />
+                                )}
                             </Paper>
                         </Grid>
 
@@ -130,19 +169,7 @@ function Dashboard() {
                                     История
                                 </Typography>
                                 <List>
-                                    <ListItem>
-                                        <ListItemText
-                                            primary="Создана хореография 'Современный танец'"
-                                            secondary="2 часа назад"
-                                        />
-                                    </ListItem>
-                                    <Divider />
-                                    <ListItem>
-                                        <ListItemText
-                                            primary="Обновлена хореография 'Классический балет'"
-                                            secondary="1 день назад"
-                                        />
-                                    </ListItem>
+                                    {/* History will be populated dynamically */}
                                 </List>
                             </Paper>
                         </Grid>
@@ -150,62 +177,36 @@ function Dashboard() {
                 </Container>
             </Box>
 
-            {/* Диалог настроек */}
-            <Dialog open={openSettings} onClose={() => setOpenSettings(false)} maxWidth="sm" fullWidth>
+            {/* Settings Dialog */}
+            <Dialog open={openSettings} onClose={() => setOpenSettings(false)}>
                 <DialogTitle>Настройки</DialogTitle>
                 <DialogContent>
-                    <Box sx={{ mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Профиль
-                        </Typography>
-                        <TextField
-                            margin="dense"
-                            label="Имя пользователя"
-                            fullWidth
-                            value={settings.username}
-                            onChange={(e) => setSettings({ ...settings, username: e.target.value })}
-                        />
-                        <TextField
-                            margin="dense"
-                            label="Email"
-                            fullWidth
-                            value={settings.email}
-                            onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                        />
-                    </Box>
-                    <Divider sx={{ my: 2 }} />
-                    <Box sx={{ mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Управление аккаунтом
-                        </Typography>
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            color="primary"
-                            onClick={handleLogout}
-                            sx={{ mb: 2 }}
-                        >
-                            Выйти из аккаунта
-                        </Button>
-                        <Button
-                            fullWidth
-                            variant="outlined"
-                            color="error"
-                            onClick={() => setOpenDeleteConfirm(true)}
-                        >
-                            Удалить аккаунт
-                        </Button>
-                    </Box>
+                    <TextField
+                        label="Имя пользователя"
+                        value={settings.username}
+                        onChange={(e) => setSettings({ ...settings, username: e.target.value })}
+                        fullWidth
+                        margin="normal"
+                    />
+                    <TextField
+                        label="Email"
+                        value={settings.email}
+                        onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                        fullWidth
+                        margin="normal"
+                    />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenSettings(false)}>Отмена</Button>
-                    <Button onClick={handleSettingsSave} variant="contained">Сохранить</Button>
+                    <Button onClick={handleSettingsSave} variant="contained">
+                        Сохранить
+                    </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Диалог подтверждения удаления */}
+            {/* Delete Account Confirmation Dialog */}
             <Dialog open={openDeleteConfirm} onClose={() => setOpenDeleteConfirm(false)}>
-                <DialogTitle>Удаление аккаунта</DialogTitle>
+                <DialogTitle>Удалить аккаунт?</DialogTitle>
                 <DialogContent>
                     <Typography>
                         Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить.

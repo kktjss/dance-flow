@@ -114,7 +114,7 @@ function AuthHome() {
                                                 <Button
                                                     variant="contained"
                                                     startIcon={<CreateIcon />}
-                                                    onClick={() => navigate('/builder')}
+                                                    onClick={() => navigate('/constructor')}
                                                 >
                                                     Создать
                                                 </Button>

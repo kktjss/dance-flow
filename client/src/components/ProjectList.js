@@ -96,11 +96,21 @@ const ProjectList = ({ onSelectProject, onCreateNewProject }) => {
     // Select a project
     const handleSelectProject = async (project) => {
         try {
+            setLoading(true);
+
+            // Получаем полные данные проекта с сервера
             const response = await axios.get(`${API_URL}/projects/${project._id}`);
+            console.log(`Loaded project "${response.data.name}" with ${response.data.elements?.length || 0} elements`);
+
+            // Передаем напрямую, без модификаций
             onSelectProject(response.data);
+
+            setError(null);
         } catch (err) {
             console.error('Error loading project details:', err);
             setError('Failed to load project details. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 

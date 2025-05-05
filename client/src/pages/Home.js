@@ -84,7 +84,7 @@ function Home() {
                         <Button
                             variant="contained"
                             size="large"
-                            onClick={() => navigate('/builder')}
+                            onClick={() => navigate('/constructor')}
                             sx={{ mt: 2, fontSize: '1.2rem', py: 1.5, px: 4 }}
                         >
                             Начать создавать
@@ -119,7 +119,7 @@ function Home() {
                                         <Button
                                             size="large"
                                             color="primary"
-                                            onClick={() => navigate('/builder')}
+                                            onClick={() => navigate('/constructor')}
                                         >
                                             Подробнее
                                         </Button>
@@ -165,7 +165,7 @@ function Home() {
                                         <Button
                                             size="large"
                                             color="primary"
-                                            onClick={() => navigate('/builder')}
+                                            onClick={() => navigate('/constructor')}
                                         >
                                             Подробнее
                                         </Button>
@@ -247,7 +247,7 @@ function Home() {
                                     variant="contained"
                                     size="large"
                                     sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
-                                    onClick={() => navigate('/builder')}
+                                    onClick={() => navigate('/constructor')}
                                 >
                                     Начать бесплатно
                                 </Button>

@@ -73,50 +73,177 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
 
     // Create a keyframe at the current time
     const createKeyframeAtCurrentTime = () => {
-        // Create a deep copy of the properties
-        const updatedProperties = JSON.parse(JSON.stringify(properties));
+        if (!selectedElement || !properties) {
+            console.error('Cannot create keyframe: No element selected or properties not loaded');
+            return;
+        }
 
-        // Ensure keyframes array exists
-        if (!updatedProperties.keyframes) {
-            updatedProperties.keyframes = [];
+        console.log('Creating keyframe at time:', currentTime);
+
+        // VALIDATION: Check time is valid
+        if (typeof currentTime !== 'number' || isNaN(currentTime) || currentTime < 0) {
+            console.error('Invalid current time:', currentTime);
+            return;
+        }
+
+        // VALIDATION: Ensure element has valid position
+        if (!properties.position ||
+            typeof properties.position.x !== 'number' || isNaN(properties.position.x) ||
+            typeof properties.position.y !== 'number' || isNaN(properties.position.y)) {
+            console.error('Invalid position:', properties.position);
+            return;
+        }
+
+        // VALIDATION: Ensure opacity is valid
+        if (!properties.style ||
+            typeof properties.style.opacity !== 'number' ||
+            isNaN(properties.style.opacity)) {
+            console.error('Invalid opacity:', properties.style?.opacity);
+            return;
+        }
+
+        // Create new keyframe with complete, validated properties
+        const keyframeProps = {
+            time: currentTime,
+            position: {
+                x: Number(properties.position.x),
+                y: Number(properties.position.y)
+            },
+            opacity: Number(properties.style.opacity),
+            scale: typeof properties.scale === 'number' ? Number(properties.scale) : 1
+        };
+
+        console.log('Creating new keyframe with props:', JSON.stringify(keyframeProps));
+
+        // Final validation of keyframe data
+        if (isNaN(keyframeProps.time) ||
+            isNaN(keyframeProps.position.x) ||
+            isNaN(keyframeProps.position.y) ||
+            isNaN(keyframeProps.opacity) ||
+            isNaN(keyframeProps.scale)) {
+            console.error('INVALID KEYFRAME DATA DETECTED!', keyframeProps);
+            alert('Ошибка при создании ключевого кадра: некорректные данные');
+            return;
+        }
+
+        // IMPORTANT: Create a completely new object to avoid reference issues
+        // Don't use properties directly or JSON parse/stringify which can cause issues
+        const updatedElement = {
+            ...selectedElement,
+            position: { ...selectedElement.position },
+            size: { ...selectedElement.size },
+            style: { ...selectedElement.style }
+        };
+
+        // Ensure keyframes array exists and is properly initialized
+        if (!updatedElement.keyframes) {
+            console.log('Initializing new keyframes array');
+            updatedElement.keyframes = [];
+        } else if (!Array.isArray(updatedElement.keyframes)) {
+            console.error(`Element has non-array keyframes: ${typeof updatedElement.keyframes}`);
+            updatedElement.keyframes = [];
+        } else {
+            // Make a deep copy of existing keyframes array to avoid reference issues
+            updatedElement.keyframes = updatedElement.keyframes.map(kf => ({
+                time: kf.time,
+                position: { x: kf.position.x, y: kf.position.y },
+                opacity: kf.opacity,
+                scale: kf.scale || 1
+            }));
         }
 
         // Check if a keyframe already exists at this time
-        const existingKeyframeIndex = updatedProperties.keyframes.findIndex(
-            k => Math.abs(k.time - currentTime) < 0.01
+        const existingKeyframeIndex = updatedElement.keyframes.findIndex(
+            kf => Math.abs(kf.time - currentTime) < 0.01
         );
 
-        // Properties to save in the keyframe
-        const keyframeProps = {
-            position: {
-                x: updatedProperties.position.x,
-                y: updatedProperties.position.y
-            },
-            opacity: updatedProperties.style.opacity,
-            scale: 1 // Default scale
-        };
-
         if (existingKeyframeIndex >= 0) {
-            // Update existing keyframe
-            updatedProperties.keyframes[existingKeyframeIndex] = {
-                ...updatedProperties.keyframes[existingKeyframeIndex],
-                ...keyframeProps,
-                time: currentTime
-            };
+            console.log(`Updating existing keyframe at index ${existingKeyframeIndex}`);
+            // Replace existing keyframe with new one
+            updatedElement.keyframes[existingKeyframeIndex] = keyframeProps;
         } else {
+            console.log('Adding new keyframe to array');
             // Add new keyframe
-            updatedProperties.keyframes.push({
-                time: currentTime,
-                ...keyframeProps
-            });
-
-            // Sort keyframes by time
-            updatedProperties.keyframes.sort((a, b) => a.time - b.time);
+            updatedElement.keyframes.push(keyframeProps);
         }
 
-        // Update state and notify parent
-        setProperties(updatedProperties);
-        onElementUpdate(updatedProperties);
+        // Sort keyframes by time
+        updatedElement.keyframes.sort((a, b) => a.time - b.time);
+
+        console.log(`Element now has ${updatedElement.keyframes.length} keyframes`);
+
+        // Final validation check of all keyframes
+        let allValid = true;
+        updatedElement.keyframes.forEach((kf, idx) => {
+            if (!kf ||
+                typeof kf.time !== 'number' || isNaN(kf.time) ||
+                !kf.position ||
+                typeof kf.position.x !== 'number' || isNaN(kf.position.x) ||
+                typeof kf.position.y !== 'number' || isNaN(kf.position.y) ||
+                typeof kf.opacity !== 'number' || isNaN(kf.opacity)) {
+
+                console.error(`Invalid keyframe at index ${idx}:`, kf);
+                allValid = false;
+            }
+        });
+
+        if (!allValid) {
+            console.error('Keyframe validation failed, cannot update element');
+            alert('Некоторые ключевые кадры содержат некорректные данные. Операция отменена.');
+            return;
+        }
+
+        // Create comprehensive backups
+        try {
+            if (selectedElement.id && updatedElement.keyframes.length > 0) {
+                // 1. Element-specific backup
+                const elementBackupKey = `keyframe-backup-${selectedElement.id}`;
+                localStorage.setItem(elementBackupKey, JSON.stringify(updatedElement.keyframes));
+                console.log(`Element backup created with ${updatedElement.keyframes.length} keyframes for element ${selectedElement.id}`);
+
+                // 2. For project-wide backup, we need to get existing backup or create a new one
+                if (window.currentProjectId) {
+                    const projectBackupKey = `project-keyframes-${window.currentProjectId}`;
+                    try {
+                        // Load existing backup
+                        let projectBackup = {};
+                        const existingBackup = localStorage.getItem(projectBackupKey);
+
+                        if (existingBackup) {
+                            try {
+                                projectBackup = JSON.parse(existingBackup);
+                            } catch (parseErr) {
+                                console.warn('Failed to parse existing project backup, creating new one');
+                                projectBackup = {};
+                            }
+                        }
+
+                        // Update with new keyframes for this element
+                        projectBackup[selectedElement.id] = updatedElement.keyframes;
+
+                        // Save updated project backup
+                        localStorage.setItem(projectBackupKey, JSON.stringify(projectBackup));
+
+                        // Count total keyframes in backup
+                        const totalBackupKeyframes = Object.values(projectBackup).reduce(
+                            (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0
+                        );
+
+                        console.log(`Project-wide backup updated: ${totalBackupKeyframes} total keyframes for ${Object.keys(projectBackup).length} elements`);
+                    } catch (backupErr) {
+                        console.error('Error updating project backup:', backupErr);
+                    }
+                } else {
+                    console.log('No current project ID found, skipping project-wide backup');
+                }
+            }
+        } catch (err) {
+            console.warn('Failed to create keyframe backup:', err);
+        }
+
+        // Update the element with new keyframes
+        console.log('Updating element with new keyframes');
+        onElementUpdate(updatedElement);
     };
 
     // Delete a keyframe

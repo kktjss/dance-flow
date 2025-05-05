@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Home from './pages/Home';
-import ChoreographyBuilder from './pages/ChoreographyBuilder';
 import TeamManagement from './pages/TeamManagement';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
@@ -91,14 +90,6 @@ function App() {
                         }
                     />
                     <Route
-                        path="/builder"
-                        element={
-                            <ProtectedRoute>
-                                <ChoreographyBuilder />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
                         path="/teams"
                         element={
                             <ProtectedRoute>
@@ -108,6 +99,16 @@ function App() {
                     />
                     <Route
                         path="/constructor"
+                        element={
+                            <ProtectedRoute>
+                                <ConstructorPage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Маршрут для открытия определенного проекта */}
+                    <Route
+                        path="/constructor/:projectId"
                         element={
                             <ProtectedRoute>
                                 <ConstructorPage />
