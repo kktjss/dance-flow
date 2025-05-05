@@ -70,6 +70,7 @@
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     border: 1px solid #eee;
+    position: relative;
 }
 
 .project-card:hover {
@@ -93,4 +94,17 @@
 .project-date {
     color: #999;
     font-size: 0.8rem;
+}
+
+.delete-button {
+    opacity: 0.7;
+    transition: opacity 0.2s, background-color 0.2s !important;
+}
+
+.delete-button:hover {
+    opacity: 1;
+}
+
+.project-card:hover .delete-button {
+    opacity: 1;
 }

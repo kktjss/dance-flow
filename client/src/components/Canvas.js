@@ -829,13 +829,6 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
             const newState = !prev;
             console.log(`Recording mode toggled from ${prev} to ${newState}`);
 
-            // Display alert about the mode change
-            if (newState) {
-                alert('Режим записи ключевых кадров ВКЛЮЧЕН. Перемещайте элементы для создания ключевых кадров.');
-            } else {
-                alert('Режим записи ключевых кадров ВЫКЛЮЧЕН.');
-            }
-
             return newState;
         });
     }, []);

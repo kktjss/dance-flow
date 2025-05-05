@@ -782,3 +782,144 @@
   }
 }
 
+[2025-05-05T12:46:37.853Z] [UPDATE PROJECT] Full update data for MongoDB:
+{
+  "projectId": "68160e6288e5f5551f050655",
+  "totalKeyframes": 2,
+  "keyframesJsonLength": 167,
+  "updateData": {
+    "_id": "68160e6288e5f5551f050655",
+    "name": "фф2",
+    "description": "",
+    "duration": 60,
+    "audioUrl": null,
+    "elements": [
+      {
+        "position": {
+          "x": 184,
+          "y": 238
+        },
+        "size": {
+          "width": 100,
+          "height": 100
+        },
+        "style": {
+          "color": "#000000",
+          "backgroundColor": "#2196F3",
+          "borderColor": "#0D47A1",
+          "borderWidth": 2,
+          "opacity": 1,
+          "zIndex": 1
+        },
+        "id": "ae866a9a-1749-43c2-bb24-ae2565cb764d",
+        "type": "circle",
+        "content": "",
+        "animation": {
+          "startTime": 0,
+          "endTime": null,
+          "effects": []
+        },
+        "_id": "6818608188e5f5551f050942"
+      }
+    ],
+    "createdAt": "2025-05-03T12:38:58.628Z",
+    "updatedAt": "2025-05-05T12:46:37.853Z",
+    "__v": 0,
+    "keyframesJson": "{\"ae866a9a-1749-43c2-bb24-ae2565cb764d\":[{\"time\":0,\"position\":{\"x\":833,\"y\":291},\"opacity\":1,\"scale\":..."
+  }
+}
+
+[2025-05-05T12:50:24.551Z] [UPDATE PROJECT] Full update data for MongoDB:
+{
+  "projectId": "68160e6288e5f5551f050655",
+  "totalKeyframes": 2,
+  "keyframesJsonLength": 167,
+  "updateData": {
+    "_id": "68160e6288e5f5551f050655",
+    "name": "фф2",
+    "description": "",
+    "duration": 60,
+    "audioUrl": null,
+    "elements": [
+      {
+        "position": {
+          "x": 184,
+          "y": 238
+        },
+        "size": {
+          "width": 100,
+          "height": 100
+        },
+        "style": {
+          "color": "#000000",
+          "backgroundColor": "#2196F3",
+          "borderColor": "#0D47A1",
+          "borderWidth": 2,
+          "opacity": 1,
+          "zIndex": 1
+        },
+        "id": "ae866a9a-1749-43c2-bb24-ae2565cb764d",
+        "type": "circle",
+        "content": "",
+        "animation": {
+          "startTime": 0,
+          "endTime": null,
+          "effects": []
+        },
+        "_id": "6818608188e5f5551f050942"
+      }
+    ],
+    "createdAt": "2025-05-03T12:38:58.628Z",
+    "updatedAt": "2025-05-05T12:50:24.551Z",
+    "__v": 0,
+    "keyframesJson": "{\"ae866a9a-1749-43c2-bb24-ae2565cb764d\":[{\"time\":0,\"position\":{\"x\":188,\"y\":226},\"opacity\":1,\"scale\":..."
+  }
+}
+
+[2025-05-05T12:56:55.568Z] [UPDATE PROJECT] Full update data for MongoDB:
+{
+  "projectId": "68160e6288e5f5551f050655",
+  "totalKeyframes": 2,
+  "keyframesJsonLength": 167,
+  "updateData": {
+    "_id": "68160e6288e5f5551f050655",
+    "name": "фф2",
+    "description": "",
+    "duration": 60,
+    "audioUrl": null,
+    "elements": [
+      {
+        "position": {
+          "x": 184,
+          "y": 238
+        },
+        "size": {
+          "width": 100,
+          "height": 100
+        },
+        "style": {
+          "color": "#000000",
+          "backgroundColor": "#2196F3",
+          "borderColor": "#0D47A1",
+          "borderWidth": 2,
+          "opacity": 1,
+          "zIndex": 1
+        },
+        "id": "ae866a9a-1749-43c2-bb24-ae2565cb764d",
+        "type": "circle",
+        "content": "",
+        "animation": {
+          "startTime": 0,
+          "endTime": null,
+          "effects": []
+        },
+        "_id": "6818608188e5f5551f050942"
+      }
+    ],
+    "createdAt": "2025-05-03T12:38:58.628Z",
+    "updatedAt": "2025-05-05T12:56:55.568Z",
+    "__v": 0,
+    "keyframesJson": "{\"ae866a9a-1749-43c2-bb24-ae2565cb764d\":[{\"time\":0,\"position\":{\"x\":188,\"y\":226},\"opacity\":1,\"scale\":..."
+  }
+}
+

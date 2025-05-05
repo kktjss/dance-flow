@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment, Menu, MenuItem } from '@mui/material';
+import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment, Menu, MenuItem, Snackbar, Alert } from '@mui/material';
 import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
@@ -38,6 +38,7 @@ const ConstructorPage = () => {
     const [copyMenuAnchor, setCopyMenuAnchor] = useState(null);
     const [clipboardElement, setClipboardElement] = useState(null);
     const [clipboardKeyframes, setClipboardKeyframes] = useState(null);
+    const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
     const navigate = useNavigate();
     const params = useParams();
@@ -384,6 +385,23 @@ See console for complete details.`);
         }
     };
 
+    // Function to show notification
+    const showNotification = (message, severity = 'success') => {
+        setNotification({
+            open: true,
+            message,
+            severity
+        });
+    };
+
+    // Function to close notification
+    const handleCloseNotification = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setNotification({ ...notification, open: false });
+    };
+
     // Handle saving the project
     const handleSaveProject = async () => {
         try {
@@ -631,7 +649,7 @@ See console for complete details.`);
                 window.currentProjectId = response.data._id;
                 console.log(`Set window.currentProjectId to ${window.currentProjectId}`);
 
-                alert(project._id ? 'Проект успешно сохранен' : 'Новый проект создан');
+                showNotification(project._id ? 'Проект успешно сохранен' : 'Новый проект создан');
                 setError(null);
             } catch (saveError) {
                 console.error('Error during project save:', saveError);
@@ -663,13 +681,13 @@ See console for complete details.`);
 
                             // Обновляем состояние проекта с восстановленными ключевыми кадрами
                             setProject(refreshedProject);
-                            setError('Проект загружен с резервной копией ключевых кадров из локального хранилища');
+                            showNotification('Проект загружен с резервной копией ключевых кадров из локального хранилища', 'warning');
                         } else {
                             throw new Error('No backup available in localStorage');
                         }
                     } catch (restoreError) {
                         console.error('Failed to restore from backup:', restoreError);
-                        setError('Не удалось сохранить проект. Резервная копия недоступна.');
+                        showNotification('Не удалось сохранить проект. Резервная копия недоступна.', 'error');
                     }
                 } else {
                     // Детальная информация об ошибке для нового проекта
@@ -692,12 +710,12 @@ See console for complete details.`);
                         errorMessage += ` Причина: ${saveError.message}`;
                     }
 
-                    setError(errorMessage);
+                    showNotification(errorMessage, 'error');
                 }
             }
         } catch (err) {
             console.error('Error in handleSaveProject:', err);
-            setError('Failed to save project. Please try again.');
+            showNotification('Failed to save project. Please try again.', 'error');
         }
     };
 
@@ -832,7 +850,7 @@ See console for complete details.`);
 
                         if (restoredCount > 0) {
                             console.log(`Restored total of ${restoredCount} keyframes from local storage backup`);
-                            setError(`Внимание: ${restoredCount} ключевых кадров восстановлено из локального хранилища`);
+                            showNotification(`Внимание: ${restoredCount} ключевых кадров восстановлено из локального хранилища`);
                         }
                     }
                 }
@@ -876,7 +894,7 @@ See console for complete details.`);
                 audioUrl: null,
                 elements: []
             });
-            setError(`Не удалось загрузить проект. ${err.message}`);
+            showNotification(`Не удалось загрузить проект. ${err.message}`);
             // Reset project ID if there was an error
             window.currentProjectId = null;
         }
@@ -1021,7 +1039,7 @@ See console for complete details.`);
                     }
                     alertMessage += ' Подробная информация выведена в консоль.';
 
-                    alert(alertMessage);
+                    showNotification(alertMessage);
                 } catch (err) {
                     console.error('Error fetching debug info:', err);
 
@@ -1042,14 +1060,14 @@ See console for complete details.`);
                     }
 
                     console.error(`Debug request error details: ${errorDetails}`);
-                    alert(`Диагностика: Проект имеет ${totalKeyframes} ключевых кадров. Ошибка получения данных с сервера: ${err.message}. Проверьте консоль для подробностей.`);
+                    showNotification(`Диагностика: Проект имеет ${totalKeyframes} ключевых кадров. Ошибка получения данных с сервера: ${err.message}. Проверьте консоль для подробностей.`);
                 }
             } else {
-                alert(`Диагностика: Новый проект с ${totalKeyframes} ключевыми кадрами. Сохраните проект для проверки на сервере.`);
+                showNotification(`Диагностика: Новый проект с ${totalKeyframes} ключевыми кадрами. Сохраните проект для проверки на сервере.`);
             }
         } catch (err) {
             console.error('Error in keyframe diagnostic:', err);
-            alert('Ошибка при выполнении диагностики. См. консоль для деталей.');
+            showNotification('Ошибка при выполнении диагностики. См. консоль для деталей.');
         }
     };
 
@@ -1101,16 +1119,16 @@ See console for complete details.`);
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Error saving keyframes:', errorData);
-                alert(`Ошибка при сохранении: ${errorData.message || response.statusText}`);
+                showNotification(`Ошибка при сохранении: ${errorData.message || response.statusText}`);
                 return;
             }
 
             const data = await response.json();
             console.log('Save result:', data);
-            alert(`Сохранено успешно! Длина JSON: ${data.keyframesJsonLength} символов`);
+            showNotification(`Сохранено успешно! Длина JSON: ${data.keyframesJsonLength} символов`);
         } catch (error) {
             console.error('Error in handleTestSaveKeyframes:', error);
-            alert(`Ошибка: ${error.message}`);
+            showNotification(`Ошибка: ${error.message}`);
         }
     };
 
@@ -1148,6 +1166,7 @@ See console for complete details.`);
                         {showProjects ? 'Скрыть проекты' : 'Открыть проект'}
                     </Button>
 
+                    {/* Debug buttons - commented out after successful testing
                     <Button
                         variant="outlined"
                         color="info"
@@ -1167,7 +1186,6 @@ See console for complete details.`);
                         Тест сохранения
                     </Button>
 
-                    {/* Temporary solution until hot reload issue is fixed */}
                     <Button
                         variant="outlined"
                         color="error"
@@ -1175,7 +1193,7 @@ See console for complete details.`);
                             console.log('*** DIRECT KEYFRAME SAVE - INLINE IMPLEMENTATION ***');
 
                             if (!project._id) {
-                                alert('Необходимо сначала сохранить проект!');
+                                showNotification('Необходимо сначала сохранить проект!', 'warning');
                                 return;
                             }
 
@@ -1195,7 +1213,7 @@ See console for complete details.`);
                             }
 
                             if (elementsWithKeyframes.length === 0) {
-                                alert('Не найдены ключевые кадры для сохранения!');
+                                showNotification('Не найдены ключевые кадры для сохранения!', 'warning');
                                 return;
                             }
 
@@ -1237,11 +1255,11 @@ See console for complete details.`);
                                 })
                                 .then(data => {
                                     console.log('Success:', data);
-                                    alert(`Прямое сохранение успешно!\n- Элемент: ${targetElement.id}\n- Сохранено ${targetElement.keyframesCount} ключевых кадров`);
+                                    showNotification(`Прямое сохранение успешно!\n- Элемент: ${targetElement.id}\n- Сохранено ${targetElement.keyframesCount} ключевых кадров`);
                                 })
                                 .catch(error => {
                                     console.error('Error in fetch:', error);
-                                    alert(`Ошибка: ${error.message}`);
+                                    showNotification(`Ошибка: ${error.message}`, 'error');
                                 });
                         }}
                         size="small"
@@ -1259,6 +1277,7 @@ See console for complete details.`);
                     >
                         Тест API
                     </Button>
+                    */}
                 </Box>
             </Box>
 
@@ -1467,6 +1486,23 @@ See console for complete details.`);
                     </Paper>
                 </Grid>
             </Grid>
+
+            {/* Custom notification */}
+            <Snackbar
+                open={notification.open}
+                autoHideDuration={6000}
+                onClose={handleCloseNotification}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseNotification}
+                    severity={notification.severity}
+                    variant="filled"
+                    sx={{ width: '100%' }}
+                >
+                    {notification.message}
+                </Alert>
+            </Snackbar>
         </Container>
     );
 };
