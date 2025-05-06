@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, IconButton, Slider, Typography } from '@mui/material';
 import { PlayArrow, Pause, VolumeUp, VolumeOff } from '@mui/icons-material';
 
-const Player = ({ audioUrl, duration, currentTime, onTimeUpdate, isPlaying, onPlayPause }) => {
+const Player = ({ audioUrl, duration, currentTime, onTimeUpdate, isPlaying, onPlayPause, readOnly = false }) => {
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
     const audioRef = useRef(null);
@@ -155,7 +155,7 @@ const Player = ({ audioUrl, duration, currentTime, onTimeUpdate, isPlaying, onPl
                     {formatTime(duration)}
                 </Typography>
 
-                {audioUrl && (
+                {audioUrl && !readOnly && (
                     <>
                         <IconButton onClick={handleMuteToggle}>
                             {isMuted ? <VolumeOff /> : <VolumeUp />}

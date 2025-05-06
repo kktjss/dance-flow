@@ -10,7 +10,7 @@ import VideoViewer from './VideoViewer';
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
 
-const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedElement, onElementSelect }) => {
+const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedElement, onElementSelect, readOnly = false }) => {
     const containerRef = useRef(null);
     const canvasContainerRef = useRef(null);
     const canvasId = useRef(`canvas-${uuidv4()}`);
@@ -32,7 +32,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
         canvasContainer.style.left = '0';
         canvasContainer.style.width = '100%';
         canvasContainer.style.height = '100%';
-        canvasContainer.style.pointerEvents = 'auto';
+        canvasContainer.style.pointerEvents = readOnly ? 'none' : 'auto';
         containerRef.current.appendChild(canvasContainer);
         canvasContainerRef.current = canvasContainer;
 
@@ -51,17 +51,27 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                 width: canvasContainer.clientWidth,
                 height: canvasContainer.clientHeight,
                 backgroundColor: '#ffffff',
-                preserveObjectStacking: true
+                preserveObjectStacking: true,
+                selection: !readOnly, // Disable selection in readOnly mode
+                interactive: !readOnly // Disable interaction in readOnly mode
             });
 
             fabricInstances.set(canvasId.current, fabricCanvas);
+
+            // Set selection properties based on readOnly mode
+            if (readOnly) {
+                fabricCanvas.selection = false;
+                fabricCanvas.skipTargetFind = true;
+                fabricCanvas.selectable = false;
+                fabricCanvas.hoverCursor = 'default';
+            }
 
             // Устанавливаем обработчики событий
             setupEventHandlers(fabricCanvas);
 
             // Добавляем обработчик клавиши Delete для удаления элементов
             const handleKeyDown = (e) => {
-                if (e.key === 'Delete' && fabricCanvas.getActiveObject()) {
+                if (!readOnly && e.key === 'Delete' && fabricCanvas.getActiveObject()) {
                     e.preventDefault();
                     handleDeleteElement();
                 }
@@ -118,18 +128,20 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
             };
         }, 0);
 
-        // Создаем контейнер для кнопок
-        const btnContainer = document.createElement('div');
-        btnContainer.id = `btn-container-${canvasId.current}`;
-        btnContainer.style.position = 'absolute';
-        btnContainer.style.top = '0';
-        btnContainer.style.left = '0';
-        btnContainer.style.width = '100%';
-        btnContainer.style.height = '100%';
-        btnContainer.style.pointerEvents = 'none';
-        btnContainer.style.zIndex = '10';
-        containerRef.current.appendChild(btnContainer);
-        buttonContainerRef.current = btnContainer;
+        // Создаем контейнер для кнопок, только если не в режиме чтения
+        if (!readOnly) {
+            const btnContainer = document.createElement('div');
+            btnContainer.id = `btn-container-${canvasId.current}`;
+            btnContainer.style.position = 'absolute';
+            btnContainer.style.top = '0';
+            btnContainer.style.left = '0';
+            btnContainer.style.width = '100%';
+            btnContainer.style.height = '100%';
+            btnContainer.style.pointerEvents = 'none';
+            btnContainer.style.zIndex = '10';
+            containerRef.current.appendChild(btnContainer);
+            buttonContainerRef.current = btnContainer;
+        }
 
         return () => {
             // Удаляем DOM элементы
@@ -141,7 +153,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                 containerRef.current.removeChild(buttonContainerRef.current);
             }
         };
-    }, []);
+    }, [readOnly]);
 
     // Функция установки обработчиков событий
     const setupEventHandlers = useCallback((fabricCanvas) => {
@@ -149,6 +161,9 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
 
         // Очищаем существующие обработчики
         fabricCanvas.off();
+
+        // Skip event handlers in readOnly mode
+        if (readOnly) return;
 
         // Обработчик модификации объекта
         fabricCanvas.on('object:modified', (e) => {
@@ -294,7 +309,7 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                 onElementSelect(null);
             }, 0);
         });
-    }, [elements, currentTime, isRecordingKeyframe, onElementsChange, onElementSelect]);
+    }, [elements, currentTime, isRecordingKeyframe, onElementsChange, onElementSelect, readOnly]);
 
     // Функция для применения эффектов анимации
     const applyAnimationEffects = useCallback((fabricObject, element) => {

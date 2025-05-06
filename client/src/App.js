@@ -9,6 +9,8 @@ import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard';
 import AuthHome from './pages/AuthHome';
 import ConstructorPage from './pages/ConstructorPage';
+import ProjectViewPage from './pages/ProjectViewPage';
+import ProjectsPage from './pages/ProjectsPage';
 
 const theme = createTheme({
     palette: {
@@ -112,6 +114,26 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <ConstructorPage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Маршрут для просмотра проекта (read-only) */}
+                    <Route
+                        path="/projects/:projectId"
+                        element={
+                            <ProtectedRoute>
+                                <ProjectViewPage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Маршрут для просмотра списка всех проектов */}
+                    <Route
+                        path="/projects"
+                        element={
+                            <ProtectedRoute>
+                                <ProjectsPage />
                             </ProtectedRoute>
                         }
                     />
