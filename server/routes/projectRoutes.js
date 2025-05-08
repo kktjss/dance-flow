@@ -164,7 +164,6 @@ router.post('/save-test', async (req, res) => {
 });
 
 // Direct keyframe test route - for updating keyframes directly
-// IMPORTANT: Route must be defined BEFORE other /:id routes
 router.post('/:id/direct-keyframes', async (req, res) => {
     try {
         const projectId = req.params.id;
@@ -173,18 +172,49 @@ router.post('/:id/direct-keyframes', async (req, res) => {
         // Get the keyframe data from the request
         const { elementId, keyframes } = req.body;
 
-        if (!elementId || !keyframes || !Array.isArray(keyframes)) {
+        // Validate input
+        if (!elementId) {
             return res.status(400).json({
-                message: 'Invalid data. Required: elementId and keyframes array',
+                message: 'Missing elementId in request',
+                received: req.body
+            });
+        }
+
+        if (!keyframes || !Array.isArray(keyframes)) {
+            return res.status(400).json({
+                message: 'Invalid keyframes data. Expected an array.',
                 received: {
-                    hasElementId: Boolean(elementId),
                     hasKeyframes: Boolean(keyframes),
-                    keyframesIsArray: Array.isArray(keyframes)
+                    keyframesType: keyframes ? typeof keyframes : 'undefined',
+                    isArray: Array.isArray(keyframes)
                 }
             });
         }
 
-        console.log(`[DIRECT KF] Received ${keyframes.length} keyframes for element ${elementId}`);
+        // Validate each keyframe
+        const validKeyframes = keyframes.filter(kf => {
+            const isValid = kf &&
+                typeof kf.time === 'number' && !isNaN(kf.time) &&
+                kf.position &&
+                typeof kf.position.x === 'number' && !isNaN(kf.position.x) &&
+                typeof kf.position.y === 'number' && !isNaN(kf.position.y) &&
+                typeof kf.opacity === 'number' && !isNaN(kf.opacity);
+
+            if (!isValid) {
+                console.warn(`[DIRECT KF] Invalid keyframe found:`, kf);
+            }
+
+            return isValid;
+        });
+
+        if (validKeyframes.length === 0) {
+            return res.status(400).json({
+                message: 'No valid keyframes found in the request',
+                received: keyframes
+            });
+        }
+
+        console.log(`[DIRECT KF] Received ${keyframes.length} keyframes, ${validKeyframes.length} are valid for element ${elementId}`);
 
         // First, get the current project to check existing keyframesJson
         const project = await Project.findById(projectId);
@@ -209,17 +239,14 @@ router.post('/:id/direct-keyframes', async (req, res) => {
         }
 
         // Add the new keyframes
-        keyframesData[elementId] = keyframes;
+        keyframesData[elementId] = validKeyframes;
 
         // Serialize to JSON
         const keyframesJson = JSON.stringify(keyframesData);
         console.log(`[DIRECT KF] Updated keyframesJson, length: ${keyframesJson.length}`);
 
-        // DIRECT UPDATE ONLY TO THE keyframesJson FIELD
-        console.log(`[DIRECT KF] Performing direct update on keyframesJson field`);
-
+        // Update the keyframesJson field
         try {
-            // Use updateOne for a targeted update of just the keyframesJson field
             const updateResult = await Project.updateOne(
                 { _id: projectId },
                 { $set: { keyframesJson: keyframesJson } }
@@ -235,7 +262,7 @@ router.post('/:id/direct-keyframes', async (req, res) => {
                 });
             }
 
-            // Verify the update worked
+            // Verify the update
             const verifyProject = await Project.findById(projectId);
 
             if (!verifyProject.keyframesJson || verifyProject.keyframesJson === '{}') {
@@ -247,6 +274,7 @@ router.post('/:id/direct-keyframes', async (req, res) => {
                 });
             }
 
+            // Verify the keyframes data
             let verifyCount = 0;
             try {
                 const verifiedData = JSON.parse(verifyProject.keyframesJson);
@@ -256,14 +284,18 @@ router.post('/:id/direct-keyframes', async (req, res) => {
                 console.log(`[DIRECT KF] Verification successful. Found ${verifyCount} keyframes in database`);
             } catch (e) {
                 console.error(`[DIRECT KF] Failed to parse verified keyframesJson: ${e.message}`);
+                return res.status(500).json({
+                    message: 'Failed to verify keyframes data',
+                    error: e.message
+                });
             }
 
             res.json({
                 success: true,
-                message: 'Keyframes directly updated in database',
+                message: 'Keyframes successfully updated',
                 updated: {
                     elementId,
-                    keyframeCount: keyframes.length
+                    keyframeCount: validKeyframes.length
                 },
                 verification: {
                     keyframesJsonLength: verifyProject.keyframesJson.length,

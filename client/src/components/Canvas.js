@@ -189,27 +189,27 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
             console.log('Current element position:', element.position);
             console.log('Modified object position:', { left: modifiedObject.left, top: modifiedObject.top });
 
-            // Создаем обновленный массив элементов
+            // Create updated array of elements
             let updatedElements;
 
-            // Если запись кадров активна, обновляем keyframes
+            // If recording keyframes is active, update keyframes
             if (isRecordingKeyframe) {
                 console.log('Recording keyframe mode is active, creating keyframe');
 
-                // Создаем свойства для сохранения в кадре
+                // Create properties for the keyframe
                 const keyframeProps = {
                     time: currentTime,
                     position: {
                         x: modifiedObject.left,
                         y: modifiedObject.top
                     },
-                    opacity: modifiedObject.opacity,
+                    opacity: modifiedObject.opacity || 1,
                     scale: modifiedObject.scaleX || 1
                 };
 
                 console.log('Creating keyframe with time:', currentTime, 'props:', keyframeProps);
 
-                // Добавляем или обновляем кадр для текущего времени
+                // Add or update the keyframe
                 const updatedElement = addOrUpdateKeyframe(
                     element,
                     currentTime,
@@ -218,19 +218,17 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
 
                 console.log('Updated element keyframes count:', updatedElement.keyframes?.length || 0);
 
-                // Обновляем список элементов измененным элементом
+                // Update the elements array
                 updatedElements = elements.map(elem =>
                     elem.id === elementId ? updatedElement : elem
                 );
             } else {
                 console.log('Recording keyframe mode is NOT active, updating base properties');
 
-                // Если запись кадров не активна, обновляем только базовые свойства,
-                // но сохраняем существующие keyframes
+                // Update base properties while preserving keyframes
                 updatedElements = elements.map(elem => {
                     if (elem.id === elementId) {
-                        // Ensure we don't lose existing keyframes
-                        const updatedElement = {
+                        return {
                             ...elem,
                             position: {
                                 x: modifiedObject.left,
@@ -242,37 +240,20 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
                             },
                             style: {
                                 ...elem.style,
-                                opacity: modifiedObject.opacity
-                            }
+                                opacity: modifiedObject.opacity || 1
+                            },
+                            keyframes: elem.keyframes || [] // Preserve existing keyframes
                         };
-
-                        // Make sure we keep the keyframes array
-                        if (!updatedElement.keyframes && elem.keyframes) {
-                            console.log('Preserving existing keyframes array');
-                            updatedElement.keyframes = [...elem.keyframes];
-                        }
-
-                        return updatedElement;
                     }
                     return elem;
                 });
             }
 
-            // Log the keyframes count before update
-            const keyframesCountBefore = elements.reduce((total, el) =>
-                total + (el.keyframes?.length || 0), 0);
-
-            // Log the keyframes count after update
-            const keyframesCountAfter = updatedElements.reduce((total, el) =>
-                total + (el.keyframes?.length || 0), 0);
-
-            console.log(`Total keyframes before: ${keyframesCountBefore}, after: ${keyframesCountAfter}`);
-
-            // Используем setTimeout для безопасного обновления состояния
-            setTimeout(() => {
-                console.log('Updating elements state');
+            // Notify parent component of changes
+            if (onElementsChange) {
+                console.log('Notifying parent of element changes');
                 onElementsChange(updatedElements);
-            }, 0);
+            }
         });
 
         // Обработчик выбора элемента
@@ -496,126 +477,59 @@ const Canvas = ({ elements, currentTime, isPlaying, onElementsChange, selectedEl
 
     // Функция добавления или обновления keyframe
     const addOrUpdateKeyframe = (element, time, properties = {}) => {
-        console.log('Adding/updating keyframe for element:', element.id);
+        console.log('Adding/updating keyframe:', { elementId: element.id, time, properties });
 
-        if (!element) {
-            console.error('Cannot add keyframe: element is null or undefined');
+        // Validate input
+        if (!element || !element.id) {
+            console.error('Invalid element in addOrUpdateKeyframe:', element);
             return element;
         }
 
-        // Создаем глубокую копию элемента
-        const updatedElement = JSON.parse(JSON.stringify(element));
-
-        // Убедимся, что у элемента есть массив keyframes
-        if (!updatedElement.keyframes || !Array.isArray(updatedElement.keyframes)) {
-            console.log('Element has no keyframes array, creating one');
-            updatedElement.keyframes = [];
+        if (typeof time !== 'number' || isNaN(time)) {
+            console.error('Invalid time in addOrUpdateKeyframe:', time);
+            return element;
         }
 
-        // Текущие свойства элемента
-        const defaultProps = {
-            position: { ...(updatedElement.position || { x: 0, y: 0 }) },
-            opacity: updatedElement.style?.opacity || 1,
-            scale: updatedElement.scale || 1
-        };
-
-        // Validate default properties to prevent NaN
-        if (typeof defaultProps.position.x !== 'number' || isNaN(defaultProps.position.x)) {
-            console.warn('Invalid position.x in properties, using 0 instead');
-            defaultProps.position.x = 0;
-        }
-
-        if (typeof defaultProps.position.y !== 'number' || isNaN(defaultProps.position.y)) {
-            console.warn('Invalid position.y in properties, using 0 instead');
-            defaultProps.position.y = 0;
-        }
-
-        if (typeof defaultProps.opacity !== 'number' || isNaN(defaultProps.opacity)) {
-            console.warn('Invalid opacity in properties, using 1 instead');
-            defaultProps.opacity = 1;
-        }
-
-        // Extract properties correctly from the provided object
-        const posX = properties.position ? properties.position.x : (properties.left !== undefined ? properties.left : defaultProps.position.x);
-        const posY = properties.position ? properties.position.y : (properties.top !== undefined ? properties.top : defaultProps.position.y);
-
-        // Создаем новый keyframe на основе текущих свойств и переданных изменений
-        const newKeyframe = {
+        // Ensure properties are valid
+        const validProperties = {
             time,
             position: {
-                x: posX,
-                y: posY
+                x: typeof properties.position?.x === 'number' ? properties.position.x : 0,
+                y: typeof properties.position?.y === 'number' ? properties.position.y : 0
             },
-            opacity: properties.opacity !== undefined ? properties.opacity : defaultProps.opacity,
-            scale: properties.scale !== undefined ? properties.scale : defaultProps.scale
+            opacity: typeof properties.opacity === 'number' ? properties.opacity : 1,
+            scale: typeof properties.scale === 'number' ? properties.scale : 1
         };
 
-        console.log('New keyframe data:', JSON.stringify(newKeyframe));
+        // Create a new array of keyframes
+        let updatedKeyframes = Array.isArray(element.keyframes) ? [...element.keyframes] : [];
 
-        // ВАЖНОЕ ДИАГНОСТИЧЕСКОЕ СООБЩЕНИЕ - ПРОВЕРКА ВАЛИДНОСТИ KEYFRAME
-        if (isNaN(newKeyframe.time) ||
-            isNaN(newKeyframe.position.x) ||
-            isNaN(newKeyframe.position.y) ||
-            isNaN(newKeyframe.opacity) ||
-            isNaN(newKeyframe.scale)) {
-            console.error('INVALID KEYFRAME DATA DETECTED:', newKeyframe);
-            console.error('This will cause problems when saving to the server!');
+        // Find existing keyframe at this time
+        const existingIndex = updatedKeyframes.findIndex(kf => kf.time === time);
 
-            // Fix invalid values
-            if (isNaN(newKeyframe.time)) newKeyframe.time = 0;
-            if (isNaN(newKeyframe.position.x)) newKeyframe.position.x = 0;
-            if (isNaN(newKeyframe.position.y)) newKeyframe.position.y = 0;
-            if (isNaN(newKeyframe.opacity)) newKeyframe.opacity = 1;
-            if (isNaN(newKeyframe.scale)) newKeyframe.scale = 1;
-
-            console.log('Corrected keyframe data:', newKeyframe);
-        }
-
-        // Проверяем существует ли keyframe на данное время с погрешностью 0.01 секунды
-        const existingKeyframeIndex = updatedElement.keyframes.findIndex(kf =>
-            Math.abs(kf.time - time) < 0.01
-        );
-
-        if (existingKeyframeIndex !== -1) {
-            console.log(`Updating existing keyframe at index ${existingKeyframeIndex}`);
-            updatedElement.keyframes[existingKeyframeIndex] = newKeyframe;
+        if (existingIndex !== -1) {
+            // Update existing keyframe
+            updatedKeyframes[existingIndex] = {
+                ...updatedKeyframes[existingIndex],
+                ...validProperties
+            };
+            console.log('Updated existing keyframe at time:', time);
         } else {
-            console.log('Adding new keyframe to array');
-            updatedElement.keyframes.push(newKeyframe);
+            // Add new keyframe
+            updatedKeyframes.push(validProperties);
+            console.log('Added new keyframe at time:', time);
         }
 
-        // Фильтрация невалидных keyframes
-        const oldLength = updatedElement.keyframes.length;
-        updatedElement.keyframes = updatedElement.keyframes
-            .filter(kf => {
-                const isValid = kf &&
-                    typeof kf.time === 'number' &&
-                    kf.position &&
-                    typeof kf.position.x === 'number' &&
-                    typeof kf.position.y === 'number' &&
-                    typeof kf.opacity === 'number';
+        // Sort keyframes by time
+        updatedKeyframes.sort((a, b) => a.time - b.time);
 
-                if (!isValid) {
-                    console.warn('Filtering out invalid keyframe:', kf);
-                }
+        // Create updated element
+        const updatedElement = {
+            ...element,
+            keyframes: updatedKeyframes
+        };
 
-                return isValid;
-            });
-
-        const validKeyframesCount = updatedElement.keyframes.length;
-        if (oldLength > validKeyframesCount) {
-            console.warn(`Removed ${oldLength - validKeyframesCount} invalid keyframes!`);
-        }
-
-        // Сортируем keyframes по времени
-        updatedElement.keyframes.sort((a, b) => a.time - b.time);
-
-        console.log(`Element ${element.id} now has ${validKeyframesCount} valid keyframes`);
-        console.log('First keyframe:',
-            updatedElement.keyframes.length > 0
-                ? JSON.stringify(updatedElement.keyframes[0])
-                : 'none');
-
+        console.log('Updated element keyframes count:', updatedKeyframes.length);
         return updatedElement;
     };
 

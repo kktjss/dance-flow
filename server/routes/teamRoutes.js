@@ -64,29 +64,67 @@ router.get('/', auth, async (req, res) => {
 // Get a specific team by ID
 router.get('/:teamId', auth, async (req, res) => {
     try {
+        console.log(`[TEAM ROUTE] Fetching team ${req.params.teamId} for user ${req.user.id}`);
+
         const team = await Team.findById(req.params.teamId)
             .populate('owner', 'username email')
             .populate('members.userId', 'username email')
             .populate('projects', 'name description');
 
         if (!team) {
+            console.log(`[TEAM ROUTE] Team ${req.params.teamId} not found`);
             return res.status(404).json({ message: 'Команда не найдена' });
         }
+
+        // Validate team data
+        if (!team.owner || !team.owner._id) {
+            console.error(`[TEAM ROUTE] Invalid team data - missing owner:`, team);
+            // Try to fix the team data by setting the current user as owner
+            try {
+                team.owner = req.user.id;
+                await team.save();
+                console.log(`[TEAM ROUTE] Fixed team owner for team ${team._id}`);
+            } catch (fixError) {
+                console.error(`[TEAM ROUTE] Failed to fix team owner:`, fixError);
+                return res.status(500).json({
+                    message: 'Ошибка данных команды. Пожалуйста, обратитесь к администратору.',
+                    error: 'INVALID_TEAM_DATA'
+                });
+            }
+        }
+
+        // Validate members data
+        if (!team.members || !Array.isArray(team.members)) {
+            console.error(`[TEAM ROUTE] Invalid team members data:`, team);
+            team.members = [];
+            await team.save();
+        }
+
+        // Filter out invalid members
+        team.members = team.members.filter(member =>
+            member && member.userId && member.userId._id
+        );
 
         // Check if user is owner or member
         const isOwner = team.owner._id.toString() === req.user.id;
         const isMember = team.members.some(member =>
-            member.userId._id.toString() === req.user.id
+            member.userId && member.userId._id && member.userId._id.toString() === req.user.id
         );
 
         if (!isOwner && !isMember) {
+            console.log(`[TEAM ROUTE] Access denied for user ${req.user.id}`);
             return res.status(403).json({ message: 'Нет доступа к этой команде' });
         }
 
+        console.log(`[TEAM ROUTE] Successfully fetched team ${team._id}`);
         res.json(team);
     } catch (error) {
-        console.error('Error fetching team:', error);
-        res.status(500).json({ message: 'Ошибка при получении информации о команде', error: error.message });
+        console.error('[TEAM ROUTE] Error fetching team:', error);
+        res.status(500).json({
+            message: 'Ошибка при получении информации о команде',
+            error: error.message,
+            details: error.stack
+        });
     }
 });
 
