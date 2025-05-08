@@ -15,10 +15,13 @@ import {
     DialogActions,
     Paper,
     Divider,
-    CircularProgress
+    CircularProgress,
+    FormControlLabel,
+    Switch
 } from '@mui/material';
-import { Delete, Edit, Add } from '@mui/icons-material';
+import { Delete, Edit, Add, Lock, Public } from '@mui/icons-material';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -29,6 +32,10 @@ const ProjectList = ({ onSelectProject, onCreateNewProject }) => {
     const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
     const [newProjectName, setNewProjectName] = useState('');
     const [newProjectDescription, setNewProjectDescription] = useState('');
+    const [isPrivate, setIsPrivate] = useState(true);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState(null);
+    const navigate = useNavigate();
 
     // Fetch projects on component mount
     useEffect(() => {
@@ -39,11 +46,48 @@ const ProjectList = ({ onSelectProject, onCreateNewProject }) => {
     const loadProjects = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_URL}/projects`);
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                console.error('No authentication token found');
+                setError('Authentication required. Please log in.');
+                return;
+            }
+
+            console.log('Loading projects with token:', token.substring(0, 10) + '...');
+
+            // Log the full request details
+            console.log('Making request to:', `${API_URL}/projects`);
+            console.log('With headers:', {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            });
+
+            const response = await axios.get(`${API_URL}/projects`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('Projects loaded:', response.data);
+            console.log('Number of projects:', response.data.length);
+            console.log('Project details:', response.data.map(p => ({
+                id: p._id,
+                name: p.name,
+                owner: p.owner,
+                isPrivate: p.isPrivate
+            })));
+
             setProjects(response.data);
             setError(null);
         } catch (err) {
             console.error('Error loading projects:', err);
+            console.error('Error details:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status
+            });
             setError('Failed to load projects. Please try again.');
         } finally {
             setLoading(false);
@@ -55,38 +99,76 @@ const ProjectList = ({ onSelectProject, onCreateNewProject }) => {
         if (!newProjectName.trim()) return;
 
         try {
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                console.error('No authentication token found');
+                setError('Authentication required. Please log in.');
+                return;
+            }
+
+            console.log('Creating project with token:', token.substring(0, 10) + '...');
+
             const newProject = {
                 name: newProjectName.trim(),
                 description: newProjectDescription.trim() || '',
                 duration: 60,
-                elements: []
+                elements: [],
+                isPrivate
             };
 
-            const response = await axios.post(`${API_URL}/projects`, newProject);
+            console.log('Sending project creation request:', {
+                url: `${API_URL}/projects`,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                data: newProject
+            });
+
+            const response = await axios.post(`${API_URL}/projects`, newProject, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('Project created successfully:', response.data);
+
             setProjects([...projects, response.data]);
             setNewProjectDialogOpen(false);
             setNewProjectName('');
             setNewProjectDescription('');
+            setIsPrivate(true);
 
             // Select the newly created project
             onSelectProject(response.data);
         } catch (err) {
             console.error('Error creating project:', err);
+            console.error('Error details:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status,
+                headers: err.config?.headers
+            });
             setError('Failed to create project. Please try again.');
         }
     };
 
     // Delete a project
-    const handleDeleteProject = async (projectId, event) => {
-        event.stopPropagation();
-
+    const handleDeleteProject = async (projectId) => {
         if (!window.confirm('Вы уверены, что хотите удалить этот проект?')) {
             return;
         }
 
         try {
-            await axios.delete(`${API_URL}/projects/${projectId}`);
+            const token = localStorage.getItem('token');
+            await axios.delete(`${API_URL}/projects/${projectId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setProjects(projects.filter(project => project._id !== projectId));
+            setDeleteConfirmOpen(false);
+            setProjectToDelete(null);
         } catch (err) {
             console.error('Error deleting project:', err);
             setError('Failed to delete project. Please try again.');
@@ -117,6 +199,11 @@ const ProjectList = ({ onSelectProject, onCreateNewProject }) => {
     // Create new blank project
     const handleNewBlankProject = () => {
         setNewProjectDialogOpen(true);
+    };
+
+    const confirmDelete = (project) => {
+        setProjectToDelete(project);
+        setDeleteConfirmOpen(true);
     };
 
     return (
@@ -168,7 +255,16 @@ const ProjectList = ({ onSelectProject, onCreateNewProject }) => {
                                     }}
                                 >
                                     <ListItemText
-                                        primary={project.name}
+                                        primary={
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                {project.name}
+                                                {project.isPrivate ? (
+                                                    <Lock fontSize="small" color="action" />
+                                                ) : (
+                                                    <Public fontSize="small" color="action" />
+                                                )}
+                                            </Box>
+                                        }
                                         secondary={
                                             <React.Fragment>
                                                 <Typography variant="body2" component="span" color="text.secondary">
@@ -184,7 +280,10 @@ const ProjectList = ({ onSelectProject, onCreateNewProject }) => {
                                     <ListItemSecondaryAction>
                                         <IconButton
                                             edge="end"
-                                            onClick={(e) => handleDeleteProject(project._id, e)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                confirmDelete(project);
+                                            }}
                                             title="Удалить проект"
                                         >
                                             <Delete />
@@ -220,6 +319,15 @@ const ProjectList = ({ onSelectProject, onCreateNewProject }) => {
                         value={newProjectDescription}
                         onChange={(e) => setNewProjectDescription(e.target.value)}
                     />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={isPrivate}
+                                onChange={(e) => setIsPrivate(e.target.checked)}
+                            />
+                        }
+                        label="Приватный проект"
+                    />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setNewProjectDialogOpen(false)}>Отмена</Button>
@@ -229,6 +337,27 @@ const ProjectList = ({ onSelectProject, onCreateNewProject }) => {
                         disabled={!newProjectName.trim()}
                     >
                         Создать
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+            >
+                <DialogTitle>Подтвердите удаление</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Вы уверены, что хотите удалить проект "{projectToDelete?.name}"?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteConfirmOpen(false)}>Отмена</Button>
+                    <Button
+                        onClick={() => handleDeleteProject(projectToDelete._id)}
+                        color="error"
+                    >
+                        Удалить
                     </Button>
                 </DialogActions>
             </Dialog>

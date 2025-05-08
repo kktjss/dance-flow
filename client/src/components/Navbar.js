@@ -69,14 +69,6 @@ function Navbar() {
                                 <NavButton
                                     color="primary"
                                     variant="text"
-                                    onClick={() => navigate('/projects')}
-                                    active={isActive('/projects')}
-                                >
-                                    Проекты
-                                </NavButton>
-                                <NavButton
-                                    color="primary"
-                                    variant="text"
                                     onClick={() => navigate('/teams')}
                                     active={isActive('/teams')}
                                 >

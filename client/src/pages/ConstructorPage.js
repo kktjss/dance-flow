@@ -587,11 +587,39 @@ See console for complete details.`);
                 if (project._id) {
                     // Update existing project
                     console.log('Updating existing project with ID:', project._id);
-                    response = await axios.put(`${API_URL}/projects/${project._id}`, projectToSave);
+                    const token = localStorage.getItem('token');
+                    response = await axios.put(`${API_URL}/projects/${project._id}`, projectToSave, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
                 } else {
                     // Create new project
                     console.log('Creating new project with data:', JSON.stringify(projectToSave).substring(0, 200) + '...');
-                    response = await axios.post(`${API_URL}/projects`, projectToSave);
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        throw new Error('No authentication token found. Please log in.');
+                    }
+
+                    // Ensure we have the required fields
+                    const projectData = {
+                        ...projectToSave,
+                        name: projectToSave.name || 'Новый проект',
+                        description: projectToSave.description || '',
+                        duration: projectToSave.duration || 60,
+                        elements: projectToSave.elements || [],
+                        isPrivate: true
+                    };
+
+                    console.log('Sending project data:', JSON.stringify(projectData, null, 2));
+
+                    response = await axios.post(`${API_URL}/projects`, projectData, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
                 }
 
                 console.log('Server response received:', response.status, response.statusText);
@@ -666,7 +694,16 @@ See console for complete details.`);
                             const backupKeyframes = JSON.parse(backupData);
 
                             // Получаем проект с сервера заново
-                            const refreshResponse = await axios.get(`${API_URL}/projects/${project._id}`);
+                            const token = localStorage.getItem('token');
+                            if (!token) {
+                                throw new Error('No authentication token found. Please log in.');
+                            }
+                            const refreshResponse = await axios.get(`${API_URL}/projects/${project._id}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            });
                             const refreshedProject = refreshResponse.data;
 
                             // Восстанавливаем ключевые кадры из резервной копии
@@ -741,7 +778,16 @@ See console for complete details.`);
             setProject(prev => ({ ...prev, _id: projectId, elements: [], loading: true }));
 
             console.log('Sending request to server...');
-            const response = await axios.get(`${API_URL}/projects/${projectId}`);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found. Please log in.');
+            }
+            const response = await axios.get(`${API_URL}/projects/${projectId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             console.log('Got response from server:', response.status);
 
             if (!response || !response.data) {

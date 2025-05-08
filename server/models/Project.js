@@ -31,6 +31,17 @@ const ElementSchema = new mongoose.Schema({
 const ProjectSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String, default: '' },
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true // Add index for better query performance
+    },
+    isPrivate: {
+        type: Boolean,
+        default: true,
+        index: true // Add index for better query performance
+    },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
     duration: { type: Number, default: 60 }, // Duration in seconds
@@ -89,6 +100,9 @@ const ProjectSchema = new mongoose.Schema({
 }, {
     versionKey: false
 });
+
+// Add compound index for owner and isPrivate fields
+ProjectSchema.index({ owner: 1, isPrivate: 1 });
 
 // Обновление времени и базовое логирование при сохранении
 ProjectSchema.pre('save', function (next) {

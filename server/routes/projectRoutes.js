@@ -4,6 +4,8 @@ const Project = require('../models/Project');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
+const Team = require('../src/models/Team');
+const ensureAuth = require('../middleware/auth');
 
 // Create logs directory if it doesn't exist
 const logsDir = path.join(__dirname, '..', 'logs');
@@ -29,19 +31,24 @@ function logWithDetails(message, data = null) {
 // Log all route registrations
 console.log('[ROUTE SETUP] Registering project routes...');
 
-// GET all projects
-router.get('/', async (req, res) => {
+// GET all projects (only returns projects that are either owned by the user or public)
+router.get('/', ensureAuth, async (req, res) => {
     try {
-        console.log('[GET ALL PROJECTS] Fetching all projects');
+        console.log('Fetching projects for user:', req.user.id);
 
-        // Find all projects, excluding keyframesJson field
-        const projects = await Project.find({}, { keyframesJson: 0 });
+        const projects = await Project.find({
+            $or: [
+                { owner: req.user.id },
+                { isPrivate: false }
+            ]
+        }).select('-keyframesJson');
 
-        console.log(`[GET ALL PROJECTS] Found ${projects.length} projects`);
+        console.log(`Found ${projects.length} projects for user`);
+
         res.json(projects);
     } catch (error) {
-        console.error('[GET ALL PROJECTS] Error fetching projects:', error);
-        res.status(500).json({ message: 'Error fetching projects', error: error.message });
+        console.error('Error fetching projects:', error);
+        res.status(500).json({ message: 'Error fetching projects' });
     }
 });
 
@@ -512,529 +519,121 @@ router.post('/:id/debug', async (req, res) => {
     }
 });
 
-// GET a single project by ID
-router.get('/:id', async (req, res) => {
+// GET a single project by ID (with access control)
+router.get('/:id', ensureAuth, async (req, res) => {
     try {
-        const projectId = req.params.id;
-        console.log(`[GET PROJECT] Fetching project with ID: ${projectId}`);
+        console.log('Fetching project:', req.params.id, 'for user:', req.user.id);
 
-        // Get the project from the database
-        const project = await Project.findById(projectId);
+        const project = await Project.findById(req.params.id);
 
         if (!project) {
-            console.log(`[GET PROJECT] Project with ID ${projectId} not found`);
             return res.status(404).json({ message: 'Project not found' });
         }
 
-        console.log(`[GET PROJECT] Found project: ${project.name}`);
-
-        // Convert to plain object to modify
-        const projectToReturn = project.toObject();
-
-        // Process keyframes back into elements
-        let totalKeyframes = 0;
-        if (projectToReturn.keyframesJson) {
-            try {
-                // Parse the keyframes JSON string
-                const keyframesData = JSON.parse(projectToReturn.keyframesJson);
-                console.log(`[GET PROJECT] Parsed keyframes data with ${Object.keys(keyframesData).length} element entries`);
-
-                // Verify the parsed keyframes
-                Object.keys(keyframesData).forEach(elementId => {
-                    if (!Array.isArray(keyframesData[elementId])) {
-                        console.error(`[GET PROJECT] Invalid keyframes format for element ${elementId}: not an array`);
-                        keyframesData[elementId] = [];
-                    } else {
-                        const validKeyframes = keyframesData[elementId].filter(kf =>
-                            kf &&
-                            typeof kf.time === 'number' && !isNaN(kf.time) &&
-                            kf.position &&
-                            typeof kf.position.x === 'number' && !isNaN(kf.position.x) &&
-                            typeof kf.position.y === 'number' && !isNaN(kf.position.y) &&
-                            typeof kf.opacity === 'number' && !isNaN(kf.opacity)
-                        );
-
-                        if (validKeyframes.length !== keyframesData[elementId].length) {
-                            console.warn(`[GET PROJECT] Filtered out ${keyframesData[elementId].length - validKeyframes.length} invalid keyframes for element ${elementId}`);
-                        }
-
-                        keyframesData[elementId] = validKeyframes;
-                    }
-
-                    totalKeyframes += keyframesData[elementId].length;
-                });
-
-                // Attach keyframes to elements
-                let attachedKeyframes = 0;
-                projectToReturn.elements.forEach(element => {
-                    if (element.id && keyframesData[element.id]) {
-                        element.keyframes = keyframesData[element.id];
-                        attachedKeyframes += element.keyframes.length;
-                        console.log(`[GET PROJECT] Attached ${element.keyframes.length} keyframes to element ${element.id}`);
-                    } else {
-                        console.log(`[GET PROJECT] No keyframes found for element ${element.id}, creating empty array`);
-                        element.keyframes = [];
-                    }
-                });
-
-                console.log(`[GET PROJECT] Total attached keyframes: ${attachedKeyframes}/${totalKeyframes}`);
-
-                // For diagnostic purposes, check if all keyframes were attached
-                if (attachedKeyframes < totalKeyframes) {
-                    console.warn(`[GET PROJECT] Not all keyframes were attached! Stored: ${totalKeyframes}, Attached: ${attachedKeyframes}`);
-                }
-            } catch (parseError) {
-                console.error('[GET PROJECT] Error parsing keyframes JSON:', parseError);
-                // Ensure all elements have an empty keyframes array
-                if (projectToReturn.elements) {
-                    projectToReturn.elements.forEach(element => {
-                        element.keyframes = [];
-                    });
-                }
-            }
-        } else {
-            console.log('[GET PROJECT] No keyframes data found in project');
-            // Ensure all elements have an empty keyframes array
-            if (projectToReturn.elements) {
-                projectToReturn.elements.forEach(element => {
-                    element.keyframes = [];
-                });
-            }
+        // Check if user has access
+        if (project.isPrivate && project.owner.toString() !== req.user.id) {
+            console.log('Access denied: Project is private and user is not owner');
+            return res.status(403).json({ message: 'Access denied' });
         }
 
-        // Remove keyframesJson from response
-        delete projectToReturn.keyframesJson;
-
-        // Validate the project structure before returning
-        if (!projectToReturn.elements) {
-            console.warn('[GET PROJECT] Project has no elements array, initializing empty array');
-            projectToReturn.elements = [];
-        }
-
-        console.log(`[GET PROJECT] Returning project with ${projectToReturn.elements.length} elements and ${projectToReturn.elements.reduce((sum, el) => sum + (el.keyframes?.length || 0), 0)} total keyframes`);
-
-        res.json(projectToReturn);
+        console.log('Project access granted');
+        res.json(project);
     } catch (error) {
-        console.error('[GET PROJECT] Error fetching project:', error);
-        res.status(500).json({ message: 'Error fetching project', error: error.message });
+        console.error('Error fetching project:', error);
+        res.status(500).json({ message: 'Error fetching project' });
     }
 });
 
 // POST create a new project
-router.post('/', async (req, res) => {
+router.post('/', ensureAuth, async (req, res) => {
     try {
-        console.log('[CREATE PROJECT] Processing new project creation request');
+        console.log('Creating project for user:', req.user.id);
+        console.log('Request body:', JSON.stringify(req.body, null, 2));
+        console.log('User from auth:', req.user);
 
-        // Get the project data from the request body
-        const projectData = req.body;
-        console.log(`[CREATE PROJECT] New project has ${projectData.elements?.length || 0} elements`);
-
-        // Validate project data
-        if (!projectData) {
-            console.error('[CREATE PROJECT] Invalid project data - missing data');
-            return res.status(400).json({ message: 'Invalid project data' });
+        // Remove _id if it's null to prevent Mongoose issues
+        const projectData = { ...req.body };
+        if (projectData._id === null) {
+            delete projectData._id;
         }
 
-        // Ensure elements array exists
-        if (!projectData.elements) {
-            console.log('[CREATE PROJECT] No elements array provided, initializing empty array');
-            projectData.elements = [];
-        }
-
-        // CRITICAL: Extract and validate keyframes from all elements
-        const keyframesData = {};
-        let totalKeyframes = 0;
-
-        projectData.elements.forEach((element, index) => {
-            if (element.id) {
-                // Initialize keyframes array if it doesn't exist
-                if (!element.keyframes) {
-                    console.log(`[CREATE PROJECT] Element ${element.id} has no keyframes array, creating empty array`);
-                    element.keyframes = [];
-                } else if (!Array.isArray(element.keyframes)) {
-                    console.error(`[CREATE PROJECT] Element ${element.id} has non-array keyframes: ${typeof element.keyframes}`);
-                    element.keyframes = [];
-                }
-
-                // Validate each keyframe and collect valid ones
-                if (element.keyframes && element.keyframes.length > 0) {
-                    console.log(`[CREATE PROJECT] Element ${element.id} has ${element.keyframes.length} keyframes`);
-
-                    // Filter valid keyframes
-                    const validKeyframes = element.keyframes.filter(kf => {
-                        const isValid = kf &&
-                            typeof kf.time === 'number' && !isNaN(kf.time) &&
-                            kf.position &&
-                            typeof kf.position.x === 'number' && !isNaN(kf.position.x) &&
-                            typeof kf.position.y === 'number' && !isNaN(kf.position.y) &&
-                            typeof kf.opacity === 'number' && !isNaN(kf.opacity);
-
-                        if (!isValid) {
-                            console.error(`[CREATE PROJECT] Invalid keyframe found in element ${element.id}:`, kf);
-                        }
-
-                        return isValid;
-                    });
-
-                    if (validKeyframes.length !== element.keyframes.length) {
-                        console.warn(`[CREATE PROJECT] Filtered out ${element.keyframes.length - validKeyframes.length} invalid keyframes from element ${element.id}`);
-                    }
-
-                    if (validKeyframes.length > 0) {
-                        keyframesData[element.id] = validKeyframes;
-                        totalKeyframes += validKeyframes.length;
-                        console.log(`[CREATE PROJECT] Saved ${validKeyframes.length} valid keyframes for element ${element.id}`);
-                    }
-
-                    // Remove keyframes from element to avoid duplication
-                    delete element.keyframes;
-                }
-            } else {
-                console.error(`[CREATE PROJECT] Element at index ${index} is missing ID, cannot save keyframes`);
-            }
-        });
-
-        console.log(`[CREATE PROJECT] Total extracted keyframes: ${totalKeyframes} from ${Object.keys(keyframesData).length} elements`);
-
-        // Convert keyframesData to JSON string
-        let keyframesJson = null;
-        try {
-            if (totalKeyframes > 0) {
-                keyframesJson = JSON.stringify(keyframesData);
-                console.log(`[CREATE PROJECT] Serialized ${totalKeyframes} keyframes to JSON string (${keyframesJson.length} chars)`);
-
-                // Verify JSON is valid by parsing it back
-                const parsed = JSON.parse(keyframesJson);
-                const parsedKeyframesCount = Object.values(parsed).reduce((sum, arr) => sum + arr.length, 0);
-                if (parsedKeyframesCount !== totalKeyframes) {
-                    console.error(`[CREATE PROJECT] JSON serialization/deserialization issue: ${parsedKeyframesCount} != ${totalKeyframes}`);
-                }
-            } else {
-                console.log('[CREATE PROJECT] No valid keyframes to save');
-            }
-        } catch (jsonError) {
-            console.error('[CREATE PROJECT] Error serializing keyframes to JSON:', jsonError);
-            return res.status(500).json({ message: 'Error processing keyframes', error: jsonError.message });
-        }
-
-        // Set timestamps
-        const now = new Date();
-        projectData.createdAt = now;
-        projectData.updatedAt = now;
-
-        // Create a new project with keyframesJson
-        const newProject = new Project({
+        const project = new Project({
             ...projectData,
-            keyframesJson
+            owner: req.user.id,
+            isPrivate: req.body.isPrivate !== undefined ? req.body.isPrivate : true
         });
 
-        // Save the new project
-        const savedProject = await newProject.save();
-        console.log(`[CREATE PROJECT] New project saved successfully with ID: ${savedProject._id}`);
+        console.log('Project object before save:', JSON.stringify(project, null, 2));
 
-        // Convert to plain object to modify
-        const projectToReturn = savedProject.toObject();
+        await project.save();
+        console.log('Project created:', project._id);
 
-        // Process keyframes back into elements
-        if (projectToReturn.keyframesJson) {
-            try {
-                const keyframesData = JSON.parse(projectToReturn.keyframesJson);
-                console.log(`[CREATE PROJECT] Parsed keyframes data with ${Object.keys(keyframesData).length} element entries`);
-
-                // Attach keyframes to corresponding elements
-                let attachedKeyframes = 0;
-                projectToReturn.elements.forEach(element => {
-                    if (keyframesData[element.id]) {
-                        element.keyframes = keyframesData[element.id];
-                        attachedKeyframes += element.keyframes.length;
-                        console.log(`[CREATE PROJECT] Attached ${element.keyframes.length} keyframes to element ${element.id}`);
-                    } else {
-                        element.keyframes = [];
-                    }
-                });
-
-                console.log(`[CREATE PROJECT] Total attached keyframes: ${attachedKeyframes}`);
-
-                // Remove keyframesJson from response
-                delete projectToReturn.keyframesJson;
-            } catch (parseError) {
-                console.error('[CREATE PROJECT] Error parsing keyframes JSON:', parseError);
-                // Still return the project but with empty keyframes
-                projectToReturn.elements.forEach(element => {
-                    element.keyframes = [];
-                });
-            }
-        } else {
-            console.log('[CREATE PROJECT] No keyframes data found in created project');
-            // Ensure all elements have keyframes array
-            projectToReturn.elements.forEach(element => {
-                element.keyframes = [];
-            });
-        }
-
-        console.log(`[CREATE PROJECT] Returning new project with ${projectToReturn.elements.length} elements`);
-
-        res.status(201).json(projectToReturn);
+        res.status(201).json(project);
     } catch (error) {
-        console.error('[CREATE PROJECT] Error creating project:', error);
-        res.status(500).json({ message: 'Error creating project', error: error.message });
+        console.error('Error creating project:', error);
+        console.error('Error details:', error.stack);
+        console.error('Validation errors:', error.errors);
+        res.status(500).json({
+            message: 'Error creating project',
+            error: error.message,
+            details: error.errors || error.stack
+        });
     }
 });
 
 // PUT update project
-router.put('/:id', async (req, res) => {
+router.put('/:id', ensureAuth, async (req, res) => {
     try {
-        const projectId = req.params.id;
-        console.log(`[UPDATE PROJECT] Processing update for project ID: ${projectId}`);
+        console.log('Updating project:', req.params.id, 'for user:', req.user.id);
 
-        // Get the project data from the request body
-        const projectData = req.body;
-        console.log(`[UPDATE PROJECT] Project has ${projectData.elements?.length || 0} elements`);
+        const project = await Project.findById(req.params.id);
 
-        // Validate project data
-        if (!projectData || !projectData.elements) {
-            console.error('[UPDATE PROJECT] Invalid project data - missing elements array');
-            return res.status(400).json({ message: 'Invalid project data' });
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found' });
         }
 
-        // CRITICAL: Extract and validate keyframes from all elements
-        const keyframesData = {};
-        let totalKeyframes = 0;
-
-        projectData.elements.forEach((element, index) => {
-            if (element.id) {
-                // Initialize keyframes array if it doesn't exist
-                if (!element.keyframes) {
-                    console.log(`[UPDATE PROJECT] Element ${element.id} has no keyframes array, creating empty array`);
-                    element.keyframes = [];
-                } else if (!Array.isArray(element.keyframes)) {
-                    console.error(`[UPDATE PROJECT] Element ${element.id} has non-array keyframes: ${typeof element.keyframes}`);
-                    element.keyframes = [];
-                }
-
-                // Validate each keyframe and collect valid ones
-                if (element.keyframes && element.keyframes.length > 0) {
-                    console.log(`[UPDATE PROJECT] Element ${element.id} has ${element.keyframes.length} keyframes`);
-
-                    // Filter valid keyframes
-                    const validKeyframes = element.keyframes.filter(kf => {
-                        const isValid = kf &&
-                            typeof kf.time === 'number' && !isNaN(kf.time) &&
-                            kf.position &&
-                            typeof kf.position.x === 'number' && !isNaN(kf.position.x) &&
-                            typeof kf.position.y === 'number' && !isNaN(kf.position.y) &&
-                            typeof kf.opacity === 'number' && !isNaN(kf.opacity);
-
-                        if (!isValid) {
-                            console.error(`[UPDATE PROJECT] Invalid keyframe found in element ${element.id}:`, kf);
-                        }
-
-                        return isValid;
-                    });
-
-                    if (validKeyframes.length !== element.keyframes.length) {
-                        console.warn(`[UPDATE PROJECT] Filtered out ${element.keyframes.length - validKeyframes.length} invalid keyframes from element ${element.id}`);
-                    }
-
-                    if (validKeyframes.length > 0) {
-                        keyframesData[element.id] = validKeyframes;
-                        totalKeyframes += validKeyframes.length;
-                        console.log(`[UPDATE PROJECT] Saved ${validKeyframes.length} valid keyframes for element ${element.id}`);
-                    }
-
-                    // Remove keyframes from element to avoid duplication
-                    delete element.keyframes;
-                }
-            } else {
-                console.error(`[UPDATE PROJECT] Element at index ${index} is missing ID, cannot save keyframes`);
-            }
-        });
-
-        console.log(`[UPDATE PROJECT] Total extracted keyframes: ${totalKeyframes} from ${Object.keys(keyframesData).length} elements`);
-
-        // Convert keyframesData to JSON string
-        let keyframesJson = null;
-        try {
-            if (totalKeyframes > 0) {
-                keyframesJson = JSON.stringify(keyframesData);
-                console.log(`[UPDATE PROJECT] Serialized ${totalKeyframes} keyframes to JSON string (${keyframesJson.length} chars)`);
-
-                // Verify JSON is valid by parsing it back
-                const parsed = JSON.parse(keyframesJson);
-                const parsedKeyframesCount = Object.values(parsed).reduce((sum, arr) => sum + arr.length, 0);
-                if (parsedKeyframesCount !== totalKeyframes) {
-                    console.error(`[UPDATE PROJECT] JSON serialization/deserialization issue: ${parsedKeyframesCount} != ${totalKeyframes}`);
-                }
-            } else {
-                console.log('[UPDATE PROJECT] No valid keyframes to save');
-                keyframesJson = "{}";
-            }
-        } catch (jsonError) {
-            console.error('[UPDATE PROJECT] Error serializing keyframes to JSON:', jsonError);
-            return res.status(500).json({ message: 'Error processing keyframes', error: jsonError.message });
+        // Check if user is owner
+        if (project.owner.toString() !== req.user.id) {
+            console.log('Access denied: User is not project owner');
+            return res.status(403).json({ message: 'Access denied' });
         }
 
-        // Set updated timestamp
-        projectData.updatedAt = new Date();
+        // Update project
+        Object.assign(project, req.body);
+        await project.save();
 
-        // Remove any keyframes from projectData (they should be in keyframesJson)
-        if (projectData.elements) {
-            projectData.elements.forEach(element => {
-                if (element.keyframes) {
-                    delete element.keyframes;
-                }
-            });
-        }
-
-        // Save keyframesJson to the project
-        const updateData = {
-            ...projectData,
-            keyframesJson
-        };
-
-        console.log(`[UPDATE PROJECT] Final keyframesJson length: ${keyframesJson ? keyframesJson.length : 0}`);
-        console.log(`[UPDATE PROJECT] keyframesJson sample: ${keyframesJson ? keyframesJson.substring(0, 100) + '...' : 'null'}`);
-
-        // For direct debugging, log the entire updateData object
-        logWithDetails("[UPDATE PROJECT] Full update data for MongoDB:", {
-            projectId,
-            totalKeyframes,
-            keyframesJsonLength: keyframesJson ? keyframesJson.length : 0,
-            updateData: {
-                ...updateData,
-                keyframesJson: keyframesJson ? (keyframesJson.length > 100 ? keyframesJson.substring(0, 100) + '...' : keyframesJson) : null
-            }
-        });
-
-        // CRITICAL FIX: Make sure we're using the correct method for the update
-        // Update the project in the database with an explicit update of the keyframesJson field
-        try {
-            // First update the project excluding the keyframesJson field
-            const { keyframesJson: _removed, ...dataWithoutKeyframes } = updateData;
-
-            // First step: update basic project data
-            let result = await Project.findByIdAndUpdate(
-                projectId,
-                dataWithoutKeyframes,
-                { new: true, runValidators: true }
-            );
-
-            if (!result) {
-                console.error(`[UPDATE PROJECT] Project with ID ${projectId} not found`);
-                return res.status(404).json({ message: 'Project not found' });
-            }
-
-            // Second step: update keyframesJson separately to avoid any potential issues
-            if (keyframesJson) {
-                console.log(`[UPDATE PROJECT] Updating keyframesJson field separately`);
-                result = await Project.findByIdAndUpdate(
-                    projectId,
-                    { keyframesJson },
-                    { new: true }
-                );
-
-                console.log(`[UPDATE PROJECT] keyframesJson update completed`);
-            }
-
-            console.log(`[UPDATE PROJECT] Project updated successfully: ${result.name}`);
-
-            // Verify keyframesJson was properly saved
-            const verifyProject = await Project.findById(projectId);
-            const savedKeyframesJson = verifyProject.keyframesJson;
-            console.log(`[UPDATE PROJECT] Verification: keyframesJson in DB has length ${savedKeyframesJson ? savedKeyframesJson.length : 0}`);
-
-            if (savedKeyframesJson) {
-                try {
-                    const parsedKeyframes = JSON.parse(savedKeyframesJson);
-                    const elementCount = Object.keys(parsedKeyframes).length;
-                    const savedKeyframesCount = Object.values(parsedKeyframes).reduce(
-                        (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0
-                    );
-                    console.log(`[UPDATE PROJECT] Verification: saved ${savedKeyframesCount} keyframes for ${elementCount} elements`);
-                } catch (e) {
-                    console.error(`[UPDATE PROJECT] Verification: failed to parse saved keyframesJson: ${e.message}`);
-                }
-            }
-
-            // Fetch the updated project with keyframes reattached
-            const updatedProject = await Project.findById(projectId);
-
-            if (!updatedProject) {
-                console.error('[UPDATE PROJECT] Failed to fetch updated project');
-                return res.status(500).json({ message: 'Failed to fetch updated project' });
-            }
-
-            // Convert to plain object to modify
-            const projectToReturn = updatedProject.toObject();
-
-            // Process keyframes back into elements
-            if (projectToReturn.keyframesJson) {
-                try {
-                    const keyframesData = JSON.parse(projectToReturn.keyframesJson);
-                    console.log(`[UPDATE PROJECT] Parsed keyframes data with ${Object.keys(keyframesData).length} element entries`);
-
-                    // Attach keyframes to corresponding elements
-                    let attachedKeyframes = 0;
-                    projectToReturn.elements.forEach(element => {
-                        if (keyframesData[element.id]) {
-                            element.keyframes = keyframesData[element.id];
-                            attachedKeyframes += element.keyframes.length;
-                            console.log(`[UPDATE PROJECT] Attached ${element.keyframes.length} keyframes to element ${element.id}`);
-                        } else {
-                            element.keyframes = [];
-                        }
-                    });
-
-                    console.log(`[UPDATE PROJECT] Total attached keyframes: ${attachedKeyframes}`);
-
-                    // Remove keyframesJson from response
-                    delete projectToReturn.keyframesJson;
-                } catch (parseError) {
-                    console.error('[UPDATE PROJECT] Error parsing keyframes JSON:', parseError);
-                    // Still return the project but with empty keyframes
-                    projectToReturn.elements.forEach(element => {
-                        element.keyframes = [];
-                    });
-                }
-            } else {
-                console.log('[UPDATE PROJECT] No keyframes data found in updated project');
-                // Ensure all elements have keyframes array
-                projectToReturn.elements.forEach(element => {
-                    element.keyframes = [];
-                });
-            }
-
-            console.log(`[UPDATE PROJECT] Returning updated project with ${projectToReturn.elements.length} elements`);
-
-            res.json(projectToReturn);
-        } catch (dbError) {
-            console.error('[UPDATE PROJECT] Database error:', dbError);
-            return res.status(500).json({ message: 'Database error during update', error: dbError.message });
-        }
+        console.log('Project updated successfully');
+        res.json(project);
     } catch (error) {
-        console.error('[UPDATE PROJECT] Error updating project:', error);
-        res.status(500).json({ message: 'Error updating project', error: error.message });
+        console.error('Error updating project:', error);
+        res.status(500).json({ message: 'Error updating project' });
     }
 });
 
 // DELETE a project
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', ensureAuth, async (req, res) => {
     try {
-        const projectId = req.params.id;
-        console.log(`[DELETE PROJECT] Deleting project with ID: ${projectId}`);
+        console.log('Deleting project:', req.params.id, 'for user:', req.user.id);
 
-        const result = await Project.findByIdAndDelete(projectId);
+        const project = await Project.findById(req.params.id);
 
-        if (!result) {
-            console.log(`[DELETE PROJECT] Project with ID ${projectId} not found`);
+        if (!project) {
             return res.status(404).json({ message: 'Project not found' });
         }
 
-        console.log(`[DELETE PROJECT] Project deleted successfully: ${result.name}`);
-        res.json({ message: 'Project deleted successfully' });
+        // Check if user is owner
+        if (project.owner.toString() !== req.user.id) {
+            console.log('Access denied: User is not project owner');
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        await project.remove();
+        console.log('Project deleted successfully');
+
+        res.json({ message: 'Project deleted' });
     } catch (error) {
-        console.error('[DELETE PROJECT] Error deleting project:', error);
-        res.status(500).json({ message: 'Error deleting project', error: error.message });
+        console.error('Error deleting project:', error);
+        res.status(500).json({ message: 'Error deleting project' });
     }
 });
 

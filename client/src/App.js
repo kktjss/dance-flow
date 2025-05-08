@@ -11,6 +11,8 @@ import AuthHome from './pages/AuthHome';
 import ConstructorPage from './pages/ConstructorPage';
 import ProjectViewPage from './pages/ProjectViewPage';
 import ProjectsPage from './pages/ProjectsPage';
+import ProjectViewer from './pages/ProjectViewer';
+import ProjectConstructor from './pages/ProjectConstructor';
 
 const theme = createTheme({
     palette: {
@@ -142,6 +144,23 @@ function App() {
                     <Route
                         path="/dance-flow"
                         element={<ConstructorPage />}
+                    />
+
+                    <Route
+                        path="/teams/:teamId/projects/:projectId/viewer"
+                        element={
+                            <ProtectedRoute>
+                                <ProjectViewer />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/teams/:teamId/projects/:projectId/constructor"
+                        element={
+                            <ProtectedRoute>
+                                <ProjectConstructor />
+                            </ProtectedRoute>
+                        }
                     />
                 </Routes>
             </Router>

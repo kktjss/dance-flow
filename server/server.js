@@ -4,54 +4,65 @@ const cors = require('cors');
 const projectRoutes = require('./routes/projectRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const authRoutes = require('./src/routes/authRoutes');
+const teamRoutes = require('./routes/teamRoutes');
+const userRoutes = require('./routes/userRoutes');
 const directKeyframesRoute = require('./direct-keyframes-route');
 const path = require('path');
 const testRoutes = require('./test-route');
+const ensureAuth = require('./middleware/auth');
+const { checkTeamProjectPermissions } = require('./middleware/teamPermissions');
+const { checkProjectAccess } = require('./middleware/projectPermissions');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/dance-flow', {
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/dance-platform', {
     useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log('Connected to MongoDB');
-}).catch(err => {
-    console.error('MongoDB connection error:', err);
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000 // Timeout after 5s instead of 30s
+})
+    .then(() => console.log('Connected to MongoDB'))
+    .catch((err) => {
+        console.error('MongoDB connection error:', err);
+        process.exit(1); // Exit if cannot connect to database
+    });
+
+// Middleware
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Authorization']
+}));
+
+app.use(express.json());
+
+// Logging middleware
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    next();
 });
 
 // Routes
-console.log('Setting up API routes...');
-app.use('/api/auth', authRoutes);
-console.log('Mounted auth routes at /api/auth');
-
-// Direct keyframes route must be defined BEFORE regular project routes
-app.use('/api/projects', directKeyframesRoute);
-console.log('Mounted direct-keyframes route at /api/projects/:id/direct-keyframes');
-
-// Regular project routes
 app.use('/api/projects', projectRoutes);
-console.log('Mounted project routes at /api/projects');
-
 app.use('/api/upload', uploadRoutes);
-console.log('Mounted upload routes at /api/upload');
-
+app.use('/api/auth', authRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/direct-keyframes', directKeyframesRoute);
 app.use('/api/test', testRoutes);
-console.log("Test routes mounted at /api/test");
 
-// Static files (for uploaded content)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Serve client/public/models folder (for development)
-app.use('/models', express.static(path.join(__dirname, '..', 'client', 'public', 'models')));
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Server error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+});
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 }); 

@@ -68,7 +68,13 @@ function Dashboard() {
     const fetchChoreographies = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_URL}/projects`);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+            const response = await axios.get(`${API_URL}/projects`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setChoreographies(response.data);
             setError(null);
         } catch (err) {
