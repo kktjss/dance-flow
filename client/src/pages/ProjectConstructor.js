@@ -128,13 +128,22 @@ const ProjectConstructor = () => {
                                     <Typography variant="h4" component="h1">
                                         {project.name}
                                     </Typography>
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        onClick={() => navigate(`/projects/${projectId}`)}
-                                    >
-                                        Открыть в проектах
-                                    </Button>
+                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                        <Button
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => navigate(`/projects/${projectId}`)}
+                                        >
+                                            Посмотреть
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={() => navigate(`/constructor/${projectId}`)}
+                                        >
+                                            Редактировать
+                                        </Button>
+                                    </Box>
                                 </Box>
 
                                 <Typography variant="body1" color="text.secondary" paragraph>

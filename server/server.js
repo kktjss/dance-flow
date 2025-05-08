@@ -1,17 +1,21 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const dotenv = require('dotenv');
 const projectRoutes = require('./routes/projectRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const teamRoutes = require('./routes/teamRoutes');
 const userRoutes = require('./routes/userRoutes');
 const directKeyframesRoute = require('./direct-keyframes-route');
+const historyRoutes = require('./routes/history');
 const path = require('path');
 const testRoutes = require('./test-route');
 const ensureAuth = require('./middleware/auth');
 const { checkTeamProjectPermissions } = require('./middleware/teamPermissions');
 const { checkProjectAccess } = require('./middleware/projectPermissions');
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -55,6 +59,7 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/direct-keyframes', directKeyframesRoute);
 app.use('/api/test', testRoutes);
+app.use('/api/history', historyRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

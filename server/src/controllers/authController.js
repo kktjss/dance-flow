@@ -7,6 +7,12 @@ exports.register = async (req, res) => {
         console.log('Registration request received:', req.body);
         const { username, email, password } = req.body;
 
+        // Простая проверка формата email (что-то@что-то.что-то)
+        const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: 'Email должен быть в формате something@domain.com' });
+        }
+
         // Проверяем, существует ли пользователь
         const existingUser = await User.findOne({ $or: [{ email }, { username }] });
         if (existingUser) {
@@ -27,7 +33,10 @@ exports.register = async (req, res) => {
 
         // Создаем JWT токен
         const token = jwt.sign(
-            { userId: user._id },
+            {
+                userId: user._id,
+                username: user.username
+            },
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '24h' }
         );
@@ -57,23 +66,35 @@ exports.register = async (req, res) => {
 // Вход пользователя
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { username, password } = req.body;
+        console.log('Login attempt for username:', username);
 
         // Находим пользователя
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ username });
+        console.log('User found:', user ? {
+            id: user._id,
+            username: user.username,
+            email: user.email
+        } : 'Not found');
+
         if (!user) {
-            return res.status(401).json({ message: 'Неверный email или пароль' });
+            return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
         // Проверяем пароль
         const isMatch = await user.comparePassword(password);
+        console.log('Password match:', isMatch);
+
         if (!isMatch) {
-            return res.status(401).json({ message: 'Неверный email или пароль' });
+            return res.status(401).json({ message: 'Неверное имя пользователя или пароль' });
         }
 
         // Создаем JWT токен
         const token = jwt.sign(
-            { userId: user._id },
+            {
+                userId: user._id,
+                username: user.username
+            },
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '24h' }
         );

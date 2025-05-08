@@ -22,6 +22,11 @@ const ensureAuth = (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         console.log('Token decoded:', decoded);
 
+        if (!decoded.userId) {
+            console.log('Token does not contain userId');
+            return res.status(401).json({ message: 'Invalid token format' });
+        }
+
         // Add user info to request
         req.user = {
             id: decoded.userId,

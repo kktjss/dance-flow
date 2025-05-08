@@ -32,6 +32,8 @@ import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ChoreographyList from '../components/ChoreographyList';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -48,6 +50,8 @@ function Dashboard() {
     const [choreographies, setChoreographies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [history, setHistory] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(true);
 
     useEffect(() => {
         const userData = localStorage.getItem('user');
@@ -60,6 +64,7 @@ function Dashboard() {
                 notifications: true,
             });
             fetchChoreographies();
+            fetchHistory();
         } else {
             navigate('/login');
         }
@@ -85,6 +90,25 @@ function Dashboard() {
         }
     };
 
+    const fetchHistory = async () => {
+        try {
+            setHistoryLoading(true);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+            const response = await axios.get(`${API_URL}/history`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setHistory(response.data);
+        } catch (err) {
+            console.error('Error fetching history:', err);
+            setError('Не удалось загрузить историю. Пожалуйста, попробуйте позже.');
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
     const handleDeleteChoreography = async (id) => {
         try {
             await axios.delete(`${API_URL}/projects/${id}`);
@@ -101,16 +125,41 @@ function Dashboard() {
         navigate('/');
     };
 
-    const handleDeleteAccount = () => {
-        // TODO: Implement account deletion
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/');
+    const handleDeleteAccount = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`${API_URL}/users/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/');
+        } catch (err) {
+            console.error('Error deleting account:', err);
+            setError('Не удалось удалить аккаунт. Пожалуйста, попробуйте позже.');
+        }
     };
 
     const handleSettingsSave = () => {
         // TODO: Implement settings save
         setOpenSettings(false);
+    };
+
+    const getActionText = (action) => {
+        switch (action) {
+            case 'PROJECT_CREATED':
+                return 'Создан проект';
+            case 'PROJECT_UPDATED':
+                return 'Обновлен проект';
+            case 'TEAM_MEMBER_ADDED':
+                return 'Добавлен участник команды';
+            case 'TEAM_MEMBER_REMOVED':
+                return 'Удален участник команды';
+            case 'TEAM_PROJECT_UPDATED':
+                return 'Обновлен командный проект';
+            default:
+                return action;
+        }
     };
 
     if (!user) {
@@ -174,9 +223,40 @@ function Dashboard() {
                                 <Typography variant="h5" gutterBottom>
                                     История
                                 </Typography>
-                                <List>
-                                    {/* History will be populated dynamically */}
-                                </List>
+                                {historyLoading ? (
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                                        <CircularProgress />
+                                    </Box>
+                                ) : (
+                                    <List>
+                                        {history.map((item) => (
+                                            <React.Fragment key={item._id}>
+                                                <ListItem>
+                                                    <ListItemText
+                                                        primary={getActionText(item.action)}
+                                                        secondary={
+                                                            <>
+                                                                <Typography component="span" variant="body2" color="text.primary">
+                                                                    {item.projectId?.title || 'Проект'}
+                                                                </Typography>
+                                                                {' — '}
+                                                                {item.description}
+                                                                <br />
+                                                                {format(new Date(item.timestamp), 'd MMMM yyyy, HH:mm', { locale: ru })}
+                                                            </>
+                                                        }
+                                                    />
+                                                </ListItem>
+                                                <Divider component="li" />
+                                            </React.Fragment>
+                                        ))}
+                                        {history.length === 0 && (
+                                            <ListItem>
+                                                <ListItemText primary="История пуста" />
+                                            </ListItem>
+                                        )}
+                                    </List>
+                                )}
                             </Paper>
                         </Grid>
                     </Grid>
@@ -201,6 +281,26 @@ function Dashboard() {
                         fullWidth
                         margin="normal"
                     />
+                    <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<LogoutIcon />}
+                            onClick={handleLogout}
+                            fullWidth
+                        >
+                            Выйти
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<DeleteIcon />}
+                            onClick={() => setOpenDeleteConfirm(true)}
+                            fullWidth
+                        >
+                            Удалить аккаунт
+                        </Button>
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenSettings(false)}>Отмена</Button>

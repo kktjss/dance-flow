@@ -41,103 +41,113 @@ function TeamManagement() {
     // Tabs
     const [tabValue, setTabValue] = useState(0);
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchTimeout, setSearchTimeout] = useState(null);
+
     const navigate = useNavigate();
 
     // Fetch teams on component mount
     useEffect(() => {
-        fetchTeams();
-        fetchProjects();
-        fetchUsers();
-    }, []);
-
-    const fetchTeams = async () => {
-        try {
-            setLoading(true);
+        const checkAuth = () => {
             const token = localStorage.getItem('token');
-            console.log('Fetching teams with token:', token ? 'Token exists' : 'No token');
+            const user = localStorage.getItem('user');
 
-            if (!token) {
-                console.log('No auth token available for teams fetch');
-                setError('Для загрузки команд необходимо войти в систему.');
-                setLoading(false);
-                return;
+            console.log('Auth check:', {
+                hasToken: !!token,
+                hasUser: !!user,
+                userData: user ? JSON.parse(user) : null
+            });
+
+            if (!token || !user) {
+                console.log('No auth data, redirecting to login');
+                navigate('/login');
+                return false;
             }
 
-            // Проверяем, не истек ли токен
             try {
                 const tokenData = JSON.parse(atob(token.split('.')[1]));
-                const expirationTime = tokenData.exp * 1000; // конвертируем в миллисекунды
+                const expirationTime = tokenData.exp * 1000;
+                console.log('Token expiration:', new Date(expirationTime));
 
                 if (Date.now() >= expirationTime) {
                     console.log('Token expired, redirecting to login');
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     navigate('/login');
-                    return;
+                    return false;
                 }
-            } catch (tokenErr) {
-                console.error('Error parsing token:', tokenErr);
+                return true;
+            } catch (err) {
+                console.error('Error checking auth:', err);
+                navigate('/login');
+                return false;
+            }
+        };
+
+        if (checkAuth()) {
+            fetchTeams();
+            fetchProjects();
+            fetchUsers();
+        }
+    }, [navigate]);
+
+    const fetchTeams = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+
+            console.log('Fetching teams:', {
+                hasToken: !!token,
+                hasUser: !!user,
+                userData: user ? JSON.parse(user) : null
+            });
+
+            if (!token || !user) {
+                console.log('No auth data for teams fetch');
+                setError('Для загрузки команд необходимо войти в систему.');
+                setLoading(false);
+                return;
             }
 
-            console.log('Requesting teams from API...');
-            try {
-                console.log('Trying main API endpoint...');
-                const mainResponse = await axios.get(`${API_BASE_URL}/api/teams`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+            const userData = JSON.parse(user);
+            console.log('Current user:', userData);
 
-                console.log('Teams API response:', mainResponse.data);
+            const response = await axios.get(`${API_BASE_URL}/api/teams`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-                if (mainResponse.data.teams) {
-                    console.log('Teams found in response:', mainResponse.data.teams.length);
-                    setTeams(mainResponse.data.teams);
-                } else if (Array.isArray(mainResponse.data)) {
-                    console.log('Teams found in response (legacy format):', mainResponse.data.length);
-                    setTeams(mainResponse.data);
-                } else {
-                    console.warn('Unexpected response format:', mainResponse.data);
-                    setTeams([]);
-                }
-                setError(null);
-            } catch (mainErr) {
-                console.error('Main API error:', mainErr);
-                if (mainErr.response && mainErr.response.status === 401) {
-                    console.log('Token expired, redirecting to login');
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    navigate('/login');
-                    return;
-                }
+            console.log('Teams response:', response.data);
 
-                // Пробуем резервный тестовый endpoint
-                try {
-                    console.log('Trying test endpoint...');
-                    const testResponse = await axios.get(`${API_BASE_URL}/api/teams-test-all`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-
-                    console.log('Test endpoint response:', testResponse.data);
-
-                    if (testResponse.data.teams && Array.isArray(testResponse.data.teams)) {
-                        setTeams(testResponse.data.teams);
-                        setError('Используются тестовые данные.');
-                    } else {
-                        setTeams([]);
-                        setError('Не удалось загрузить команды. API недоступен.');
-                    }
-                } catch (testErr) {
-                    console.error('Test endpoint also failed:', testErr);
-                    setTeams([]);
-                    setError('Не удалось загрузить команды. API недоступен.');
-                }
+            // Проверяем, есть ли у пользователя доступ к командам
+            if (Array.isArray(response.data) && response.data.length > 0) {
+                console.log('Available teams:', response.data.map(team => ({
+                    id: team._id,
+                    name: team.name,
+                    owner: team.owner,
+                    members: team.members
+                })));
+            } else {
+                console.log('No teams available for user');
             }
 
-            setLoading(false);
+            setTeams(Array.isArray(response.data) ? response.data : []);
+            setError(null);
         } catch (err) {
-            console.error('Error in teams fetch flow:', err);
-            setError('Не удалось загрузить команды. Пожалуйста, попробуйте позже.');
+            console.error('Error fetching teams:', err);
+            if (err.response?.status === 401) {
+                console.log('Unauthorized, redirecting to login');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                navigate('/login');
+            } else if (err.response?.status === 403) {
+                console.log('Forbidden access to teams');
+                setError('У вас нет доступа к командам. Пожалуйста, создайте новую команду.');
+            } else {
+                setError('Не удалось загрузить команды. Пожалуйста, попробуйте позже.');
+            }
+        } finally {
             setLoading(false);
-            setTeams([]);
         }
     };
 
@@ -153,53 +163,103 @@ function TeamManagement() {
         }
     };
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (search = '') => {
         try {
             const token = localStorage.getItem('token');
+            console.log('Fetching users with params:', { search, teamId: selectedTeam?._id });
             const response = await axios.get(`${API_BASE_URL}/api/users`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                params: {
+                    search,
+                    teamId: selectedTeam?._id
+                }
             });
+            console.log('Search results:', response.data);
             setUsers(response.data);
         } catch (err) {
             console.error('Error fetching users:', err);
         }
     };
 
+    // Add debounced search handler
+    const handleSearchChange = (event) => {
+        const value = event.target.value;
+        console.log('Search input changed:', value);
+        setSearchQuery(value);
+
+        // Clear previous timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+
+        // Set new timeout
+        const timeout = setTimeout(() => {
+            console.log('Executing search for:', value);
+            fetchUsers(value);
+        }, 300); // 300ms delay
+
+        setSearchTimeout(timeout);
+    };
+
+    // Add handler for user selection from search results
+    const handleUserSelect = (user) => {
+        setSelectedUserId(user._id);
+        setSearchQuery(user.username); // Show selected user in search field
+    };
+
+    // Update useEffect to fetch users when team is selected
+    useEffect(() => {
+        if (selectedTeam) {
+            fetchUsers(searchQuery);
+        }
+    }, [selectedTeam]);
+
     const handleCreateTeam = async () => {
         try {
             const token = localStorage.getItem('token');
             console.log('Creating team with token:', token ? 'Token exists' : 'No token');
-            console.log('Team data:', { name: newTeamName, description: newTeamDescription });
+            console.log('New team data:', { name: newTeamName, description: newTeamDescription });
 
             if (!token) {
                 setError('Для создания команды необходимо войти в систему.');
                 return;
             }
 
-            // Отправляем запрос напрямую на основной маршрут
-            console.log('Sending request to main route');
-            const response = await axios.post(`${API_BASE_URL}/api/teams`, {
-                name: newTeamName,
-                description: newTeamDescription
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            // Проверяем, не истек ли токен
+            try {
+                const tokenData = JSON.parse(atob(token.split('.')[1]));
+                const expirationTime = tokenData.exp * 1000; // конвертируем в миллисекунды
+                console.log('Token expiration:', new Date(expirationTime));
 
-            console.log('Team created successfully:', response.data);
-            // Если ответ содержит поле success и team
-            if (response.data.success && response.data.team) {
-                const newTeam = response.data.team;
-                setTeams([...teams, newTeam]);
-            }
-            // Для обратной совместимости
-            else {
-                setTeams([...teams, response.data]);
+                if (Date.now() >= expirationTime) {
+                    console.log('Token expired, redirecting to login');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    navigate('/login');
+                    return;
+                }
+            } catch (tokenErr) {
+                console.error('Error parsing token:', tokenErr);
             }
 
+            console.log('Sending request to create team...');
+            const response = await axios.post(
+                `${API_BASE_URL}/api/teams`,
+                {
+                    name: newTeamName,
+                    description: newTeamDescription
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            console.log('Team creation response:', response.data);
+            setTeams([...teams, response.data]);
             setCreateTeamDialog(false);
             setNewTeamName('');
             setNewTeamDescription('');
-            setError(null); // Сбрасываем ошибки при успешном создании
+            setError(null);
 
             // После создания команды обновим список команд
             fetchTeams();
@@ -207,50 +267,7 @@ function TeamManagement() {
             console.error('Error creating team:', err);
             console.error('Response data:', err.response?.data);
             console.error('Request config:', err.config);
-
-            try {
-                // Получаем токен снова, чтобы избежать ошибки 'token is not defined'
-                const token = localStorage.getItem('token');
-
-                // Если основной маршрут не работает, попробуем тестовый
-                console.log('Main route failed, trying test route');
-                const testUrl = `${API_BASE_URL}/api/teams-test-db`;  // Используем новый маршрут -test-db
-                const testResponse = await axios.post(testUrl, {
-                    name: newTeamName,
-                    description: newTeamDescription
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                console.log('Test route success:', testResponse.data);
-
-                if (testResponse.data.success && testResponse.data.team) {
-                    // Используем команду, полученную из API
-                    setTeams([...teams, testResponse.data.team]);
-                } else {
-                    // Создаем фиктивную команду в интерфейсе
-                    const fakeTeam = {
-                        _id: Date.now().toString(),
-                        name: newTeamName,
-                        description: newTeamDescription,
-                        members: [{ userId: { _id: 'current-user' } }],
-                        projects: []
-                    };
-
-                    setTeams([...teams, fakeTeam]);
-                }
-
-                setCreateTeamDialog(false);
-                setNewTeamName('');
-                setNewTeamDescription('');
-                setError('Команда создана в тестовом режиме. Перезагрузите страницу для обновления.');
-
-                // После создания команды обновим список команд
-                fetchTeams();
-            } catch (testErr) {
-                console.error('Test route also failed:', testErr);
-                setError(`Не удалось создать команду: ${err.response?.data?.message || err.message}`);
-            }
+            setError('Не удалось создать команду. Пожалуйста, попробуйте позже.');
         }
     };
 
@@ -833,7 +850,11 @@ function TeamManagement() {
             {/* Add Member Dialog */}
             <Dialog
                 open={addMemberDialog && selectedTeam !== null}
-                onClose={() => setAddMemberDialog(false)}
+                onClose={() => {
+                    setAddMemberDialog(false);
+                    setSearchQuery('');
+                    setSelectedUserId('');
+                }}
             >
                 <DialogTitle>Добавить участника</DialogTitle>
                 <DialogContent>
@@ -841,29 +862,34 @@ function TeamManagement() {
                         Добавьте участника в команду и установите уровень доступа.
                     </DialogContentText>
 
-                    <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
-                        <InputLabel>Пользователь</InputLabel>
-                        <Select
-                            value={selectedUserId}
-                            onChange={(e) => setSelectedUserId(e.target.value)}
-                            label="Пользователь"
-                            required
-                        >
-                            <MenuItem value="" disabled>Выберите пользователя</MenuItem>
-                            {users
-                                .filter(user => selectedTeam && (
-                                    // Filter out already added users and current owner
-                                    !selectedTeam.members.some(member => member.userId._id === user._id) &&
-                                    selectedTeam.owner._id !== user._id
-                                ))
-                                .map((user) => (
-                                    <MenuItem key={user._id} value={user._id}>
-                                        {user.username} ({user.email})
-                                    </MenuItem>
-                                ))
-                            }
-                        </Select>
-                    </FormControl>
+                    <TextField
+                        fullWidth
+                        margin="dense"
+                        label="Поиск пользователей"
+                        variant="outlined"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        placeholder="Поиск по имени или email..."
+                        sx={{ mb: 2 }}
+                    />
+
+                    {searchQuery && users.length > 0 && (
+                        <List sx={{ maxHeight: 200, overflow: 'auto', mb: 2 }}>
+                            {users.map((user) => (
+                                <ListItem
+                                    key={user._id}
+                                    button
+                                    onClick={() => handleUserSelect(user)}
+                                    selected={selectedUserId === user._id}
+                                >
+                                    <ListItemText
+                                        primary={user.username}
+                                        secondary={user.email}
+                                    />
+                                </ListItem>
+                            ))}
+                        </List>
+                    )}
 
                     <FormControl fullWidth margin="dense">
                         <InputLabel>Роль</InputLabel>
@@ -879,7 +905,11 @@ function TeamManagement() {
                     </FormControl>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setAddMemberDialog(false)}>Отмена</Button>
+                    <Button onClick={() => {
+                        setAddMemberDialog(false);
+                        setSearchQuery('');
+                        setSelectedUserId('');
+                    }}>Отмена</Button>
                     <Button
                         onClick={handleAddMember}
                         disabled={!selectedUserId}

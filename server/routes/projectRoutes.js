@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Project = require('../models/Project');
+const History = require('../models/History');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -36,9 +37,20 @@ router.get('/', ensureAuth, async (req, res) => {
     try {
         console.log('Fetching projects for user:', req.user.id);
 
+        // Find teams where user is a member
+        const teams = await Team.find({
+            'members.userId': req.user.id
+        });
+
+        // Get project IDs from teams
+        const teamProjectIds = teams.reduce((acc, team) => {
+            return acc.concat(team.projects);
+        }, []);
+
         const projects = await Project.find({
             $or: [
                 { owner: req.user.id },
+                { _id: { $in: teamProjectIds } },
                 { isPrivate: false }
             ]
         }).select('-keyframesJson');
@@ -562,13 +574,28 @@ router.get('/:id', ensureAuth, async (req, res) => {
             return res.status(404).json({ message: 'Project not found' });
         }
 
-        // Check if user has access
-        if (project.isPrivate && project.owner.toString() !== req.user.id) {
-            console.log('Access denied: Project is private and user is not owner');
+        // Check if user is owner
+        if (project.owner.toString() === req.user.id) {
+            return res.json(project);
+        }
+
+        // Check if project is in any team where user is a member
+        const team = await Team.findOne({
+            projects: project._id,
+            'members.userId': req.user.id
+        });
+
+        if (team) {
+            // User is a member of a team that has this project
+            return res.json(project);
+        }
+
+        // If project is private and user is not owner or team member
+        if (project.isPrivate) {
             return res.status(403).json({ message: 'Access denied' });
         }
 
-        console.log('Project access granted');
+        // If project is public
         res.json(project);
     } catch (error) {
         console.error('Error fetching project:', error);
@@ -579,11 +606,11 @@ router.get('/:id', ensureAuth, async (req, res) => {
 // POST create a new project
 router.post('/', ensureAuth, async (req, res) => {
     try {
-        console.log('Creating project for user:', req.user.id);
-        console.log('Request body:', JSON.stringify(req.body, null, 2));
-        console.log('User from auth:', req.user);
+        console.log('[PROJECT] Creating new project for user:', req.user.id);
+        console.log('[PROJECT] User object:', req.user);
+        console.log('[PROJECT] Request body:', req.body);
 
-        // Remove _id if it's null to prevent Mongoose issues
+        // Удаляем _id если он null
         const projectData = { ...req.body };
         if (projectData._id === null) {
             delete projectData._id;
@@ -592,24 +619,33 @@ router.post('/', ensureAuth, async (req, res) => {
         const project = new Project({
             ...projectData,
             owner: req.user.id,
-            isPrivate: req.body.isPrivate !== undefined ? req.body.isPrivate : true
+            isPrivate: projectData.isPrivate !== undefined ? projectData.isPrivate : true
         });
 
-        console.log('Project object before save:', JSON.stringify(project, null, 2));
+        console.log('[PROJECT] Project object before save:', project);
 
         await project.save();
-        console.log('Project created:', project._id);
+        console.log('[PROJECT] Project created:', project._id);
+
+        // Create history entry
+        console.log('[PROJECT] Creating history entry for project creation');
+        const historyData = {
+            userId: new mongoose.Types.ObjectId(req.user.id),
+            projectId: project._id,
+            action: 'PROJECT_CREATED',
+            description: `Создан проект "${project.name}"`
+        };
+        console.log('[PROJECT] History data:', historyData);
+
+        const history = new History(historyData);
+        await history.save();
+        console.log('[PROJECT] History entry created:', history._id);
 
         res.status(201).json(project);
     } catch (error) {
-        console.error('Error creating project:', error);
-        console.error('Error details:', error.stack);
-        console.error('Validation errors:', error.errors);
-        res.status(500).json({
-            message: 'Error creating project',
-            error: error.message,
-            details: error.errors || error.stack
-        });
+        console.error('[PROJECT] Error creating project:', error);
+        console.error('[PROJECT] Error details:', error.stack);
+        res.status(500).json({ message: 'Error creating project', error: error.message });
     }
 });
 
@@ -633,6 +669,15 @@ router.put('/:id', ensureAuth, async (req, res) => {
         // Update project
         Object.assign(project, req.body);
         await project.save();
+
+        // Create history entry for project update
+        const history = new History({
+            userId: req.user.id,
+            projectId: project._id,
+            action: 'PROJECT_UPDATED',
+            description: `Обновлен проект "${project.title}"`
+        });
+        await history.save();
 
         console.log('Project updated successfully');
         res.json(project);

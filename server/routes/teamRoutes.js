@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const Team = require('../models/Team');
 const User = require('../models/User');
 const Project = require('../models/Project');
+const History = require('../models/History');
 const auth = require('../middleware/auth');
 
 // Добавим маршрут для проверки доступности API
@@ -46,17 +47,33 @@ router.post('/', auth, async (req, res) => {
 // Get all teams for current user
 router.get('/', auth, async (req, res) => {
     try {
+        console.log('[TEAM ROUTE] Fetching teams for user:', {
+            userId: req.user.id,
+            userData: req.user
+        });
+
         // Find teams where the user is either the owner or a member
         const teams = await Team.find({
             $or: [
                 { owner: req.user.id },
                 { 'members.userId': req.user.id }
             ]
-        }).populate('owner', 'username email');
+        }).populate('owner', 'username email')
+            .populate('members.userId', 'username email');
+
+        console.log('[TEAM ROUTE] Found teams:', teams.map(team => ({
+            id: team._id,
+            name: team.name,
+            owner: team.owner?._id,
+            members: team.members.map(m => ({
+                userId: m.userId?._id,
+                role: m.role
+            }))
+        })));
 
         res.json(teams);
     } catch (error) {
-        console.error('Error fetching teams:', error);
+        console.error('[TEAM ROUTE] Error fetching teams:', error);
         res.status(500).json({ message: 'Ошибка при получении команд', error: error.message });
     }
 });
@@ -75,6 +92,16 @@ router.get('/:teamId', auth, async (req, res) => {
             console.log(`[TEAM ROUTE] Team ${req.params.teamId} not found`);
             return res.status(404).json({ message: 'Команда не найдена' });
         }
+
+        console.log('[TEAM ROUTE] Found team:', {
+            id: team._id,
+            name: team.name,
+            owner: team.owner?._id,
+            members: team.members.map(m => ({
+                userId: m.userId?._id,
+                role: m.role
+            }))
+        });
 
         // Validate team data
         if (!team.owner || !team.owner._id) {
@@ -111,9 +138,28 @@ router.get('/:teamId', auth, async (req, res) => {
             member.userId && member.userId._id && member.userId._id.toString() === req.user.id
         );
 
+        console.log('[TEAM ROUTE] Access check:', {
+            userId: req.user.id,
+            teamOwner: team.owner._id.toString(),
+            isOwner,
+            isMember,
+            members: team.members.map(m => ({
+                userId: m.userId._id.toString(),
+                role: m.role
+            }))
+        });
+
         if (!isOwner && !isMember) {
             console.log(`[TEAM ROUTE] Access denied for user ${req.user.id}`);
-            return res.status(403).json({ message: 'Нет доступа к этой команде' });
+            return res.status(403).json({
+                message: 'Нет доступа к этой команде',
+                details: {
+                    userId: req.user.id,
+                    teamId: team._id,
+                    isOwner,
+                    isMember
+                }
+            });
         }
 
         console.log(`[TEAM ROUTE] Successfully fetched team ${team._id}`);
@@ -201,6 +247,15 @@ router.post('/:teamId/members', auth, async (req, res) => {
             { $push: { teams: team._id } }
         );
 
+        // Create history entry for team member addition
+        const history = new History({
+            userId: req.user.id,
+            projectId: team._id, // Using team ID as projectId for team-related history
+            action: 'TEAM_MEMBER_ADDED',
+            description: `Добавлен новый участник "${userToAdd.username}" в команду "${team.name}"`
+        });
+        await history.save();
+
         res.json(team);
     } catch (error) {
         console.error('Error adding team member:', error);
@@ -212,23 +267,22 @@ router.post('/:teamId/members', auth, async (req, res) => {
 router.delete('/:teamId/members/:userId', auth, async (req, res) => {
     try {
         const team = await Team.findById(req.params.teamId);
-
         if (!team) {
             return res.status(404).json({ message: 'Команда не найдена' });
         }
 
-        // Check if user is owner or admin (or user is removing themselves)
+        // Check if user is owner or admin
         if (team.owner.toString() !== req.user.id &&
-            req.params.userId !== req.user.id &&
             !team.members.some(member =>
                 member.userId.toString() === req.user.id && member.role === 'admin'
             )) {
             return res.status(403).json({ message: 'Нет прав для удаления участников' });
         }
 
-        // Owner cannot be removed
-        if (team.owner.toString() === req.params.userId) {
-            return res.status(400).json({ message: 'Владелец команды не может быть удален' });
+        // Get user to remove
+        const userToRemove = await User.findById(req.params.userId);
+        if (!userToRemove) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
         }
 
         // Remove user from team
@@ -244,7 +298,16 @@ router.delete('/:teamId/members/:userId', auth, async (req, res) => {
             { $pull: { teams: team._id } }
         );
 
-        res.json({ message: 'Участник удален из команды' });
+        // Create history entry for team member removal
+        const history = new History({
+            userId: req.user.id,
+            projectId: team._id, // Using team ID as projectId for team-related history
+            action: 'TEAM_MEMBER_REMOVED',
+            description: `Удален участник "${userToRemove.username}" из команды "${team.name}"`
+        });
+        await history.save();
+
+        res.json(team);
     } catch (error) {
         console.error('Error removing team member:', error);
         res.status(500).json({ message: 'Ошибка при удалении участника', error: error.message });
@@ -390,6 +453,102 @@ router.delete('/:teamId', auth, async (req, res) => {
     } catch (error) {
         console.error('Error deleting team:', error);
         res.status(500).json({ message: 'Ошибка при удалении команды', error: error.message });
+    }
+});
+
+// Update team project
+router.put('/:teamId/projects/:projectId', auth, async (req, res) => {
+    try {
+        const team = await Team.findById(req.params.teamId);
+        if (!team) {
+            return res.status(404).json({ message: 'Команда не найдена' });
+        }
+
+        const project = await Project.findById(req.params.projectId);
+        if (!project) {
+            return res.status(404).json({ message: 'Проект не найден' });
+        }
+
+        // Check if user is owner or admin
+        if (team.owner.toString() !== req.user.id &&
+            !team.members.some(member =>
+                member.userId.toString() === req.user.id && member.role === 'admin'
+            )) {
+            return res.status(403).json({ message: 'Нет прав для обновления проекта команды' });
+        }
+
+        // Update project
+        Object.assign(project, req.body);
+        await project.save();
+
+        // Create history entry for team project update
+        const history = new History({
+            userId: req.user.id,
+            projectId: project._id,
+            action: 'TEAM_PROJECT_UPDATED',
+            description: `Обновлен проект "${project.title}" в команде "${team.name}"`
+        });
+        await history.save();
+
+        res.json(project);
+    } catch (error) {
+        console.error('Error updating team project:', error);
+        res.status(500).json({ message: 'Ошибка при обновлении проекта команды', error: error.message });
+    }
+});
+
+// GET project in team context
+router.get('/:teamId/projects/:projectId/viewer', auth, async (req, res) => {
+    try {
+        const { teamId, projectId } = req.params;
+        const userId = req.user.id;
+
+        // Find team
+        const team = await Team.findById(teamId);
+        if (!team) {
+            return res.status(404).json({
+                success: false,
+                message: 'Команда не найдена'
+            });
+        }
+
+        // Check if user is a member of the team
+        const member = team.members.find(m => m.userId.toString() === userId);
+        if (!member) {
+            return res.status(403).json({
+                success: false,
+                message: 'Вы не являетесь участником команды'
+            });
+        }
+
+        // Check if project exists in team
+        if (!team.projects.includes(projectId)) {
+            return res.status(404).json({
+                success: false,
+                message: 'Проект не найден в команде'
+            });
+        }
+
+        // Get project data
+        const project = await Project.findById(projectId);
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                message: 'Проект не найден'
+            });
+        }
+
+        res.json({
+            success: true,
+            project
+        });
+    } catch (error) {
+        console.error('Error fetching team project:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Ошибка при получении проекта',
+            error: error.message
+        });
     }
 });
 

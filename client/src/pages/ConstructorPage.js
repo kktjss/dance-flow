@@ -4,6 +4,7 @@ import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy } from 
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 
 // Import components
 import Player from '../components/Player';
@@ -1179,377 +1180,382 @@ See console for complete details.`);
     };
 
     return (
-        <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
-            {error && (
-                <Paper sx={{ p: 2, mb: 2, bgcolor: '#ffebee' }}>
-                    <Typography color="error">{error}</Typography>
-                </Paper>
-            )}
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <Navbar />
+            <Box sx={{ flexGrow: 1, pt: 8 }}>
+                <Container maxWidth="xl">
+                    {error && (
+                        <Paper sx={{ p: 2, mb: 2, bgcolor: '#ffebee' }}>
+                            <Typography color="error">{error}</Typography>
+                        </Paper>
+                    )}
 
-            {/* Project management buttons */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h5" component="h1">
-                    {project.name} {project._id && <Typography component="span" variant="body2" color="text.secondary">({project._id})</Typography>}
-                </Typography>
+                    {/* Project management buttons */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                        <Typography variant="h5" component="h1">
+                            {project.name} {project._id && <Typography component="span" variant="body2" color="text.secondary">({project._id})</Typography>}
+                        </Typography>
 
-                <Box>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<Save />}
-                        onClick={handleSaveProject}
-                        sx={{ mr: 1 }}
-                    >
-                        Сохранить
-                    </Button>
+                        <Box>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={<Save />}
+                                onClick={handleSaveProject}
+                                sx={{ mr: 1 }}
+                            >
+                                Сохранить
+                            </Button>
 
-                    <Button
-                        variant="outlined"
-                        startIcon={<FolderOpen />}
-                        onClick={() => setShowProjects(prev => !prev)}
-                        sx={{ mr: 1 }}
-                    >
-                        {showProjects ? 'Скрыть проекты' : 'Открыть проект'}
-                    </Button>
-
-                    {/* Debug buttons - commented out after successful testing
-                    <Button
-                        variant="outlined"
-                        color="info"
-                        onClick={handleDebugKeyframes}
-                        size="small"
-                    >
-                        Диагностика
-                    </Button>
-
-                    <Button
-                        variant="outlined"
-                        color="warning"
-                        onClick={handleTestSave}
-                        size="small"
-                        sx={{ ml: 1 }}
-                    >
-                        Тест сохранения
-                    </Button>
-
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => {
-                            console.log('*** DIRECT KEYFRAME SAVE - INLINE IMPLEMENTATION ***');
-
-                            if (!project._id) {
-                                showNotification('Необходимо сначала сохранить проект!', 'warning');
-                                return;
-                            }
-
-                            // Find elements with keyframes
-                            const elementsWithKeyframes = [];
-
-                            if (project.elements && project.elements.length > 0) {
-                                for (const element of project.elements) {
-                                    if (element.keyframes && Array.isArray(element.keyframes) && element.keyframes.length > 0) {
-                                        elementsWithKeyframes.push({
-                                            id: element.id,
-                                            keyframesCount: element.keyframes.length,
-                                            keyframes: JSON.parse(JSON.stringify(element.keyframes))
-                                        });
-                                    }
-                                }
-                            }
-
-                            if (elementsWithKeyframes.length === 0) {
-                                showNotification('Не найдены ключевые кадры для сохранения!', 'warning');
-                                return;
-                            }
-
-                            // Select the element with the most keyframes
-                            const targetElement = elementsWithKeyframes.reduce(
-                                (max, current) => current.keyframesCount > max.keyframesCount ? current : max,
-                                elementsWithKeyframes[0]
-                            );
-
-                            console.log(`Selected element ${targetElement.id} with ${targetElement.keyframesCount} keyframes`);
-
-                            // Send direct update request
-                            const directUrl = `${API_URL}/projects/${project._id}/direct-keyframes`;
-                            console.log(`Full URL for direct save: ${directUrl}`);
-
-                            const updateData = {
-                                elementId: targetElement.id,
-                                keyframes: targetElement.keyframes
-                            };
-
-                            console.log('Data payload size:', JSON.stringify(updateData).length);
-
-                            // Alternate approach with fetch instead of axios
-                            fetch(directUrl, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(updateData)
-                            })
-                                .then(response => {
-                                    console.log('Response status:', response.status);
-                                    if (!response.ok) {
-                                        return response.text().then(text => {
-                                            throw new Error(`Status ${response.status}: ${text}`);
-                                        });
-                                    }
-                                    return response.json();
-                                })
-                                .then(data => {
-                                    console.log('Success:', data);
-                                    showNotification(`Прямое сохранение успешно!\n- Элемент: ${targetElement.id}\n- Сохранено ${targetElement.keyframesCount} ключевых кадров`);
-                                })
-                                .catch(error => {
-                                    console.error('Error in fetch:', error);
-                                    showNotification(`Ошибка: ${error.message}`, 'error');
-                                });
-                        }}
-                        size="small"
-                        sx={{ ml: 1 }}
-                    >
-                        Прямое сохранение
-                    </Button>
-
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={handleTestSaveKeyframes}
-                        size="small"
-                        sx={{ ml: 1 }}
-                    >
-                        Тест API
-                    </Button>
-                    */}
-                </Box>
-            </Box>
-
-            {/* Main content */}
-            <Grid container spacing={2}>
-                {/* Project list (conditionally shown) */}
-                {showProjects && (
-                    <Grid item xs={12}>
-                        <ProjectsList
-                            onSelectProject={handleSelectProject}
-                            setShowProjects={setShowProjects}
-                        />
-                    </Grid>
-                )}
-
-                {/* Audio player */}
-                <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                        {!project.audioUrl && (
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <AccessTime color="action" sx={{ mr: 1 }} />
-                                {isEditingDuration ? (
-                                    <TextField
-                                        label="Длительность"
-                                        type="number"
-                                        size="small"
-                                        value={project.duration}
-                                        onChange={handleDurationChange}
-                                        onBlur={() => setIsEditingDuration(false)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                setIsEditingDuration(false);
-                                            }
-                                        }}
-                                        autoFocus
-                                        InputProps={{
-                                            endAdornment: <InputAdornment position="end">сек</InputAdornment>,
-                                        }}
-                                        sx={{ width: 150 }}
-                                    />
-                                ) : (
-                                    <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                        onClick={() => setIsEditingDuration(true)}
-                                        sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                                    >
-                                        Длительность: {project.duration} сек (нажмите чтобы изменить)
-                                    </Typography>
-                                )}
-                            </Box>
-                        )}
-
-                        {!project.audioUrl && (
                             <Button
                                 variant="outlined"
-                                component="label"
-                                startIcon={<UploadIcon />}
+                                startIcon={<FolderOpen />}
+                                onClick={() => setShowProjects(prev => !prev)}
+                                sx={{ mr: 1 }}
+                            >
+                                {showProjects ? 'Скрыть проекты' : 'Открыть проект'}
+                            </Button>
+
+                            {/* Debug buttons - commented out after successful testing
+                            <Button
+                                variant="outlined"
+                                color="info"
+                                onClick={handleDebugKeyframes}
                                 size="small"
                             >
-                                Загрузить аудио
-                                <input
-                                    type="file"
-                                    accept="audio/*"
-                                    hidden
-                                    onChange={handleAudioUpload}
-                                />
+                                Диагностика
                             </Button>
-                        )}
-                    </Box>
 
-                    <Player
-                        audioUrl={project.audioUrl}
-                        duration={project.duration}
-                        currentTime={currentTime}
-                        onTimeUpdate={handleTimeUpdate}
-                        isPlaying={isPlaying}
-                        onPlayPause={handlePlayPause}
-                    />
-                </Grid>
+                            <Button
+                                variant="outlined"
+                                color="warning"
+                                onClick={handleTestSave}
+                                size="small"
+                                sx={{ ml: 1 }}
+                            >
+                                Тест сохранения
+                            </Button>
 
-                {/* Canvas and tools */}
-                <Grid item xs={12} md={9}>
-                    {/* Canvas controls */}
-                    <Box
-                        sx={{
-                            mb: 1,
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <Box sx={{ flexGrow: 1 }}>
-                            {selectedElement && (
-                                <Typography variant="body2" color="text.secondary">
-                                    Выбран: {selectedElement.type}
-                                </Typography>
-                            )}
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={() => {
+                                    console.log('*** DIRECT KEYFRAME SAVE - INLINE IMPLEMENTATION ***');
+
+                                    if (!project._id) {
+                                        showNotification('Необходимо сначала сохранить проект!', 'warning');
+                                        return;
+                                    }
+
+                                    // Find elements with keyframes
+                                    const elementsWithKeyframes = [];
+
+                                    if (project.elements && project.elements.length > 0) {
+                                        for (const element of project.elements) {
+                                            if (element.keyframes && Array.isArray(element.keyframes) && element.keyframes.length > 0) {
+                                                elementsWithKeyframes.push({
+                                                    id: element.id,
+                                                    keyframesCount: element.keyframes.length,
+                                                    keyframes: JSON.parse(JSON.stringify(element.keyframes))
+                                                });
+                                            }
+                                        }
+                                    }
+
+                                    if (elementsWithKeyframes.length === 0) {
+                                        showNotification('Не найдены ключевые кадры для сохранения!', 'warning');
+                                        return;
+                                    }
+
+                                    // Select the element with the most keyframes
+                                    const targetElement = elementsWithKeyframes.reduce(
+                                        (max, current) => current.keyframesCount > max.keyframesCount ? current : max,
+                                        elementsWithKeyframes[0]
+                                    );
+
+                                    console.log(`Selected element ${targetElement.id} with ${targetElement.keyframesCount} keyframes`);
+
+                                    // Send direct update request
+                                    const directUrl = `${API_URL}/projects/${project._id}/direct-keyframes`;
+                                    console.log(`Full URL for direct save: ${directUrl}`);
+
+                                    const updateData = {
+                                        elementId: targetElement.id,
+                                        keyframes: targetElement.keyframes
+                                    };
+
+                                    console.log('Data payload size:', JSON.stringify(updateData).length);
+
+                                    // Alternate approach with fetch instead of axios
+                                    fetch(directUrl, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify(updateData)
+                                    })
+                                        .then(response => {
+                                            console.log('Response status:', response.status);
+                                            if (!response.ok) {
+                                                return response.text().then(text => {
+                                                    throw new Error(`Status ${response.status}: ${text}`);
+                                                });
+                                            }
+                                            return response.json();
+                                        })
+                                        .then(data => {
+                                            console.log('Success:', data);
+                                            showNotification(`Прямое сохранение успешно!\n- Элемент: ${targetElement.id}\n- Сохранено ${targetElement.keyframesCount} ключевых кадров`);
+                                        })
+                                        .catch(error => {
+                                            console.error('Error in fetch:', error);
+                                            showNotification(`Ошибка: ${error.message}`, 'error');
+                                        });
+                                }}
+                                size="small"
+                                sx={{ ml: 1 }}
+                            >
+                                Прямое сохранение
+                            </Button>
+
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={handleTestSaveKeyframes}
+                                size="small"
+                                sx={{ ml: 1 }}
+                            >
+                                Тест API
+                            </Button>
+                            */}
                         </Box>
-
-                        {selectedElement && (
-                            <>
-                                <IconButton
-                                    color="primary"
-                                    aria-label="copy"
-                                    onClick={handleOpenCopyMenu}
-                                    title="Копировать свойства"
-                                >
-                                    <ContentCopy />
-                                </IconButton>
-
-                                <Menu
-                                    anchorEl={copyMenuAnchor}
-                                    open={Boolean(copyMenuAnchor)}
-                                    onClose={handleCloseCopyMenu}
-                                >
-                                    <MenuItem onClick={handleCopyElementProperties}>
-                                        Копировать стиль и размер
-                                    </MenuItem>
-                                    {selectedElement && selectedElement.keyframes && selectedElement.keyframes.length > 0 && (
-                                        <MenuItem onClick={handleCopyElementAnimations}>
-                                            Копировать анимацию
-                                        </MenuItem>
-                                    )}
-                                </Menu>
-
-                                {canPasteProperties && (
-                                    <Button
-                                        size="small"
-                                        onClick={handlePasteElementProperties}
-                                        sx={{ mr: 1 }}
-                                    >
-                                        Вставить стиль
-                                    </Button>
-                                )}
-
-                                {canPasteAnimations && (
-                                    <Button
-                                        size="small"
-                                        onClick={handlePasteElementAnimations}
-                                    >
-                                        Вставить анимацию
-                                    </Button>
-                                )}
-                            </>
-                        )}
                     </Box>
 
-                    {/* Canvas */}
-                    <Box
-                        sx={{
-                            position: 'relative',
-                            backgroundColor: '#f5f5f5',
-                            borderRadius: 1,
-                            overflow: 'hidden',
-                            height: 'calc(100vh - 300px)', // Adjust for header, player, and other UI elements
-                            minHeight: '600px'
-                        }}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={handleDrop}
-                    >
-                        <Canvas
-                            elements={project.elements}
-                            currentTime={currentTime}
-                            isPlaying={isPlaying}
-                            onElementsChange={handleElementsUpdate}
-                            selectedElement={selectedElement}
-                            onElementSelect={handleElementSelect}
-                        />
-                    </Box>
-
-                    {/* Animation tips */}
-                    <Box sx={{ mt: 1, p: 1, bgcolor: 'rgba(25, 118, 210, 0.08)', borderRadius: 1 }}>
-                        <Typography variant="body2" color="primary">
-                            Совет по анимации: для создания анимации переместите плеер на нужное время,
-                            затем перетащите объект в нужное положение.
-                        </Typography>
-                    </Box>
-                </Grid>
-
-                {/* Side panels */}
-                <Grid item xs={12} md={3}>
-                    <Paper sx={{ height: '100%' }}>
-                        <Tabs
-                            value={tabIndex}
-                            onChange={(_, newValue) => setTabIndex(newValue)}
-                            variant="fullWidth"
-                        >
-                            <Tab label="Инструменты" />
-                            <Tab label="Свойства" />
-                        </Tabs>
-
-                        <Box sx={{ p: 2, height: 'calc(600px - 48px)', overflow: 'auto' }}>
-                            {tabIndex === 0 && (
-                                <ToolPanel onAddElement={handleAddElement} />
-                            )}
-
-                            {tabIndex === 1 && (
-                                <PropertyPanel
-                                    selectedElement={selectedElement}
-                                    onElementUpdate={handleElementUpdate}
-                                    currentTime={currentTime}
+                    {/* Main content */}
+                    <Grid container spacing={2}>
+                        {/* Project list (conditionally shown) */}
+                        {showProjects && (
+                            <Grid item xs={12}>
+                                <ProjectsList
+                                    onSelectProject={handleSelectProject}
+                                    setShowProjects={setShowProjects}
                                 />
-                            )}
-                        </Box>
-                    </Paper>
-                </Grid>
-            </Grid>
+                            </Grid>
+                        )}
 
-            {/* Custom notification */}
-            <Snackbar
-                open={notification.open}
-                autoHideDuration={6000}
-                onClose={handleCloseNotification}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-                <Alert
-                    onClose={handleCloseNotification}
-                    severity={notification.severity}
-                    variant="filled"
-                    sx={{ width: '100%' }}
-                >
-                    {notification.message}
-                </Alert>
-            </Snackbar>
-        </Container>
+                        {/* Audio player */}
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                                {!project.audioUrl && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <AccessTime color="action" sx={{ mr: 1 }} />
+                                        {isEditingDuration ? (
+                                            <TextField
+                                                label="Длительность"
+                                                type="number"
+                                                size="small"
+                                                value={project.duration}
+                                                onChange={handleDurationChange}
+                                                onBlur={() => setIsEditingDuration(false)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        setIsEditingDuration(false);
+                                                    }
+                                                }}
+                                                autoFocus
+                                                InputProps={{
+                                                    endAdornment: <InputAdornment position="end">сек</InputAdornment>,
+                                                }}
+                                                sx={{ width: 150 }}
+                                            />
+                                        ) : (
+                                            <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                                onClick={() => setIsEditingDuration(true)}
+                                                sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                                            >
+                                                Длительность: {project.duration} сек (нажмите чтобы изменить)
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                )}
+
+                                {!project.audioUrl && (
+                                    <Button
+                                        variant="outlined"
+                                        component="label"
+                                        startIcon={<UploadIcon />}
+                                        size="small"
+                                    >
+                                        Загрузить аудио
+                                        <input
+                                            type="file"
+                                            accept="audio/*"
+                                            hidden
+                                            onChange={handleAudioUpload}
+                                        />
+                                    </Button>
+                                )}
+                            </Box>
+
+                            <Player
+                                audioUrl={project.audioUrl}
+                                duration={project.duration}
+                                currentTime={currentTime}
+                                onTimeUpdate={handleTimeUpdate}
+                                isPlaying={isPlaying}
+                                onPlayPause={handlePlayPause}
+                            />
+                        </Grid>
+
+                        {/* Canvas and tools */}
+                        <Grid item xs={12} md={9}>
+                            {/* Canvas controls */}
+                            <Box
+                                sx={{
+                                    mb: 1,
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                <Box sx={{ flexGrow: 1 }}>
+                                    {selectedElement && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Выбран: {selectedElement.type}
+                                        </Typography>
+                                    )}
+                                </Box>
+
+                                {selectedElement && (
+                                    <>
+                                        <IconButton
+                                            color="primary"
+                                            aria-label="copy"
+                                            onClick={handleOpenCopyMenu}
+                                            title="Копировать свойства"
+                                        >
+                                            <ContentCopy />
+                                        </IconButton>
+
+                                        <Menu
+                                            anchorEl={copyMenuAnchor}
+                                            open={Boolean(copyMenuAnchor)}
+                                            onClose={handleCloseCopyMenu}
+                                        >
+                                            <MenuItem onClick={handleCopyElementProperties}>
+                                                Копировать стиль и размер
+                                            </MenuItem>
+                                            {selectedElement && selectedElement.keyframes && selectedElement.keyframes.length > 0 && (
+                                                <MenuItem onClick={handleCopyElementAnimations}>
+                                                    Копировать анимацию
+                                                </MenuItem>
+                                            )}
+                                        </Menu>
+
+                                        {canPasteProperties && (
+                                            <Button
+                                                size="small"
+                                                onClick={handlePasteElementProperties}
+                                                sx={{ mr: 1 }}
+                                            >
+                                                Вставить стиль
+                                            </Button>
+                                        )}
+
+                                        {canPasteAnimations && (
+                                            <Button
+                                                size="small"
+                                                onClick={handlePasteElementAnimations}
+                                            >
+                                                Вставить анимацию
+                                            </Button>
+                                        )}
+                                    </>
+                                )}
+                            </Box>
+
+                            {/* Canvas */}
+                            <Box
+                                sx={{
+                                    position: 'relative',
+                                    backgroundColor: '#f5f5f5',
+                                    borderRadius: 1,
+                                    overflow: 'hidden',
+                                    height: 'calc(100vh - 300px)', // Adjust for header, player, and other UI elements
+                                    minHeight: '600px'
+                                }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={handleDrop}
+                            >
+                                <Canvas
+                                    elements={project.elements}
+                                    currentTime={currentTime}
+                                    isPlaying={isPlaying}
+                                    onElementsChange={handleElementsUpdate}
+                                    selectedElement={selectedElement}
+                                    onElementSelect={handleElementSelect}
+                                />
+                            </Box>
+
+                            {/* Animation tips */}
+                            <Box sx={{ mt: 1, p: 1, bgcolor: 'rgba(25, 118, 210, 0.08)', borderRadius: 1 }}>
+                                <Typography variant="body2" color="primary">
+                                    Совет по анимации: для создания анимации переместите плеер на нужное время,
+                                    затем перетащите объект в нужное положение.
+                                </Typography>
+                            </Box>
+                        </Grid>
+
+                        {/* Side panels */}
+                        <Grid item xs={12} md={3}>
+                            <Paper sx={{ height: '100%' }}>
+                                <Tabs
+                                    value={tabIndex}
+                                    onChange={(_, newValue) => setTabIndex(newValue)}
+                                    variant="fullWidth"
+                                >
+                                    <Tab label="Инструменты" />
+                                    <Tab label="Свойства" />
+                                </Tabs>
+
+                                <Box sx={{ p: 2, height: 'calc(600px - 48px)', overflow: 'auto' }}>
+                                    {tabIndex === 0 && (
+                                        <ToolPanel onAddElement={handleAddElement} />
+                                    )}
+
+                                    {tabIndex === 1 && (
+                                        <PropertyPanel
+                                            selectedElement={selectedElement}
+                                            onElementUpdate={handleElementUpdate}
+                                            currentTime={currentTime}
+                                        />
+                                    )}
+                                </Box>
+                            </Paper>
+                        </Grid>
+                    </Grid>
+
+                    {/* Custom notification */}
+                    <Snackbar
+                        open={notification.open}
+                        autoHideDuration={6000}
+                        onClose={handleCloseNotification}
+                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    >
+                        <Alert
+                            onClose={handleCloseNotification}
+                            severity={notification.severity}
+                            variant="filled"
+                            sx={{ width: '100%' }}
+                        >
+                            {notification.message}
+                        </Alert>
+                    </Snackbar>
+                </Container>
+            </Box>
+        </Box>
     );
 };
 

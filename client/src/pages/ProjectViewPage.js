@@ -88,7 +88,17 @@ const ProjectViewPage = () => {
             setError(null);
             setProject(prev => ({ ...prev, loading: true }));
 
-            const response = await axios.get(`${API_URL}/projects/${id}`);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Требуется авторизация');
+            }
+
+            const response = await axios.get(`${API_URL}/projects/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
             if (!response || !response.data) {
                 throw new Error('No project data returned');

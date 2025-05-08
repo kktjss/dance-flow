@@ -17,7 +17,7 @@ import Footer from '../../components/Footer';
 function Login() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        email: '',
+        username: '',
         password: '',
     });
     const [error, setError] = useState('');
@@ -37,7 +37,7 @@ function Login() {
 
         try {
             const response = await axios.post('http://localhost:5000/api/auth/login', {
-                email: formData.email,
+                username: formData.username,
                 password: formData.password,
             });
 
@@ -55,30 +55,46 @@ function Login() {
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <>
             <Navbar />
-            <Box sx={{ flexGrow: 1, pt: 8 }}>
-                <Container maxWidth="sm">
-                    <Paper elevation={3} sx={{ p: 4 }}>
-                        <Typography variant="h4" component="h1" gutterBottom align="center">
+            <Container component="main" maxWidth="xs">
+                <Box
+                    sx={{
+                        marginTop: 8,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Paper
+                        elevation={3}
+                        sx={{
+                            padding: 4,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            width: '100%',
+                        }}
+                    >
+                        <Typography component="h1" variant="h5">
                             Вход
                         </Typography>
                         {error && (
-                            <Alert severity="error" sx={{ mb: 2 }}>
+                            <Alert severity="error" sx={{ width: '100%', mt: 2 }}>
                                 {error}
                             </Alert>
                         )}
-                        <form onSubmit={handleSubmit}>
+                        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
                             <TextField
                                 margin="normal"
                                 required
                                 fullWidth
-                                id="email"
-                                label="Email"
-                                name="email"
-                                autoComplete="email"
+                                id="username"
+                                label="Имя пользователя"
+                                name="username"
+                                autoComplete="username"
                                 autoFocus
-                                value={formData.email}
+                                value={formData.username}
                                 onChange={handleChange}
                             />
                             <TextField
@@ -108,15 +124,15 @@ function Login() {
                                     variant="body2"
                                     onClick={() => navigate('/register')}
                                 >
-                                    Нет аккаунта? Зарегистрироваться
+                                    Нет аккаунта? Зарегистрируйтесь
                                 </Link>
                             </Box>
-                        </form>
+                        </Box>
                     </Paper>
-                </Container>
-            </Box>
+                </Box>
+            </Container>
             <Footer />
-        </Box>
+        </>
     );
 }
 
