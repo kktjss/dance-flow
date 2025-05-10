@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import './ProjectsList.css';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, IconButton, Snackbar, Alert } from '@mui/material';
 import { Delete } from '@mui/icons-material';
+import { projectService } from '../services/api';
 
 const ProjectsList = ({ onSelectProject, setShowProjects }) => {
     const [projects, setProjects] = useState([]);
@@ -12,13 +12,12 @@ const ProjectsList = ({ onSelectProject, setShowProjects }) => {
     const [projectToDelete, setProjectToDelete] = useState(null);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
-    const API_URL = 'http://localhost:5000/api';
-
     const fetchProjects = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_URL}/projects`);
-            setProjects(response.data);
+            const data = await projectService.getProjects();
+            setProjects(data);
+            setError(null);
         } catch (err) {
             console.error('Error fetching projects:', err);
             setError('Failed to load projects');
@@ -29,7 +28,7 @@ const ProjectsList = ({ onSelectProject, setShowProjects }) => {
 
     useEffect(() => {
         fetchProjects();
-    }, [API_URL]);
+    }, []);
 
     const handleProjectSelect = (projectId) => {
         console.log('Selected project ID:', projectId);
@@ -55,7 +54,7 @@ const ProjectsList = ({ onSelectProject, setShowProjects }) => {
         if (!projectToDelete) return;
 
         try {
-            await axios.delete(`${API_URL}/projects/${projectToDelete._id}`);
+            await projectService.deleteProject(projectToDelete._id);
 
             // Update projects list
             setProjects(projects.filter(p => p._id !== projectToDelete._id));
@@ -117,46 +116,41 @@ const ProjectsList = ({ onSelectProject, setShowProjects }) => {
                             </div>
                             <IconButton
                                 className="delete-button"
-                                size="small"
-                                color="error"
                                 onClick={(e) => openDeleteConfirm(e, project)}
+                                size="small"
                                 sx={{
                                     position: 'absolute',
-                                    top: '5px',
-                                    right: '5px',
-                                    backgroundColor: 'rgba(255,255,255,0.7)',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(255,255,255,0.9)',
-                                    }
+                                    top: 5,
+                                    right: 5,
+                                    opacity: 0.7,
+                                    '&:hover': { opacity: 1 }
                                 }}
                             >
-                                <Delete fontSize="small" />
+                                <Delete />
                             </IconButton>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* Delete Confirmation Dialog */}
             <Dialog
                 open={deleteConfirmOpen}
                 onClose={closeDeleteConfirm}
             >
-                <DialogTitle>Удаление проекта</DialogTitle>
+                <DialogTitle>Подтверждение удаления</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        Вы уверены, что хотите удалить проект "{projectToDelete?.name}"? Это действие невозможно отменить.
+                        Вы уверены, что хотите удалить проект "{projectToDelete?.name}"? Это действие нельзя отменить.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={closeDeleteConfirm}>Отмена</Button>
-                    <Button onClick={handleDeleteProject} color="error" variant="contained">
+                    <Button onClick={handleDeleteProject} color="error" autoFocus>
                         Удалить
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Notification */}
             <Snackbar
                 open={notification.open}
                 autoHideDuration={6000}

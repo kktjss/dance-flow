@@ -34,21 +34,29 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/dance-pla
 
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['Authorization']
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Logging middleware
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    if (req.body && Object.keys(req.body).length > 0) {
+        console.log('Body:', JSON.stringify(req.body, null, 2));
+    }
     next();
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Routes
@@ -64,10 +72,17 @@ app.use('/api/history', historyRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
-    res.status(500).json({ message: 'Internal server error', error: err.message });
+    console.error('Stack trace:', err.stack);
+    res.status(500).json({
+        message: 'Internal server error',
+        error: err.message,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
 });
 
 // Start server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    console.log('Environment:', process.env.NODE_ENV || 'development');
+    console.log('MongoDB URI:', process.env.MONGODB_URI || 'mongodb://localhost:27017/dance-platform');
 }); 

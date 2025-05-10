@@ -1,0 +1,2449 @@
+2025-05-09 21:42:37,584 - INFO - Test endpoint called
+2025-05-09 21:42:37,632 - INFO - ==================================================
+2025-05-09 21:42:37,633 - INFO - Received frame for processing
+2025-05-09 21:42:37,633 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:37,633 - INFO - Read 449933 bytes from file
+2025-05-09 21:42:37,633 - INFO - Created numpy array with shape: (449933,)
+2025-05-09 21:42:37,649 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:37,649 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:37,801 - INFO - Enhanced image created
+2025-05-09 21:42:37,916 - INFO - Pose detected!
+2025-05-09 21:42:37,926 - INFO - Found 33 landmarks
+2025-05-09 21:42:37,926 - INFO - Frame processed in 0.28 seconds
+2025-05-09 21:42:37,926 - INFO - Total request processing time: 0.29 seconds
+2025-05-09 21:42:37,926 - INFO - ==================================================
+2025-05-09 21:42:38,038 - INFO - Test endpoint called
+2025-05-09 21:42:38,057 - INFO - ==================================================
+2025-05-09 21:42:38,058 - INFO - Received frame for processing
+2025-05-09 21:42:38,058 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:38,058 - INFO - Read 449933 bytes from file
+2025-05-09 21:42:38,058 - INFO - Created numpy array with shape: (449933,)
+2025-05-09 21:42:38,068 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:38,068 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:38,082 - INFO - Enhanced image created
+2025-05-09 21:42:38,174 - INFO - Pose detected!
+2025-05-09 21:42:38,187 - INFO - Found 33 landmarks
+2025-05-09 21:42:38,188 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:38,188 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:38,188 - INFO - ==================================================
+2025-05-09 21:42:38,311 - INFO - Test endpoint called
+2025-05-09 21:42:38,406 - INFO - ==================================================
+2025-05-09 21:42:38,406 - INFO - Received frame for processing
+2025-05-09 21:42:38,406 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:38,406 - INFO - Read 449933 bytes from file
+2025-05-09 21:42:38,406 - INFO - Created numpy array with shape: (449933,)
+2025-05-09 21:42:38,416 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:38,416 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:38,430 - INFO - Enhanced image created
+2025-05-09 21:42:38,516 - INFO - Pose detected!
+2025-05-09 21:42:38,527 - INFO - Found 33 landmarks
+2025-05-09 21:42:38,527 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:42:38,527 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:42:38,527 - INFO - ==================================================
+2025-05-09 21:42:38,655 - INFO - Test endpoint called
+2025-05-09 21:42:38,694 - INFO - ==================================================
+2025-05-09 21:42:38,694 - INFO - Received frame for processing
+2025-05-09 21:42:38,694 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:38,694 - INFO - Read 454628 bytes from file
+2025-05-09 21:42:38,694 - INFO - Created numpy array with shape: (454628,)
+2025-05-09 21:42:38,715 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:38,715 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:38,730 - INFO - Enhanced image created
+2025-05-09 21:42:38,817 - INFO - Pose detected!
+2025-05-09 21:42:38,828 - INFO - Found 33 landmarks
+2025-05-09 21:42:38,828 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:42:38,828 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:38,829 - INFO - ==================================================
+2025-05-09 21:42:39,016 - INFO - Test endpoint called
+2025-05-09 21:42:39,155 - INFO - ==================================================
+2025-05-09 21:42:39,156 - INFO - Received frame for processing
+2025-05-09 21:42:39,156 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:39,156 - INFO - Read 449213 bytes from file
+2025-05-09 21:42:39,156 - INFO - Created numpy array with shape: (449213,)
+2025-05-09 21:42:39,177 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:39,177 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:39,192 - INFO - Enhanced image created
+2025-05-09 21:42:39,287 - INFO - Pose detected!
+2025-05-09 21:42:39,304 - INFO - Found 33 landmarks
+2025-05-09 21:42:39,304 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:39,305 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:42:39,305 - INFO - ==================================================
+2025-05-09 21:42:39,457 - INFO - Test endpoint called
+2025-05-09 21:42:39,494 - INFO - ==================================================
+2025-05-09 21:42:39,494 - INFO - Received frame for processing
+2025-05-09 21:42:39,495 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:39,495 - INFO - Read 437889 bytes from file
+2025-05-09 21:42:39,495 - INFO - Created numpy array with shape: (437889,)
+2025-05-09 21:42:39,518 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:39,518 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:39,532 - INFO - Enhanced image created
+2025-05-09 21:42:39,626 - INFO - Pose detected!
+2025-05-09 21:42:39,645 - INFO - Found 33 landmarks
+2025-05-09 21:42:39,645 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:39,645 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:42:39,645 - INFO - ==================================================
+2025-05-09 21:42:39,764 - INFO - Test endpoint called
+2025-05-09 21:42:39,878 - INFO - ==================================================
+2025-05-09 21:42:39,879 - INFO - Received frame for processing
+2025-05-09 21:42:39,879 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:39,879 - INFO - Read 445029 bytes from file
+2025-05-09 21:42:39,879 - INFO - Created numpy array with shape: (445029,)
+2025-05-09 21:42:39,900 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:39,901 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:39,918 - INFO - Enhanced image created
+2025-05-09 21:42:40,010 - INFO - Pose detected!
+2025-05-09 21:42:40,020 - INFO - Found 33 landmarks
+2025-05-09 21:42:40,020 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:40,020 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:40,021 - INFO - ==================================================
+2025-05-09 21:42:40,133 - INFO - Test endpoint called
+2025-05-09 21:42:40,154 - INFO - ==================================================
+2025-05-09 21:42:40,155 - INFO - Received frame for processing
+2025-05-09 21:42:40,155 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:40,155 - INFO - Read 446451 bytes from file
+2025-05-09 21:42:40,155 - INFO - Created numpy array with shape: (446451,)
+2025-05-09 21:42:40,176 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:40,176 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:40,190 - INFO - Enhanced image created
+2025-05-09 21:42:40,276 - INFO - Pose detected!
+2025-05-09 21:42:40,285 - INFO - Found 33 landmarks
+2025-05-09 21:42:40,285 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:42:40,285 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:40,285 - INFO - ==================================================
+2025-05-09 21:42:40,406 - INFO - Test endpoint called
+2025-05-09 21:42:40,491 - INFO - ==================================================
+2025-05-09 21:42:40,491 - INFO - Received frame for processing
+2025-05-09 21:42:40,491 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:40,491 - INFO - Read 430795 bytes from file
+2025-05-09 21:42:40,491 - INFO - Created numpy array with shape: (430795,)
+2025-05-09 21:42:40,512 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:40,512 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:40,532 - INFO - Enhanced image created
+2025-05-09 21:42:40,626 - INFO - Pose detected!
+2025-05-09 21:42:40,638 - INFO - Found 33 landmarks
+2025-05-09 21:42:40,638 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:40,638 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:42:40,638 - INFO - ==================================================
+2025-05-09 21:42:53,513 - INFO - Test endpoint called
+2025-05-09 21:42:53,548 - INFO - ==================================================
+2025-05-09 21:42:53,548 - INFO - Received frame for processing
+2025-05-09 21:42:53,549 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:53,549 - INFO - Read 431382 bytes from file
+2025-05-09 21:42:53,549 - INFO - Created numpy array with shape: (431382,)
+2025-05-09 21:42:53,561 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:53,562 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:53,577 - INFO - Enhanced image created
+2025-05-09 21:42:53,677 - INFO - Pose detected!
+2025-05-09 21:42:53,688 - INFO - Found 33 landmarks
+2025-05-09 21:42:53,688 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:53,688 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:53,688 - INFO - ==================================================
+2025-05-09 21:42:53,835 - INFO - Test endpoint called
+2025-05-09 21:42:53,931 - INFO - ==================================================
+2025-05-09 21:42:53,931 - INFO - Received frame for processing
+2025-05-09 21:42:53,932 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:53,932 - INFO - Read 431382 bytes from file
+2025-05-09 21:42:53,932 - INFO - Created numpy array with shape: (431382,)
+2025-05-09 21:42:53,953 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:53,953 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:53,970 - INFO - Enhanced image created
+2025-05-09 21:42:54,063 - INFO - Pose detected!
+2025-05-09 21:42:54,072 - INFO - Found 33 landmarks
+2025-05-09 21:42:54,072 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:54,073 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:54,073 - INFO - ==================================================
+2025-05-09 21:42:54,177 - INFO - Test endpoint called
+2025-05-09 21:42:54,199 - INFO - ==================================================
+2025-05-09 21:42:54,200 - INFO - Received frame for processing
+2025-05-09 21:42:54,200 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:54,200 - INFO - Read 431382 bytes from file
+2025-05-09 21:42:54,200 - INFO - Created numpy array with shape: (431382,)
+2025-05-09 21:42:54,215 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:54,215 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:54,229 - INFO - Enhanced image created
+2025-05-09 21:42:54,324 - INFO - Pose detected!
+2025-05-09 21:42:54,336 - INFO - Found 33 landmarks
+2025-05-09 21:42:54,337 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:54,337 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:54,337 - INFO - ==================================================
+2025-05-09 21:42:54,455 - INFO - Test endpoint called
+2025-05-09 21:42:54,468 - INFO - Test endpoint called
+2025-05-09 21:42:54,483 - INFO - ==================================================
+2025-05-09 21:42:54,484 - INFO - Received frame for processing
+2025-05-09 21:42:54,484 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:54,484 - INFO - Read 431382 bytes from file
+2025-05-09 21:42:54,484 - INFO - Created numpy array with shape: (431382,)
+2025-05-09 21:42:54,498 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:54,498 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:54,515 - INFO - Enhanced image created
+2025-05-09 21:42:54,611 - INFO - Pose detected!
+2025-05-09 21:42:54,622 - INFO - Found 33 landmarks
+2025-05-09 21:42:54,622 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:54,622 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:54,622 - INFO - ==================================================
+2025-05-09 21:42:54,629 - INFO - ==================================================
+2025-05-09 21:42:54,630 - INFO - Received frame for processing
+2025-05-09 21:42:54,630 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:54,630 - INFO - Read 431382 bytes from file
+2025-05-09 21:42:54,630 - INFO - Created numpy array with shape: (431382,)
+2025-05-09 21:42:54,642 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:54,642 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:54,658 - INFO - Enhanced image created
+2025-05-09 21:42:54,759 - INFO - Pose detected!
+2025-05-09 21:42:54,769 - INFO - Found 33 landmarks
+2025-05-09 21:42:54,769 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:54,770 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:54,770 - INFO - ==================================================
+2025-05-09 21:42:54,815 - INFO - Test endpoint called
+2025-05-09 21:42:54,893 - INFO - ==================================================
+2025-05-09 21:42:54,894 - INFO - Received frame for processing
+2025-05-09 21:42:54,894 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:54,894 - INFO - Read 431382 bytes from file
+2025-05-09 21:42:54,894 - INFO - Created numpy array with shape: (431382,)
+2025-05-09 21:42:54,916 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:54,916 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:54,930 - INFO - Enhanced image created
+2025-05-09 21:42:55,028 - INFO - Pose detected!
+2025-05-09 21:42:55,047 - INFO - Found 33 landmarks
+2025-05-09 21:42:55,047 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:55,047 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:42:55,047 - INFO - ==================================================
+2025-05-09 21:42:55,060 - INFO - Test endpoint called
+2025-05-09 21:42:55,190 - INFO - ==================================================
+2025-05-09 21:42:55,190 - INFO - Received frame for processing
+2025-05-09 21:42:55,190 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:55,190 - INFO - Read 431382 bytes from file
+2025-05-09 21:42:55,191 - INFO - Created numpy array with shape: (431382,)
+2025-05-09 21:42:55,212 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:55,212 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:55,227 - INFO - Enhanced image created
+2025-05-09 21:42:55,326 - INFO - Pose detected!
+2025-05-09 21:42:55,336 - INFO - Found 33 landmarks
+2025-05-09 21:42:55,337 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:55,337 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:42:55,337 - INFO - ==================================================
+2025-05-09 21:42:55,342 - INFO - Test endpoint called
+2025-05-09 21:42:55,459 - INFO - ==================================================
+2025-05-09 21:42:55,459 - INFO - Received frame for processing
+2025-05-09 21:42:55,459 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:55,459 - INFO - Read 431550 bytes from file
+2025-05-09 21:42:55,459 - INFO - Created numpy array with shape: (431550,)
+2025-05-09 21:42:55,476 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:55,476 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:55,492 - INFO - Enhanced image created
+2025-05-09 21:42:55,582 - INFO - Pose detected!
+2025-05-09 21:42:55,592 - INFO - Found 33 landmarks
+2025-05-09 21:42:55,592 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:55,592 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:55,592 - INFO - ==================================================
+2025-05-09 21:42:55,597 - INFO - Test endpoint called
+2025-05-09 21:42:55,723 - INFO - ==================================================
+2025-05-09 21:42:55,723 - INFO - Received frame for processing
+2025-05-09 21:42:55,723 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:55,723 - INFO - Read 446664 bytes from file
+2025-05-09 21:42:55,723 - INFO - Created numpy array with shape: (446664,)
+2025-05-09 21:42:55,736 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:55,736 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:55,752 - INFO - Enhanced image created
+2025-05-09 21:42:55,844 - INFO - Pose detected!
+2025-05-09 21:42:55,864 - INFO - Found 33 landmarks
+2025-05-09 21:42:55,864 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:55,864 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:55,864 - INFO - ==================================================
+2025-05-09 21:42:55,873 - INFO - Test endpoint called
+2025-05-09 21:42:55,903 - INFO - ==================================================
+2025-05-09 21:42:55,903 - INFO - Received frame for processing
+2025-05-09 21:42:55,903 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:55,903 - INFO - Read 440951 bytes from file
+2025-05-09 21:42:55,903 - INFO - Created numpy array with shape: (440951,)
+2025-05-09 21:42:55,924 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:55,924 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:55,937 - INFO - Enhanced image created
+2025-05-09 21:42:56,018 - INFO - Pose detected!
+2025-05-09 21:42:56,028 - INFO - Found 33 landmarks
+2025-05-09 21:42:56,029 - INFO - Frame processed in 0.10 seconds
+2025-05-09 21:42:56,029 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:56,029 - INFO - ==================================================
+2025-05-09 21:42:56,214 - INFO - Test endpoint called
+2025-05-09 21:42:56,219 - INFO - Test endpoint called
+2025-05-09 21:42:56,326 - INFO - ==================================================
+2025-05-09 21:42:56,326 - INFO - Received frame for processing
+2025-05-09 21:42:56,326 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:56,326 - INFO - Read 433700 bytes from file
+2025-05-09 21:42:56,327 - INFO - Created numpy array with shape: (433700,)
+2025-05-09 21:42:56,348 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:56,348 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:56,366 - INFO - Enhanced image created
+2025-05-09 21:42:56,459 - INFO - Pose detected!
+2025-05-09 21:42:56,474 - INFO - Found 33 landmarks
+2025-05-09 21:42:56,474 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:56,474 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:42:56,474 - INFO - ==================================================
+2025-05-09 21:42:56,485 - INFO - ==================================================
+2025-05-09 21:42:56,485 - INFO - Received frame for processing
+2025-05-09 21:42:56,485 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:56,485 - INFO - Read 434626 bytes from file
+2025-05-09 21:42:56,485 - INFO - Created numpy array with shape: (434626,)
+2025-05-09 21:42:56,499 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:56,500 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:56,521 - INFO - Enhanced image created
+2025-05-09 21:42:56,654 - INFO - Pose detected!
+2025-05-09 21:42:56,670 - INFO - Found 33 landmarks
+2025-05-09 21:42:56,670 - INFO - Frame processed in 0.17 seconds
+2025-05-09 21:42:56,671 - INFO - Total request processing time: 0.19 seconds
+2025-05-09 21:42:56,671 - INFO - ==================================================
+2025-05-09 21:42:56,691 - INFO - Test endpoint called
+2025-05-09 21:42:56,801 - INFO - Test endpoint called
+2025-05-09 21:42:56,806 - INFO - ==================================================
+2025-05-09 21:42:56,806 - INFO - Received frame for processing
+2025-05-09 21:42:56,806 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:56,806 - INFO - Read 415100 bytes from file
+2025-05-09 21:42:56,807 - INFO - Created numpy array with shape: (415100,)
+2025-05-09 21:42:56,827 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:56,827 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:56,843 - INFO - Enhanced image created
+2025-05-09 21:42:56,935 - INFO - Pose detected!
+2025-05-09 21:42:56,949 - INFO - Found 33 landmarks
+2025-05-09 21:42:56,949 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:56,949 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:56,949 - INFO - ==================================================
+2025-05-09 21:42:56,961 - INFO - ==================================================
+2025-05-09 21:42:56,961 - INFO - Received frame for processing
+2025-05-09 21:42:56,961 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:56,962 - INFO - Read 422595 bytes from file
+2025-05-09 21:42:56,962 - INFO - Created numpy array with shape: (422595,)
+2025-05-09 21:42:56,976 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:56,976 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:56,992 - INFO - Enhanced image created
+2025-05-09 21:42:57,089 - INFO - Pose detected!
+2025-05-09 21:42:57,100 - INFO - Found 33 landmarks
+2025-05-09 21:42:57,101 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:57,101 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:57,101 - INFO - ==================================================
+2025-05-09 21:42:57,151 - INFO - Test endpoint called
+2025-05-09 21:42:57,169 - INFO - Test endpoint called
+2025-05-09 21:42:57,270 - INFO - Test endpoint called
+2025-05-09 21:42:57,272 - INFO - ==================================================
+2025-05-09 21:42:57,272 - INFO - Received frame for processing
+2025-05-09 21:42:57,272 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:57,273 - INFO - Read 419641 bytes from file
+2025-05-09 21:42:57,273 - INFO - Created numpy array with shape: (419641,)
+2025-05-09 21:42:57,283 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,283 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,302 - INFO - Enhanced image created
+2025-05-09 21:42:57,393 - INFO - Pose detected!
+2025-05-09 21:42:57,403 - INFO - Found 33 landmarks
+2025-05-09 21:42:57,403 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:57,403 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:57,403 - INFO - ==================================================
+2025-05-09 21:42:57,411 - INFO - ==================================================
+2025-05-09 21:42:57,411 - INFO - Received frame for processing
+2025-05-09 21:42:57,411 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:57,412 - INFO - Read 404046 bytes from file
+2025-05-09 21:42:57,412 - INFO - Created numpy array with shape: (404046,)
+2025-05-09 21:42:57,430 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,430 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,445 - INFO - Enhanced image created
+2025-05-09 21:42:57,553 - INFO - Pose detected!
+2025-05-09 21:42:57,563 - INFO - Found 33 landmarks
+2025-05-09 21:42:57,563 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:57,563 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:42:57,563 - INFO - ==================================================
+2025-05-09 21:42:57,569 - INFO - Test endpoint called
+2025-05-09 21:42:57,573 - INFO - ==================================================
+2025-05-09 21:42:57,573 - INFO - Received frame for processing
+2025-05-09 21:42:57,573 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:57,573 - INFO - Read 415460 bytes from file
+2025-05-09 21:42:57,573 - INFO - Created numpy array with shape: (415460,)
+2025-05-09 21:42:57,587 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,588 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,607 - INFO - Enhanced image created
+2025-05-09 21:42:57,695 - INFO - Pose detected!
+2025-05-09 21:42:57,705 - INFO - Found 33 landmarks
+2025-05-09 21:42:57,706 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:57,706 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:57,706 - INFO - ==================================================
+2025-05-09 21:42:57,713 - INFO - Test endpoint called
+2025-05-09 21:42:57,715 - INFO - ==================================================
+2025-05-09 21:42:57,715 - INFO - Received frame for processing
+2025-05-09 21:42:57,715 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:57,715 - INFO - Read 449289 bytes from file
+2025-05-09 21:42:57,715 - INFO - Created numpy array with shape: (449289,)
+2025-05-09 21:42:57,726 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,726 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,741 - INFO - Enhanced image created
+2025-05-09 21:42:57,828 - INFO - Pose detected!
+2025-05-09 21:42:57,838 - INFO - Found 33 landmarks
+2025-05-09 21:42:57,839 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:42:57,839 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:42:57,839 - INFO - ==================================================
+2025-05-09 21:42:57,850 - INFO - ==================================================
+2025-05-09 21:42:57,850 - INFO - Received frame for processing
+2025-05-09 21:42:57,850 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:57,850 - INFO - Read 446645 bytes from file
+2025-05-09 21:42:57,851 - INFO - Created numpy array with shape: (446645,)
+2025-05-09 21:42:57,864 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,864 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:57,878 - INFO - Enhanced image created
+2025-05-09 21:42:57,967 - INFO - Pose detected!
+2025-05-09 21:42:57,980 - INFO - Found 33 landmarks
+2025-05-09 21:42:57,981 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:57,981 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:57,981 - INFO - ==================================================
+2025-05-09 21:42:57,988 - INFO - Test endpoint called
+2025-05-09 21:42:58,046 - INFO - Test endpoint called
+2025-05-09 21:42:58,063 - INFO - ==================================================
+2025-05-09 21:42:58,064 - INFO - Received frame for processing
+2025-05-09 21:42:58,064 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:58,064 - INFO - Read 427644 bytes from file
+2025-05-09 21:42:58,064 - INFO - Created numpy array with shape: (427644,)
+2025-05-09 21:42:58,077 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,077 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,093 - INFO - Enhanced image created
+2025-05-09 21:42:58,183 - INFO - Pose detected!
+2025-05-09 21:42:58,193 - INFO - Found 33 landmarks
+2025-05-09 21:42:58,194 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:58,194 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:58,194 - INFO - ==================================================
+2025-05-09 21:42:58,202 - INFO - Test endpoint called
+2025-05-09 21:42:58,206 - INFO - ==================================================
+2025-05-09 21:42:58,206 - INFO - Received frame for processing
+2025-05-09 21:42:58,206 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:58,206 - INFO - Read 434225 bytes from file
+2025-05-09 21:42:58,206 - INFO - Created numpy array with shape: (434225,)
+2025-05-09 21:42:58,224 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,224 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,238 - INFO - Enhanced image created
+2025-05-09 21:42:58,331 - INFO - Pose detected!
+2025-05-09 21:42:58,341 - INFO - Found 33 landmarks
+2025-05-09 21:42:58,342 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:58,342 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:58,342 - INFO - ==================================================
+2025-05-09 21:42:58,348 - INFO - ==================================================
+2025-05-09 21:42:58,349 - INFO - Received frame for processing
+2025-05-09 21:42:58,349 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:58,349 - INFO - Read 437598 bytes from file
+2025-05-09 21:42:58,349 - INFO - Created numpy array with shape: (437598,)
+2025-05-09 21:42:58,360 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,360 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,379 - INFO - Enhanced image created
+2025-05-09 21:42:58,466 - INFO - Pose detected!
+2025-05-09 21:42:58,476 - INFO - Found 33 landmarks
+2025-05-09 21:42:58,476 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:42:58,476 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:42:58,476 - INFO - ==================================================
+2025-05-09 21:42:58,482 - INFO - Test endpoint called
+2025-05-09 21:42:58,483 - INFO - Test endpoint called
+2025-05-09 21:42:58,594 - INFO - ==================================================
+2025-05-09 21:42:58,595 - INFO - Received frame for processing
+2025-05-09 21:42:58,595 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:58,595 - INFO - Read 437807 bytes from file
+2025-05-09 21:42:58,595 - INFO - Created numpy array with shape: (437807,)
+2025-05-09 21:42:58,617 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,617 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,633 - INFO - Enhanced image created
+2025-05-09 21:42:58,734 - INFO - Pose detected!
+2025-05-09 21:42:58,754 - INFO - Found 33 landmarks
+2025-05-09 21:42:58,754 - INFO - Frame processed in 0.14 seconds
+2025-05-09 21:42:58,754 - INFO - Total request processing time: 0.16 seconds
+2025-05-09 21:42:58,754 - INFO - ==================================================
+2025-05-09 21:42:58,761 - INFO - Test endpoint called
+2025-05-09 21:42:58,763 - INFO - ==================================================
+2025-05-09 21:42:58,763 - INFO - Received frame for processing
+2025-05-09 21:42:58,763 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:58,764 - INFO - Read 438243 bytes from file
+2025-05-09 21:42:58,764 - INFO - Created numpy array with shape: (438243,)
+2025-05-09 21:42:58,775 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,775 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,798 - INFO - Enhanced image created
+2025-05-09 21:42:58,900 - INFO - Pose detected!
+2025-05-09 21:42:58,910 - INFO - Found 33 landmarks
+2025-05-09 21:42:58,910 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:58,910 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:42:58,910 - INFO - ==================================================
+2025-05-09 21:42:58,917 - INFO - Test endpoint called
+2025-05-09 21:42:58,918 - INFO - ==================================================
+2025-05-09 21:42:58,918 - INFO - Received frame for processing
+2025-05-09 21:42:58,919 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:58,919 - INFO - Read 437080 bytes from file
+2025-05-09 21:42:58,919 - INFO - Created numpy array with shape: (437080,)
+2025-05-09 21:42:58,932 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,932 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:58,949 - INFO - Enhanced image created
+2025-05-09 21:42:59,049 - INFO - Pose detected!
+2025-05-09 21:42:59,059 - INFO - Found 33 landmarks
+2025-05-09 21:42:59,059 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:42:59,059 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:42:59,059 - INFO - ==================================================
+2025-05-09 21:42:59,066 - INFO - Test endpoint called
+2025-05-09 21:42:59,067 - INFO - ==================================================
+2025-05-09 21:42:59,067 - INFO - Received frame for processing
+2025-05-09 21:42:59,067 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:59,068 - INFO - Read 441093 bytes from file
+2025-05-09 21:42:59,068 - INFO - Created numpy array with shape: (441093,)
+2025-05-09 21:42:59,078 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:59,078 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:59,097 - INFO - Enhanced image created
+2025-05-09 21:42:59,182 - INFO - Pose detected!
+2025-05-09 21:42:59,192 - INFO - Found 33 landmarks
+2025-05-09 21:42:59,192 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:42:59,192 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:42:59,192 - INFO - ==================================================
+2025-05-09 21:42:59,199 - INFO - ==================================================
+2025-05-09 21:42:59,199 - INFO - Received frame for processing
+2025-05-09 21:42:59,199 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:42:59,200 - INFO - Read 433497 bytes from file
+2025-05-09 21:42:59,200 - INFO - Created numpy array with shape: (433497,)
+2025-05-09 21:42:59,211 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:42:59,211 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:42:59,226 - INFO - Enhanced image created
+2025-05-09 21:42:59,298 - INFO - Pose detected!
+2025-05-09 21:42:59,307 - INFO - Found 33 landmarks
+2025-05-09 21:42:59,308 - INFO - Frame processed in 0.10 seconds
+2025-05-09 21:42:59,308 - INFO - Total request processing time: 0.11 seconds
+2025-05-09 21:42:59,308 - INFO - ==================================================
+2025-05-09 21:43:00,769 - INFO - Test endpoint called
+2025-05-09 21:43:00,899 - INFO - Test endpoint called
+2025-05-09 21:43:00,903 - INFO - Test endpoint called
+2025-05-09 21:43:00,905 - INFO - ==================================================
+2025-05-09 21:43:00,905 - INFO - Received frame for processing
+2025-05-09 21:43:00,905 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:00,905 - INFO - Read 425597 bytes from file
+2025-05-09 21:43:00,905 - INFO - Created numpy array with shape: (425597,)
+2025-05-09 21:43:00,919 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:00,919 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:00,935 - INFO - Enhanced image created
+2025-05-09 21:43:01,016 - INFO - Pose detected!
+2025-05-09 21:43:01,026 - INFO - Found 33 landmarks
+2025-05-09 21:43:01,026 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:01,027 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:01,027 - INFO - ==================================================
+2025-05-09 21:43:01,034 - INFO - ==================================================
+2025-05-09 21:43:01,034 - INFO - Received frame for processing
+2025-05-09 21:43:01,034 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:01,035 - INFO - Read 408684 bytes from file
+2025-05-09 21:43:01,035 - INFO - Created numpy array with shape: (408684,)
+2025-05-09 21:43:01,046 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:01,047 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:01,063 - INFO - Enhanced image created
+2025-05-09 21:43:01,166 - INFO - Pose detected!
+2025-05-09 21:43:01,175 - INFO - Found 33 landmarks
+2025-05-09 21:43:01,175 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:01,176 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:01,176 - INFO - ==================================================
+2025-05-09 21:43:01,181 - INFO - Test endpoint called
+2025-05-09 21:43:01,182 - INFO - ==================================================
+2025-05-09 21:43:01,182 - INFO - Received frame for processing
+2025-05-09 21:43:01,182 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:01,182 - INFO - Read 400944 bytes from file
+2025-05-09 21:43:01,183 - INFO - Created numpy array with shape: (400944,)
+2025-05-09 21:43:01,192 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:01,192 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:01,205 - INFO - Enhanced image created
+2025-05-09 21:43:01,293 - INFO - Pose detected!
+2025-05-09 21:43:01,302 - INFO - Found 33 landmarks
+2025-05-09 21:43:01,303 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:01,303 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:01,303 - INFO - ==================================================
+2025-05-09 21:43:01,309 - INFO - ==================================================
+2025-05-09 21:43:01,309 - INFO - Received frame for processing
+2025-05-09 21:43:01,309 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:01,309 - INFO - Read 398669 bytes from file
+2025-05-09 21:43:01,309 - INFO - Created numpy array with shape: (398669,)
+2025-05-09 21:43:01,319 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:01,319 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:01,332 - INFO - Enhanced image created
+2025-05-09 21:43:01,409 - INFO - Pose detected!
+2025-05-09 21:43:01,419 - INFO - Found 33 landmarks
+2025-05-09 21:43:01,419 - INFO - Frame processed in 0.10 seconds
+2025-05-09 21:43:01,419 - INFO - Total request processing time: 0.11 seconds
+2025-05-09 21:43:01,420 - INFO - ==================================================
+2025-05-09 21:43:49,020 - INFO - Test endpoint called
+2025-05-09 21:43:49,022 - INFO - Test endpoint called
+2025-05-09 21:43:49,156 - INFO - ==================================================
+2025-05-09 21:43:49,157 - INFO - Received frame for processing
+2025-05-09 21:43:49,157 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:49,157 - INFO - Read 386445 bytes from file
+2025-05-09 21:43:49,157 - INFO - Created numpy array with shape: (386445,)
+2025-05-09 21:43:49,187 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,187 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,336 - INFO - Enhanced image created
+2025-05-09 21:43:49,471 - INFO - Pose detected!
+2025-05-09 21:43:49,481 - INFO - Found 33 landmarks
+2025-05-09 21:43:49,481 - INFO - Frame processed in 0.29 seconds
+2025-05-09 21:43:49,481 - INFO - Total request processing time: 0.32 seconds
+2025-05-09 21:43:49,481 - INFO - ==================================================
+2025-05-09 21:43:49,485 - INFO - Test endpoint called
+2025-05-09 21:43:49,487 - INFO - ==================================================
+2025-05-09 21:43:49,487 - INFO - Received frame for processing
+2025-05-09 21:43:49,487 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:49,488 - INFO - Read 386445 bytes from file
+2025-05-09 21:43:49,488 - INFO - Created numpy array with shape: (386445,)
+2025-05-09 21:43:49,498 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,498 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,516 - INFO - Enhanced image created
+2025-05-09 21:43:49,627 - INFO - Pose detected!
+2025-05-09 21:43:49,637 - INFO - Found 33 landmarks
+2025-05-09 21:43:49,637 - INFO - Frame processed in 0.14 seconds
+2025-05-09 21:43:49,638 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:43:49,638 - INFO - ==================================================
+2025-05-09 21:43:49,644 - INFO - Test endpoint called
+2025-05-09 21:43:49,646 - INFO - ==================================================
+2025-05-09 21:43:49,646 - INFO - Received frame for processing
+2025-05-09 21:43:49,646 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:49,646 - INFO - Read 386445 bytes from file
+2025-05-09 21:43:49,646 - INFO - Created numpy array with shape: (386445,)
+2025-05-09 21:43:49,655 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,655 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,670 - INFO - Enhanced image created
+2025-05-09 21:43:49,778 - INFO - Pose detected!
+2025-05-09 21:43:49,787 - INFO - Found 33 landmarks
+2025-05-09 21:43:49,787 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:49,787 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:49,787 - INFO - ==================================================
+2025-05-09 21:43:49,830 - INFO - Test endpoint called
+2025-05-09 21:43:49,832 - INFO - ==================================================
+2025-05-09 21:43:49,832 - INFO - Received frame for processing
+2025-05-09 21:43:49,832 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:49,832 - INFO - Read 417887 bytes from file
+2025-05-09 21:43:49,832 - INFO - Created numpy array with shape: (417887,)
+2025-05-09 21:43:49,845 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,846 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,862 - INFO - Enhanced image created
+2025-05-09 21:43:49,949 - INFO - Pose detected!
+2025-05-09 21:43:49,958 - INFO - Found 33 landmarks
+2025-05-09 21:43:49,958 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:49,958 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:49,958 - INFO - ==================================================
+2025-05-09 21:43:49,964 - INFO - Test endpoint called
+2025-05-09 21:43:49,966 - INFO - ==================================================
+2025-05-09 21:43:49,966 - INFO - Received frame for processing
+2025-05-09 21:43:49,966 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:49,966 - INFO - Read 421410 bytes from file
+2025-05-09 21:43:49,966 - INFO - Created numpy array with shape: (421410,)
+2025-05-09 21:43:49,976 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,976 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:49,992 - INFO - Enhanced image created
+2025-05-09 21:43:50,095 - INFO - Pose detected!
+2025-05-09 21:43:50,105 - INFO - Found 33 landmarks
+2025-05-09 21:43:50,105 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:50,105 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:50,105 - INFO - ==================================================
+2025-05-09 21:43:50,148 - INFO - ==================================================
+2025-05-09 21:43:50,148 - INFO - Received frame for processing
+2025-05-09 21:43:50,148 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:50,148 - INFO - Read 413008 bytes from file
+2025-05-09 21:43:50,148 - INFO - Created numpy array with shape: (413008,)
+2025-05-09 21:43:50,161 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,161 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,179 - INFO - Enhanced image created
+2025-05-09 21:43:50,267 - INFO - Pose detected!
+2025-05-09 21:43:50,276 - INFO - Found 33 landmarks
+2025-05-09 21:43:50,276 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:50,276 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:50,277 - INFO - ==================================================
+2025-05-09 21:43:50,281 - INFO - Test endpoint called
+2025-05-09 21:43:50,282 - INFO - Test endpoint called
+2025-05-09 21:43:50,443 - INFO - ==================================================
+2025-05-09 21:43:50,443 - INFO - Received frame for processing
+2025-05-09 21:43:50,443 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:50,443 - INFO - Read 411193 bytes from file
+2025-05-09 21:43:50,443 - INFO - Created numpy array with shape: (411193,)
+2025-05-09 21:43:50,457 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,457 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,474 - INFO - Enhanced image created
+2025-05-09 21:43:50,556 - INFO - Pose detected!
+2025-05-09 21:43:50,565 - INFO - Found 33 landmarks
+2025-05-09 21:43:50,566 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:50,566 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:50,566 - INFO - ==================================================
+2025-05-09 21:43:50,571 - INFO - ==================================================
+2025-05-09 21:43:50,571 - INFO - Received frame for processing
+2025-05-09 21:43:50,571 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:50,572 - INFO - Read 412944 bytes from file
+2025-05-09 21:43:50,572 - INFO - Created numpy array with shape: (412944,)
+2025-05-09 21:43:50,582 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,582 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,601 - INFO - Enhanced image created
+2025-05-09 21:43:50,691 - INFO - Pose detected!
+2025-05-09 21:43:50,700 - INFO - Found 33 landmarks
+2025-05-09 21:43:50,701 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:50,701 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:50,701 - INFO - ==================================================
+2025-05-09 21:43:50,706 - INFO - Test endpoint called
+2025-05-09 21:43:50,707 - INFO - Test endpoint called
+2025-05-09 21:43:50,812 - INFO - ==================================================
+2025-05-09 21:43:50,812 - INFO - Received frame for processing
+2025-05-09 21:43:50,812 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:50,812 - INFO - Read 420852 bytes from file
+2025-05-09 21:43:50,812 - INFO - Created numpy array with shape: (420852,)
+2025-05-09 21:43:50,833 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,833 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,848 - INFO - Enhanced image created
+2025-05-09 21:43:50,930 - INFO - Pose detected!
+2025-05-09 21:43:50,947 - INFO - Found 33 landmarks
+2025-05-09 21:43:50,948 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:50,948 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:50,948 - INFO - ==================================================
+2025-05-09 21:43:50,957 - INFO - ==================================================
+2025-05-09 21:43:50,958 - INFO - Received frame for processing
+2025-05-09 21:43:50,958 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:50,958 - INFO - Read 416489 bytes from file
+2025-05-09 21:43:50,958 - INFO - Created numpy array with shape: (416489,)
+2025-05-09 21:43:50,979 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,980 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:50,996 - INFO - Enhanced image created
+2025-05-09 21:43:51,090 - INFO - Pose detected!
+2025-05-09 21:43:51,099 - INFO - Found 33 landmarks
+2025-05-09 21:43:51,100 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:51,100 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:51,100 - INFO - ==================================================
+2025-05-09 21:43:51,104 - INFO - Test endpoint called
+2025-05-09 21:43:51,105 - INFO - Test endpoint called
+2025-05-09 21:43:51,230 - INFO - Test endpoint called
+2025-05-09 21:43:51,231 - INFO - ==================================================
+2025-05-09 21:43:51,231 - INFO - Received frame for processing
+2025-05-09 21:43:51,231 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:51,232 - INFO - Read 432370 bytes from file
+2025-05-09 21:43:51,232 - INFO - Created numpy array with shape: (432370,)
+2025-05-09 21:43:51,244 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,245 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,263 - INFO - Enhanced image created
+2025-05-09 21:43:51,345 - INFO - Pose detected!
+2025-05-09 21:43:51,355 - INFO - Found 33 landmarks
+2025-05-09 21:43:51,355 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:51,355 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:51,355 - INFO - ==================================================
+2025-05-09 21:43:51,360 - INFO - ==================================================
+2025-05-09 21:43:51,361 - INFO - Received frame for processing
+2025-05-09 21:43:51,361 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:51,361 - INFO - Read 438017 bytes from file
+2025-05-09 21:43:51,361 - INFO - Created numpy array with shape: (438017,)
+2025-05-09 21:43:51,372 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,372 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,392 - INFO - Enhanced image created
+2025-05-09 21:43:51,489 - INFO - Pose detected!
+2025-05-09 21:43:51,500 - INFO - Found 33 landmarks
+2025-05-09 21:43:51,500 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:51,500 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:51,500 - INFO - ==================================================
+2025-05-09 21:43:51,506 - INFO - Test endpoint called
+2025-05-09 21:43:51,508 - INFO - ==================================================
+2025-05-09 21:43:51,508 - INFO - Received frame for processing
+2025-05-09 21:43:51,508 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:51,508 - INFO - Read 439167 bytes from file
+2025-05-09 21:43:51,508 - INFO - Created numpy array with shape: (439167,)
+2025-05-09 21:43:51,519 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,519 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,536 - INFO - Enhanced image created
+2025-05-09 21:43:51,630 - INFO - Pose detected!
+2025-05-09 21:43:51,640 - INFO - Found 33 landmarks
+2025-05-09 21:43:51,640 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:51,640 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:51,640 - INFO - ==================================================
+2025-05-09 21:43:51,646 - INFO - Test endpoint called
+2025-05-09 21:43:51,648 - INFO - ==================================================
+2025-05-09 21:43:51,648 - INFO - Received frame for processing
+2025-05-09 21:43:51,648 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:51,648 - INFO - Read 418909 bytes from file
+2025-05-09 21:43:51,648 - INFO - Created numpy array with shape: (418909,)
+2025-05-09 21:43:51,660 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,660 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,675 - INFO - Enhanced image created
+2025-05-09 21:43:51,765 - INFO - Pose detected!
+2025-05-09 21:43:51,775 - INFO - Found 33 landmarks
+2025-05-09 21:43:51,775 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:51,775 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:51,775 - INFO - ==================================================
+2025-05-09 21:43:51,781 - INFO - Test endpoint called
+2025-05-09 21:43:51,783 - INFO - ==================================================
+2025-05-09 21:43:51,783 - INFO - Received frame for processing
+2025-05-09 21:43:51,783 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:51,783 - INFO - Read 406896 bytes from file
+2025-05-09 21:43:51,783 - INFO - Created numpy array with shape: (406896,)
+2025-05-09 21:43:51,794 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,794 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,809 - INFO - Enhanced image created
+2025-05-09 21:43:51,907 - INFO - Pose detected!
+2025-05-09 21:43:51,918 - INFO - Found 33 landmarks
+2025-05-09 21:43:51,918 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:51,918 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:51,918 - INFO - ==================================================
+2025-05-09 21:43:51,966 - INFO - ==================================================
+2025-05-09 21:43:51,967 - INFO - Received frame for processing
+2025-05-09 21:43:51,967 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:51,967 - INFO - Read 400244 bytes from file
+2025-05-09 21:43:51,967 - INFO - Created numpy array with shape: (400244,)
+2025-05-09 21:43:51,980 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,980 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:51,997 - INFO - Enhanced image created
+2025-05-09 21:43:52,097 - INFO - Pose detected!
+2025-05-09 21:43:52,108 - INFO - Found 33 landmarks
+2025-05-09 21:43:52,109 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:52,109 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:52,109 - INFO - ==================================================
+2025-05-09 21:43:52,113 - INFO - Test endpoint called
+2025-05-09 21:43:52,114 - INFO - Test endpoint called
+2025-05-09 21:43:52,302 - INFO - ==================================================
+2025-05-09 21:43:52,302 - INFO - Received frame for processing
+2025-05-09 21:43:52,302 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:52,302 - INFO - Read 369795 bytes from file
+2025-05-09 21:43:52,302 - INFO - Created numpy array with shape: (369795,)
+2025-05-09 21:43:52,326 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:52,326 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:52,342 - INFO - Enhanced image created
+2025-05-09 21:43:52,433 - INFO - Pose detected!
+2025-05-09 21:43:52,453 - INFO - Found 33 landmarks
+2025-05-09 21:43:52,453 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:52,453 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:43:52,453 - INFO - ==================================================
+2025-05-09 21:43:52,466 - INFO - Test endpoint called
+2025-05-09 21:43:52,469 - INFO - ==================================================
+2025-05-09 21:43:52,469 - INFO - Received frame for processing
+2025-05-09 21:43:52,470 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:52,470 - INFO - Read 372073 bytes from file
+2025-05-09 21:43:52,470 - INFO - Created numpy array with shape: (372073,)
+2025-05-09 21:43:52,485 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:52,486 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:52,505 - INFO - Enhanced image created
+2025-05-09 21:43:52,600 - INFO - Pose detected!
+2025-05-09 21:43:52,609 - INFO - Found 33 landmarks
+2025-05-09 21:43:52,609 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:52,610 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:52,610 - INFO - ==================================================
+2025-05-09 21:43:52,673 - INFO - ==================================================
+2025-05-09 21:43:52,674 - INFO - Received frame for processing
+2025-05-09 21:43:52,674 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:52,674 - INFO - Read 401896 bytes from file
+2025-05-09 21:43:52,674 - INFO - Created numpy array with shape: (401896,)
+2025-05-09 21:43:52,686 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:52,686 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:52,709 - INFO - Enhanced image created
+2025-05-09 21:43:52,808 - INFO - Pose detected!
+2025-05-09 21:43:52,818 - INFO - Found 33 landmarks
+2025-05-09 21:43:52,818 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:52,818 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:52,818 - INFO - ==================================================
+2025-05-09 21:43:52,823 - INFO - Test endpoint called
+2025-05-09 21:43:52,877 - INFO - Test endpoint called
+2025-05-09 21:43:52,974 - INFO - Test endpoint called
+2025-05-09 21:43:52,977 - INFO - ==================================================
+2025-05-09 21:43:52,977 - INFO - Received frame for processing
+2025-05-09 21:43:52,977 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:52,977 - INFO - Read 416471 bytes from file
+2025-05-09 21:43:52,978 - INFO - Created numpy array with shape: (416471,)
+2025-05-09 21:43:52,997 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:52,997 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,013 - INFO - Enhanced image created
+2025-05-09 21:43:53,104 - INFO - Pose detected!
+2025-05-09 21:43:53,115 - INFO - Found 33 landmarks
+2025-05-09 21:43:53,116 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:53,116 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:53,116 - INFO - ==================================================
+2025-05-09 21:43:53,122 - INFO - ==================================================
+2025-05-09 21:43:53,122 - INFO - Received frame for processing
+2025-05-09 21:43:53,122 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:53,122 - INFO - Read 413734 bytes from file
+2025-05-09 21:43:53,123 - INFO - Created numpy array with shape: (413734,)
+2025-05-09 21:43:53,138 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,138 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,155 - INFO - Enhanced image created
+2025-05-09 21:43:53,251 - INFO - Pose detected!
+2025-05-09 21:43:53,261 - INFO - Found 33 landmarks
+2025-05-09 21:43:53,261 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:53,261 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:53,261 - INFO - ==================================================
+2025-05-09 21:43:53,268 - INFO - ==================================================
+2025-05-09 21:43:53,269 - INFO - Received frame for processing
+2025-05-09 21:43:53,269 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:53,269 - INFO - Read 430505 bytes from file
+2025-05-09 21:43:53,269 - INFO - Created numpy array with shape: (430505,)
+2025-05-09 21:43:53,281 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,281 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,301 - INFO - Enhanced image created
+2025-05-09 21:43:53,384 - INFO - Pose detected!
+2025-05-09 21:43:53,394 - INFO - Found 33 landmarks
+2025-05-09 21:43:53,394 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:53,394 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:53,394 - INFO - ==================================================
+2025-05-09 21:43:53,399 - INFO - Test endpoint called
+2025-05-09 21:43:53,400 - INFO - Test endpoint called
+2025-05-09 21:43:53,534 - INFO - Test endpoint called
+2025-05-09 21:43:53,536 - INFO - ==================================================
+2025-05-09 21:43:53,536 - INFO - Received frame for processing
+2025-05-09 21:43:53,536 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:53,537 - INFO - Read 409797 bytes from file
+2025-05-09 21:43:53,537 - INFO - Created numpy array with shape: (409797,)
+2025-05-09 21:43:53,557 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,557 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,572 - INFO - Enhanced image created
+2025-05-09 21:43:53,665 - INFO - Pose detected!
+2025-05-09 21:43:53,683 - INFO - Found 33 landmarks
+2025-05-09 21:43:53,683 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:53,683 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:43:53,684 - INFO - ==================================================
+2025-05-09 21:43:53,699 - INFO - ==================================================
+2025-05-09 21:43:53,699 - INFO - Received frame for processing
+2025-05-09 21:43:53,699 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:53,699 - INFO - Read 407425 bytes from file
+2025-05-09 21:43:53,699 - INFO - Created numpy array with shape: (407425,)
+2025-05-09 21:43:53,715 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,716 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,731 - INFO - Enhanced image created
+2025-05-09 21:43:53,843 - INFO - Pose detected!
+2025-05-09 21:43:53,852 - INFO - Found 33 landmarks
+2025-05-09 21:43:53,853 - INFO - Frame processed in 0.14 seconds
+2025-05-09 21:43:53,853 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:43:53,853 - INFO - ==================================================
+2025-05-09 21:43:53,858 - INFO - ==================================================
+2025-05-09 21:43:53,858 - INFO - Received frame for processing
+2025-05-09 21:43:53,858 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:53,858 - INFO - Read 412583 bytes from file
+2025-05-09 21:43:53,858 - INFO - Created numpy array with shape: (412583,)
+2025-05-09 21:43:53,869 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,869 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:53,890 - INFO - Enhanced image created
+2025-05-09 21:43:53,983 - INFO - Pose detected!
+2025-05-09 21:43:53,993 - INFO - Found 33 landmarks
+2025-05-09 21:43:53,993 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:53,993 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:53,993 - INFO - ==================================================
+2025-05-09 21:43:53,998 - INFO - Test endpoint called
+2025-05-09 21:43:53,999 - INFO - Test endpoint called
+2025-05-09 21:43:54,132 - INFO - ==================================================
+2025-05-09 21:43:54,132 - INFO - Received frame for processing
+2025-05-09 21:43:54,132 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:54,132 - INFO - Read 412427 bytes from file
+2025-05-09 21:43:54,132 - INFO - Created numpy array with shape: (412427,)
+2025-05-09 21:43:54,144 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,145 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,158 - INFO - Enhanced image created
+2025-05-09 21:43:54,252 - INFO - Pose detected!
+2025-05-09 21:43:54,269 - INFO - Found 33 landmarks
+2025-05-09 21:43:54,269 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:54,270 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:54,270 - INFO - ==================================================
+2025-05-09 21:43:54,281 - INFO - Test endpoint called
+2025-05-09 21:43:54,283 - INFO - ==================================================
+2025-05-09 21:43:54,284 - INFO - Received frame for processing
+2025-05-09 21:43:54,284 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:54,284 - INFO - Read 416890 bytes from file
+2025-05-09 21:43:54,284 - INFO - Created numpy array with shape: (416890,)
+2025-05-09 21:43:54,301 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,301 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,316 - INFO - Enhanced image created
+2025-05-09 21:43:54,393 - INFO - Pose detected!
+2025-05-09 21:43:54,402 - INFO - Found 33 landmarks
+2025-05-09 21:43:54,402 - INFO - Frame processed in 0.10 seconds
+2025-05-09 21:43:54,402 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:54,402 - INFO - ==================================================
+2025-05-09 21:43:54,409 - INFO - Test endpoint called
+2025-05-09 21:43:54,410 - INFO - ==================================================
+2025-05-09 21:43:54,411 - INFO - Received frame for processing
+2025-05-09 21:43:54,411 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:54,411 - INFO - Read 428507 bytes from file
+2025-05-09 21:43:54,411 - INFO - Created numpy array with shape: (428507,)
+2025-05-09 21:43:54,421 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,421 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,436 - INFO - Enhanced image created
+2025-05-09 21:43:54,520 - INFO - Pose detected!
+2025-05-09 21:43:54,530 - INFO - Found 33 landmarks
+2025-05-09 21:43:54,530 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:54,530 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:54,530 - INFO - ==================================================
+2025-05-09 21:43:54,536 - INFO - Test endpoint called
+2025-05-09 21:43:54,537 - INFO - ==================================================
+2025-05-09 21:43:54,538 - INFO - Received frame for processing
+2025-05-09 21:43:54,538 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:54,538 - INFO - Read 423439 bytes from file
+2025-05-09 21:43:54,538 - INFO - Created numpy array with shape: (423439,)
+2025-05-09 21:43:54,548 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,548 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,561 - INFO - Enhanced image created
+2025-05-09 21:43:54,647 - INFO - Pose detected!
+2025-05-09 21:43:54,656 - INFO - Found 33 landmarks
+2025-05-09 21:43:54,656 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:54,656 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:54,656 - INFO - ==================================================
+2025-05-09 21:43:54,663 - INFO - ==================================================
+2025-05-09 21:43:54,663 - INFO - Received frame for processing
+2025-05-09 21:43:54,663 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:54,664 - INFO - Read 425622 bytes from file
+2025-05-09 21:43:54,664 - INFO - Created numpy array with shape: (425622,)
+2025-05-09 21:43:54,675 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,675 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:54,690 - INFO - Enhanced image created
+2025-05-09 21:43:54,784 - INFO - Pose detected!
+2025-05-09 21:43:54,793 - INFO - Found 33 landmarks
+2025-05-09 21:43:54,793 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:54,793 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:54,793 - INFO - ==================================================
+2025-05-09 21:43:56,180 - INFO - Test endpoint called
+2025-05-09 21:43:56,182 - INFO - Test endpoint called
+2025-05-09 21:43:56,302 - INFO - ==================================================
+2025-05-09 21:43:56,302 - INFO - Received frame for processing
+2025-05-09 21:43:56,302 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:56,302 - INFO - Read 57327 bytes from file
+2025-05-09 21:43:56,303 - INFO - Created numpy array with shape: (57327,)
+2025-05-09 21:43:56,315 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:56,315 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:56,336 - INFO - Enhanced image created
+2025-05-09 21:43:56,433 - INFO - No pose detected in frame
+2025-05-09 21:43:56,433 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:56,433 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:56,433 - INFO - ==================================================
+2025-05-09 21:43:56,436 - INFO - Test endpoint called
+2025-05-09 21:43:56,439 - INFO - ==================================================
+2025-05-09 21:43:56,439 - INFO - Received frame for processing
+2025-05-09 21:43:56,439 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:56,439 - INFO - Read 416123 bytes from file
+2025-05-09 21:43:56,439 - INFO - Created numpy array with shape: (416123,)
+2025-05-09 21:43:56,450 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:56,450 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:56,469 - INFO - Enhanced image created
+2025-05-09 21:43:56,602 - INFO - Pose detected!
+2025-05-09 21:43:56,613 - INFO - Found 33 landmarks
+2025-05-09 21:43:56,613 - INFO - Frame processed in 0.16 seconds
+2025-05-09 21:43:56,613 - INFO - Total request processing time: 0.17 seconds
+2025-05-09 21:43:56,613 - INFO - ==================================================
+2025-05-09 21:43:56,620 - INFO - Test endpoint called
+2025-05-09 21:43:56,621 - INFO - ==================================================
+2025-05-09 21:43:56,621 - INFO - Received frame for processing
+2025-05-09 21:43:56,621 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:56,621 - INFO - Read 416123 bytes from file
+2025-05-09 21:43:56,621 - INFO - Created numpy array with shape: (416123,)
+2025-05-09 21:43:56,631 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:56,631 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:56,645 - INFO - Enhanced image created
+2025-05-09 21:43:56,737 - INFO - Pose detected!
+2025-05-09 21:43:56,756 - INFO - Found 33 landmarks
+2025-05-09 21:43:56,756 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:56,756 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:56,756 - INFO - ==================================================
+2025-05-09 21:43:56,833 - INFO - Test endpoint called
+2025-05-09 21:43:56,835 - INFO - ==================================================
+2025-05-09 21:43:56,836 - INFO - Received frame for processing
+2025-05-09 21:43:56,836 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:56,836 - INFO - Read 469451 bytes from file
+2025-05-09 21:43:56,836 - INFO - Created numpy array with shape: (469451,)
+2025-05-09 21:43:56,847 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:56,848 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:56,866 - INFO - Enhanced image created
+2025-05-09 21:43:56,991 - INFO - Pose detected!
+2025-05-09 21:43:57,005 - INFO - Found 33 landmarks
+2025-05-09 21:43:57,006 - INFO - Frame processed in 0.16 seconds
+2025-05-09 21:43:57,006 - INFO - Total request processing time: 0.17 seconds
+2025-05-09 21:43:57,006 - INFO - ==================================================
+2025-05-09 21:43:57,015 - INFO - Test endpoint called
+2025-05-09 21:43:57,017 - INFO - ==================================================
+2025-05-09 21:43:57,017 - INFO - Received frame for processing
+2025-05-09 21:43:57,017 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:57,018 - INFO - Read 470059 bytes from file
+2025-05-09 21:43:57,018 - INFO - Created numpy array with shape: (470059,)
+2025-05-09 21:43:57,030 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,030 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,056 - INFO - Enhanced image created
+2025-05-09 21:43:57,175 - INFO - Pose detected!
+2025-05-09 21:43:57,187 - INFO - Found 33 landmarks
+2025-05-09 21:43:57,187 - INFO - Frame processed in 0.16 seconds
+2025-05-09 21:43:57,187 - INFO - Total request processing time: 0.17 seconds
+2025-05-09 21:43:57,187 - INFO - ==================================================
+2025-05-09 21:43:57,196 - INFO - ==================================================
+2025-05-09 21:43:57,196 - INFO - Received frame for processing
+2025-05-09 21:43:57,196 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:57,196 - INFO - Read 478964 bytes from file
+2025-05-09 21:43:57,196 - INFO - Created numpy array with shape: (478964,)
+2025-05-09 21:43:57,208 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,208 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,220 - INFO - Enhanced image created
+2025-05-09 21:43:57,312 - INFO - Pose detected!
+2025-05-09 21:43:57,324 - INFO - Found 33 landmarks
+2025-05-09 21:43:57,324 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:57,324 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:57,324 - INFO - ==================================================
+2025-05-09 21:43:57,332 - INFO - Test endpoint called
+2025-05-09 21:43:57,391 - INFO - Test endpoint called
+2025-05-09 21:43:57,407 - INFO - ==================================================
+2025-05-09 21:43:57,407 - INFO - Received frame for processing
+2025-05-09 21:43:57,407 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:57,407 - INFO - Read 476287 bytes from file
+2025-05-09 21:43:57,407 - INFO - Created numpy array with shape: (476287,)
+2025-05-09 21:43:57,418 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,418 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,435 - INFO - Enhanced image created
+2025-05-09 21:43:57,537 - INFO - Pose detected!
+2025-05-09 21:43:57,548 - INFO - Found 33 landmarks
+2025-05-09 21:43:57,548 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:57,548 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:57,548 - INFO - ==================================================
+2025-05-09 21:43:57,555 - INFO - Test endpoint called
+2025-05-09 21:43:57,557 - INFO - ==================================================
+2025-05-09 21:43:57,557 - INFO - Received frame for processing
+2025-05-09 21:43:57,557 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:57,557 - INFO - Read 484220 bytes from file
+2025-05-09 21:43:57,557 - INFO - Created numpy array with shape: (484220,)
+2025-05-09 21:43:57,568 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,568 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,583 - INFO - Enhanced image created
+2025-05-09 21:43:57,684 - INFO - Pose detected!
+2025-05-09 21:43:57,696 - INFO - Found 33 landmarks
+2025-05-09 21:43:57,696 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:57,696 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:57,696 - INFO - ==================================================
+2025-05-09 21:43:57,705 - INFO - ==================================================
+2025-05-09 21:43:57,705 - INFO - Received frame for processing
+2025-05-09 21:43:57,705 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:57,705 - INFO - Read 479123 bytes from file
+2025-05-09 21:43:57,705 - INFO - Created numpy array with shape: (479123,)
+2025-05-09 21:43:57,716 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,716 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,732 - INFO - Enhanced image created
+2025-05-09 21:43:57,832 - INFO - Pose detected!
+2025-05-09 21:43:57,844 - INFO - Found 33 landmarks
+2025-05-09 21:43:57,844 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:57,844 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:57,844 - INFO - ==================================================
+2025-05-09 21:43:57,850 - INFO - Test endpoint called
+2025-05-09 21:43:57,869 - INFO - Test endpoint called
+2025-05-09 21:43:57,898 - INFO - ==================================================
+2025-05-09 21:43:57,898 - INFO - Received frame for processing
+2025-05-09 21:43:57,898 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:57,899 - INFO - Read 484710 bytes from file
+2025-05-09 21:43:57,899 - INFO - Created numpy array with shape: (484710,)
+2025-05-09 21:43:57,918 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,918 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:57,947 - INFO - Enhanced image created
+2025-05-09 21:43:58,058 - INFO - Pose detected!
+2025-05-09 21:43:58,073 - INFO - Found 33 landmarks
+2025-05-09 21:43:58,073 - INFO - Frame processed in 0.16 seconds
+2025-05-09 21:43:58,073 - INFO - Total request processing time: 0.18 seconds
+2025-05-09 21:43:58,073 - INFO - ==================================================
+2025-05-09 21:43:58,081 - INFO - Test endpoint called
+2025-05-09 21:43:58,085 - INFO - ==================================================
+2025-05-09 21:43:58,086 - INFO - Received frame for processing
+2025-05-09 21:43:58,086 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:58,086 - INFO - Read 477932 bytes from file
+2025-05-09 21:43:58,087 - INFO - Created numpy array with shape: (477932,)
+2025-05-09 21:43:58,100 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,101 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,115 - INFO - Enhanced image created
+2025-05-09 21:43:58,220 - INFO - Pose detected!
+2025-05-09 21:43:58,230 - INFO - Found 33 landmarks
+2025-05-09 21:43:58,230 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:58,230 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:58,230 - INFO - ==================================================
+2025-05-09 21:43:58,238 - INFO - ==================================================
+2025-05-09 21:43:58,238 - INFO - Received frame for processing
+2025-05-09 21:43:58,238 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:58,238 - INFO - Read 477504 bytes from file
+2025-05-09 21:43:58,239 - INFO - Created numpy array with shape: (477504,)
+2025-05-09 21:43:58,249 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,250 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,264 - INFO - Enhanced image created
+2025-05-09 21:43:58,360 - INFO - Pose detected!
+2025-05-09 21:43:58,370 - INFO - Found 33 landmarks
+2025-05-09 21:43:58,370 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:58,370 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:58,370 - INFO - ==================================================
+2025-05-09 21:43:58,376 - INFO - Test endpoint called
+2025-05-09 21:43:58,409 - INFO - Test endpoint called
+2025-05-09 21:43:58,422 - INFO - ==================================================
+2025-05-09 21:43:58,422 - INFO - Received frame for processing
+2025-05-09 21:43:58,422 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:58,422 - INFO - Read 471449 bytes from file
+2025-05-09 21:43:58,422 - INFO - Created numpy array with shape: (471449,)
+2025-05-09 21:43:58,433 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,434 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,450 - INFO - Enhanced image created
+2025-05-09 21:43:58,533 - INFO - Pose detected!
+2025-05-09 21:43:58,543 - INFO - Found 33 landmarks
+2025-05-09 21:43:58,543 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:58,543 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:58,543 - INFO - ==================================================
+2025-05-09 21:43:58,548 - INFO - Test endpoint called
+2025-05-09 21:43:58,551 - INFO - ==================================================
+2025-05-09 21:43:58,551 - INFO - Received frame for processing
+2025-05-09 21:43:58,552 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:58,552 - INFO - Read 471449 bytes from file
+2025-05-09 21:43:58,552 - INFO - Created numpy array with shape: (471449,)
+2025-05-09 21:43:58,563 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,564 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,579 - INFO - Enhanced image created
+2025-05-09 21:43:58,677 - INFO - Pose detected!
+2025-05-09 21:43:58,689 - INFO - Found 33 landmarks
+2025-05-09 21:43:58,689 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:58,689 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:58,689 - INFO - ==================================================
+2025-05-09 21:43:58,697 - INFO - ==================================================
+2025-05-09 21:43:58,697 - INFO - Received frame for processing
+2025-05-09 21:43:58,697 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:58,697 - INFO - Read 485988 bytes from file
+2025-05-09 21:43:58,697 - INFO - Created numpy array with shape: (485988,)
+2025-05-09 21:43:58,709 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,709 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,724 - INFO - Enhanced image created
+2025-05-09 21:43:58,811 - INFO - Pose detected!
+2025-05-09 21:43:58,821 - INFO - Found 33 landmarks
+2025-05-09 21:43:58,821 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:58,821 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:58,821 - INFO - ==================================================
+2025-05-09 21:43:58,828 - INFO - Test endpoint called
+2025-05-09 21:43:58,848 - INFO - Test endpoint called
+2025-05-09 21:43:58,936 - INFO - ==================================================
+2025-05-09 21:43:58,936 - INFO - Received frame for processing
+2025-05-09 21:43:58,937 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:58,937 - INFO - Read 484769 bytes from file
+2025-05-09 21:43:58,937 - INFO - Created numpy array with shape: (484769,)
+2025-05-09 21:43:58,960 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,961 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:58,977 - INFO - Enhanced image created
+2025-05-09 21:43:59,074 - INFO - Pose detected!
+2025-05-09 21:43:59,085 - INFO - Found 33 landmarks
+2025-05-09 21:43:59,086 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:43:59,086 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:43:59,086 - INFO - ==================================================
+2025-05-09 21:43:59,092 - INFO - Test endpoint called
+2025-05-09 21:43:59,095 - INFO - ==================================================
+2025-05-09 21:43:59,095 - INFO - Received frame for processing
+2025-05-09 21:43:59,095 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:59,095 - INFO - Read 483550 bytes from file
+2025-05-09 21:43:59,095 - INFO - Created numpy array with shape: (483550,)
+2025-05-09 21:43:59,106 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,106 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,119 - INFO - Enhanced image created
+2025-05-09 21:43:59,205 - INFO - Pose detected!
+2025-05-09 21:43:59,215 - INFO - Found 33 landmarks
+2025-05-09 21:43:59,215 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:59,215 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:59,215 - INFO - ==================================================
+2025-05-09 21:43:59,246 - INFO - Test endpoint called
+2025-05-09 21:43:59,251 - INFO - ==================================================
+2025-05-09 21:43:59,251 - INFO - Received frame for processing
+2025-05-09 21:43:59,251 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:59,252 - INFO - Read 478278 bytes from file
+2025-05-09 21:43:59,252 - INFO - Created numpy array with shape: (478278,)
+2025-05-09 21:43:59,275 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,275 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,292 - INFO - Enhanced image created
+2025-05-09 21:43:59,377 - INFO - Pose detected!
+2025-05-09 21:43:59,387 - INFO - Found 33 landmarks
+2025-05-09 21:43:59,387 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:59,387 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:59,387 - INFO - ==================================================
+2025-05-09 21:43:59,394 - INFO - Test endpoint called
+2025-05-09 21:43:59,397 - INFO - ==================================================
+2025-05-09 21:43:59,397 - INFO - Received frame for processing
+2025-05-09 21:43:59,397 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:59,398 - INFO - Read 465334 bytes from file
+2025-05-09 21:43:59,398 - INFO - Created numpy array with shape: (465334,)
+2025-05-09 21:43:59,409 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,409 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,424 - INFO - Enhanced image created
+2025-05-09 21:43:59,514 - INFO - Pose detected!
+2025-05-09 21:43:59,523 - INFO - Found 33 landmarks
+2025-05-09 21:43:59,524 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:59,524 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:43:59,524 - INFO - ==================================================
+2025-05-09 21:43:59,530 - INFO - Test endpoint called
+2025-05-09 21:43:59,532 - INFO - ==================================================
+2025-05-09 21:43:59,532 - INFO - Received frame for processing
+2025-05-09 21:43:59,532 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:59,532 - INFO - Read 458493 bytes from file
+2025-05-09 21:43:59,532 - INFO - Created numpy array with shape: (458493,)
+2025-05-09 21:43:59,543 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,544 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,559 - INFO - Enhanced image created
+2025-05-09 21:43:59,643 - INFO - Pose detected!
+2025-05-09 21:43:59,655 - INFO - Found 33 landmarks
+2025-05-09 21:43:59,655 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:43:59,655 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:43:59,656 - INFO - ==================================================
+2025-05-09 21:43:59,683 - INFO - ==================================================
+2025-05-09 21:43:59,683 - INFO - Received frame for processing
+2025-05-09 21:43:59,683 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:59,683 - INFO - Read 456677 bytes from file
+2025-05-09 21:43:59,684 - INFO - Created numpy array with shape: (456677,)
+2025-05-09 21:43:59,697 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,697 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,716 - INFO - Enhanced image created
+2025-05-09 21:43:59,811 - INFO - Pose detected!
+2025-05-09 21:43:59,823 - INFO - Found 33 landmarks
+2025-05-09 21:43:59,823 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:43:59,823 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:43:59,823 - INFO - ==================================================
+2025-05-09 21:43:59,829 - INFO - Test endpoint called
+2025-05-09 21:43:59,867 - INFO - Test endpoint called
+2025-05-09 21:43:59,901 - INFO - ==================================================
+2025-05-09 21:43:59,901 - INFO - Received frame for processing
+2025-05-09 21:43:59,901 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:43:59,901 - INFO - Read 455624 bytes from file
+2025-05-09 21:43:59,901 - INFO - Created numpy array with shape: (455624,)
+2025-05-09 21:43:59,923 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,924 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:43:59,940 - INFO - Enhanced image created
+2025-05-09 21:44:00,033 - INFO - Pose detected!
+2025-05-09 21:44:00,054 - INFO - Found 33 landmarks
+2025-05-09 21:44:00,054 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:00,054 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:44:00,054 - INFO - ==================================================
+2025-05-09 21:44:00,070 - INFO - Test endpoint called
+2025-05-09 21:44:00,072 - INFO - ==================================================
+2025-05-09 21:44:00,072 - INFO - Received frame for processing
+2025-05-09 21:44:00,072 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:00,072 - INFO - Read 451847 bytes from file
+2025-05-09 21:44:00,072 - INFO - Created numpy array with shape: (451847,)
+2025-05-09 21:44:00,084 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,085 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,103 - INFO - Enhanced image created
+2025-05-09 21:44:00,200 - INFO - Pose detected!
+2025-05-09 21:44:00,209 - INFO - Found 33 landmarks
+2025-05-09 21:44:00,210 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:00,210 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:00,210 - INFO - ==================================================
+2025-05-09 21:44:00,215 - INFO - Test endpoint called
+2025-05-09 21:44:00,217 - INFO - ==================================================
+2025-05-09 21:44:00,217 - INFO - Received frame for processing
+2025-05-09 21:44:00,217 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:00,217 - INFO - Read 453523 bytes from file
+2025-05-09 21:44:00,217 - INFO - Created numpy array with shape: (453523,)
+2025-05-09 21:44:00,230 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,230 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,248 - INFO - Enhanced image created
+2025-05-09 21:44:00,340 - INFO - Pose detected!
+2025-05-09 21:44:00,350 - INFO - Found 33 landmarks
+2025-05-09 21:44:00,350 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:00,350 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:00,351 - INFO - ==================================================
+2025-05-09 21:44:00,357 - INFO - Test endpoint called
+2025-05-09 21:44:00,359 - INFO - ==================================================
+2025-05-09 21:44:00,359 - INFO - Received frame for processing
+2025-05-09 21:44:00,359 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:00,360 - INFO - Read 451888 bytes from file
+2025-05-09 21:44:00,360 - INFO - Created numpy array with shape: (451888,)
+2025-05-09 21:44:00,371 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,371 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,386 - INFO - Enhanced image created
+2025-05-09 21:44:00,483 - INFO - Pose detected!
+2025-05-09 21:44:00,495 - INFO - Found 33 landmarks
+2025-05-09 21:44:00,495 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:00,495 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:00,495 - INFO - ==================================================
+2025-05-09 21:44:00,508 - INFO - ==================================================
+2025-05-09 21:44:00,509 - INFO - Received frame for processing
+2025-05-09 21:44:00,509 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:00,509 - INFO - Read 454737 bytes from file
+2025-05-09 21:44:00,509 - INFO - Created numpy array with shape: (454737,)
+2025-05-09 21:44:00,521 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,521 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,536 - INFO - Enhanced image created
+2025-05-09 21:44:00,629 - INFO - Pose detected!
+2025-05-09 21:44:00,639 - INFO - Found 33 landmarks
+2025-05-09 21:44:00,639 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:00,639 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:00,640 - INFO - ==================================================
+2025-05-09 21:44:00,646 - INFO - Test endpoint called
+2025-05-09 21:44:00,647 - INFO - Test endpoint called
+2025-05-09 21:44:00,743 - INFO - ==================================================
+2025-05-09 21:44:00,743 - INFO - Received frame for processing
+2025-05-09 21:44:00,743 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:00,743 - INFO - Read 455102 bytes from file
+2025-05-09 21:44:00,743 - INFO - Created numpy array with shape: (455102,)
+2025-05-09 21:44:00,755 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,755 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,768 - INFO - Enhanced image created
+2025-05-09 21:44:00,847 - INFO - Pose detected!
+2025-05-09 21:44:00,866 - INFO - Found 33 landmarks
+2025-05-09 21:44:00,866 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:44:00,866 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:44:00,867 - INFO - ==================================================
+2025-05-09 21:44:00,877 - INFO - ==================================================
+2025-05-09 21:44:00,877 - INFO - Received frame for processing
+2025-05-09 21:44:00,877 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:00,877 - INFO - Read 455102 bytes from file
+2025-05-09 21:44:00,877 - INFO - Created numpy array with shape: (455102,)
+2025-05-09 21:44:00,898 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,898 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:00,912 - INFO - Enhanced image created
+2025-05-09 21:44:01,010 - INFO - Pose detected!
+2025-05-09 21:44:01,020 - INFO - Found 33 landmarks
+2025-05-09 21:44:01,021 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:01,021 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:01,021 - INFO - ==================================================
+2025-05-09 21:44:01,025 - INFO - Test endpoint called
+2025-05-09 21:44:01,026 - INFO - Test endpoint called
+2025-05-09 21:44:01,089 - INFO - ==================================================
+2025-05-09 21:44:01,090 - INFO - Received frame for processing
+2025-05-09 21:44:01,090 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:01,090 - INFO - Read 448205 bytes from file
+2025-05-09 21:44:01,090 - INFO - Created numpy array with shape: (448205,)
+2025-05-09 21:44:01,100 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,101 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,117 - INFO - Enhanced image created
+2025-05-09 21:44:01,227 - INFO - Pose detected!
+2025-05-09 21:44:01,237 - INFO - Found 33 landmarks
+2025-05-09 21:44:01,237 - INFO - Frame processed in 0.14 seconds
+2025-05-09 21:44:01,238 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:44:01,238 - INFO - ==================================================
+2025-05-09 21:44:01,244 - INFO - Test endpoint called
+2025-05-09 21:44:01,246 - INFO - ==================================================
+2025-05-09 21:44:01,246 - INFO - Received frame for processing
+2025-05-09 21:44:01,246 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:01,246 - INFO - Read 454879 bytes from file
+2025-05-09 21:44:01,246 - INFO - Created numpy array with shape: (454879,)
+2025-05-09 21:44:01,257 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,257 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,276 - INFO - Enhanced image created
+2025-05-09 21:44:01,367 - INFO - Pose detected!
+2025-05-09 21:44:01,378 - INFO - Found 33 landmarks
+2025-05-09 21:44:01,378 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:01,378 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:01,379 - INFO - ==================================================
+2025-05-09 21:44:01,385 - INFO - Test endpoint called
+2025-05-09 21:44:01,387 - INFO - ==================================================
+2025-05-09 21:44:01,387 - INFO - Received frame for processing
+2025-05-09 21:44:01,388 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:01,388 - INFO - Read 455402 bytes from file
+2025-05-09 21:44:01,388 - INFO - Created numpy array with shape: (455402,)
+2025-05-09 21:44:01,399 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,399 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,415 - INFO - Enhanced image created
+2025-05-09 21:44:01,508 - INFO - Pose detected!
+2025-05-09 21:44:01,520 - INFO - Found 33 landmarks
+2025-05-09 21:44:01,520 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:01,520 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:01,520 - INFO - ==================================================
+2025-05-09 21:44:01,528 - INFO - ==================================================
+2025-05-09 21:44:01,528 - INFO - Received frame for processing
+2025-05-09 21:44:01,528 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:01,528 - INFO - Read 457351 bytes from file
+2025-05-09 21:44:01,528 - INFO - Created numpy array with shape: (457351,)
+2025-05-09 21:44:01,540 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,540 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,557 - INFO - Enhanced image created
+2025-05-09 21:44:01,647 - INFO - Pose detected!
+2025-05-09 21:44:01,656 - INFO - Found 33 landmarks
+2025-05-09 21:44:01,656 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:01,656 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:01,656 - INFO - ==================================================
+2025-05-09 21:44:01,662 - INFO - Test endpoint called
+2025-05-09 21:44:01,662 - INFO - Test endpoint called
+2025-05-09 21:44:01,750 - INFO - ==================================================
+2025-05-09 21:44:01,750 - INFO - Received frame for processing
+2025-05-09 21:44:01,750 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:01,751 - INFO - Read 460602 bytes from file
+2025-05-09 21:44:01,751 - INFO - Created numpy array with shape: (460602,)
+2025-05-09 21:44:01,777 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,777 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,793 - INFO - Enhanced image created
+2025-05-09 21:44:01,871 - INFO - Pose detected!
+2025-05-09 21:44:01,881 - INFO - Found 33 landmarks
+2025-05-09 21:44:01,882 - INFO - Frame processed in 0.10 seconds
+2025-05-09 21:44:01,882 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:01,882 - INFO - ==================================================
+2025-05-09 21:44:01,888 - INFO - ==================================================
+2025-05-09 21:44:01,888 - INFO - Received frame for processing
+2025-05-09 21:44:01,888 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:01,888 - INFO - Read 457892 bytes from file
+2025-05-09 21:44:01,888 - INFO - Created numpy array with shape: (457892,)
+2025-05-09 21:44:01,899 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,900 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:01,914 - INFO - Enhanced image created
+2025-05-09 21:44:02,016 - INFO - Pose detected!
+2025-05-09 21:44:02,028 - INFO - Found 33 landmarks
+2025-05-09 21:44:02,028 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:02,028 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:02,028 - INFO - ==================================================
+2025-05-09 21:44:02,033 - INFO - Test endpoint called
+2025-05-09 21:44:02,034 - INFO - Test endpoint called
+2025-05-09 21:44:02,116 - INFO - ==================================================
+2025-05-09 21:44:02,116 - INFO - Received frame for processing
+2025-05-09 21:44:02,116 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:02,116 - INFO - Read 459978 bytes from file
+2025-05-09 21:44:02,116 - INFO - Created numpy array with shape: (459978,)
+2025-05-09 21:44:02,129 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,129 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,146 - INFO - Enhanced image created
+2025-05-09 21:44:02,239 - INFO - Pose detected!
+2025-05-09 21:44:02,249 - INFO - Found 33 landmarks
+2025-05-09 21:44:02,249 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:02,249 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:02,249 - INFO - ==================================================
+2025-05-09 21:44:02,255 - INFO - Test endpoint called
+2025-05-09 21:44:02,257 - INFO - ==================================================
+2025-05-09 21:44:02,257 - INFO - Received frame for processing
+2025-05-09 21:44:02,258 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:02,258 - INFO - Read 455445 bytes from file
+2025-05-09 21:44:02,258 - INFO - Created numpy array with shape: (455445,)
+2025-05-09 21:44:02,269 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,270 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,285 - INFO - Enhanced image created
+2025-05-09 21:44:02,388 - INFO - Pose detected!
+2025-05-09 21:44:02,399 - INFO - Found 33 landmarks
+2025-05-09 21:44:02,399 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:02,399 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:02,399 - INFO - ==================================================
+2025-05-09 21:44:02,455 - INFO - ==================================================
+2025-05-09 21:44:02,455 - INFO - Received frame for processing
+2025-05-09 21:44:02,455 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:02,456 - INFO - Read 451552 bytes from file
+2025-05-09 21:44:02,456 - INFO - Created numpy array with shape: (451552,)
+2025-05-09 21:44:02,479 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,479 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,495 - INFO - Enhanced image created
+2025-05-09 21:44:02,595 - INFO - Pose detected!
+2025-05-09 21:44:02,605 - INFO - Found 33 landmarks
+2025-05-09 21:44:02,605 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:02,606 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:44:02,606 - INFO - ==================================================
+2025-05-09 21:44:02,611 - INFO - Test endpoint called
+2025-05-09 21:44:02,612 - INFO - Test endpoint called
+2025-05-09 21:44:02,739 - INFO - ==================================================
+2025-05-09 21:44:02,740 - INFO - Received frame for processing
+2025-05-09 21:44:02,740 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:02,740 - INFO - Read 447319 bytes from file
+2025-05-09 21:44:02,740 - INFO - Created numpy array with shape: (447319,)
+2025-05-09 21:44:02,751 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,751 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,767 - INFO - Enhanced image created
+2025-05-09 21:44:02,861 - INFO - Pose detected!
+2025-05-09 21:44:02,871 - INFO - Found 33 landmarks
+2025-05-09 21:44:02,871 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:02,871 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:02,871 - INFO - ==================================================
+2025-05-09 21:44:02,877 - INFO - ==================================================
+2025-05-09 21:44:02,878 - INFO - Received frame for processing
+2025-05-09 21:44:02,878 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:02,878 - INFO - Read 448728 bytes from file
+2025-05-09 21:44:02,878 - INFO - Created numpy array with shape: (448728,)
+2025-05-09 21:44:02,889 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,889 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:02,908 - INFO - Enhanced image created
+2025-05-09 21:44:02,997 - INFO - Pose detected!
+2025-05-09 21:44:03,007 - INFO - Found 33 landmarks
+2025-05-09 21:44:03,007 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:03,007 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:03,007 - INFO - ==================================================
+2025-05-09 21:44:03,012 - INFO - Test endpoint called
+2025-05-09 21:44:03,013 - INFO - Test endpoint called
+2025-05-09 21:44:03,117 - INFO - ==================================================
+2025-05-09 21:44:03,117 - INFO - Received frame for processing
+2025-05-09 21:44:03,117 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:03,117 - INFO - Read 448994 bytes from file
+2025-05-09 21:44:03,117 - INFO - Created numpy array with shape: (448994,)
+2025-05-09 21:44:03,129 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,129 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,146 - INFO - Enhanced image created
+2025-05-09 21:44:03,245 - INFO - Pose detected!
+2025-05-09 21:44:03,256 - INFO - Found 33 landmarks
+2025-05-09 21:44:03,256 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:03,256 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:03,256 - INFO - ==================================================
+2025-05-09 21:44:03,262 - INFO - Test endpoint called
+2025-05-09 21:44:03,264 - INFO - ==================================================
+2025-05-09 21:44:03,264 - INFO - Received frame for processing
+2025-05-09 21:44:03,264 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:03,264 - INFO - Read 429914 bytes from file
+2025-05-09 21:44:03,264 - INFO - Created numpy array with shape: (429914,)
+2025-05-09 21:44:03,276 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,276 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,292 - INFO - Enhanced image created
+2025-05-09 21:44:03,376 - INFO - Pose detected!
+2025-05-09 21:44:03,387 - INFO - Found 33 landmarks
+2025-05-09 21:44:03,387 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:44:03,387 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:44:03,387 - INFO - ==================================================
+2025-05-09 21:44:03,395 - INFO - ==================================================
+2025-05-09 21:44:03,395 - INFO - Received frame for processing
+2025-05-09 21:44:03,395 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:03,395 - INFO - Read 438708 bytes from file
+2025-05-09 21:44:03,395 - INFO - Created numpy array with shape: (438708,)
+2025-05-09 21:44:03,407 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,407 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,420 - INFO - Enhanced image created
+2025-05-09 21:44:03,507 - INFO - Pose detected!
+2025-05-09 21:44:03,518 - INFO - Found 33 landmarks
+2025-05-09 21:44:03,518 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:44:03,518 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:44:03,518 - INFO - ==================================================
+2025-05-09 21:44:03,523 - INFO - Test endpoint called
+2025-05-09 21:44:03,525 - INFO - Test endpoint called
+2025-05-09 21:44:03,621 - INFO - ==================================================
+2025-05-09 21:44:03,621 - INFO - Received frame for processing
+2025-05-09 21:44:03,621 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:03,621 - INFO - Read 446852 bytes from file
+2025-05-09 21:44:03,621 - INFO - Created numpy array with shape: (446852,)
+2025-05-09 21:44:03,634 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,635 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,652 - INFO - Enhanced image created
+2025-05-09 21:44:03,735 - INFO - Pose detected!
+2025-05-09 21:44:03,744 - INFO - Found 33 landmarks
+2025-05-09 21:44:03,745 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:44:03,745 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:44:03,745 - INFO - ==================================================
+2025-05-09 21:44:03,751 - INFO - Test endpoint called
+2025-05-09 21:44:03,753 - INFO - ==================================================
+2025-05-09 21:44:03,753 - INFO - Received frame for processing
+2025-05-09 21:44:03,753 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:03,754 - INFO - Read 444889 bytes from file
+2025-05-09 21:44:03,754 - INFO - Created numpy array with shape: (444889,)
+2025-05-09 21:44:03,765 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,765 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,782 - INFO - Enhanced image created
+2025-05-09 21:44:03,879 - INFO - Pose detected!
+2025-05-09 21:44:03,889 - INFO - Found 33 landmarks
+2025-05-09 21:44:03,889 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:03,889 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:03,889 - INFO - ==================================================
+2025-05-09 21:44:03,897 - INFO - ==================================================
+2025-05-09 21:44:03,897 - INFO - Received frame for processing
+2025-05-09 21:44:03,897 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:03,897 - INFO - Read 449310 bytes from file
+2025-05-09 21:44:03,898 - INFO - Created numpy array with shape: (449310,)
+2025-05-09 21:44:03,908 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,908 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:03,926 - INFO - Enhanced image created
+2025-05-09 21:44:04,026 - INFO - Pose detected!
+2025-05-09 21:44:04,037 - INFO - Found 33 landmarks
+2025-05-09 21:44:04,037 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:04,037 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:04,037 - INFO - ==================================================
+2025-05-09 21:44:04,042 - INFO - Test endpoint called
+2025-05-09 21:44:04,042 - INFO - Test endpoint called
+2025-05-09 21:44:04,158 - INFO - ==================================================
+2025-05-09 21:44:04,158 - INFO - Received frame for processing
+2025-05-09 21:44:04,158 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:04,159 - INFO - Read 431690 bytes from file
+2025-05-09 21:44:04,159 - INFO - Created numpy array with shape: (431690,)
+2025-05-09 21:44:04,183 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,183 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,202 - INFO - Enhanced image created
+2025-05-09 21:44:04,292 - INFO - Pose detected!
+2025-05-09 21:44:04,301 - INFO - Found 33 landmarks
+2025-05-09 21:44:04,301 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:04,302 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:04,302 - INFO - ==================================================
+2025-05-09 21:44:04,308 - INFO - ==================================================
+2025-05-09 21:44:04,308 - INFO - Received frame for processing
+2025-05-09 21:44:04,308 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:04,308 - INFO - Read 436193 bytes from file
+2025-05-09 21:44:04,308 - INFO - Created numpy array with shape: (436193,)
+2025-05-09 21:44:04,319 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,319 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,335 - INFO - Enhanced image created
+2025-05-09 21:44:04,432 - INFO - Pose detected!
+2025-05-09 21:44:04,441 - INFO - Found 33 landmarks
+2025-05-09 21:44:04,442 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:04,442 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:04,442 - INFO - ==================================================
+2025-05-09 21:44:04,446 - INFO - Test endpoint called
+2025-05-09 21:44:04,524 - INFO - Test endpoint called
+2025-05-09 21:44:04,573 - INFO - ==================================================
+2025-05-09 21:44:04,573 - INFO - Received frame for processing
+2025-05-09 21:44:04,573 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:04,573 - INFO - Read 425376 bytes from file
+2025-05-09 21:44:04,573 - INFO - Created numpy array with shape: (425376,)
+2025-05-09 21:44:04,595 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,595 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,610 - INFO - Enhanced image created
+2025-05-09 21:44:04,707 - INFO - Pose detected!
+2025-05-09 21:44:04,717 - INFO - Found 33 landmarks
+2025-05-09 21:44:04,717 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:04,717 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:04,717 - INFO - ==================================================
+2025-05-09 21:44:04,723 - INFO - Test endpoint called
+2025-05-09 21:44:04,726 - INFO - ==================================================
+2025-05-09 21:44:04,726 - INFO - Received frame for processing
+2025-05-09 21:44:04,726 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:04,726 - INFO - Read 447597 bytes from file
+2025-05-09 21:44:04,726 - INFO - Created numpy array with shape: (447597,)
+2025-05-09 21:44:04,739 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,739 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,758 - INFO - Enhanced image created
+2025-05-09 21:44:04,855 - INFO - Pose detected!
+2025-05-09 21:44:04,865 - INFO - Found 33 landmarks
+2025-05-09 21:44:04,865 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:04,865 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:04,865 - INFO - ==================================================
+2025-05-09 21:44:04,872 - INFO - Test endpoint called
+2025-05-09 21:44:04,874 - INFO - ==================================================
+2025-05-09 21:44:04,874 - INFO - Received frame for processing
+2025-05-09 21:44:04,874 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:04,874 - INFO - Read 445756 bytes from file
+2025-05-09 21:44:04,874 - INFO - Created numpy array with shape: (445756,)
+2025-05-09 21:44:04,885 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,885 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:04,900 - INFO - Enhanced image created
+2025-05-09 21:44:05,016 - INFO - Pose detected!
+2025-05-09 21:44:05,028 - INFO - Found 33 landmarks
+2025-05-09 21:44:05,028 - INFO - Frame processed in 0.14 seconds
+2025-05-09 21:44:05,028 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:44:05,028 - INFO - ==================================================
+2025-05-09 21:44:05,036 - INFO - ==================================================
+2025-05-09 21:44:05,036 - INFO - Received frame for processing
+2025-05-09 21:44:05,036 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:05,036 - INFO - Read 443354 bytes from file
+2025-05-09 21:44:05,036 - INFO - Created numpy array with shape: (443354,)
+2025-05-09 21:44:05,048 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,049 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,066 - INFO - Enhanced image created
+2025-05-09 21:44:05,157 - INFO - Pose detected!
+2025-05-09 21:44:05,167 - INFO - Found 33 landmarks
+2025-05-09 21:44:05,168 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:05,168 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:05,168 - INFO - ==================================================
+2025-05-09 21:44:05,173 - INFO - Test endpoint called
+2025-05-09 21:44:05,174 - INFO - Test endpoint called
+2025-05-09 21:44:05,276 - INFO - ==================================================
+2025-05-09 21:44:05,277 - INFO - Received frame for processing
+2025-05-09 21:44:05,277 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:05,277 - INFO - Read 434835 bytes from file
+2025-05-09 21:44:05,277 - INFO - Created numpy array with shape: (434835,)
+2025-05-09 21:44:05,299 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,299 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,316 - INFO - Enhanced image created
+2025-05-09 21:44:05,404 - INFO - Pose detected!
+2025-05-09 21:44:05,424 - INFO - Found 33 landmarks
+2025-05-09 21:44:05,424 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:05,424 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:44:05,424 - INFO - ==================================================
+2025-05-09 21:44:05,437 - INFO - Test endpoint called
+2025-05-09 21:44:05,440 - INFO - ==================================================
+2025-05-09 21:44:05,440 - INFO - Received frame for processing
+2025-05-09 21:44:05,440 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:05,441 - INFO - Read 436306 bytes from file
+2025-05-09 21:44:05,441 - INFO - Created numpy array with shape: (436306,)
+2025-05-09 21:44:05,456 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,456 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,473 - INFO - Enhanced image created
+2025-05-09 21:44:05,566 - INFO - Pose detected!
+2025-05-09 21:44:05,575 - INFO - Found 33 landmarks
+2025-05-09 21:44:05,576 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:05,576 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:05,576 - INFO - ==================================================
+2025-05-09 21:44:05,582 - INFO - Test endpoint called
+2025-05-09 21:44:05,583 - INFO - ==================================================
+2025-05-09 21:44:05,584 - INFO - Received frame for processing
+2025-05-09 21:44:05,584 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:05,584 - INFO - Read 430923 bytes from file
+2025-05-09 21:44:05,584 - INFO - Created numpy array with shape: (430923,)
+2025-05-09 21:44:05,594 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,595 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,610 - INFO - Enhanced image created
+2025-05-09 21:44:05,700 - INFO - Pose detected!
+2025-05-09 21:44:05,709 - INFO - Found 33 landmarks
+2025-05-09 21:44:05,709 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:44:05,710 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:05,710 - INFO - ==================================================
+2025-05-09 21:44:05,762 - INFO - Test endpoint called
+2025-05-09 21:44:05,763 - INFO - ==================================================
+2025-05-09 21:44:05,764 - INFO - Received frame for processing
+2025-05-09 21:44:05,764 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:05,764 - INFO - Read 398651 bytes from file
+2025-05-09 21:44:05,764 - INFO - Created numpy array with shape: (398651,)
+2025-05-09 21:44:05,774 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,775 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,791 - INFO - Enhanced image created
+2025-05-09 21:44:05,892 - INFO - Pose detected!
+2025-05-09 21:44:05,903 - INFO - Found 33 landmarks
+2025-05-09 21:44:05,903 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:05,903 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:05,903 - INFO - ==================================================
+2025-05-09 21:44:05,909 - INFO - Test endpoint called
+2025-05-09 21:44:05,910 - INFO - ==================================================
+2025-05-09 21:44:05,910 - INFO - Received frame for processing
+2025-05-09 21:44:05,911 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:05,911 - INFO - Read 416735 bytes from file
+2025-05-09 21:44:05,911 - INFO - Created numpy array with shape: (416735,)
+2025-05-09 21:44:05,921 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,921 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:05,937 - INFO - Enhanced image created
+2025-05-09 21:44:06,036 - INFO - Pose detected!
+2025-05-09 21:44:06,047 - INFO - Found 33 landmarks
+2025-05-09 21:44:06,047 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:06,047 - INFO - Total request processing time: 0.14 seconds
+2025-05-09 21:44:06,047 - INFO - ==================================================
+2025-05-09 21:44:06,058 - INFO - ==================================================
+2025-05-09 21:44:06,058 - INFO - Received frame for processing
+2025-05-09 21:44:06,058 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:06,058 - INFO - Read 426946 bytes from file
+2025-05-09 21:44:06,059 - INFO - Created numpy array with shape: (426946,)
+2025-05-09 21:44:06,071 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:06,072 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:06,090 - INFO - Enhanced image created
+2025-05-09 21:44:06,180 - INFO - Pose detected!
+2025-05-09 21:44:06,189 - INFO - Found 33 landmarks
+2025-05-09 21:44:06,189 - INFO - Frame processed in 0.12 seconds
+2025-05-09 21:44:06,190 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:06,190 - INFO - ==================================================
+2025-05-09 21:44:06,195 - INFO - Test endpoint called
+2025-05-09 21:44:06,195 - INFO - Test endpoint called
+2025-05-09 21:44:06,293 - INFO - ==================================================
+2025-05-09 21:44:06,293 - INFO - Received frame for processing
+2025-05-09 21:44:06,293 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:06,293 - INFO - Read 412806 bytes from file
+2025-05-09 21:44:06,293 - INFO - Created numpy array with shape: (412806,)
+2025-05-09 21:44:06,314 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:06,314 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:06,331 - INFO - Enhanced image created
+2025-05-09 21:44:06,436 - INFO - Pose detected!
+2025-05-09 21:44:06,447 - INFO - Found 33 landmarks
+2025-05-09 21:44:06,447 - INFO - Frame processed in 0.13 seconds
+2025-05-09 21:44:06,447 - INFO - Total request processing time: 0.15 seconds
+2025-05-09 21:44:06,447 - INFO - ==================================================
+2025-05-09 21:44:06,457 - INFO - Test endpoint called
+2025-05-09 21:44:06,459 - INFO - ==================================================
+2025-05-09 21:44:06,459 - INFO - Received frame for processing
+2025-05-09 21:44:06,459 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:06,460 - INFO - Read 419641 bytes from file
+2025-05-09 21:44:06,460 - INFO - Created numpy array with shape: (419641,)
+2025-05-09 21:44:06,473 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:06,473 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:06,493 - INFO - Enhanced image created
+2025-05-09 21:44:06,612 - INFO - Pose detected!
+2025-05-09 21:44:06,623 - INFO - Found 33 landmarks
+2025-05-09 21:44:06,623 - INFO - Frame processed in 0.15 seconds
+2025-05-09 21:44:06,623 - INFO - Total request processing time: 0.16 seconds
+2025-05-09 21:44:06,624 - INFO - ==================================================
+2025-05-09 21:44:06,632 - INFO - ==================================================
+2025-05-09 21:44:06,632 - INFO - Received frame for processing
+2025-05-09 21:44:06,632 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:06,632 - INFO - Read 415101 bytes from file
+2025-05-09 21:44:06,632 - INFO - Created numpy array with shape: (415101,)
+2025-05-09 21:44:06,647 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:06,648 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:06,668 - INFO - Enhanced image created
+2025-05-09 21:44:06,780 - INFO - Pose detected!
+2025-05-09 21:44:06,790 - INFO - Found 33 landmarks
+2025-05-09 21:44:06,790 - INFO - Frame processed in 0.14 seconds
+2025-05-09 21:44:06,791 - INFO - Total request processing time: 0.16 seconds
+2025-05-09 21:44:06,791 - INFO - ==================================================
+2025-05-09 21:44:06,796 - INFO - Test endpoint called
+2025-05-09 21:44:06,797 - INFO - Test endpoint called
+2025-05-09 21:44:06,982 - INFO - ==================================================
+2025-05-09 21:44:06,982 - INFO - Received frame for processing
+2025-05-09 21:44:06,982 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:06,982 - INFO - Read 439380 bytes from file
+2025-05-09 21:44:06,982 - INFO - Created numpy array with shape: (439380,)
+2025-05-09 21:44:07,005 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:07,006 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:07,020 - INFO - Enhanced image created
+2025-05-09 21:44:07,119 - INFO - Pose detected!
+2025-05-09 21:44:07,140 - INFO - Found 33 landmarks
+2025-05-09 21:44:07,141 - INFO - Frame processed in 0.14 seconds
+2025-05-09 21:44:07,141 - INFO - Total request processing time: 0.16 seconds
+2025-05-09 21:44:07,141 - INFO - ==================================================
+2025-05-09 21:44:07,153 - INFO - Test endpoint called
+2025-05-09 21:44:07,156 - INFO - ==================================================
+2025-05-09 21:44:07,156 - INFO - Received frame for processing
+2025-05-09 21:44:07,156 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:07,156 - INFO - Read 439380 bytes from file
+2025-05-09 21:44:07,156 - INFO - Created numpy array with shape: (439380,)
+2025-05-09 21:44:07,171 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:07,171 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:07,186 - INFO - Enhanced image created
+2025-05-09 21:44:07,272 - INFO - Pose detected!
+2025-05-09 21:44:07,283 - INFO - Found 33 landmarks
+2025-05-09 21:44:07,283 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:44:07,283 - INFO - Total request processing time: 0.13 seconds
+2025-05-09 21:44:07,283 - INFO - ==================================================
+2025-05-09 21:44:07,290 - INFO - ==================================================
+2025-05-09 21:44:07,290 - INFO - Received frame for processing
+2025-05-09 21:44:07,290 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-09 21:44:07,290 - INFO - Read 441978 bytes from file
+2025-05-09 21:44:07,291 - INFO - Created numpy array with shape: (441978,)
+2025-05-09 21:44:07,302 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-09 21:44:07,302 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-09 21:44:07,319 - INFO - Enhanced image created
+2025-05-09 21:44:07,398 - INFO - Pose detected!
+2025-05-09 21:44:07,408 - INFO - Found 33 landmarks
+2025-05-09 21:44:07,408 - INFO - Frame processed in 0.11 seconds
+2025-05-09 21:44:07,408 - INFO - Total request processing time: 0.12 seconds
+2025-05-09 21:44:07,408 - INFO - ==================================================
+2025-05-10 05:37:21,906 - INFO - Test endpoint called
+2025-05-10 05:37:21,909 - INFO - Test endpoint called
+2025-05-10 05:37:22,045 - INFO - ==================================================
+2025-05-10 05:37:22,045 - INFO - Received frame for processing
+2025-05-10 05:37:22,045 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:22,045 - INFO - Read 455852 bytes from file
+2025-05-10 05:37:22,045 - INFO - Created numpy array with shape: (455852,)
+2025-05-10 05:37:22,068 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,068 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,085 - INFO - Enhanced image created
+2025-05-10 05:37:22,196 - INFO - Pose detected!
+2025-05-10 05:37:22,210 - INFO - Found 33 landmarks
+2025-05-10 05:37:22,210 - INFO - Frame processed in 0.14 seconds
+2025-05-10 05:37:22,210 - INFO - Total request processing time: 0.17 seconds
+2025-05-10 05:37:22,210 - INFO - ==================================================
+2025-05-10 05:37:22,219 - INFO - Test endpoint called
+2025-05-10 05:37:22,221 - INFO - ==================================================
+2025-05-10 05:37:22,221 - INFO - Received frame for processing
+2025-05-10 05:37:22,221 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:22,221 - INFO - Read 455852 bytes from file
+2025-05-10 05:37:22,221 - INFO - Created numpy array with shape: (455852,)
+2025-05-10 05:37:22,234 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,235 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,252 - INFO - Enhanced image created
+2025-05-10 05:37:22,350 - INFO - Pose detected!
+2025-05-10 05:37:22,359 - INFO - Found 33 landmarks
+2025-05-10 05:37:22,359 - INFO - Frame processed in 0.12 seconds
+2025-05-10 05:37:22,359 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 05:37:22,359 - INFO - ==================================================
+2025-05-10 05:37:22,412 - INFO - ==================================================
+2025-05-10 05:37:22,413 - INFO - Received frame for processing
+2025-05-10 05:37:22,413 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:22,413 - INFO - Read 460138 bytes from file
+2025-05-10 05:37:22,413 - INFO - Created numpy array with shape: (460138,)
+2025-05-10 05:37:22,436 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,436 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,455 - INFO - Enhanced image created
+2025-05-10 05:37:22,558 - INFO - Pose detected!
+2025-05-10 05:37:22,569 - INFO - Found 33 landmarks
+2025-05-10 05:37:22,569 - INFO - Frame processed in 0.13 seconds
+2025-05-10 05:37:22,569 - INFO - Total request processing time: 0.16 seconds
+2025-05-10 05:37:22,569 - INFO - ==================================================
+2025-05-10 05:37:22,575 - INFO - Test endpoint called
+2025-05-10 05:37:22,576 - INFO - Test endpoint called
+2025-05-10 05:37:22,642 - INFO - ==================================================
+2025-05-10 05:37:22,642 - INFO - Received frame for processing
+2025-05-10 05:37:22,642 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:22,642 - INFO - Read 470059 bytes from file
+2025-05-10 05:37:22,642 - INFO - Created numpy array with shape: (470059,)
+2025-05-10 05:37:22,657 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,657 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,675 - INFO - Enhanced image created
+2025-05-10 05:37:22,767 - INFO - Pose detected!
+2025-05-10 05:37:22,778 - INFO - Found 33 landmarks
+2025-05-10 05:37:22,778 - INFO - Frame processed in 0.12 seconds
+2025-05-10 05:37:22,778 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 05:37:22,778 - INFO - ==================================================
+2025-05-10 05:37:22,786 - INFO - Test endpoint called
+2025-05-10 05:37:22,789 - INFO - ==================================================
+2025-05-10 05:37:22,789 - INFO - Received frame for processing
+2025-05-10 05:37:22,789 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:22,789 - INFO - Read 475456 bytes from file
+2025-05-10 05:37:22,789 - INFO - Created numpy array with shape: (475456,)
+2025-05-10 05:37:22,802 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,802 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:22,817 - INFO - Enhanced image created
+2025-05-10 05:37:22,930 - INFO - Pose detected!
+2025-05-10 05:37:22,944 - INFO - Found 33 landmarks
+2025-05-10 05:37:22,944 - INFO - Frame processed in 0.14 seconds
+2025-05-10 05:37:22,944 - INFO - Total request processing time: 0.16 seconds
+2025-05-10 05:37:22,944 - INFO - ==================================================
+2025-05-10 05:37:23,004 - INFO - ==================================================
+2025-05-10 05:37:23,004 - INFO - Received frame for processing
+2025-05-10 05:37:23,004 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:23,005 - INFO - Read 469650 bytes from file
+2025-05-10 05:37:23,005 - INFO - Created numpy array with shape: (469650,)
+2025-05-10 05:37:23,018 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,018 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,037 - INFO - Enhanced image created
+2025-05-10 05:37:23,145 - INFO - Pose detected!
+2025-05-10 05:37:23,156 - INFO - Found 33 landmarks
+2025-05-10 05:37:23,156 - INFO - Frame processed in 0.14 seconds
+2025-05-10 05:37:23,156 - INFO - Total request processing time: 0.15 seconds
+2025-05-10 05:37:23,156 - INFO - ==================================================
+2025-05-10 05:37:23,162 - INFO - Test endpoint called
+2025-05-10 05:37:23,162 - INFO - Test endpoint called
+2025-05-10 05:37:23,186 - INFO - Test endpoint called
+2025-05-10 05:37:23,294 - INFO - ==================================================
+2025-05-10 05:37:23,294 - INFO - Received frame for processing
+2025-05-10 05:37:23,294 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:23,295 - INFO - Read 486133 bytes from file
+2025-05-10 05:37:23,295 - INFO - Created numpy array with shape: (486133,)
+2025-05-10 05:37:23,319 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,319 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,336 - INFO - Enhanced image created
+2025-05-10 05:37:23,427 - INFO - Pose detected!
+2025-05-10 05:37:23,439 - INFO - Found 33 landmarks
+2025-05-10 05:37:23,439 - INFO - Frame processed in 0.12 seconds
+2025-05-10 05:37:23,439 - INFO - Total request processing time: 0.15 seconds
+2025-05-10 05:37:23,440 - INFO - ==================================================
+2025-05-10 05:37:23,446 - INFO - ==================================================
+2025-05-10 05:37:23,446 - INFO - Received frame for processing
+2025-05-10 05:37:23,446 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:23,446 - INFO - Read 486123 bytes from file
+2025-05-10 05:37:23,446 - INFO - Created numpy array with shape: (486123,)
+2025-05-10 05:37:23,458 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,458 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,473 - INFO - Enhanced image created
+2025-05-10 05:37:23,565 - INFO - Pose detected!
+2025-05-10 05:37:23,576 - INFO - Found 33 landmarks
+2025-05-10 05:37:23,576 - INFO - Frame processed in 0.12 seconds
+2025-05-10 05:37:23,576 - INFO - Total request processing time: 0.13 seconds
+2025-05-10 05:37:23,576 - INFO - ==================================================
+2025-05-10 05:37:23,585 - INFO - Test endpoint called
+2025-05-10 05:37:23,587 - INFO - ==================================================
+2025-05-10 05:37:23,587 - INFO - Received frame for processing
+2025-05-10 05:37:23,587 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:23,587 - INFO - Read 485925 bytes from file
+2025-05-10 05:37:23,588 - INFO - Created numpy array with shape: (485925,)
+2025-05-10 05:37:23,602 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,602 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,618 - INFO - Enhanced image created
+2025-05-10 05:37:23,712 - INFO - Pose detected!
+2025-05-10 05:37:23,723 - INFO - Found 33 landmarks
+2025-05-10 05:37:23,723 - INFO - Frame processed in 0.12 seconds
+2025-05-10 05:37:23,723 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 05:37:23,723 - INFO - ==================================================
+2025-05-10 05:37:23,729 - INFO - Test endpoint called
+2025-05-10 05:37:23,762 - INFO - ==================================================
+2025-05-10 05:37:23,763 - INFO - Received frame for processing
+2025-05-10 05:37:23,763 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:23,763 - INFO - Read 479310 bytes from file
+2025-05-10 05:37:23,763 - INFO - Created numpy array with shape: (479310,)
+2025-05-10 05:37:23,776 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,776 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,796 - INFO - Enhanced image created
+2025-05-10 05:37:23,895 - INFO - Pose detected!
+2025-05-10 05:37:23,906 - INFO - Found 33 landmarks
+2025-05-10 05:37:23,907 - INFO - Frame processed in 0.13 seconds
+2025-05-10 05:37:23,907 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 05:37:23,907 - INFO - ==================================================
+2025-05-10 05:37:23,912 - INFO - Test endpoint called
+2025-05-10 05:37:23,914 - INFO - Test endpoint called
+2025-05-10 05:37:23,916 - INFO - ==================================================
+2025-05-10 05:37:23,916 - INFO - Received frame for processing
+2025-05-10 05:37:23,916 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:23,916 - INFO - Read 466270 bytes from file
+2025-05-10 05:37:23,917 - INFO - Created numpy array with shape: (466270,)
+2025-05-10 05:37:23,928 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,928 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:23,945 - INFO - Enhanced image created
+2025-05-10 05:37:24,036 - INFO - Pose detected!
+2025-05-10 05:37:24,046 - INFO - Found 33 landmarks
+2025-05-10 05:37:24,047 - INFO - Frame processed in 0.12 seconds
+2025-05-10 05:37:24,047 - INFO - Total request processing time: 0.13 seconds
+2025-05-10 05:37:24,047 - INFO - ==================================================
+2025-05-10 05:37:24,055 - INFO - ==================================================
+2025-05-10 05:37:24,056 - INFO - Received frame for processing
+2025-05-10 05:37:24,056 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:24,056 - INFO - Read 473467 bytes from file
+2025-05-10 05:37:24,056 - INFO - Created numpy array with shape: (473467,)
+2025-05-10 05:37:24,066 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:24,066 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:24,081 - INFO - Enhanced image created
+2025-05-10 05:37:24,168 - INFO - Pose detected!
+2025-05-10 05:37:24,177 - INFO - Found 33 landmarks
+2025-05-10 05:37:24,177 - INFO - Frame processed in 0.11 seconds
+2025-05-10 05:37:24,177 - INFO - Total request processing time: 0.12 seconds
+2025-05-10 05:37:24,177 - INFO - ==================================================
+2025-05-10 05:37:24,183 - INFO - ==================================================
+2025-05-10 05:37:24,183 - INFO - Received frame for processing
+2025-05-10 05:37:24,183 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 05:37:24,183 - INFO - Read 474719 bytes from file
+2025-05-10 05:37:24,183 - INFO - Created numpy array with shape: (474719,)
+2025-05-10 05:37:24,193 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 05:37:24,194 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 05:37:24,209 - INFO - Enhanced image created
+2025-05-10 05:37:24,294 - INFO - Pose detected!
+2025-05-10 05:37:24,304 - INFO - Found 33 landmarks
+2025-05-10 05:37:24,305 - INFO - Frame processed in 0.11 seconds
+2025-05-10 05:37:24,305 - INFO - Total request processing time: 0.12 seconds
+2025-05-10 05:37:24,305 - INFO - ==================================================
+2025-05-10 10:10:49,614 - INFO - Test endpoint called
+2025-05-10 10:10:49,700 - INFO - ==================================================
+2025-05-10 10:10:49,700 - INFO - Received frame for processing
+2025-05-10 10:10:49,700 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:10:49,701 - INFO - Read 480014 bytes from file
+2025-05-10 10:10:49,701 - INFO - Created numpy array with shape: (480014,)
+2025-05-10 10:10:49,723 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:10:49,723 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:10:49,740 - INFO - Enhanced image created
+2025-05-10 10:10:49,850 - INFO - Pose detected!
+2025-05-10 10:10:49,861 - INFO - Found 33 landmarks
+2025-05-10 10:10:49,861 - INFO - Frame processed in 0.14 seconds
+2025-05-10 10:10:49,861 - INFO - Total request processing time: 0.16 seconds
+2025-05-10 10:10:49,861 - INFO - ==================================================
+2025-05-10 10:10:49,958 - INFO - Test endpoint called
+2025-05-10 10:10:50,047 - INFO - ==================================================
+2025-05-10 10:10:50,047 - INFO - Received frame for processing
+2025-05-10 10:10:50,047 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:10:50,048 - INFO - Read 489673 bytes from file
+2025-05-10 10:10:50,048 - INFO - Created numpy array with shape: (489673,)
+2025-05-10 10:10:50,074 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:10:50,074 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:10:50,088 - INFO - Enhanced image created
+2025-05-10 10:10:50,180 - INFO - Pose detected!
+2025-05-10 10:10:50,201 - INFO - Found 33 landmarks
+2025-05-10 10:10:50,201 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:10:50,201 - INFO - Total request processing time: 0.15 seconds
+2025-05-10 10:10:50,201 - INFO - ==================================================
+2025-05-10 10:10:50,328 - INFO - Test endpoint called
+2025-05-10 10:10:50,350 - INFO - ==================================================
+2025-05-10 10:10:50,350 - INFO - Received frame for processing
+2025-05-10 10:10:50,350 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:10:50,350 - INFO - Read 469624 bytes from file
+2025-05-10 10:10:50,350 - INFO - Created numpy array with shape: (469624,)
+2025-05-10 10:10:50,372 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:10:50,372 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:10:50,385 - INFO - Enhanced image created
+2025-05-10 10:10:50,475 - INFO - Pose detected!
+2025-05-10 10:10:50,493 - INFO - Found 33 landmarks
+2025-05-10 10:10:50,493 - INFO - Frame processed in 0.12 seconds
+2025-05-10 10:10:50,493 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 10:10:50,493 - INFO - ==================================================
+2025-05-10 10:10:50,627 - INFO - Test endpoint called
+2025-05-10 10:10:50,712 - INFO - ==================================================
+2025-05-10 10:10:50,712 - INFO - Received frame for processing
+2025-05-10 10:10:50,712 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:10:50,712 - INFO - Read 474579 bytes from file
+2025-05-10 10:10:50,712 - INFO - Created numpy array with shape: (474579,)
+2025-05-10 10:10:50,723 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:10:50,723 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:10:50,738 - INFO - Enhanced image created
+2025-05-10 10:10:50,835 - INFO - Pose detected!
+2025-05-10 10:10:50,846 - INFO - Found 33 landmarks
+2025-05-10 10:10:50,847 - INFO - Frame processed in 0.12 seconds
+2025-05-10 10:10:50,847 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 10:10:50,847 - INFO - ==================================================
+2025-05-10 10:10:51,046 - INFO - Test endpoint called
+2025-05-10 10:10:51,146 - INFO - ==================================================
+2025-05-10 10:10:51,146 - INFO - Received frame for processing
+2025-05-10 10:10:51,146 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:10:51,146 - INFO - Read 481752 bytes from file
+2025-05-10 10:10:51,146 - INFO - Created numpy array with shape: (481752,)
+2025-05-10 10:10:51,156 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:10:51,156 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:10:51,170 - INFO - Enhanced image created
+2025-05-10 10:10:51,253 - INFO - Pose detected!
+2025-05-10 10:10:51,272 - INFO - Found 33 landmarks
+2025-05-10 10:10:51,272 - INFO - Frame processed in 0.12 seconds
+2025-05-10 10:10:51,272 - INFO - Total request processing time: 0.13 seconds
+2025-05-10 10:10:51,272 - INFO - ==================================================
+2025-05-10 10:19:20,610 - INFO - Test endpoint called
+2025-05-10 10:19:20,723 - INFO - ==================================================
+2025-05-10 10:19:20,724 - INFO - Received frame for processing
+2025-05-10 10:19:20,724 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:20,724 - INFO - Read 478768 bytes from file
+2025-05-10 10:19:20,724 - INFO - Created numpy array with shape: (478768,)
+2025-05-10 10:19:20,756 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:20,757 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:20,907 - INFO - Enhanced image created
+2025-05-10 10:19:21,040 - INFO - Pose detected!
+2025-05-10 10:19:21,052 - INFO - Found 33 landmarks
+2025-05-10 10:19:21,053 - INFO - Frame processed in 0.30 seconds
+2025-05-10 10:19:21,053 - INFO - Total request processing time: 0.33 seconds
+2025-05-10 10:19:21,053 - INFO - ==================================================
+2025-05-10 10:19:21,217 - INFO - Test endpoint called
+2025-05-10 10:19:21,240 - INFO - ==================================================
+2025-05-10 10:19:21,240 - INFO - Received frame for processing
+2025-05-10 10:19:21,240 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:21,241 - INFO - Read 485925 bytes from file
+2025-05-10 10:19:21,241 - INFO - Created numpy array with shape: (485925,)
+2025-05-10 10:19:21,252 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:21,252 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:21,265 - INFO - Enhanced image created
+2025-05-10 10:19:21,358 - INFO - Pose detected!
+2025-05-10 10:19:21,371 - INFO - Found 33 landmarks
+2025-05-10 10:19:21,371 - INFO - Frame processed in 0.12 seconds
+2025-05-10 10:19:21,371 - INFO - Total request processing time: 0.13 seconds
+2025-05-10 10:19:21,371 - INFO - ==================================================
+2025-05-10 10:19:21,523 - INFO - Test endpoint called
+2025-05-10 10:19:21,542 - INFO - ==================================================
+2025-05-10 10:19:21,542 - INFO - Received frame for processing
+2025-05-10 10:19:21,542 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:21,543 - INFO - Read 474277 bytes from file
+2025-05-10 10:19:21,543 - INFO - Created numpy array with shape: (474277,)
+2025-05-10 10:19:21,553 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:21,554 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:21,568 - INFO - Enhanced image created
+2025-05-10 10:19:21,656 - INFO - Pose detected!
+2025-05-10 10:19:21,677 - INFO - Found 33 landmarks
+2025-05-10 10:19:21,678 - INFO - Frame processed in 0.12 seconds
+2025-05-10 10:19:21,678 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 10:19:21,678 - INFO - ==================================================
+2025-05-10 10:19:48,150 - INFO - Test endpoint called
+2025-05-10 10:19:48,257 - INFO - ==================================================
+2025-05-10 10:19:48,257 - INFO - Received frame for processing
+2025-05-10 10:19:48,258 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:48,258 - INFO - Read 485740 bytes from file
+2025-05-10 10:19:48,258 - INFO - Created numpy array with shape: (485740,)
+2025-05-10 10:19:48,271 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:48,272 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:48,289 - INFO - Enhanced image created
+2025-05-10 10:19:48,377 - INFO - Pose detected!
+2025-05-10 10:19:48,387 - INFO - Found 33 landmarks
+2025-05-10 10:19:48,387 - INFO - Frame processed in 0.12 seconds
+2025-05-10 10:19:48,387 - INFO - Total request processing time: 0.13 seconds
+2025-05-10 10:19:48,387 - INFO - ==================================================
+2025-05-10 10:19:48,518 - INFO - Test endpoint called
+2025-05-10 10:19:48,548 - INFO - ==================================================
+2025-05-10 10:19:48,548 - INFO - Received frame for processing
+2025-05-10 10:19:48,548 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:48,548 - INFO - Read 468747 bytes from file
+2025-05-10 10:19:48,549 - INFO - Created numpy array with shape: (468747,)
+2025-05-10 10:19:48,561 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:48,561 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:48,577 - INFO - Enhanced image created
+2025-05-10 10:19:48,679 - INFO - Pose detected!
+2025-05-10 10:19:48,689 - INFO - Found 33 landmarks
+2025-05-10 10:19:48,689 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:19:48,690 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 10:19:48,690 - INFO - ==================================================
+2025-05-10 10:19:48,826 - INFO - Test endpoint called
+2025-05-10 10:19:48,920 - INFO - ==================================================
+2025-05-10 10:19:48,920 - INFO - Received frame for processing
+2025-05-10 10:19:48,921 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:48,921 - INFO - Read 487046 bytes from file
+2025-05-10 10:19:48,921 - INFO - Created numpy array with shape: (487046,)
+2025-05-10 10:19:48,943 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:48,943 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:48,958 - INFO - Enhanced image created
+2025-05-10 10:19:49,062 - INFO - Pose detected!
+2025-05-10 10:19:49,072 - INFO - Found 33 landmarks
+2025-05-10 10:19:49,072 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:19:49,073 - INFO - Total request processing time: 0.15 seconds
+2025-05-10 10:19:49,073 - INFO - ==================================================
+2025-05-10 10:19:49,191 - INFO - Test endpoint called
+2025-05-10 10:19:49,221 - INFO - ==================================================
+2025-05-10 10:19:49,221 - INFO - Received frame for processing
+2025-05-10 10:19:49,222 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:49,222 - INFO - Read 478970 bytes from file
+2025-05-10 10:19:49,222 - INFO - Created numpy array with shape: (478970,)
+2025-05-10 10:19:49,243 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:49,244 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:49,258 - INFO - Enhanced image created
+2025-05-10 10:19:49,362 - INFO - Pose detected!
+2025-05-10 10:19:49,373 - INFO - Found 33 landmarks
+2025-05-10 10:19:49,373 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:19:49,373 - INFO - Total request processing time: 0.15 seconds
+2025-05-10 10:19:49,373 - INFO - ==================================================
+2025-05-10 10:19:49,548 - INFO - Test endpoint called
+2025-05-10 10:19:49,696 - INFO - ==================================================
+2025-05-10 10:19:49,696 - INFO - Received frame for processing
+2025-05-10 10:19:49,697 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:49,697 - INFO - Read 470512 bytes from file
+2025-05-10 10:19:49,697 - INFO - Created numpy array with shape: (470512,)
+2025-05-10 10:19:49,708 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:49,708 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:49,723 - INFO - Enhanced image created
+2025-05-10 10:19:49,829 - INFO - Pose detected!
+2025-05-10 10:19:49,841 - INFO - Found 33 landmarks
+2025-05-10 10:19:49,841 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:19:49,841 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 10:19:49,841 - INFO - ==================================================
+2025-05-10 10:19:49,971 - INFO - Test endpoint called
+2025-05-10 10:19:50,003 - INFO - ==================================================
+2025-05-10 10:19:50,003 - INFO - Received frame for processing
+2025-05-10 10:19:50,003 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:50,003 - INFO - Read 452189 bytes from file
+2025-05-10 10:19:50,003 - INFO - Created numpy array with shape: (452189,)
+2025-05-10 10:19:50,026 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:50,027 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:50,044 - INFO - Enhanced image created
+2025-05-10 10:19:50,123 - INFO - Pose detected!
+2025-05-10 10:19:50,134 - INFO - Found 33 landmarks
+2025-05-10 10:19:50,134 - INFO - Frame processed in 0.11 seconds
+2025-05-10 10:19:50,134 - INFO - Total request processing time: 0.13 seconds
+2025-05-10 10:19:50,134 - INFO - ==================================================
+2025-05-10 10:19:50,235 - INFO - Test endpoint called
+2025-05-10 10:19:50,351 - INFO - ==================================================
+2025-05-10 10:19:50,351 - INFO - Received frame for processing
+2025-05-10 10:19:50,351 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:19:50,351 - INFO - Read 450240 bytes from file
+2025-05-10 10:19:50,351 - INFO - Created numpy array with shape: (450240,)
+2025-05-10 10:19:50,377 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:19:50,377 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:19:50,391 - INFO - Enhanced image created
+2025-05-10 10:19:50,486 - INFO - Pose detected!
+2025-05-10 10:19:50,502 - INFO - Found 33 landmarks
+2025-05-10 10:19:50,502 - INFO - Frame processed in 0.12 seconds
+2025-05-10 10:19:50,502 - INFO - Total request processing time: 0.15 seconds
+2025-05-10 10:19:50,502 - INFO - ==================================================
+2025-05-10 10:22:07,434 - INFO - Test endpoint called
+2025-05-10 10:22:07,554 - INFO - ==================================================
+2025-05-10 10:22:07,555 - INFO - Received frame for processing
+2025-05-10 10:22:07,555 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:07,555 - INFO - Read 473492 bytes from file
+2025-05-10 10:22:07,555 - INFO - Created numpy array with shape: (473492,)
+2025-05-10 10:22:07,572 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:07,572 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:07,592 - INFO - Enhanced image created
+2025-05-10 10:22:07,692 - INFO - Pose detected!
+2025-05-10 10:22:07,711 - INFO - Found 33 landmarks
+2025-05-10 10:22:07,711 - INFO - Frame processed in 0.14 seconds
+2025-05-10 10:22:07,712 - INFO - Total request processing time: 0.16 seconds
+2025-05-10 10:22:07,712 - INFO - ==================================================
+2025-05-10 10:22:07,849 - INFO - Test endpoint called
+2025-05-10 10:22:07,876 - INFO - ==================================================
+2025-05-10 10:22:07,877 - INFO - Received frame for processing
+2025-05-10 10:22:07,877 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:07,877 - INFO - Read 486133 bytes from file
+2025-05-10 10:22:07,877 - INFO - Created numpy array with shape: (486133,)
+2025-05-10 10:22:07,904 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:07,904 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:07,918 - INFO - Enhanced image created
+2025-05-10 10:22:08,004 - INFO - Pose detected!
+2025-05-10 10:22:08,015 - INFO - Found 33 landmarks
+2025-05-10 10:22:08,015 - INFO - Frame processed in 0.11 seconds
+2025-05-10 10:22:08,015 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 10:22:08,015 - INFO - ==================================================
+2025-05-10 10:22:08,159 - INFO - Test endpoint called
+2025-05-10 10:22:08,180 - INFO - ==================================================
+2025-05-10 10:22:08,180 - INFO - Received frame for processing
+2025-05-10 10:22:08,180 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:08,180 - INFO - Read 487940 bytes from file
+2025-05-10 10:22:08,181 - INFO - Created numpy array with shape: (487940,)
+2025-05-10 10:22:08,203 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:08,204 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:08,217 - INFO - Enhanced image created
+2025-05-10 10:22:08,304 - INFO - Pose detected!
+2025-05-10 10:22:08,315 - INFO - Found 33 landmarks
+2025-05-10 10:22:08,316 - INFO - Frame processed in 0.11 seconds
+2025-05-10 10:22:08,316 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 10:22:08,316 - INFO - ==================================================
+2025-05-10 10:22:08,435 - INFO - Test endpoint called
+2025-05-10 10:22:08,519 - INFO - ==================================================
+2025-05-10 10:22:08,519 - INFO - Received frame for processing
+2025-05-10 10:22:08,519 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:08,519 - INFO - Read 478973 bytes from file
+2025-05-10 10:22:08,519 - INFO - Created numpy array with shape: (478973,)
+2025-05-10 10:22:08,542 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:08,543 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:08,559 - INFO - Enhanced image created
+2025-05-10 10:22:08,652 - INFO - Pose detected!
+2025-05-10 10:22:08,671 - INFO - Found 33 landmarks
+2025-05-10 10:22:08,672 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:22:08,672 - INFO - Total request processing time: 0.15 seconds
+2025-05-10 10:22:08,672 - INFO - ==================================================
+2025-05-10 10:22:08,798 - INFO - Test endpoint called
+2025-05-10 10:22:08,818 - INFO - ==================================================
+2025-05-10 10:22:08,819 - INFO - Received frame for processing
+2025-05-10 10:22:08,819 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:08,819 - INFO - Read 487046 bytes from file
+2025-05-10 10:22:08,819 - INFO - Created numpy array with shape: (487046,)
+2025-05-10 10:22:08,842 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:08,842 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:08,858 - INFO - Enhanced image created
+2025-05-10 10:22:08,949 - INFO - Pose detected!
+2025-05-10 10:22:08,968 - INFO - Found 33 landmarks
+2025-05-10 10:22:08,968 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:22:08,968 - INFO - Total request processing time: 0.15 seconds
+2025-05-10 10:22:08,968 - INFO - ==================================================
+2025-05-10 10:22:09,099 - INFO - Test endpoint called
+2025-05-10 10:22:09,198 - INFO - ==================================================
+2025-05-10 10:22:09,198 - INFO - Received frame for processing
+2025-05-10 10:22:09,198 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:09,198 - INFO - Read 483550 bytes from file
+2025-05-10 10:22:09,198 - INFO - Created numpy array with shape: (483550,)
+2025-05-10 10:22:09,221 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:09,221 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:09,239 - INFO - Enhanced image created
+2025-05-10 10:22:09,332 - INFO - Pose detected!
+2025-05-10 10:22:09,350 - INFO - Found 33 landmarks
+2025-05-10 10:22:09,351 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:22:09,351 - INFO - Total request processing time: 0.15 seconds
+2025-05-10 10:22:09,351 - INFO - ==================================================
+2025-05-10 10:22:09,502 - INFO - Test endpoint called
+2025-05-10 10:22:09,521 - INFO - ==================================================
+2025-05-10 10:22:09,521 - INFO - Received frame for processing
+2025-05-10 10:22:09,521 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:09,521 - INFO - Read 466605 bytes from file
+2025-05-10 10:22:09,521 - INFO - Created numpy array with shape: (466605,)
+2025-05-10 10:22:09,533 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:09,534 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:09,546 - INFO - Enhanced image created
+2025-05-10 10:22:09,638 - INFO - Pose detected!
+2025-05-10 10:22:09,659 - INFO - Found 33 landmarks
+2025-05-10 10:22:09,660 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:22:09,660 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 10:22:09,660 - INFO - ==================================================
+2025-05-10 10:22:09,773 - INFO - Test endpoint called
+2025-05-10 10:22:09,881 - INFO - ==================================================
+2025-05-10 10:22:09,881 - INFO - Received frame for processing
+2025-05-10 10:22:09,881 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:09,881 - INFO - Read 455823 bytes from file
+2025-05-10 10:22:09,881 - INFO - Created numpy array with shape: (455823,)
+2025-05-10 10:22:09,892 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:09,892 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:09,909 - INFO - Enhanced image created
+2025-05-10 10:22:10,001 - INFO - Pose detected!
+2025-05-10 10:22:10,015 - INFO - Found 33 landmarks
+2025-05-10 10:22:10,015 - INFO - Frame processed in 0.12 seconds
+2025-05-10 10:22:10,015 - INFO - Total request processing time: 0.13 seconds
+2025-05-10 10:22:10,015 - INFO - ==================================================
+2025-05-10 10:22:10,146 - INFO - Test endpoint called
+2025-05-10 10:22:10,173 - INFO - ==================================================
+2025-05-10 10:22:10,173 - INFO - Received frame for processing
+2025-05-10 10:22:10,174 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:10,174 - INFO - Read 454608 bytes from file
+2025-05-10 10:22:10,174 - INFO - Created numpy array with shape: (454608,)
+2025-05-10 10:22:10,199 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:10,200 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:10,216 - INFO - Enhanced image created
+2025-05-10 10:22:10,290 - INFO - Pose detected!
+2025-05-10 10:22:10,299 - INFO - Found 33 landmarks
+2025-05-10 10:22:10,300 - INFO - Frame processed in 0.10 seconds
+2025-05-10 10:22:10,300 - INFO - Total request processing time: 0.13 seconds
+2025-05-10 10:22:10,300 - INFO - ==================================================
+2025-05-10 10:22:10,427 - INFO - Test endpoint called
+2025-05-10 10:22:10,502 - INFO - ==================================================
+2025-05-10 10:22:10,502 - INFO - Received frame for processing
+2025-05-10 10:22:10,502 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:10,503 - INFO - Read 448526 bytes from file
+2025-05-10 10:22:10,503 - INFO - Created numpy array with shape: (448526,)
+2025-05-10 10:22:10,528 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:10,528 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:10,545 - INFO - Enhanced image created
+2025-05-10 10:22:10,640 - INFO - Pose detected!
+2025-05-10 10:22:10,658 - INFO - Found 33 landmarks
+2025-05-10 10:22:10,659 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:22:10,659 - INFO - Total request processing time: 0.16 seconds
+2025-05-10 10:22:10,659 - INFO - ==================================================
+2025-05-10 10:22:10,780 - INFO - Test endpoint called
+2025-05-10 10:22:10,808 - INFO - ==================================================
+2025-05-10 10:22:10,808 - INFO - Received frame for processing
+2025-05-10 10:22:10,808 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:10,808 - INFO - Read 457243 bytes from file
+2025-05-10 10:22:10,809 - INFO - Created numpy array with shape: (457243,)
+2025-05-10 10:22:10,829 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:10,830 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:10,844 - INFO - Enhanced image created
+2025-05-10 10:22:10,931 - INFO - Pose detected!
+2025-05-10 10:22:10,950 - INFO - Found 33 landmarks
+2025-05-10 10:22:10,950 - INFO - Frame processed in 0.12 seconds
+2025-05-10 10:22:10,950 - INFO - Total request processing time: 0.14 seconds
+2025-05-10 10:22:10,950 - INFO - ==================================================
+2025-05-10 10:22:11,074 - INFO - Test endpoint called
+2025-05-10 10:22:11,162 - INFO - ==================================================
+2025-05-10 10:22:11,162 - INFO - Received frame for processing
+2025-05-10 10:22:11,162 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:11,163 - INFO - Read 452209 bytes from file
+2025-05-10 10:22:11,163 - INFO - Created numpy array with shape: (452209,)
+2025-05-10 10:22:11,174 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:11,174 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:11,190 - INFO - Enhanced image created
+2025-05-10 10:22:11,268 - INFO - Pose detected!
+2025-05-10 10:22:11,279 - INFO - Found 33 landmarks
+2025-05-10 10:22:11,280 - INFO - Frame processed in 0.11 seconds
+2025-05-10 10:22:11,280 - INFO - Total request processing time: 0.12 seconds
+2025-05-10 10:22:11,280 - INFO - ==================================================
+2025-05-10 10:22:11,403 - INFO - Test endpoint called
+2025-05-10 10:22:11,444 - INFO - ==================================================
+2025-05-10 10:22:11,444 - INFO - Received frame for processing
+2025-05-10 10:22:11,445 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:11,445 - INFO - Read 453643 bytes from file
+2025-05-10 10:22:11,445 - INFO - Created numpy array with shape: (453643,)
+2025-05-10 10:22:11,470 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:11,470 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:11,486 - INFO - Enhanced image created
+2025-05-10 10:22:11,591 - INFO - Pose detected!
+2025-05-10 10:22:11,602 - INFO - Found 33 landmarks
+2025-05-10 10:22:11,603 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:22:11,603 - INFO - Total request processing time: 0.16 seconds
+2025-05-10 10:22:11,603 - INFO - ==================================================
+2025-05-10 10:22:11,781 - INFO - Test endpoint called
+2025-05-10 10:22:11,817 - INFO - ==================================================
+2025-05-10 10:22:11,818 - INFO - Received frame for processing
+2025-05-10 10:22:11,818 - INFO - File info: filename=blob, content_type=image/jpeg
+2025-05-10 10:22:11,818 - INFO - Read 456056 bytes from file
+2025-05-10 10:22:11,818 - INFO - Created numpy array with shape: (456056,)
+2025-05-10 10:22:11,844 - INFO - Successfully read image with shape: (1920, 1080, 3)
+2025-05-10 10:22:11,845 - INFO - Processing frame with shape: (1920, 1080, 3)
+2025-05-10 10:22:11,860 - INFO - Enhanced image created
+2025-05-10 10:22:11,967 - INFO - Pose detected!
+2025-05-10 10:22:11,978 - INFO - Found 33 landmarks
+2025-05-10 10:22:11,979 - INFO - Frame processed in 0.13 seconds
+2025-05-10 10:22:11,979 - INFO - Total request processing time: 0.16 seconds
+2025-05-10 10:22:11,979 - INFO - ==================================================
