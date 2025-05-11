@@ -205,4 +205,99 @@ export const frameService = {
     }
 };
 
+/**
+ * API Service for Dance Flow Platform
+ * Handles communication with backend services
+ */
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+/**
+ * Process a video frame to detect poses
+ * @param {Blob} frameBlob - Video frame as blob
+ * @param {Object} options - Processing options
+ * @param {boolean} options.overlay - Whether to return skeleton-only PNG (default: true)
+ * @param {boolean} options.resize - Whether to resize large frames (default: true)
+ * @param {number} options.clickX - X coordinate of click point (optional)
+ * @param {number} options.clickY - Y coordinate of click point (optional)
+ * @returns {Promise<Object>} - Detection results
+ */
+export const processVideoFrame = async (frameBlob, options = {}) => {
+    const {
+        overlay = true,
+        resize = true,
+        clickX = null,
+        clickY = null
+    } = options;
+
+    // Create form data with the frame
+    const formData = new FormData();
+    formData.append('file', frameBlob, 'frame.jpg');
+
+    // Build query string for parameters
+    let queryParams = `?overlay=${overlay ? 1 : 0}&resize=${resize ? 1 : 0}`;
+
+    // Add click coordinates if provided
+    if (clickX !== null && clickY !== null) {
+        queryParams += `&click_x=${Math.round(clickX)}&click_y=${Math.round(clickY)}`;
+    }
+
+    console.log(`Sending request to: ${API_BASE_URL}/process-frame${queryParams}`);
+    console.log(`Click coordinates: ${clickX}, ${clickY}`);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/process-frame${queryParams}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error processing frame:', error);
+        throw error;
+    }
+};
+
+/**
+ * Check the health of the video analyzer backend
+ * @returns {Promise<Object>} - Health status
+ */
+export const checkBackendHealth = async () => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/health`);
+
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error checking backend health:', error);
+        throw error;
+    }
+};
+
+/**
+ * Clear the backend cache
+ * @returns {Promise<Object>} - Status response
+ */
+export const clearBackendCache = async () => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/clear-cache`);
+
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error clearing cache:', error);
+        throw error;
+    }
+};
+
 export default api; 
