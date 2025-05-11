@@ -9,6 +9,11 @@ node_modules/
 # Production
 /build
 /dist
+/server_backup
+
+client/public/audio
+client/public/models
+client/src/assets/models
 
 # Misc
 .DS_Store
