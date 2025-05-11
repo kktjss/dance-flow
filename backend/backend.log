@@ -4189,3 +4189,104 @@ AttributeError: 'list' object has no attribute 'landmark'
 2025-05-11 08:30:17,639 [INFO] Returning result with 2 poses
 2025-05-11 08:31:41,062 [INFO] Using settings from config module
 2025-05-11 08:31:42,285 [INFO] Landmarker ready (model=lite, delegate=gpu)
+2025-05-11 08:33:17,078 [INFO] Received request: click_x=1053, click_y=544, image=1, draw=1, overlay=1
+2025-05-11 08:33:17,078 [INFO] Read 416123 bytes from uploaded file
+2025-05-11 08:33:17,113 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:33:17,113 [INFO] Processing frame with click_point: (1053, 544)
+2025-05-11 08:33:17,114 [INFO] Processing frame with shape: (1920, 1080, 3), click_point: (1053, 544)
+2025-05-11 08:33:17,119 [INFO] Resized frame to: 360x640
+2025-05-11 08:33:17,119 [INFO] Using landmarker: <mediapipe.tasks.python.vision.pose_landmarker.PoseLandmarker object at 0x7fa9b26c8b30>
+2025-05-11 08:33:17,119 [INFO] Using newer MediaPipe API
+2025-05-11 08:33:17,152 [INFO] Detected 1 poses
+2025-05-11 08:33:17,152 [INFO] Pose 0 - bbox: (0.33,0.36) to (0.60,0.73), visibility: 0.85
+2025-05-11 08:33:17,152 [INFO] Dancer 0: inside_bbox=False, dist=2.477, score=0.713, final=0.710
+2025-05-11 08:33:17,153 [INFO] Selected dancer 0 as closest with distance 0.710
+2025-05-11 08:33:17,153 [INFO] Final selected pose: 0
+2025-05-11 08:33:17,153 [INFO] Drawing landmarks with draw=True, overlay=True
+2025-05-11 08:33:17,184 [INFO] Added PNG image with landmarks to result
+2025-05-11 08:33:17,185 [INFO] Returning result with 1 poses, selected_index=0
+2025-05-11 08:33:17,185 [INFO] Processed click with result: poses=1, selected_idx=0
+2025-05-11 08:33:17,185 [INFO] Returning result with 1 poses
+2025-05-11 08:33:19,789 [INFO] Received request: click_x=88, click_y=547, image=1, draw=1, overlay=1
+2025-05-11 08:33:19,789 [INFO] Read 416123 bytes from uploaded file
+2025-05-11 08:33:19,813 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:33:19,813 [INFO] Processing frame with click_point: (88, 547)
+2025-05-11 08:33:19,814 [INFO] Processed click with result: poses=1, selected_idx=0
+2025-05-11 08:33:19,814 [INFO] Returning result with 1 poses
+2025-05-11 08:36:42,146 [INFO] Using settings from config module
+2025-05-11 08:36:42,146 [INFO] Starting Video Analyzer Server on 0.0.0.0:8000
+2025-05-11 08:36:42,253 [INFO] Using settings from config module
+2025-05-11 08:36:43,522 [INFO] Landmarker ready (model=lite, delegate=gpu)
+2025-05-11 08:36:50,035 [INFO] Received request: click_x=None, click_y=None, image=1, draw=1, overlay=1
+2025-05-11 08:36:50,035 [INFO] Read 325666 bytes from uploaded file
+2025-05-11 08:36:50,052 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:36:50,052 [INFO] Processing frame with shape: (1920, 1080, 3), click_point: None
+2025-05-11 08:36:50,055 [INFO] Resized frame to: 360x640
+2025-05-11 08:36:50,055 [INFO] Using landmarker: <mediapipe.tasks.python.vision.pose_landmarker.PoseLandmarker object at 0x7f3de089d2e0>
+2025-05-11 08:36:50,055 [INFO] Using newer MediaPipe API
+2025-05-11 08:36:50,102 [INFO] Detected 2 poses
+2025-05-11 08:36:50,102 [INFO] Pose 0 - bbox: (0.43,0.39) to (0.70,0.67), visibility: 0.83
+2025-05-11 08:36:50,102 [INFO] Pose 1 - bbox: (0.41,0.23) to (0.75,0.71), visibility: 0.89
+2025-05-11 08:36:50,103 [INFO] Drawing landmarks with draw=True, overlay=True
+2025-05-11 08:36:50,140 [INFO] Added PNG image with landmarks to result
+2025-05-11 08:36:50,140 [INFO] Returning result with 2 poses, selected_index=None
+2025-05-11 08:36:50,141 [INFO] Returning result with 2 poses
+2025-05-11 08:36:50,223 [INFO] Received request: click_x=None, click_y=None, image=1, draw=1, overlay=1
+2025-05-11 08:36:50,224 [INFO] Read 325666 bytes from uploaded file
+2025-05-11 08:36:50,233 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:36:50,234 [INFO] Returning result with 2 poses
+2025-05-11 08:36:50,339 [INFO] Received request: click_x=None, click_y=None, image=1, draw=1, overlay=1
+2025-05-11 08:36:50,339 [INFO] Read 325666 bytes from uploaded file
+2025-05-11 08:36:50,362 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:36:50,363 [INFO] Returning result with 2 poses
+2025-05-11 08:36:50,432 [INFO] Received request: click_x=None, click_y=None, image=1, draw=1, overlay=1
+2025-05-11 08:36:50,432 [INFO] Read 325666 bytes from uploaded file
+2025-05-11 08:36:50,455 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:36:50,456 [INFO] Returning result with 2 poses
+2025-05-11 08:36:50,564 [INFO] Received request: click_x=None, click_y=None, image=1, draw=1, overlay=1
+2025-05-11 08:36:50,564 [INFO] Read 325666 bytes from uploaded file
+2025-05-11 08:36:50,581 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:36:50,582 [INFO] Returning result with 2 poses
+2025-05-11 08:36:50,606 [INFO] Received request: click_x=624, click_y=946, image=1, draw=1, overlay=1
+2025-05-11 08:36:50,607 [INFO] Read 486123 bytes from uploaded file
+2025-05-11 08:36:50,632 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:36:50,632 [INFO] Processing frame with click_point: (624, 946)
+2025-05-11 08:36:50,632 [INFO] Processing frame with shape: (1920, 1080, 3), click_point: (624, 946)
+2025-05-11 08:36:50,633 [INFO] Resized frame to: 360x640
+2025-05-11 08:36:50,633 [INFO] Using landmarker: <mediapipe.tasks.python.vision.pose_landmarker.PoseLandmarker object at 0x7f3de089d2e0>
+2025-05-11 08:36:50,633 [INFO] Using newer MediaPipe API
+2025-05-11 08:36:50,670 [INFO] Detected 2 poses
+2025-05-11 08:36:50,670 [INFO] Pose 0 - bbox: (0.42,0.38) to (0.70,0.66), visibility: 0.82
+2025-05-11 08:36:50,670 [INFO] Dancer 0: inside_bbox=False, dist=1.516, score=0.671, final=0.499
+2025-05-11 08:36:50,670 [INFO] Selected dancer 0 as closest with distance 0.499
+2025-05-11 08:36:50,670 [INFO] Pose 1 - bbox: (0.36,0.40) to (0.72,0.68), visibility: 0.88
+2025-05-11 08:36:50,671 [INFO] Dancer 1: inside_bbox=False, dist=1.520, score=0.738, final=0.398
+2025-05-11 08:36:50,671 [INFO] Selected dancer 1 as closest with distance 0.398
+2025-05-11 08:36:50,671 [INFO] Final selected pose: 1
+2025-05-11 08:36:50,671 [INFO] Drawing landmarks with draw=True, overlay=True
+2025-05-11 08:36:50,683 [INFO] Added PNG image with landmarks to result
+2025-05-11 08:36:50,683 [INFO] Returning result with 2 poses, selected_index=1
+2025-05-11 08:36:50,683 [INFO] Processed click with result: poses=2, selected_idx=1
+2025-05-11 08:36:50,684 [INFO] Returning result with 2 poses
+2025-05-11 08:36:50,703 [INFO] Received request: click_x=None, click_y=None, image=1, draw=1, overlay=1
+2025-05-11 08:36:50,703 [INFO] Read 325666 bytes from uploaded file
+2025-05-11 08:36:50,711 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:36:50,712 [INFO] Returning result with 2 poses
+2025-05-11 08:41:29,865 [INFO] Received request: click_x=694, click_y=986, image=1, draw=1, overlay=1
+2025-05-11 08:41:29,865 [INFO] Read 486133 bytes from uploaded file
+2025-05-11 08:41:29,875 [INFO] Decoded image with shape: (1920, 1080, 3)
+2025-05-11 08:41:29,875 [INFO] Processing frame with click_point: (694, 986)
+2025-05-11 08:41:29,875 [INFO] Processing frame with shape: (1920, 1080, 3), click_point: (694, 986)
+2025-05-11 08:41:29,876 [INFO] Resized frame to: 360x640
+2025-05-11 08:41:29,876 [INFO] Using landmarker: <mediapipe.tasks.python.vision.pose_landmarker.PoseLandmarker object at 0x7f3de089d2e0>
+2025-05-11 08:41:29,876 [INFO] Using newer MediaPipe API
+2025-05-11 08:41:29,895 [INFO] Detected 1 poses
+2025-05-11 08:41:29,895 [INFO] Pose 0 - bbox: (0.38,0.38) to (0.72,0.67), visibility: 0.95
+2025-05-11 08:41:29,896 [INFO] Dancer 0: inside_bbox=False, dist=1.709, score=0.786, final=0.365
+2025-05-11 08:41:29,896 [INFO] Selected dancer 0 as closest with distance 0.365
+2025-05-11 08:41:29,896 [INFO] Final selected pose: 0
+2025-05-11 08:41:29,896 [INFO] Drawing landmarks with draw=True, overlay=True
+2025-05-11 08:41:29,908 [INFO] Added PNG image with landmarks to result
+2025-05-11 08:41:29,908 [INFO] Returning result with 1 poses, selected_index=0
+2025-05-11 08:41:29,908 [INFO] Processed click with result: poses=1, selected_idx=0
+2025-05-11 08:41:29,908 [INFO] Returning result with 1 poses
