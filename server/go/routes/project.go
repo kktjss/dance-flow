@@ -2,7 +2,9 @@ package routes
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -88,13 +90,18 @@ func getProjects(c *gin.Context) {
 // getProject returns a single project by ID if the user has access
 func getProject(c *gin.Context) {
 	projectID := c.Param("id")
-	if projectID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Project ID is required"})
+	
+	// Add debug logging
+	log.Printf("[PROJECT] getProject called with ID: '%s'", projectID)
+	
+	if projectID == "" || projectID == "undefined" || projectID == "null" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Valid project ID is required"})
 		return
 	}
 
 	projectObjID, err := primitive.ObjectIDFromHex(projectID)
 	if err != nil {
+		log.Printf("[PROJECT] Error converting ID '%s' to ObjectID: %v", projectID, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID format"})
 		return
 	}
@@ -181,8 +188,8 @@ func createProject(c *gin.Context) {
 // updateProject updates a project if the user has access
 func updateProject(c *gin.Context) {
 	projectID := c.Param("id")
-	if projectID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Project ID is required"})
+	if projectID == "" || projectID == "undefined" || projectID == "null" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Valid project ID is required"})
 		return
 	}
 
@@ -232,6 +239,38 @@ func updateProject(c *gin.Context) {
 		}
 		update["$set"].(bson.M)["teamId"] = teamObjID
 	}
+	// Handle new fields
+	if input.Elements != nil {
+		update["$set"].(bson.M)["elements"] = input.Elements
+		
+		// Also extract keyframes for each element and store in keyframesJson
+		keyframesData := make(map[string]interface{})
+		
+		for _, element := range input.Elements {
+			// Access element as a map to extract ID and keyframes
+			if elem, ok := element.(map[string]interface{}); ok {
+				if elemID, hasID := elem["id"].(string); hasID {
+					if keyframes, hasKeyframes := elem["keyframes"]; hasKeyframes {
+						keyframesData[elemID] = keyframes
+					}
+				}
+			}
+		}
+		
+		// If we have keyframes, serialize to JSON and store
+		if len(keyframesData) > 0 {
+			keyframesJSON, err := json.Marshal(keyframesData)
+			if err == nil {
+				update["$set"].(bson.M)["keyframesJson"] = string(keyframesJSON)
+			}
+		}
+	}
+	if input.Duration != nil {
+		update["$set"].(bson.M)["duration"] = *input.Duration
+	}
+	if input.AudioURL != "" {
+		update["$set"].(bson.M)["audioUrl"] = input.AudioURL
+	}
 
 	// Update project
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -267,8 +306,8 @@ func updateProject(c *gin.Context) {
 // deleteProject deletes a project if the user has access
 func deleteProject(c *gin.Context) {
 	projectID := c.Param("id")
-	if projectID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Project ID is required"})
+	if projectID == "" || projectID == "undefined" || projectID == "null" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Valid project ID is required"})
 		return
 	}
 

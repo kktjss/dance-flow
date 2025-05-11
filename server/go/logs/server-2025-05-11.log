@@ -87,3 +87,144 @@
 2025/05/11 13:11:42 logger.go:74: [2025-05-11 13:11:42.011] [REQ] GET /api/projects - 127.0.0.1 - 200 (54.766737ms)
 2025/05/11 13:11:42 logger.go:74: [2025-05-11 13:11:42.013] [REQ] GET /api/projects - 127.0.0.1 - 200 (55.319112ms)
 2025/05/11 13:11:50 logger.go:74: [2025-05-11 13:11:50.550] [REQ] POST /api/projects - 127.0.0.1 - 201 (1.290597ms)
+2025/05/11 18:12:04 logger.go:46: Logger initialized, writing to logs/server-2025-05-11.log
+2025/05/11 18:12:04 logger.go:62: [2025-05-11 18:12:04.845] [MAIN] Server starting on :5000
+2025/05/11 18:12:04 logger.go:68: [2025-05-11 18:12:04.845] [MAIN] ERROR: failed to start server: listen tcp :5000: bind: address already in use
+2025/05/11 18:12:15 logger.go:74: [2025-05-11 18:12:15.006] [REQ] GET /health - ::1 - 200 (33.314µs)
+2025/05/11 18:12:32 logger.go:74: [2025-05-11 18:12:32.598] [REQ] GET /api/projects - 127.0.0.1 - 200 (48.127053ms)
+2025/05/11 18:12:32 logger.go:74: [2025-05-11 18:12:32.605] [REQ] GET /api/projects - 127.0.0.1 - 200 (54.629693ms)
+2025/05/11 18:12:40 logger.go:74: [2025-05-11 18:12:40.436] [REQ] GET /api/projects/undefined - 127.0.0.1 - 400 (85.415µs)
+2025/05/11 18:12:40 logger.go:74: [2025-05-11 18:12:40.443] [REQ] GET /api/projects/undefined - 127.0.0.1 - 400 (51.054µs)
+2025/05/11 18:21:14 logger.go:62: [2025-05-11 18:21:14.027] [MAIN] Shutting down server...
+2025/05/11 18:21:14 logger.go:62: [2025-05-11 18:21:14.027] [MAIN] Server stopped
+2025/05/11 18:21:14 logger.go:53: Closing logger
+2025/05/11 18:21:23 logger.go:46: Logger initialized, writing to logs/server-2025-05-11.log
+2025/05/11 18:21:23 logger.go:62: [2025-05-11 18:21:23.204] [MAIN] Server starting on :5000
+2025/05/11 18:26:17 logger.go:74: [2025-05-11 18:26:17.997] [REQ] GET /api/projects - 127.0.0.1 - 200 (42.078312ms)
+2025/05/11 18:26:28 logger.go:74: [2025-05-11 18:26:28.268] [REQ] GET /api/projects - 127.0.0.1 - 200 (28.561863ms)
+2025/05/11 18:26:38 logger.go:74: [2025-05-11 18:26:38.697] [REQ] GET /api/projects - 127.0.0.1 - 200 (41.350565ms)
+2025/05/11 18:26:38 logger.go:74: [2025-05-11 18:26:38.709] [REQ] GET /api/projects - 127.0.0.1 - 200 (53.574533ms)
+2025/05/11 18:26:40 logger.go:74: [2025-05-11 18:26:40.486] [REQ] GET /api/projects - 127.0.0.1 - 200 (47.641168ms)
+2025/05/11 18:26:40 logger.go:74: [2025-05-11 18:26:40.487] [REQ] GET /api/projects - 127.0.0.1 - 200 (37.814503ms)
+2025/05/11 18:27:00 logger.go:74: [2025-05-11 18:27:00.085] [REQ] GET /api/projects - 127.0.0.1 - 200 (38.278109ms)
+2025/05/11 18:27:00 logger.go:74: [2025-05-11 18:27:00.102] [REQ] GET /api/projects - 127.0.0.1 - 200 (50.740514ms)
+2025/05/11 18:27:56 logger.go:74: [2025-05-11 18:27:56.815] [REQ] POST /api/projects - 127.0.0.1 - 201 (2.689656ms)
+2025/05/11 18:27:58 logger.go:74: [2025-05-11 18:27:58.554] [REQ] GET /api/projects - 127.0.0.1 - 200 (41.852515ms)
+2025/05/11 18:27:58 logger.go:74: [2025-05-11 18:27:58.637] [REQ] GET /api/projects - 127.0.0.1 - 200 (36.254599ms)
+2025/05/11 18:28:00 logger.go:74: [2025-05-11 18:28:00.759] [REQ] GET /api/projects - 127.0.0.1 - 200 (45.935785ms)
+2025/05/11 18:28:00 logger.go:74: [2025-05-11 18:28:00.786] [REQ] GET /api/projects - 127.0.0.1 - 200 (35.63804ms)
+2025/05/11 18:28:02 logger.go:74: [2025-05-11 18:28:02.212] [REQ] GET /api/projects - 127.0.0.1 - 200 (52.745028ms)
+2025/05/11 18:28:02 logger.go:74: [2025-05-11 18:28:02.216] [REQ] GET /api/projects - 127.0.0.1 - 200 (47.410203ms)
+2025/05/11 18:28:04 logger.go:74: [2025-05-11 18:28:04.752] [REQ] DELETE /api/projects/undefined - 127.0.0.1 - 400 (79.829µs)
+2025/05/11 18:30:14 logger.go:74: [2025-05-11 18:30:14.340] [REQ] GET /health - ::1 - 200 (42.812µs)
+2025/05/11 18:30:30 logger.go:74: [2025-05-11 18:30:30.299] [REQ] GET /api/projects - ::1 - 200 (29.070586ms)
+2025/05/11 18:32:27 logger.go:74: [2025-05-11 18:32:27.768] [REQ] GET /api/projects - 127.0.0.1 - 200 (43.054626ms)
+2025/05/11 18:32:27 logger.go:74: [2025-05-11 18:32:27.789] [REQ] GET /api/projects - 127.0.0.1 - 200 (57.290162ms)
+2025/05/11 18:32:28 logger.go:74: [2025-05-11 18:32:28.437] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.79492ms)
+2025/05/11 18:32:30 logger.go:74: [2025-05-11 18:32:30.235] [REQ] GET /api/projects - 127.0.0.1 - 200 (53.073913ms)
+2025/05/11 18:32:30 logger.go:74: [2025-05-11 18:32:30.243] [REQ] GET /api/projects - 127.0.0.1 - 200 (54.351381ms)
+2025/05/11 18:32:31 logger.go:74: [2025-05-11 18:32:31.209] [REQ] GET /api/projects/682074c102df701e8d58259d - 127.0.0.1 - 200 (734.032µs)
+2025/05/11 18:32:32 logger.go:74: [2025-05-11 18:32:32.156] [REQ] GET /api/projects - 127.0.0.1 - 200 (45.62227ms)
+2025/05/11 18:32:32 logger.go:74: [2025-05-11 18:32:32.165] [REQ] GET /api/projects - 127.0.0.1 - 200 (42.563782ms)
+2025/05/11 18:32:34 logger.go:74: [2025-05-11 18:32:34.252] [REQ] GET /api/projects/682077e602df701e8d5825a9 - 127.0.0.1 - 200 (1.351079ms)
+2025/05/11 18:32:35 logger.go:74: [2025-05-11 18:32:35.397] [REQ] GET /api/projects - 127.0.0.1 - 200 (60.180192ms)
+2025/05/11 18:32:35 logger.go:74: [2025-05-11 18:32:35.403] [REQ] GET /api/projects - 127.0.0.1 - 200 (55.214828ms)
+2025/05/11 18:32:36 logger.go:74: [2025-05-11 18:32:36.087] [REQ] GET /api/projects/682074db02df701e8d58259f - 127.0.0.1 - 200 (2.948209ms)
+2025/05/11 18:32:36 logger.go:74: [2025-05-11 18:32:36.885] [REQ] GET /api/projects - 127.0.0.1 - 200 (44.655946ms)
+2025/05/11 18:32:36 logger.go:74: [2025-05-11 18:32:36.905] [REQ] GET /api/projects - 127.0.0.1 - 200 (64.291538ms)
+2025/05/11 18:32:39 logger.go:74: [2025-05-11 18:32:39.165] [REQ] GET /api/projects - 127.0.0.1 - 200 (44.063902ms)
+2025/05/11 18:32:39 logger.go:74: [2025-05-11 18:32:39.167] [REQ] GET /api/projects - 127.0.0.1 - 200 (41.104937ms)
+2025/05/11 18:32:54 logger.go:74: [2025-05-11 18:32:54.309] [REQ] DELETE /api/projects/681e11bedec179d0efcf60d6 - 127.0.0.1 - 200 (22.934685ms)
+2025/05/11 18:32:56 logger.go:74: [2025-05-11 18:32:56.235] [REQ] DELETE /api/projects/682074c102df701e8d58259d - 127.0.0.1 - 200 (1.982235ms)
+2025/05/11 18:32:57 logger.go:74: [2025-05-11 18:32:57.749] [REQ] DELETE /api/projects/682077e602df701e8d5825a9 - 127.0.0.1 - 200 (2.419301ms)
+2025/05/11 18:32:59 logger.go:74: [2025-05-11 18:32:59.189] [REQ] DELETE /api/projects/682074db02df701e8d58259f - 127.0.0.1 - 200 (1.9536ms)
+2025/05/11 18:33:03 logger.go:74: [2025-05-11 18:33:03.476] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.21468ms)
+2025/05/11 18:33:03 logger.go:74: [2025-05-11 18:33:03.490] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.927607ms)
+2025/05/11 18:33:04 logger.go:74: [2025-05-11 18:33:04.028] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.371613ms)
+2025/05/11 18:33:11 logger.go:74: [2025-05-11 18:33:11.864] [REQ] PUT /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (4.642419ms)
+2025/05/11 18:33:11 logger.go:74: [2025-05-11 18:33:11.929] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.929923ms)
+2025/05/11 18:38:37 logger.go:62: [2025-05-11 18:38:37.407] [MAIN] Shutting down server...
+2025/05/11 18:38:37 logger.go:62: [2025-05-11 18:38:37.407] [MAIN] Server stopped
+2025/05/11 18:38:37 logger.go:53: Closing logger
+2025/05/11 18:38:41 logger.go:46: Logger initialized, writing to logs/server-2025-05-11.log
+2025/05/11 18:38:41 logger.go:62: [2025-05-11 18:38:41.050] [MAIN] Server starting on :5000
+2025/05/11 18:38:46 logger.go:74: [2025-05-11 18:38:46.051] [REQ] GET /api/projects - 127.0.0.1 - 200 (3.012044ms)
+2025/05/11 18:38:46 logger.go:74: [2025-05-11 18:38:46.051] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.749581ms)
+2025/05/11 18:38:46 logger.go:74: [2025-05-11 18:38:46.975] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.063124ms)
+2025/05/11 18:39:02 logger.go:74: [2025-05-11 18:39:02.926] [REQ] PUT /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 403 (1.610889ms)
+2025/05/11 18:39:02 logger.go:74: [2025-05-11 18:39:02.954] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.612355ms)
+2025/05/11 18:44:12 logger.go:46: Logger initialized, writing to logs/server-2025-05-11.log
+2025/05/11 18:44:12 logger.go:62: [2025-05-11 18:44:12.702] [MAIN] Server starting on :5000
+2025/05/11 18:44:12 logger.go:68: [2025-05-11 18:44:12.703] [MAIN] ERROR: failed to start server: listen tcp :5000: bind: address already in use
+2025/05/11 18:44:27 logger.go:46: Logger initialized, writing to logs/server-2025-05-11.log
+2025/05/11 18:44:27 logger.go:62: [2025-05-11 18:44:27.298] [MAIN] Server starting on :5000
+2025/05/11 18:44:27 logger.go:68: [2025-05-11 18:44:27.298] [MAIN] ERROR: failed to start server: listen tcp :5000: bind: address already in use
+2025/05/11 18:44:50 logger.go:62: [2025-05-11 18:44:50.397] [MAIN] Shutting down server...
+2025/05/11 18:44:50 logger.go:62: [2025-05-11 18:44:50.397] [MAIN] Server stopped
+2025/05/11 18:44:50 logger.go:53: Closing logger
+2025/05/11 18:44:56 logger.go:46: Logger initialized, writing to logs/server-2025-05-11.log
+2025/05/11 18:44:56 logger.go:62: [2025-05-11 18:44:56.571] [MAIN] Server starting on :5000
+2025/05/11 18:45:55 logger.go:74: [2025-05-11 18:45:55.997] [REQ] GET /api/projects - ::1 - 200 (1.571987ms)
+2025/05/11 18:49:54 logger.go:74: [2025-05-11 18:49:54.238] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (2.144755ms)
+2025/05/11 18:49:54 logger.go:74: [2025-05-11 18:49:54.248] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.783397ms)
+2025/05/11 18:52:56 logger.go:74: [2025-05-11 18:52:56.362] [REQ] PUT /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (8.734139ms)
+2025/05/11 18:52:58 logger.go:74: [2025-05-11 18:52:58.213] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.74666ms)
+2025/05/11 18:52:58 logger.go:74: [2025-05-11 18:52:58.216] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.528394ms)
+2025/05/11 18:52:58 logger.go:74: [2025-05-11 18:52:58.918] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.987193ms)
+2025/05/11 18:53:00 logger.go:74: [2025-05-11 18:53:00.655] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.129181ms)
+2025/05/11 18:53:00 logger.go:74: [2025-05-11 18:53:00.668] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.757264ms)
+2025/05/11 18:53:01 logger.go:74: [2025-05-11 18:53:01.331] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.501937ms)
+2025/05/11 18:53:24 logger.go:74: [2025-05-11 18:53:24.279] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.810425ms)
+2025/05/11 18:53:24 logger.go:74: [2025-05-11 18:53:24.293] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (3.524679ms)
+2025/05/11 18:53:33 logger.go:74: [2025-05-11 18:53:33.696] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.558007ms)
+2025/05/11 18:53:33 logger.go:74: [2025-05-11 18:53:33.712] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.663549ms)
+2025/05/11 18:53:34 logger.go:74: [2025-05-11 18:53:34.380] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (2.071842ms)
+2025/05/11 18:53:38 logger.go:74: [2025-05-11 18:53:38.127] [REQ] GET /main.ac1628a47b9e003da7b0.hot-update.json - 127.0.0.1 - 404 (1.396µs)
+2025/05/11 18:53:39 logger.go:74: [2025-05-11 18:53:39.712] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.270692ms)
+2025/05/11 18:53:39 logger.go:74: [2025-05-11 18:53:39.722] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (1.908133ms)
+2025/05/11 18:59:41 logger.go:74: [2025-05-11 18:59:41.244] [REQ] PUT /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (2.166266ms)
+2025/05/11 18:59:43 logger.go:74: [2025-05-11 18:59:43.056] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.966241ms)
+2025/05/11 18:59:43 logger.go:74: [2025-05-11 18:59:43.058] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.940959ms)
+2025/05/11 18:59:44 logger.go:74: [2025-05-11 18:59:44.040] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (2.178209ms)
+2025/05/11 19:05:05 logger.go:46: Logger initialized, writing to logs/server-2025-05-11.log
+2025/05/11 19:05:05 logger.go:62: [2025-05-11 19:05:05.193] [MAIN] Server starting on :5000
+2025/05/11 19:05:05 logger.go:68: [2025-05-11 19:05:05.193] [MAIN] ERROR: failed to start server: listen tcp :5000: bind: address already in use
+2025/05/11 19:05:19 logger.go:62: [2025-05-11 19:05:19.773] [MAIN] Shutting down server...
+2025/05/11 19:05:19 logger.go:62: [2025-05-11 19:05:19.773] [MAIN] Server stopped
+2025/05/11 19:05:19 logger.go:53: Closing logger
+2025/05/11 19:05:22 logger.go:46: Logger initialized, writing to logs/server-2025-05-11.log
+2025/05/11 19:05:22 logger.go:62: [2025-05-11 19:05:22.957] [MAIN] Server starting on :5000
+2025/05/11 19:05:24 logger.go:74: [2025-05-11 19:05:24.346] [REQ] GET /api/projects - 127.0.0.1 - 200 (3.254323ms)
+2025/05/11 19:05:24 logger.go:74: [2025-05-11 19:05:24.349] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.378584ms)
+2025/05/11 19:05:43 logger.go:74: [2025-05-11 19:05:43.236] [REQ] PUT /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (3.911041ms)
+2025/05/11 19:12:27 logger.go:62: [2025-05-11 19:12:27.749] [MAIN] Shutting down server...
+2025/05/11 19:12:27 logger.go:62: [2025-05-11 19:12:27.750] [MAIN] Server stopped
+2025/05/11 19:12:27 logger.go:53: Closing logger
+2025/05/11 19:12:30 logger.go:46: Logger initialized, writing to logs/server-2025-05-11.log
+2025/05/11 19:12:30 logger.go:62: [2025-05-11 19:12:30.584] [MAIN] Server starting on :5000
+2025/05/11 19:12:37 logger.go:74: [2025-05-11 19:12:37.153] [REQ] PUT /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (5.26191ms)
+2025/05/11 19:12:38 logger.go:74: [2025-05-11 19:12:38.125] [REQ] GET /api/projects - 127.0.0.1 - 200 (3.163809ms)
+2025/05/11 19:12:38 logger.go:74: [2025-05-11 19:12:38.140] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.156978ms)
+2025/05/11 19:12:38 logger.go:74: [2025-05-11 19:12:38.676] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (3.465314ms)
+2025/05/11 19:18:59 logger.go:74: [2025-05-11 19:18:59.369] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.139238ms)
+2025/05/11 19:18:59 logger.go:74: [2025-05-11 19:18:59.373] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.850781ms)
+2025/05/11 19:19:00 logger.go:74: [2025-05-11 19:19:00.050] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (3.972291ms)
+2025/05/11 19:19:03 logger.go:74: [2025-05-11 19:19:03.483] [REQ] PUT /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (10.021383ms)
+2025/05/11 19:19:04 logger.go:74: [2025-05-11 19:19:04.794] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.429218ms)
+2025/05/11 19:19:04 logger.go:74: [2025-05-11 19:19:04.806] [REQ] GET /api/projects - 127.0.0.1 - 200 (3.027688ms)
+2025/05/11 19:19:05 logger.go:74: [2025-05-11 19:19:05.340] [REQ] GET /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (8.908881ms)
+2025/05/11 19:19:07 logger.go:74: [2025-05-11 19:19:07.648] [REQ] GET /api/projects - 127.0.0.1 - 200 (5.72426ms)
+2025/05/11 19:19:07 logger.go:74: [2025-05-11 19:19:07.649] [REQ] GET /api/projects - 127.0.0.1 - 200 (5.328609ms)
+2025/05/11 19:19:09 logger.go:74: [2025-05-11 19:19:09.599] [REQ] DELETE /api/projects/6820c1fc1c715d8ff1d9c1bf - 127.0.0.1 - 200 (2.690495ms)
+2025/05/11 19:19:19 logger.go:74: [2025-05-11 19:19:19.442] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.348984ms)
+2025/05/11 19:19:19 logger.go:74: [2025-05-11 19:19:19.444] [REQ] GET /api/history - 127.0.0.1 - 200 (3.207041ms)
+2025/05/11 19:19:19 logger.go:74: [2025-05-11 19:19:19.446] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.344654ms)
+2025/05/11 19:19:19 logger.go:74: [2025-05-11 19:19:19.452] [REQ] GET /api/history - 127.0.0.1 - 200 (3.913765ms)
+2025/05/11 19:19:27 logger.go:74: [2025-05-11 19:19:27.169] [REQ] POST /api/projects - 127.0.0.1 - 201 (2.248749ms)
+2025/05/11 19:19:30 logger.go:74: [2025-05-11 19:19:30.993] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.505917ms)
+2025/05/11 19:19:31 logger.go:74: [2025-05-11 19:19:31.001] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.638965ms)
+2025/05/11 19:19:31 logger.go:74: [2025-05-11 19:19:31.513] [REQ] GET /api/projects/6820ce0fd80c2550fd77c23b - 127.0.0.1 - 200 (1.46527ms)
+2025/05/11 19:19:34 logger.go:74: [2025-05-11 19:19:34.473] [REQ] GET /api/projects - 127.0.0.1 - 200 (1.613124ms)
+2025/05/11 19:19:34 logger.go:74: [2025-05-11 19:19:34.474] [REQ] GET /api/projects - 127.0.0.1 - 200 (2.692381ms)
+2025/05/11 19:19:34 logger.go:74: [2025-05-11 19:19:34.475] [REQ] GET /api/history - 127.0.0.1 - 200 (3.936113ms)
+2025/05/11 19:19:34 logger.go:74: [2025-05-11 19:19:34.477] [REQ] GET /api/history - 127.0.0.1 - 200 (4.788387ms)

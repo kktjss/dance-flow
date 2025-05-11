@@ -54,10 +54,10 @@ const ProjectsList = ({ onSelectProject, setShowProjects }) => {
         if (!projectToDelete) return;
 
         try {
-            await projectService.deleteProject(projectToDelete._id);
+            await projectService.deleteProject(projectToDelete.id);
 
             // Update projects list
-            setProjects(projects.filter(p => p._id !== projectToDelete._id));
+            setProjects(projects.filter(p => p.id !== projectToDelete.id));
 
             // Show success notification
             setNotification({
@@ -103,9 +103,9 @@ const ProjectsList = ({ onSelectProject, setShowProjects }) => {
                 <div className="projects-grid">
                     {projects.map(project => (
                         <div
-                            key={project._id}
+                            key={project.id}
                             className="project-card"
-                            onClick={() => handleProjectSelect(project._id)}
+                            onClick={() => handleProjectSelect(project.id)}
                         >
                             <div className="project-title">{project.name || 'Без названия'}</div>
                             <div className="project-info">

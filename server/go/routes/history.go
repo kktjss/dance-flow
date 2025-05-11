@@ -27,7 +27,13 @@ func RegisterHistoryRoutes(router *gin.RouterGroup, cfg *config.Config) {
 
 // getHistory retrieves a user's history entries
 func getHistory(c *gin.Context) {
-	userID, _ := c.Get("userId")
+	userID, exists := c.Get("userID")
+	if !exists || userID == nil {
+		log.Printf("[HISTORY] Error: userID not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+	
 	userObjID, err := primitive.ObjectIDFromHex(userID.(string))
 	if err != nil {
 		log.Printf("[HISTORY] Error converting userID to ObjectID: %v", err)
@@ -88,7 +94,13 @@ func createHistoryEntry(c *gin.Context) {
 		return
 	}
 
-	userID, _ := c.Get("userId")
+	userID, exists := c.Get("userID")
+	if !exists || userID == nil {
+		log.Printf("[HISTORY] Error: userID not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Unauthorized"})
+		return
+	}
+	
 	userObjID, err := primitive.ObjectIDFromHex(userID.(string))
 	if err != nil {
 		log.Printf("[HISTORY] Error converting userID to ObjectID: %v", err)

@@ -19,6 +19,15 @@ import {
 const ChoreographyList = ({ choreographies, onDelete }) => {
     const navigate = useNavigate();
 
+    // Helper to validate project IDs
+    const navigateToProject = (projectId, route) => {
+        if (!projectId || projectId === 'undefined' || projectId === 'null') {
+            console.error('Attempted to navigate with invalid project ID:', projectId);
+            return;
+        }
+        navigate(`${route}/${projectId}`);
+    };
+
     if (!choreographies || choreographies.length === 0) {
         return (
             <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -32,7 +41,7 @@ const ChoreographyList = ({ choreographies, onDelete }) => {
     return (
         <List>
             {choreographies.map((choreography, index) => (
-                <React.Fragment key={choreography._id || index}>
+                <React.Fragment key={choreography.id || index}>
                     <ListItem
                         alignItems="flex-start"
                         secondaryAction={
@@ -40,21 +49,21 @@ const ChoreographyList = ({ choreographies, onDelete }) => {
                                 <IconButton
                                     edge="end"
                                     aria-label="view"
-                                    onClick={() => navigate(`/projects/${choreography._id}`)}
+                                    onClick={() => navigateToProject(choreography.id, '/projects')}
                                 >
                                     <VisibilityIcon />
                                 </IconButton>
                                 <IconButton
                                     edge="end"
                                     aria-label="edit"
-                                    onClick={() => navigate(`/constructor/${choreography._id}`)}
+                                    onClick={() => navigateToProject(choreography.id, '/constructor')}
                                 >
                                     <EditIcon />
                                 </IconButton>
                                 <IconButton
                                     edge="end"
                                     aria-label="delete"
-                                    onClick={() => onDelete(choreography._id)}
+                                    onClick={() => onDelete(choreography.id)}
                                 >
                                     <DeleteIcon />
                                 </IconButton>

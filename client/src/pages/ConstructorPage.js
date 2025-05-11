@@ -19,7 +19,7 @@ const API_URL = 'http://localhost:5000/api';
 const ConstructorPage = () => {
     // State for project data
     const [project, setProject] = useState({
-        _id: null,
+        id: null,
         name: 'Новый проект',
         description: '',
         duration: 60,
@@ -47,7 +47,7 @@ const ConstructorPage = () => {
     // Загружаем проект при монтировании, если есть projectId в URL
     useEffect(() => {
         const projectId = params.projectId;
-        if (projectId && !project._id) {
+        if (projectId && !project.id) {
             console.log('Loading project from URL parameter:', projectId);
             handleSelectProject(projectId);
         }
@@ -87,7 +87,7 @@ const ConstructorPage = () => {
     const handleAddElement = (element) => {
         setProject(prev => ({
             ...prev,
-            elements: [...prev.elements, element]
+            elements: prev.elements ? [...prev.elements, element] : [element]
         }));
 
         // Auto-select the newly added element
@@ -193,9 +193,9 @@ const ConstructorPage = () => {
     const handleElementUpdate = (updatedElement) => {
         setProject(prev => ({
             ...prev,
-            elements: prev.elements.map(elem =>
-                elem.id === updatedElement.id ? updatedElement : elem
-            )
+            elements: prev.elements
+                ? prev.elements.map(elem => elem.id === updatedElement.id ? updatedElement : elem)
+                : [updatedElement]
         }));
 
         // Update selected element if it's the one being updated
@@ -206,6 +206,11 @@ const ConstructorPage = () => {
 
     // Handle bulk update to all elements
     const handleElementsUpdate = (updatedElements) => {
+        if (!updatedElements || !Array.isArray(updatedElements)) {
+            console.error('Invalid elements array received:', updatedElements);
+            return;
+        }
+
         setProject(prev => ({ ...prev, elements: updatedElements }));
 
         // Update selected element if it's in the updated list
@@ -277,7 +282,7 @@ const ConstructorPage = () => {
 
             // Send to the debug endpoint with POST method
             console.log('Sending project to debug endpoint...');
-            const debugUrl = `${API_URL}/projects/${project._id || 'test-project'}/debug`;
+            const debugUrl = `${API_URL}/projects/${project.id || 'test-project'}/debug`;
             console.log(`Debug POST URL: ${debugUrl}`);
 
             try {
@@ -316,7 +321,7 @@ See console for complete details.`);
         console.log('*** DIRECT KEYFRAME SAVE - FRESH IMPLEMENTATION ***');
 
         try {
-            if (!project._id) {
+            if (!project.id) {
                 alert('Необходимо сначала сохранить проект!');
                 return;
             }
@@ -352,7 +357,7 @@ See console for complete details.`);
             console.log(`Selected element ${targetElement.id} with ${targetElement.keyframesCount} keyframes for direct save`);
 
             // Send direct update request
-            const directUrl = `${API_URL}/projects/${project._id}/direct-keyframes`;
+            const directUrl = `${API_URL}/projects/${project.id}/direct-keyframes`;
             console.log(`Direct update URL: ${directUrl}`);
 
             const updateData = {
@@ -474,8 +479,8 @@ See console for complete details.`);
                     });
 
                     // If we have a project ID, store the backup
-                    if (project._id) {
-                        const backupKey = `project-keyframes-${project._id}`;
+                    if (project.id) {
+                        const backupKey = `project-keyframes-${project.id}`;
                         localStorage.setItem(backupKey, JSON.stringify(keyframesBackup));
                         console.log(`Created localStorage backup with ${totalBackedUpKeyframes} keyframes for ${Object.keys(keyframesBackup).length} elements`);
                     } else {
@@ -585,11 +590,11 @@ See console for complete details.`);
                 console.log('Attempting full project save...');
                 let response;
 
-                if (project._id) {
+                if (project.id) {
                     // Update existing project
-                    console.log('Updating existing project with ID:', project._id);
+                    console.log('Updating existing project with ID:', project.id);
                     const token = localStorage.getItem('token');
-                    response = await axios.put(`${API_URL}/projects/${project._id}`, projectToSave, {
+                    response = await axios.put(`${API_URL}/projects/${project.id}`, projectToSave, {
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
@@ -624,6 +629,18 @@ See console for complete details.`);
                 }
 
                 console.log('Server response received:', response.status, response.statusText);
+                console.log('RAW SERVER RESPONSE DATA:', JSON.stringify(response.data).substring(0, 300) + '...');
+
+                // Examine elements structure
+                const rawElements = response.data.elements;
+                console.log('ELEMENTS DATA TYPE:', typeof rawElements);
+                console.log('IS ARRAY:', Array.isArray(rawElements));
+                if (rawElements) {
+                    console.log('ELEMENTS COUNT:', rawElements.length);
+                    console.log('FIRST ELEMENT SAMPLE:', JSON.stringify(rawElements[0]).substring(0, 100));
+                } else {
+                    console.log('ELEMENTS IS NULL OR UNDEFINED');
+                }
 
                 // Direct check for received keyframes in response
                 console.log('*** KEYFRAME DIAGNOSTIC AFTER SAVE ***');
@@ -643,7 +660,7 @@ See console for complete details.`);
 
                 console.log(`Server returned ${responseKeyframesCount} total keyframes`);
 
-                if (project._id && responseKeyframesCount < finalKeframesCount) {
+                if (project.id && responseKeyframesCount < finalKeframesCount) {
                     console.warn(`WARNING: Server returned fewer keyframes (${responseKeyframesCount}) than sent (${finalKeframesCount})`);
 
                     // **CRITICAL FIX**: If keyframes were lost, manually add them back from our original data
@@ -671,23 +688,94 @@ See console for complete details.`);
                 }
 
                 // Непосредственно используем проект из ответа сервера
-                console.log('Updating state with project from server response');
-                setProject(response.data);
+                console.log('Updating state with server response');
+
+                // Ensure the response has a valid structure before setting the state
+                const validatedResponse = {
+                    ...response.data,
+                    // Ensure elements is an array
+                    elements: Array.isArray(response.data.elements) ? response.data.elements : []
+                };
+
+                // Check if server returned valid elements
+                let hasValidElements = validatedResponse.elements.length > 0 &&
+                    validatedResponse.elements[0] &&
+                    validatedResponse.elements[0].id &&
+                    validatedResponse.elements[0].type;
+
+                if (!hasValidElements) {
+                    console.warn('Server returned elements with missing properties, using original elements');
+
+                    // Use elements from the project we just saved since server didn't return proper elements
+                    validatedResponse.elements = projectToSave.elements.map(element => ({
+                        ...element,
+                        // Ensure deep cloning
+                        position: { ...element.position },
+                        size: { ...element.size },
+                        style: { ...element.style },
+                        keyframes: element.keyframes ? JSON.parse(JSON.stringify(element.keyframes)) : []
+                    }));
+
+                    console.log('Restored elements from client-side cache:', validatedResponse.elements.length);
+                } else {
+                    // Make sure each element has the required properties
+                    validatedResponse.elements = validatedResponse.elements.map(element => ({
+                        ...element,
+                        // Ensure ID is preserved
+                        id: element.id,
+                        // Ensure type is preserved exactly as is
+                        type: element.type,
+                        // Ensure position exists
+                        position: element.position || { x: 0, y: 0 },
+                        // Ensure size exists
+                        size: element.size || { width: 100, height: 100 },
+                        // Ensure style exists
+                        style: element.style || {
+                            color: '#000000',
+                            backgroundColor: 'transparent',
+                            borderColor: '#000000',
+                            borderWidth: 1,
+                            opacity: 1,
+                            zIndex: 0
+                        },
+                        // Ensure content is preserved
+                        content: element.content,
+                        // Ensure keyframes is an array
+                        keyframes: Array.isArray(element.keyframes) ? element.keyframes : []
+                    }));
+                }
+
+                // Cache the project data with valid elements
+                if (validatedResponse.id && window.localStorage) {
+                    try {
+                        const cacheKey = `project-data-${validatedResponse.id}`;
+                        const cacheData = {
+                            id: validatedResponse.id,
+                            elements: validatedResponse.elements
+                        };
+                        window.localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+                        console.log(`Cached project data for ID ${validatedResponse.id} with ${validatedResponse.elements.length} elements`);
+                    } catch (e) {
+                        console.error('Error caching project data:', e);
+                    }
+                }
+
+                setProject(validatedResponse);
 
                 // Make project ID available for backup purposes
-                window.currentProjectId = response.data._id;
+                window.currentProjectId = response.data.id;
                 console.log(`Set window.currentProjectId to ${window.currentProjectId}`);
 
-                showNotification(project._id ? 'Проект успешно сохранен' : 'Новый проект создан');
+                showNotification(project.id ? 'Проект успешно сохранен' : 'Новый проект создан');
                 setError(null);
             } catch (saveError) {
                 console.error('Error during project save:', saveError);
 
                 // Если проект существующий, пробуем восстановить его из резервной копии
-                if (project._id) {
+                if (project.id) {
                     try {
                         // Пробуем загрузить резервную копию из localStorage
-                        const backupKey = `project-keyframes-${project._id}`;
+                        const backupKey = `project-keyframes-${project.id}`;
                         const backupData = localStorage.getItem(backupKey);
 
                         if (backupData) {
@@ -699,7 +787,7 @@ See console for complete details.`);
                             if (!token) {
                                 throw new Error('No authentication token found. Please log in.');
                             }
-                            const refreshResponse = await axios.get(`${API_URL}/projects/${project._id}`, {
+                            const refreshResponse = await axios.get(`${API_URL}/projects/${project.id}`, {
                                 headers: {
                                     'Authorization': `Bearer ${token}`,
                                     'Content-Type': 'application/json'
@@ -771,12 +859,19 @@ See console for complete details.`);
     // Handle project selection
     const handleSelectProject = async (projectId) => {
         try {
-            setError(null); // Очищаем ошибки перед загрузкой
+            // Validate project ID first
+            if (!projectId || projectId === 'undefined' || projectId === 'null') {
+                console.error('Invalid project ID:', projectId);
+                showNotification('Недопустимый ID проекта', 'error');
+                return;
+            }
+
+            setError(null); // Clear errors before loading
             console.log('Loading project with ID:', projectId);
 
             // Показываем, что идет загрузка и обновляем URL
             console.log('Setting temporary loading state...');
-            setProject(prev => ({ ...prev, _id: projectId, elements: [], loading: true }));
+            setProject(prev => ({ ...prev, id: projectId, elements: [], loading: true }));
 
             console.log('Sending request to server...');
             const token = localStorage.getItem('token');
@@ -798,79 +893,30 @@ See console for complete details.`);
 
             console.log('Raw server response data:', JSON.stringify(response.data).substring(0, 200) + '...');
 
-            // Critical diagnostic: Get detailed project info
-            console.log('*** KEYFRAME DIAGNOSTIC AFTER LOAD ***');
-            if (response.data.elements) {
-                response.data.elements.forEach((el, index) => {
-                    console.log(`Element ${index} in response: id=${el.id}, type=${el.type}, keyframes=${el.keyframes?.length || 0}`);
+            // Check if the server response has proper elements
+            const hasValidElements = Array.isArray(response.data.elements) &&
+                response.data.elements.length > 0 &&
+                response.data.elements[0] &&
+                response.data.elements[0].id &&
+                response.data.elements[0].type;
 
-                    // Check received keyframes
-                    if (el.keyframes && el.keyframes.length > 0) {
-                        console.log(`  First keyframe: ${JSON.stringify(el.keyframes[0])}`);
-                    } else if (!el.keyframes) {
-                        console.error(`  ERROR: Element ${el.id} is missing keyframes property`);
-                        // Create keyframes array if missing
-                        el.keyframes = [];
+            if (!hasValidElements && window.localStorage) {
+                console.warn('Server response is missing proper elements, checking client-side cache');
+                // Try to restore elements from local storage if available
+                const cachedProject = window.localStorage.getItem(`project-data-${projectId}`);
+                if (cachedProject) {
+                    try {
+                        const parsedCache = JSON.parse(cachedProject);
+                        if (Array.isArray(parsedCache.elements) && parsedCache.elements.length > 0) {
+                            console.log(`Found cached elements: ${parsedCache.elements.length}`);
+                            response.data.elements = parsedCache.elements;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing cached project data', e);
                     }
-                });
+                }
             }
 
-            // Проверяем, что в ответе есть массив elements
-            if (!response.data.elements) {
-                console.warn('Server returned project without elements array, initializing empty array');
-                response.data.elements = [];
-            }
-
-            // Проверяем, что у каждого элемента есть массив keyframes
-            if (response.data.elements && response.data.elements.length > 0) {
-                console.log(`Found ${response.data.elements.length} elements in response:`);
-                response.data.elements.forEach((element, index) => {
-                    console.log(`Element ${index}: id=${element.id}, type=${element.type}`);
-                    if (!element.keyframes) {
-                        console.warn(`Element ${element.id} has no keyframes array, initializing empty array`);
-                        element.keyframes = [];
-                    }
-
-                    // Проверяем, что у элемента есть все необходимые поля
-                    if (!element.position || !element.position.x || !element.position.y) {
-                        console.warn(`Element ${element.id} has invalid position data, initializing`);
-                        element.position = element.position || {};
-                        element.position.x = element.position.x || 0;
-                        element.position.y = element.position.y || 0;
-                    }
-
-                    if (!element.size || !element.size.width || !element.size.height) {
-                        console.warn(`Element ${element.id} has invalid size data, initializing`);
-                        element.size = element.size || {};
-                        element.size.width = element.size.width || 100;
-                        element.size.height = element.size.height || 100;
-                    }
-
-                    if (!element.style) {
-                        console.warn(`Element ${element.id} has no style data, initializing`);
-                        element.style = {
-                            color: '#000000',
-                            backgroundColor: 'transparent',
-                            borderColor: '#000000',
-                            borderWidth: 1,
-                            opacity: 1,
-                            zIndex: 0
-                        };
-                    }
-                });
-            } else {
-                console.warn('Server returned project without elements or empty elements array');
-                response.data.elements = [];
-            }
-
-            // Проверка наличия ключевых кадров
-            const serverKeyframesCount = response.data.elements?.reduce(
-                (sum, el) => sum + (el.keyframes?.length || 0), 0
-            ) || 0;
-
-            console.log(`Server returned project with ${serverKeyframesCount} keyframes across ${response.data.elements.length} elements`);
-
-            // Загружаем проект с сервера
             const loadedProject = response.data;
 
             // Проверяем наличие резервной копии ключевых кадров
@@ -883,8 +929,8 @@ See console for complete details.`);
                     let restoredCount = 0;
 
                     // Если у нас мало или нет ключевых кадров с сервера, восстанавливаем из резервной копии
-                    if (serverKeyframesCount < 10 && loadedProject.elements) {
-                        loadedProject.elements.forEach(element => {
+                    if (response.data.elements && response.data.elements.length > 0 && response.data.elements.length < 10) {
+                        response.data.elements.forEach(element => {
                             if (backupKeyframes[element.id] && backupKeyframes[element.id].length > 0) {
                                 // Если элемент не имеет ключевых кадров или имеет меньше, чем в резервной копии
                                 if (!element.keyframes || element.keyframes.length < backupKeyframes[element.id].length) {
@@ -907,7 +953,41 @@ See console for complete details.`);
 
             // Обновляем данные приложения
             console.log('Updating project state with processed data...');
-            setProject(loadedProject);
+
+            // Ensure loaded project has valid structure
+            const validatedProject = {
+                ...loadedProject,
+                // Ensure elements is an array
+                elements: Array.isArray(loadedProject.elements) ? loadedProject.elements : []
+            };
+
+            // Make sure each element has the required properties
+            validatedProject.elements = validatedProject.elements.map(element => ({
+                ...element,
+                // Ensure ID is preserved
+                id: element.id,
+                // Ensure type is preserved exactly as is
+                type: element.type,
+                // Ensure position exists
+                position: element.position || { x: 0, y: 0 },
+                // Ensure size exists
+                size: element.size || { width: 100, height: 100 },
+                // Ensure style exists
+                style: element.style || {
+                    color: '#000000',
+                    backgroundColor: 'transparent',
+                    borderColor: '#000000',
+                    borderWidth: 1,
+                    opacity: 1,
+                    zIndex: 0
+                },
+                // Ensure content is preserved
+                content: element.content,
+                // Ensure keyframes is an array
+                keyframes: Array.isArray(element.keyframes) ? element.keyframes : []
+            }));
+
+            setProject(validatedProject);
 
             // Очищаем выбранный элемент
             setSelectedElement(null);
@@ -934,7 +1014,7 @@ See console for complete details.`);
             }
             // Возвращаем пустой проект в случае ошибки
             setProject({
-                _id: null,
+                id: null,
                 name: 'Новый проект',
                 description: '',
                 duration: 60,
@@ -1008,8 +1088,8 @@ See console for complete details.`);
             }
 
             // Check localStorage for backups
-            if (project._id) {
-                const backupKey = `project-keyframes-${project._id}`;
+            if (project.id) {
+                const backupKey = `project-keyframes-${project.id}`;
                 const backupData = localStorage.getItem(backupKey);
 
                 if (backupData) {
@@ -1027,11 +1107,11 @@ See console for complete details.`);
             }
 
             // If project exists, fetch raw data from server
-            if (project._id) {
+            if (project.id) {
                 try {
                     // Log the API URL and full debug URL for troubleshooting
                     console.log(`Base API URL: ${API_URL}`);
-                    const debugUrl = `${API_URL}/projects/${project._id}/debug`;
+                    const debugUrl = `${API_URL}/projects/${project.id}/debug`;
                     console.log(`Attempting to fetch debug info from: ${debugUrl}`);
 
                     // Make the request with detailed error handling
@@ -1121,8 +1201,8 @@ See console for complete details.`);
     // Make project ID available on mount/unmount
     useEffect(() => {
         // Set project ID when available
-        if (project._id) {
-            window.currentProjectId = project._id;
+        if (project.id) {
+            window.currentProjectId = project.id;
             console.log(`Set window.currentProjectId to ${window.currentProjectId}`);
         }
 
@@ -1130,7 +1210,7 @@ See console for complete details.`);
         return () => {
             window.currentProjectId = null;
         };
-    }, [project._id]);
+    }, [project.id]);
 
     // Add this function to the ConstructorPage component
     const handleTestSaveKeyframes = async () => {
@@ -1140,7 +1220,7 @@ See console for complete details.`);
                 return;
             }
 
-            const projectId = project._id;
+            const projectId = project.id;
             const elementId = selectedElement.id;
             const keyframes = selectedElement.keyframes;
             console.log("Selected element:", selectedElement);
@@ -1193,7 +1273,7 @@ See console for complete details.`);
                     {/* Project management buttons */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                         <Typography variant="h5" component="h1">
-                            {project.name} {project._id && <Typography component="span" variant="body2" color="text.secondary">({project._id})</Typography>}
+                            {project.name} {project.id && <Typography component="span" variant="body2" color="text.secondary">({project.id})</Typography>}
                         </Typography>
 
                         <Box>
@@ -1242,7 +1322,7 @@ See console for complete details.`);
                                 onClick={() => {
                                     console.log('*** DIRECT KEYFRAME SAVE - INLINE IMPLEMENTATION ***');
 
-                                    if (!project._id) {
+                                    if (!project.id) {
                                         showNotification('Необходимо сначала сохранить проект!', 'warning');
                                         return;
                                     }
@@ -1276,7 +1356,7 @@ See console for complete details.`);
                                     console.log(`Selected element ${targetElement.id} with ${targetElement.keyframesCount} keyframes`);
 
                                     // Send direct update request
-                                    const directUrl = `${API_URL}/projects/${project._id}/direct-keyframes`;
+                                    const directUrl = `${API_URL}/projects/${project.id}/direct-keyframes`;
                                     console.log(`Full URL for direct save: ${directUrl}`);
 
                                     const updateData = {

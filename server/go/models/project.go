@@ -21,6 +21,9 @@ type Project struct {
 	UpdatedAt     time.Time          `json:"updatedAt" bson:"updatedAt"`
 	IsPrivate     bool               `json:"isPrivate" bson:"isPrivate"`
 	Title         string             `json:"title" bson:"title"`
+	Elements      []interface{}      `json:"elements,omitempty" bson:"elements,omitempty"`
+	Duration      int                `json:"duration,omitempty" bson:"duration,omitempty"`
+	AudioURL      string             `json:"audioUrl,omitempty" bson:"audioUrl,omitempty"`
 }
 
 // KeyframeRef represents a keyframe reference in Project model
@@ -42,11 +45,14 @@ type ProjectCreateInput struct {
 
 // ProjectUpdateInput is the input for updating a project
 type ProjectUpdateInput struct {
-	Name        string   `json:"name,omitempty"`
-	Description string   `json:"description,omitempty"`
-	TeamID      string   `json:"teamId,omitempty"`
-	VideoURL    string   `json:"videoUrl,omitempty"`
-	Tags        []string `json:"tags,omitempty"`
-	Title       string   `json:"title,omitempty"`
-	IsPrivate   *bool    `json:"isPrivate,omitempty"`
+	Name        string        `json:"name,omitempty"`
+	Description string        `json:"description,omitempty"`
+	TeamID      string        `json:"teamId,omitempty"`
+	VideoURL    string        `json:"videoUrl,omitempty"`
+	Tags        []string      `json:"tags,omitempty"`
+	Title       string        `json:"title,omitempty"`
+	IsPrivate   *bool         `json:"isPrivate,omitempty"`
+	Elements    []interface{} `json:"elements,omitempty"`
+	Duration    *int          `json:"duration,omitempty"`
+	AudioURL    string        `json:"audioUrl,omitempty"`
 } 

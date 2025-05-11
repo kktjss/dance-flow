@@ -15,8 +15,8 @@ import (
 func CheckProjectAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		projectID := c.Param("id")
-		if projectID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Project ID is required"})
+		if projectID == "" || projectID == "undefined" || projectID == "null" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Valid project ID is required"})
 			c.Abort()
 			return
 		}
@@ -41,44 +41,54 @@ func CheckProjectAccess() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Check if project exists and user has access
-		var result bson.M
+		// First check if user is the project owner (most common case)
+		var projectCount int64
+		projectCount, err = config.ProjectsCollection.CountDocuments(ctx, bson.M{
+			"_id": projectObjID,
+			"owner": userID,
+		})
+		
+		if err == nil && projectCount > 0 {
+			// User is the project owner, allow access
+			c.Next()
+			return
+		}
+
+		// If not the owner, then check if it's a team project and if user is in that team
+		var project bson.M
 		err = config.ProjectsCollection.FindOne(ctx, bson.M{
 			"_id": projectObjID,
-			"$or": []bson.M{
-				{"owner": userID},                      // User is owner
-				{"teamId": bson.M{"$exists": true}},    // Project belongs to a team
-			},
-		}).Decode(&result)
+		}).Decode(&project)
 
 		if err != nil {
-			// If project not found or user doesn't have access
-			c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to this project"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
 			c.Abort()
 			return
 		}
 
-		// If project belongs to a team, check if user is a member of that team
-		if teamID, ok := result["teamId"].(primitive.ObjectID); ok {
+		// If project has a team ID, check if user is a member of that team
+		if teamIDValue, hasTeamID := project["teamId"]; hasTeamID && !teamIDValue.(primitive.ObjectID).IsZero() {
+			teamID := teamIDValue.(primitive.ObjectID)
+			
 			// Check if user is a member of the team
-			var teamResult bson.M
-			err = config.TeamsCollection.FindOne(ctx, bson.M{
+			teamCount, teamErr := config.TeamsCollection.CountDocuments(ctx, bson.M{
 				"_id": teamID,
 				"$or": []bson.M{
-					{"owner": userID},                                     // User is team owner
-					{"members.userId": userID},                            // User is team member
+					{"owner": userID},          // User is team owner
+					{"members.userId": userID}, // User is team member
 				},
-			}).Decode(&teamResult)
-
-			if err != nil {
-				c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to this team project"})
-				c.Abort()
+			})
+			
+			if teamErr == nil && teamCount > 0 {
+				// User is part of the team, allow access
+				c.Next()
 				return
 			}
 		}
 
-		// Project access granted
-		c.Next()
+		// If we get here, user doesn't have access
+		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to this project"})
+		c.Abort()
 	}
 }
 
