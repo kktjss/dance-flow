@@ -843,6 +843,13 @@ func getTeamProjectViewer(c *gin.Context) {
 	teamID := c.Param("id")
 	projectID := c.Param("projectId")
 	
+	// Get user ID from context
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	
 	// Convert IDs to ObjectIDs
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
@@ -853,13 +860,6 @@ func getTeamProjectViewer(c *gin.Context) {
 	projectObjID, err := primitive.ObjectIDFromHex(projectID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID format"})
-		return
-	}
-
-	// Get user ID from context
-	userID, err := middleware.GetUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
@@ -896,23 +896,51 @@ func getTeamProjectViewer(c *gin.Context) {
 		return
 	}
 	
-	// Get project by ID
-	var project models.Project
-	err = config.ProjectsCollection.FindOne(ctx, bson.M{
-		"_id": projectObjID,
-	}).Decode(&project)
-
+	// Use a raw bson.M to retrieve the project first
+	var rawProject bson.M
+	err = config.ProjectsCollection.FindOne(ctx, bson.M{"_id": projectObjID}).Decode(&rawProject)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
 		return
 	}
+	
+	// Convert to a Project struct, but handle elements separately
+	var project models.Project
+	
+	// Remove elements from raw data to avoid unmarshaling errors
+	elementsRaw, hasElements := rawProject["elements"]
+	delete(rawProject, "elements")
+	
+	// Convert the remaining fields to Project struct
+	projectBytes, err := bson.Marshal(rawProject)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error processing project data"})
+		return
+	}
+	
+	if err := bson.Unmarshal(projectBytes, &project); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error processing project data"})
+		return
+	}
+	
+	// Handle elements separately - store as raw interface{}
+	if hasElements {
+		project.Elements = []interface{}{}
+		
+		// Check if elements is an array
+		if elemArray, ok := elementsRaw.(primitive.A); ok {
+			for _, elem := range elemArray {
+				project.Elements = append(project.Elements, elem)
+			}
+		} else {
+			// If not an array, add as a single element
+			project.Elements = append(project.Elements, elementsRaw)
+		}
+	}
 
 	// Normalize elements to ensure they have all required fields
 	project.NormalizeElements()
-
-	// Return project data with success flag
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"project": project,
-	})
+	
+	// Return the project directly, just like getProject does
+	c.JSON(http.StatusOK, project)
 } 

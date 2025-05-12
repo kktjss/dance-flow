@@ -144,52 +144,55 @@ const ProjectViewer = () => {
                     }
                 );
 
-                if (response.data.success) {
-                    const fetchedProject = response.data.project;
-                    console.log('Fetched project:', JSON.stringify(fetchedProject, null, 2));
-                    setProject(fetchedProject);
+                // The API now returns the project directly, not wrapped in a success object
+                const fetchedProject = response.data;
+                console.log('Fetched project:', JSON.stringify(fetchedProject, null, 2));
 
-                    // Пробуем разные источники данных для элементов
-                    if (fetchedProject.elements && Array.isArray(fetchedProject.elements) && fetchedProject.elements.length > 0) {
-                        console.log('Using elements array from project');
-                        const normalized = normalizeElements(fetchedProject.elements);
-                        setNormalizedElements(normalized);
-                    } else if (fetchedProject.keyframesJSON) {
-                        // Пробуем использовать keyframesJSON как источник элементов
-                        try {
-                            console.log('Trying to parse keyframesJSON:', fetchedProject.keyframesJSON.substring(0, 100) + '...');
-                            const parsedKeyframes = JSON.parse(fetchedProject.keyframesJSON);
-                            if (parsedKeyframes && Array.isArray(parsedKeyframes)) {
-                                console.log('Using keyframesJSON as elements source');
-                                const normalized = normalizeElements(parsedKeyframes);
-                                setNormalizedElements(normalized);
-                            } else if (parsedKeyframes && parsedKeyframes.elements && Array.isArray(parsedKeyframes.elements)) {
-                                console.log('Using keyframesJSON.elements as elements source');
-                                const normalized = normalizeElements(parsedKeyframes.elements);
-                                setNormalizedElements(normalized);
-                            } else {
-                                console.warn('keyframesJSON does not contain valid elements array');
-                                setNormalizedElements([]);
-                            }
-                        } catch (e) {
-                            console.error('Failed to parse keyframesJSON:', e);
+                // Debug project ID
+                const projectID = fetchedProject._id || fetchedProject.id;
+                console.log('Project ID for navigation:', projectID);
+                console.log('Project ID type:', typeof projectID);
+
+                setProject(fetchedProject);
+
+                // Process elements from the project
+                if (fetchedProject.elements && Array.isArray(fetchedProject.elements) && fetchedProject.elements.length > 0) {
+                    console.log('Using elements array from project');
+                    const normalized = normalizeElements(fetchedProject.elements);
+                    setNormalizedElements(normalized);
+                } else if (fetchedProject.keyframesJSON) {
+                    // Try to use keyframesJSON as elements source
+                    try {
+                        console.log('Trying to parse keyframesJSON:', fetchedProject.keyframesJSON.substring(0, 100) + '...');
+                        const parsedKeyframes = JSON.parse(fetchedProject.keyframesJSON);
+                        if (parsedKeyframes && Array.isArray(parsedKeyframes)) {
+                            console.log('Using keyframesJSON as elements source');
+                            const normalized = normalizeElements(parsedKeyframes);
+                            setNormalizedElements(normalized);
+                        } else if (parsedKeyframes && parsedKeyframes.elements && Array.isArray(parsedKeyframes.elements)) {
+                            console.log('Using keyframesJSON.elements as elements source');
+                            const normalized = normalizeElements(parsedKeyframes.elements);
+                            setNormalizedElements(normalized);
+                        } else {
+                            console.warn('keyframesJSON does not contain valid elements array');
                             setNormalizedElements([]);
                         }
-                    } else {
-                        console.warn('Project has no elements array or keyframesJSON');
-                        // Создаем базовый элемент, чтобы холст не был пустым
-                        setNormalizedElements([{
-                            id: 'default-element',
-                            type: 'rectangle',
-                            position: { x: 100, y: 100 },
-                            size: { width: 100, height: 100 },
-                            style: { opacity: 1, backgroundColor: '#cccccc' },
-                            content: '',
-                            keyframes: []
-                        }]);
+                    } catch (e) {
+                        console.error('Failed to parse keyframesJSON:', e);
+                        setNormalizedElements([]);
                     }
                 } else {
-                    setError(response.data.message || 'Не удалось загрузить проект');
+                    console.warn('Project has no elements array or keyframesJSON');
+                    // Create a basic element so the canvas isn't empty
+                    setNormalizedElements([{
+                        id: 'default-element',
+                        type: 'rectangle',
+                        position: { x: 100, y: 100 },
+                        size: { width: 100, height: 100 },
+                        style: { opacity: 1, backgroundColor: '#cccccc' },
+                        content: '',
+                        keyframes: []
+                    }]);
                 }
             } catch (err) {
                 console.error('Error fetching project:', err);
@@ -292,9 +295,36 @@ const ProjectViewer = () => {
                     ) : project ? (
                         <>
                             <Box sx={{ mb: 4 }}>
-                                <Typography variant="h4" component="h1">
-                                    {project.name}
-                                </Typography>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="h4" component="h1">
+                                        {project.name}
+                                    </Typography>
+                                    <a
+                                        href={`/constructor/${
+                                            // Handle different ID formats
+                                            (project.id ? project.id :
+                                                project._id ? (typeof project._id === 'object' && project._id.toString ?
+                                                    project._id.toString() : project._id) :
+                                                    projectId || ''
+                                            )
+                                            }`}
+                                        style={{ textDecoration: 'none' }}
+                                        onClick={(e) => {
+                                            const projectID = project.id || (project._id ?
+                                                (typeof project._id === 'object' && project._id.toString ?
+                                                    project._id.toString() : project._id) :
+                                                projectId);
+                                            console.log(`Navigating to project: ${projectID}`);
+                                        }}
+                                    >
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                        >
+                                            Редактировать
+                                        </Button>
+                                    </a>
+                                </Box>
                                 {project.description && (
                                     <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
                                         {project.description}
