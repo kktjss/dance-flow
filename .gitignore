@@ -10,6 +10,7 @@ node_modules/
 /build
 /dist
 /server_backup
+/tests
 
 /client/public/audio
 /client/public/models
