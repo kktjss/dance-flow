@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, IconButton, Slider, Typography } from '@mui/material';
 import { PlayArrow, Pause, VolumeUp, VolumeOff } from '@mui/icons-material';
 
-const Player = ({ audioUrl, duration, currentTime, onTimeUpdate, isPlaying, onPlayPause, readOnly = false }) => {
+const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlaying, onPlayPause, readOnly = false }) => {
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
     const audioRef = useRef(null);
@@ -10,10 +10,14 @@ const Player = ({ audioUrl, duration, currentTime, onTimeUpdate, isPlaying, onPl
     const lastTimeRef = useRef(null);
     const currentTimeRef = useRef(currentTime);
 
+    // Ensure valid numeric values
+    const safeCurrentTime = typeof currentTime === 'number' && !isNaN(currentTime) ? currentTime : 0;
+    const safeDuration = typeof duration === 'number' && !isNaN(duration) ? duration : 60;
+
     // Update ref when prop changes
     useEffect(() => {
-        currentTimeRef.current = currentTime;
-    }, [currentTime]);
+        currentTimeRef.current = safeCurrentTime;
+    }, [safeCurrentTime]);
 
     // Format time in MM:SS
     const formatTime = (timeInSeconds) => {
@@ -65,11 +69,11 @@ const Player = ({ audioUrl, duration, currentTime, onTimeUpdate, isPlaying, onPl
 
         // Update time approximately 30 times per second
         if (elapsed > 33) { // ~30fps
-            const newTime = Math.min(currentTimeRef.current + elapsed / 1000, duration);
+            const newTime = Math.min(currentTimeRef.current + elapsed / 1000, safeDuration);
             onTimeUpdate(newTime);
 
             // Reset if we reach the end
-            if (newTime >= duration) {
+            if (newTime >= safeDuration) {
                 onPlayPause(false);
                 onTimeUpdate(0);
             }
@@ -80,7 +84,7 @@ const Player = ({ audioUrl, duration, currentTime, onTimeUpdate, isPlaying, onPl
         if (isPlaying) {
             animationRef.current = requestAnimationFrame(animateTime);
         }
-    }, [duration, isPlaying, onPlayPause, onTimeUpdate]);
+    }, [safeDuration, isPlaying, onPlayPause, onTimeUpdate]);
 
     // Setup and cleanup animation frame
     useEffect(() => {
@@ -115,10 +119,10 @@ const Player = ({ audioUrl, duration, currentTime, onTimeUpdate, isPlaying, onPl
 
     // Sync audio time with player time
     useEffect(() => {
-        if (audioRef.current && audioUrl && Math.abs(audioRef.current.currentTime - currentTime) > 0.5) {
-            audioRef.current.currentTime = currentTime;
+        if (audioRef.current && audioUrl && Math.abs(audioRef.current.currentTime - safeCurrentTime) > 0.5) {
+            audioRef.current.currentTime = safeCurrentTime;
         }
-    }, [currentTime, audioUrl]);
+    }, [safeCurrentTime, audioUrl]);
 
     return (
         <Box sx={{ width: '100%', p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
@@ -140,19 +144,19 @@ const Player = ({ audioUrl, duration, currentTime, onTimeUpdate, isPlaying, onPl
                 </IconButton>
 
                 <Typography variant="body2" sx={{ ml: 1, minWidth: 40 }}>
-                    {formatTime(currentTime)}
+                    {formatTime(safeCurrentTime)}
                 </Typography>
 
                 <Slider
-                    value={currentTime}
+                    value={safeCurrentTime}
                     min={0}
-                    max={duration}
+                    max={safeDuration}
                     onChange={handleTimeChange}
                     sx={{ mx: 2, flexGrow: 1 }}
                 />
 
                 <Typography variant="body2" sx={{ minWidth: 40 }}>
-                    {formatTime(duration)}
+                    {formatTime(safeDuration)}
                 </Typography>
 
                 {audioUrl && !readOnly && (

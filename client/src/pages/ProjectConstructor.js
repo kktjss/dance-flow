@@ -24,76 +24,67 @@ const ProjectConstructor = () => {
 
                 console.log('Fetching project data...', { teamId, projectId });
 
-                // First, verify team access
+                // Непосредственно загружаем проект по ID, минуя проверку команды
                 try {
-                    const teamResponse = await axios.get(
-                        `${API_BASE_URL}/api/teams/${teamId}`,
+                    console.log(`Requesting project with ID: ${projectId}`);
+                    const response = await axios.get(
+                        `${API_BASE_URL}/api/projects/${projectId}`,
                         {
                             headers: { Authorization: `Bearer ${token}` }
                         }
                     );
 
-                    if (!teamResponse.data) {
-                        throw new Error('Не удалось получить данные команды');
+                    console.log('Project data response:', response.data);
+
+                    // Проверим и исправим формат ID проекта
+                    const projectData = { ...response.data };
+                    if (!projectData._id && projectData.id) {
+                        console.log('Fixing project data: copying id to _id');
+                        projectData._id = projectData.id;
                     }
 
-                    // Validate team data
-                    if (!teamResponse.data.owner || !teamResponse.data.owner._id) {
-                        console.error('Invalid team data received:', teamResponse.data);
-                        throw new Error('Получены некорректные данные команды');
+                    // Базовая проверка данных проекта
+                    if (!projectData.name) {
+                        console.warn('Project has no name:', projectData);
+                        projectData.name = `Проект ${projectData._id || projectData.id || 'без имени'}`;
                     }
 
-                    // Validate members data
-                    if (!Array.isArray(teamResponse.data.members)) {
-                        console.error('Invalid team members data:', teamResponse.data);
-                        throw new Error('Получены некорректные данные участников команды');
-                    }
-                } catch (teamError) {
-                    console.error('Team access error:', teamError);
-                    if (teamError.response?.status === 403) {
-                        throw new Error('У вас нет доступа к этой команде');
-                    } else if (teamError.response?.status === 404) {
-                        throw new Error('Команда не найдена');
-                    } else if (teamError.response?.data?.error === 'INVALID_TEAM_DATA') {
-                        throw new Error('Ошибка данных команды. Пожалуйста, обратитесь к администратору.');
+                    console.log('Processed project data:', projectData);
+                    setProject(projectData);
+                    setError(null);
+                } catch (projectError) {
+                    console.error('Error fetching project data:', projectError);
+                    console.error('Project error response:', projectError.response?.data);
+
+                    // Информативная обработка различных ошибок проекта
+                    if (projectError.response?.status === 404) {
+                        throw new Error('Проект не найден');
+                    } else if (projectError.response?.status === 403) {
+                        throw new Error('У вас нет доступа к этому проекту');
                     } else {
-                        throw new Error(teamError.response?.data?.message || 'Ошибка при проверке доступа к команде');
+                        throw new Error(projectError.response?.data?.message ||
+                            projectError.response?.data?.error ||
+                            projectError.message ||
+                            'Произошла ошибка при загрузке проекта');
                     }
-                }
-
-                // Then fetch project data
-                const response = await axios.get(
-                    `${API_BASE_URL}/api/teams/${teamId}/projects/${projectId}/viewer`,
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
-
-                console.log('Project data response:', response.data);
-
-                if (response.data.success) {
-                    if (!response.data.project) {
-                        throw new Error('Project data is missing in the response');
-                    }
-                    setProject(response.data.project);
-                } else {
-                    throw new Error(response.data.message || 'Не удалось загрузить проект');
                 }
             } catch (err) {
-                console.error('Error fetching project:', err);
+                console.error('Error in project loading flow:', err);
+                console.error('Error details:', {
+                    message: err.message,
+                    responseStatus: err.response?.status,
+                    responseData: err.response?.data
+                });
+
                 let errorMessage = 'Не удалось загрузить проект. Пожалуйста, попробуйте позже.';
 
                 if (err.response) {
-                    // The request was made and the server responded with a status code
-                    // that falls out of the range of 2xx
                     console.error('Server response:', err.response.data);
-                    errorMessage = err.response.data.message || errorMessage;
+                    errorMessage = err.response.data?.message || err.response.data?.error || err.message || errorMessage;
                 } else if (err.request) {
-                    // The request was made but no response was received
                     console.error('No response received:', err.request);
                     errorMessage = 'Сервер не отвечает. Пожалуйста, проверьте подключение к интернету.';
                 } else if (err.message) {
-                    // The error was thrown with a specific message
                     errorMessage = err.message;
                 }
 
@@ -132,14 +123,22 @@ const ProjectConstructor = () => {
                                         <Button
                                             variant="outlined"
                                             color="primary"
-                                            onClick={() => navigate(`/projects/${projectId}`)}
+                                            onClick={() => {
+                                                const projectID = project._id || project.id;
+                                                console.log(`Navigating to view project: ${projectID}`);
+                                                navigate(`/teams/${teamId}/projects/${projectID}/viewer`);
+                                            }}
                                         >
                                             Посмотреть
                                         </Button>
                                         <Button
                                             variant="contained"
                                             color="primary"
-                                            onClick={() => navigate(`/constructor/${projectId}`)}
+                                            onClick={() => {
+                                                const projectID = project._id || project.id;
+                                                console.log(`Navigating to edit project: ${projectID}`);
+                                                navigate(`/teams/${teamId}/projects/${projectID}/constructor`);
+                                            }}
                                         >
                                             Редактировать
                                         </Button>

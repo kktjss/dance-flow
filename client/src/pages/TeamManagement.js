@@ -153,13 +153,106 @@ function TeamManagement() {
 
     const fetchProjects = async () => {
         try {
+            setLoading(true);
             const token = localStorage.getItem('token');
+            console.log('Fetching projects with token:', token ? 'Token exists' : 'No token');
+
+            if (!token) {
+                console.error('No token found for project fetch');
+                setLoading(false);
+                return;
+            }
+
+            console.log(`Sending request to: ${API_BASE_URL}/api/projects`);
             const response = await axios.get(`${API_BASE_URL}/api/projects`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setProjects(response.data);
+
+            console.log(`Received ${response.data.length} projects:`, response.data);
+
+            // Проверяем наличие ID у каждого проекта и исправляем данные при необходимости
+            const validProjects = Array.isArray(response.data)
+                ? response.data.map(project => {
+                    // Если это не объект, пропускаем
+                    if (!project || typeof project !== 'object') {
+                        console.error('Invalid project data (not an object):', project);
+                        return null;
+                    }
+
+                    // Если у проекта нет _id, но есть id, копируем id в _id
+                    if (!project._id && project.id) {
+                        console.log('Project found with id but no _id, fixing:', project);
+                        return { ...project, _id: project.id };
+                    }
+
+                    // Если нет ни _id, ни id - невалидный проект
+                    if (!project._id && !project.id) {
+                        console.error('Project without any ID:', project);
+                        return null;
+                    }
+
+                    // Проверяем корректность _id
+                    if (typeof project._id !== 'string') {
+                        console.error('Project with invalid _id type:', project);
+                        if (typeof project.id === 'string') {
+                            return { ...project, _id: project.id };
+                        }
+                        return null;
+                    }
+
+                    return project;
+                }).filter(Boolean) // Удаляем null/undefined
+                : [];
+
+            console.log(`After validation: ${validProjects.length} valid projects:`, validProjects);
+            setProjects(validProjects);
         } catch (err) {
             console.error('Error fetching projects:', err);
+            console.error('Response details:', err.response?.status, err.response?.data);
+
+            // Try fallback endpoint if main one fails
+            try {
+                const token = localStorage.getItem('token');
+                console.log('Trying fallback projects endpoint...');
+                const fallbackResponse = await axios.get(`${API_BASE_URL}/api/projects-test`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                console.log(`Received ${fallbackResponse.data.length} projects from fallback:`, fallbackResponse.data);
+
+                // Та же проверка на валидные ID для фоллбэка
+                const validProjects = Array.isArray(fallbackResponse.data)
+                    ? fallbackResponse.data.map(project => {
+                        if (!project || typeof project !== 'object') {
+                            return null;
+                        }
+
+                        if (!project._id && project.id) {
+                            return { ...project, _id: project.id };
+                        }
+
+                        if (!project._id && !project.id) {
+                            return null;
+                        }
+
+                        if (typeof project._id !== 'string') {
+                            if (typeof project.id === 'string') {
+                                return { ...project, _id: project.id };
+                            }
+                            return null;
+                        }
+
+                        return project;
+                    }).filter(Boolean)
+                    : [];
+
+                console.log(`After fallback validation: ${validProjects.length} valid projects:`, validProjects);
+                setProjects(validProjects);
+            } catch (fallbackErr) {
+                console.error('Fallback endpoint also failed:', fallbackErr);
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -199,11 +292,19 @@ function TeamManagement() {
         }, 300); // 300ms delay
 
         setSearchTimeout(timeout);
+
+        // Clear selected user when search changes
+        if (selectedUserId) {
+            setSelectedUserId('');
+        }
     };
 
     // Add handler for user selection from search results
     const handleUserSelect = (user) => {
-        setSelectedUserId(user._id);
+        console.log('User selected:', user);
+        // Используем id или _id, в зависимости от того, что доступно
+        const userId = user._id || user.id;
+        setSelectedUserId(userId);
         setSearchQuery(user.username); // Show selected user in search field
     };
 
@@ -213,6 +314,11 @@ function TeamManagement() {
             fetchUsers(searchQuery);
         }
     }, [selectedTeam]);
+
+    // Add a new useEffect to debug selectedUserId changes
+    useEffect(() => {
+        console.log('Selected user ID changed:', selectedUserId);
+    }, [selectedUserId]);
 
     const handleCreateTeam = async () => {
         try {
@@ -274,144 +380,373 @@ function TeamManagement() {
     const handleAddMember = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`${API_BASE_URL}/api/teams/${selectedTeam._id}/members`, {
+
+            // Проверка наличия необходимых данных
+            if (!selectedTeam) {
+                console.error('Error: Team is undefined');
+                setError('Ошибка: команда не выбрана');
+                return;
+            }
+
+            // Используем id или _id, в зависимости от того, что доступно
+            const teamId = selectedTeam._id || selectedTeam.id;
+
+            if (!teamId) {
+                console.error('Error: Team ID is undefined', selectedTeam);
+                setError('Ошибка: ID команды не определен');
+                return;
+            }
+
+            if (!selectedUserId) {
+                console.error('Error: User ID is undefined');
+                setError('Ошибка: необходимо выбрать пользователя');
+                return;
+            }
+
+            console.log('Adding member with data:', {
+                teamId: teamId,
+                userId: selectedUserId,
+                role: selectedUserRole
+            });
+
+            const response = await axios.post(`${API_BASE_URL}/api/teams/${teamId}/members`, {
                 userId: selectedUserId,
                 role: selectedUserRole
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // Refresh team data
-            const response = await axios.get(`${API_BASE_URL}/api/teams/${selectedTeam._id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            console.log('Add member response:', response.data);
 
-            setSelectedTeam(response.data);
+            // Проверка данных команды перед установкой в state
+            const teamData = response.data;
+
+            // Убедимся, что members существует и является массивом
+            if (!teamData.members) {
+                teamData.members = [];
+            }
+
+            // Убедимся, что все члены команды имеют корректную структуру
+            if (Array.isArray(teamData.members)) {
+                console.log('Processing team members after add:', teamData.members);
+
+                // Фильтруем некорректные данные участников
+                teamData.members = teamData.members.filter(member => {
+                    return member && (
+                        (typeof member.userId === 'object' && member.userId) ||
+                        (typeof member.userId === 'string' && member.userId)
+                    );
+                });
+
+                console.log('Filtered team members after add:', teamData.members);
+            }
+
+            setSelectedTeam(teamData);
             setAddMemberDialog(false);
             setSelectedUserId('');
             setSelectedUserRole('viewer');
+            setError(null);
 
             // Update teams list
             fetchTeams();
         } catch (err) {
             console.error('Error adding member:', err);
-            setError('Не удалось добавить участника. Пожалуйста, попробуйте позже.');
+            const errorMessage = err.response?.data?.error || 'Не удалось добавить участника. Пожалуйста, попробуйте позже.';
+            setError(errorMessage);
         }
     };
 
     const handleAddProject = async () => {
         try {
-            const token = localStorage.getItem('token');
-            console.log('Adding project to team with token:', token ? 'Token exists' : 'No token');
-            console.log('Project data:', { teamId: selectedTeam._id, projectId: selectedProjectId });
-
-            if (!token) {
-                setError('Для добавления проекта необходимо войти в систему.');
+            // Проверяем входные данные
+            if (!selectedTeam) {
+                setError('Нет выбранной команды');
                 return;
             }
 
+            // Получаем корректный ID команды
+            const teamId = selectedTeam._id || selectedTeam.id;
+            if (!teamId) {
+                console.error('Team ID is missing:', selectedTeam);
+                setError('Ошибка: не удалось определить ID команды');
+                return;
+            }
+
+            if (!selectedProjectId) {
+                setError('Не выбран проект для добавления');
+                return;
+            }
+
+            // Получаем токен
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('Для добавления проекта необходимо войти в систему');
+                return;
+            }
+
+            // Подробный лог
+            console.log('Добавление проекта в команду:', {
+                teamId: teamId,
+                projectId: selectedProjectId,
+                hasToken: Boolean(token)
+            });
+
+            // Отправляем запрос на сервер
             try {
-                console.log('Trying main API endpoint...');
-                const response = await axios.post(`${API_BASE_URL}/api/teams/${selectedTeam._id}/projects`, {
-                    projectId: selectedProjectId
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
+                // Упрощенный запрос с точным форматом данных, как ожидает сервер
+                const response = await axios.post(
+                    `${API_BASE_URL}/api/teams/${teamId}/projects`,
+                    { projectId: selectedProjectId }, // Важно: именно projectId, как ожидает сервер
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                console.log('Ответ сервера:', response.data);
+
+                // Для отладки выведем предыдущее и новое состояние команды
+                console.log('Команда до обновления:', selectedTeam);
+
+                // Загружаем обновленные данные команды
+                const updatedTeamResponse = await axios.get(
+                    `${API_BASE_URL}/api/teams/${teamId}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+
+                console.log('Обновленные данные команды:', updatedTeamResponse.data);
+
+                // Обновляем состояние
+                setSelectedTeam(updatedTeamResponse.data);
+                setAddProjectDialog(false);
+                setSelectedProjectId('');
+                setError(null);
+
+                // Перезагружаем списки
+                fetchTeams();
+                fetchProjects();
+
+                // Переключаем на вкладку с проектами
+                setTabValue(1);
+
+            } catch (err) {
+                console.error('Ошибка при добавлении проекта:', err);
+                console.error('Детали ошибки:', {
+                    status: err.response?.status,
+                    data: err.response?.data,
+                    message: err.message
                 });
 
-                console.log('Project added successfully:', response.data);
-                if (response.data.success && response.data.team) {
-                    setSelectedTeam(response.data.team);
-                    setAddProjectDialog(false);
-                    setSelectedProjectId('');
-                    setError(null);
-                }
-            } catch (mainErr) {
-                console.error('Main API error:', mainErr);
-
-                // Try test endpoint if main endpoint fails
-                try {
-                    console.log('Trying test endpoint...');
-                    const testResponse = await axios.post(`${API_BASE_URL}/api/teams-test/${selectedTeam._id}/projects`, {
-                        projectId: selectedProjectId
-                    });
-
-                    console.log('Test endpoint response:', testResponse.data);
-
-                    if (testResponse.data.success && testResponse.data.team) {
-                        setSelectedTeam(testResponse.data.team);
-                        setAddProjectDialog(false);
-                        setSelectedProjectId('');
-                        setError('Проект добавлен в тестовом режиме.');
-                    } else {
-                        throw new Error('Invalid test response format');
-                    }
-                } catch (testErr) {
-                    console.error('Test endpoint also failed:', testErr);
-                    setError('Не удалось добавить проект. Пожалуйста, попробуйте позже.');
-                }
+                setError(`Ошибка при добавлении проекта: ${err.response?.data?.error || err.message}`);
             }
         } catch (err) {
-            console.error('Error in project addition flow:', err);
-            setError('Не удалось добавить проект. Пожалуйста, попробуйте позже.');
+            console.error('Непредвиденная ошибка:', err);
+            setError('Произошла непредвиденная ошибка при попытке добавить проект');
         }
     };
 
     const handleRemoveMember = async (userId) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`${API_BASE_URL}/api/teams/${selectedTeam._id}/members/${userId}`, {
+            console.log('Removing member with userId:', userId);
+
+            if (!selectedTeam) {
+                console.error('Team is missing');
+                setError('Ошибка: данные команды отсутствуют');
+                return;
+            }
+
+            const teamId = selectedTeam._id || selectedTeam.id;
+
+            if (!teamId) {
+                console.error('Team ID is missing');
+                setError('Ошибка: идентификатор команды отсутствует');
+                return;
+            }
+
+            // Проверим, не пытается ли пользователь удалить владельца команды
+            if (selectedTeam.owner) {
+                const ownerId = typeof selectedTeam.owner === 'object' ?
+                    (selectedTeam.owner._id || selectedTeam.owner.id) :
+                    selectedTeam.owner;
+
+                if (ownerId === userId) {
+                    setError('Невозможно удалить владельца команды');
+                    return;
+                }
+            }
+
+            // Проверим, не пытается ли пользователь удалить админа
+            const memberToRemove = selectedTeam.members?.find(member => {
+                const memberId = typeof member.userId === 'object' ?
+                    (member.userId._id || member.userId.id) :
+                    member.userId;
+                return memberId === userId;
+            });
+
+            if (memberToRemove && memberToRemove.role === 'admin') {
+                // Получим текущего пользователя
+                const currentUser = JSON.parse(localStorage.getItem('user'));
+                const currentUserId = currentUser?._id || currentUser?.id;
+
+                // Проверяем, является ли текущий пользователь владельцем команды
+                const isOwner = selectedTeam.owner &&
+                    (typeof selectedTeam.owner === 'object' ?
+                        (selectedTeam.owner._id === currentUserId || selectedTeam.owner.id === currentUserId) :
+                        selectedTeam.owner === currentUserId);
+
+                if (!isOwner) {
+                    setError('Только владелец команды может удалить администратора');
+                    return;
+                }
+            }
+
+            const response = await axios.delete(`${API_BASE_URL}/api/teams/${teamId}/members/${userId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // Refresh team data
-            const response = await axios.get(`${API_BASE_URL}/api/teams/${selectedTeam._id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            console.log('Remove member response:', response.data);
 
-            setSelectedTeam(response.data);
+            // Проверка данных команды перед установкой в state
+            const teamData = response.data;
+
+            // Убедимся, что members существует и является массивом
+            if (!teamData.members) {
+                teamData.members = [];
+            }
+
+            // Убедимся, что все члены команды имеют корректную структуру
+            if (Array.isArray(teamData.members)) {
+                console.log('Processing team members after removal:', teamData.members);
+
+                // Фильтруем некорректные данные участников и удаляем дубликаты
+                const uniqueUserIds = new Set();
+                teamData.members = teamData.members.filter(member => {
+                    if (!member || !member.userId) return false;
+
+                    const memberId = typeof member.userId === 'object' ?
+                        (member.userId._id || member.userId.id) :
+                        member.userId;
+
+                    // Если userId уже был добавлен, пропускаем этот элемент
+                    if (uniqueUserIds.has(memberId)) return false;
+
+                    uniqueUserIds.add(memberId);
+                    return true;
+                });
+
+                console.log('Filtered team members after removal:', teamData.members);
+            }
+
+            setSelectedTeam(teamData);
+            setError(null);
 
             // Update teams list
             fetchTeams();
         } catch (err) {
             console.error('Error removing member:', err);
-            setError('Не удалось удалить участника. Пожалуйста, попробуйте позже.');
+
+            // Улучшенная обработка ошибок с сервера
+            if (err.response) {
+                if (err.response.status === 403) {
+                    const errorMsg = err.response.data?.error || 'У вас нет прав для удаления этого участника';
+                    setError(errorMsg);
+                } else if (err.response.data?.error) {
+                    setError(err.response.data.error);
+                } else {
+                    setError('Не удалось удалить участника. Пожалуйста, попробуйте позже.');
+                }
+            } else {
+                setError('Не удалось связаться с сервером. Проверьте подключение к интернету.');
+            }
         }
     };
 
     const handleRemoveProject = async (projectId) => {
         try {
-            const token = localStorage.getItem('token');
-            await axios.delete(`${API_BASE_URL}/api/teams/${selectedTeam._id}/projects/${projectId}`, {
-                headers: { Authorization: `Bearer ${token}` }
+            if (!selectedTeam || !selectedTeam._id) {
+                console.error('No selected team or team ID');
+                setError('Ошибка: не выбрана команда');
+                return;
+            }
+
+            if (!projectId) {
+                console.error('No project ID provided');
+                setError('Ошибка: не указан ID проекта для удаления');
+                return;
+            }
+
+            console.log('Removing project from team:', {
+                teamId: selectedTeam._id,
+                projectId: projectId
             });
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('Для удаления проекта необходимо войти в систему');
+                return;
+            }
+
+            await axios.delete(
+                `${API_BASE_URL}/api/teams/${selectedTeam._id}/projects/${projectId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            console.log('Project successfully removed');
 
             // Refresh team data
-            const response = await axios.get(`${API_BASE_URL}/api/teams/${selectedTeam._id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axios.get(
+                `${API_BASE_URL}/api/teams/${selectedTeam._id}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            console.log('Updated team data after project removal:', response.data);
 
             setSelectedTeam(response.data);
+            setError(null);
 
             // Update teams list
             fetchTeams();
+            fetchProjects();
         } catch (err) {
             console.error('Error removing project:', err);
-            setError('Не удалось удалить проект. Пожалуйста, попробуйте позже.');
+            console.error('Response details:', err.response?.status, err.response?.data);
+            setError(`Не удалось удалить проект: ${err.response?.data?.error || err.message}`);
         }
     };
 
     const handleDeleteTeam = async () => {
         try {
+            if (!selectedTeam) {
+                setError('Нет выбранной команды');
+                return;
+            }
+
+            const teamId = selectedTeam._id || selectedTeam.id;
+            if (!teamId) {
+                setError('Ошибка: не удалось определить ID команды');
+                return;
+            }
+
             const token = localStorage.getItem('token');
-            await axios.delete(`${API_BASE_URL}/api/teams/${selectedTeam._id}`, {
+            if (!token) {
+                setError('Для удаления команды необходимо войти в систему');
+                return;
+            }
+
+            console.log(`Deleting team with ID: ${teamId}`);
+            await axios.delete(`${API_BASE_URL}/api/teams/${teamId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            setTeams(teams.filter(team => team._id !== selectedTeam._id));
+            // Удаляем команду из списка, учитывая разные форматы ID
+            setTeams(teams.filter(team => {
+                const currentTeamId = team._id || team.id;
+                return currentTeamId !== teamId;
+            }));
+
             setSelectedTeam(null);
             setConfirmDeleteDialog(false);
         } catch (err) {
             console.error('Error deleting team:', err);
+            console.error('Response details:', err.response?.status, err.response?.data);
             setError('Не удалось удалить команду. Пожалуйста, попробуйте позже.');
         }
     };
@@ -420,33 +755,188 @@ function TeamManagement() {
         try {
             const token = localStorage.getItem('token');
             console.log('Selecting team with token:', token ? 'Token exists' : 'No token');
-            console.log('Selected team:', team);
+            console.log('Selected team data:', team);
 
             if (!token) {
                 setError('Для просмотра команды необходимо войти в систему.');
                 return;
             }
 
+            // Проверка валидности данных команды - принимаем как id, так и _id
+            if (!team || (!team._id && !team.id)) {
+                console.error('Invalid team data (no ID):', team);
+                setError('Некорректные данные команды');
+                return;
+            }
+
+            // Get the team ID, handling potential different field names
+            const teamId = team._id || team.id;
+            console.log('Using team ID:', teamId);
+
+            if (!teamId) {
+                console.error('Team ID is missing');
+                setError('Ошибка: идентификатор команды отсутствует.');
+                return;
+            }
+
             try {
+                // Сначала загрузим актуальный список всех проектов
+                await fetchProjects();
+
                 console.log('Trying main API endpoint...');
-                const response = await axios.get(`${API_BASE_URL}/api/teams/${team._id}`, {
+                const response = await axios.get(`${API_BASE_URL}/api/teams/${teamId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
                 console.log('Team details response:', response.data);
-                setSelectedTeam(response.data);
+
+                // Проверка данных команды перед установкой в state
+                const teamData = { ...response.data };
+
+                // Убедимся, что у команды есть _id (копируем из id если нужно)
+                if (!teamData._id && teamData.id) {
+                    teamData._id = teamData.id;
+                }
+
+                // Проверка наличия _id
+                if (!teamData || (!teamData._id && !teamData.id)) {
+                    console.error('Invalid team data from server (no ID):', teamData);
+                    setError('Получены некорректные данные команды с сервера');
+                    return;
+                }
+
+                // Убедимся, что members существует и является массивом
+                if (!teamData.members) {
+                    teamData.members = [];
+                }
+
+                // Ensure projects array exists and process it properly
+                if (Array.isArray(teamData.projectObjects)) {
+                    console.log('Using projectObjects from API response:', teamData.projectObjects);
+                    // Use the full project objects directly from the API response
+                    teamData.projects = teamData.projectObjects;
+                } else if (!teamData.projects) {
+                    teamData.projects = [];
+                    console.log('No projects in team data, using empty array');
+                } else {
+                    console.log('Raw team projects from API:', teamData.projects);
+
+                    // If projects is an array of strings (project IDs), process them
+                    if (Array.isArray(teamData.projects)) {
+                        // Get all project IDs from the team
+                        const teamProjectIds = teamData.projects.map(project =>
+                            typeof project === 'string' ? project : (project?._id || project?.id)
+                        ).filter(Boolean);
+
+                        // Find full project objects from the projects list
+                        const fullProjects = projects.filter(project =>
+                            teamProjectIds.includes(project._id)
+                        );
+
+                        // If we found all projects, use them
+                        if (fullProjects.length === teamProjectIds.length) {
+                            console.log('Found all projects in projects list:', fullProjects);
+                            teamData.projects = fullProjects;
+                        } else {
+                            // For any missing projects, create minimal objects
+                            const processedProjects = teamProjectIds.map(projectId => {
+                                const fullProject = projects.find(p => p._id === projectId);
+                                return fullProject || null;
+                            }).filter(Boolean);
+
+                            console.log('Processed projects:', processedProjects);
+                            teamData.projects = processedProjects;
+                        }
+                    }
+                }
+
+                console.log('Final team data to set:', teamData);
+                setSelectedTeam(teamData);
                 setError(null);
+
+                // Reset tab to first tab when selecting a new team
+                setTabValue(0);
             } catch (mainErr) {
                 console.error('Main API error:', mainErr);
+                console.error('Response details:', mainErr.response?.status, mainErr.response?.data);
 
                 // Try test endpoint if main endpoint fails
                 try {
                     console.log('Trying test endpoint...');
-                    const testResponse = await axios.get(`${API_BASE_URL}/api/teams-test/${team._id}`);
+                    const testResponse = await axios.get(`${API_BASE_URL}/api/teams-test/${teamId}`);
                     console.log('Test endpoint response:', testResponse.data);
 
                     if (testResponse.data.success && testResponse.data.team) {
-                        setSelectedTeam(testResponse.data.team);
+                        const teamData = { ...testResponse.data.team };
+
+                        // Убедимся, что у команды есть _id (копируем из id если нужно)
+                        if (!teamData._id && teamData.id) {
+                            teamData._id = teamData.id;
+                        }
+
+                        // Проверка наличия _id или id
+                        if (!teamData || (!teamData._id && !teamData.id)) {
+                            console.error('Invalid team data from test server (no ID):', teamData);
+                            setError('Получены некорректные данные команды с тестового сервера');
+                            return;
+                        }
+
+                        // Та же проверка для тестовых данных
+                        if (!teamData.members) {
+                            teamData.members = [];
+                        }
+
+                        if (Array.isArray(teamData.members)) {
+                            const uniqueUserIds = new Set();
+                            teamData.members = teamData.members.filter(member => {
+                                if (!member || !member.userId) return false;
+
+                                const userId = typeof member.userId === 'object' ?
+                                    (member.userId._id || member.userId.id) : member.userId;
+
+                                // Если userId уже был добавлен, пропускаем этот элемент
+                                if (uniqueUserIds.has(userId)) return false;
+
+                                uniqueUserIds.add(userId);
+                                return true;
+                            });
+                        }
+
+                        // Обработка проектов так же, как в основном блоке
+                        if (Array.isArray(teamData.projectObjects)) {
+                            console.log('Using projectObjects from test API response:', teamData.projectObjects);
+                            // Use the full project objects directly from the API response
+                            teamData.projects = teamData.projectObjects;
+                        } else if (!teamData.projects) {
+                            teamData.projects = [];
+                        } else if (Array.isArray(teamData.projects)) {
+                            // Get all project IDs from the team
+                            const teamProjectIds = teamData.projects.map(project =>
+                                typeof project === 'string' ? project : (project?._id || project?.id)
+                            ).filter(Boolean);
+
+                            // Find full project objects from the projects list
+                            const fullProjects = projects.filter(project =>
+                                teamProjectIds.includes(project._id)
+                            );
+
+                            // If we found all projects, use them
+                            if (fullProjects.length === teamProjectIds.length) {
+                                teamData.projects = fullProjects;
+                            } else {
+                                // For any missing projects, create minimal objects
+                                const processedProjects = teamProjectIds.map(projectId => {
+                                    const fullProject = projects.find(p => p._id === projectId);
+                                    return fullProject || null;
+                                }).filter(Boolean);
+
+                                teamData.projects = processedProjects;
+                            }
+                        } else {
+                            teamData.projects = [];
+                        }
+
+                        setSelectedTeam(teamData);
                         setError('Используются тестовые данные.');
                     } else {
                         throw new Error('Invalid test response format');
@@ -481,6 +971,8 @@ function TeamManagement() {
 
     const openAddProjectDialog = () => {
         if (canOpenAddProjectDialog) {
+            // Refresh projects before opening dialog to ensure we have the latest list
+            fetchProjects();
             setAddProjectDialog(true);
         }
     };
@@ -494,17 +986,37 @@ function TeamManagement() {
             return null;
         }
 
+        // Нормализация ID пользователя
+        if (typeof userId === 'object') {
+            userId = userId._id || userId.id;
+        }
+
         // Проверяем, является ли пользователь владельцем
-        if (team.owner && (team.owner._id === userId || team.owner.id === userId)) {
-            console.log('User is owner');
-            return 'owner';
+        if (team.owner) {
+            const ownerId = typeof team.owner === 'object' ?
+                (team.owner._id || team.owner.id) : team.owner;
+
+            console.log('Comparing owner id', { ownerId, userId });
+
+            if (ownerId === userId) {
+                console.log('User is owner');
+                return 'owner';
+            }
         }
 
         // Проверяем роль в списке участников
         if (team.members && Array.isArray(team.members)) {
-            const member = team.members.find(m =>
-                m.userId && (m.userId._id === userId || m.userId.id === userId)
-            );
+            // Ищем пользователя в списке участников
+            const member = team.members.find(m => {
+                if (!m || !m.userId) return false;
+
+                const memberId = typeof m.userId === 'object' ?
+                    (m.userId._id || m.userId.id) : m.userId;
+
+                console.log('Comparing member id', { memberId, userId });
+                return memberId === userId;
+            });
+
             console.log('Found member:', member);
             return member ? member.role : null;
         }
@@ -519,8 +1031,17 @@ function TeamManagement() {
             console.log('Project clicked:', project);
             console.log('Selected team:', selectedTeam);
 
-            if (!selectedTeam || !project) {
-                console.log('Missing team or project data');
+            if (!selectedTeam) {
+                console.log('Missing team data');
+                setError('Ошибка: отсутствуют данные команды');
+                return;
+            }
+
+            // Проверка данных проекта
+            const projectId = project._id || project.id;
+            if (!projectId) {
+                console.error('Project ID is missing', project);
+                setError('Ошибка: отсутствует ID проекта');
                 return;
             }
 
@@ -550,18 +1071,20 @@ function TeamManagement() {
 
             if (!userRole) {
                 console.log('No role found for user');
+                setError('У вас нет доступа к этому проекту');
                 return;
             }
 
             // Определяем маршрут в зависимости от роли
-            const route = (userRole === 'owner' || userRole === 'admin')
-                ? `/teams/${selectedTeam._id}/projects/${project._id}/constructor`
-                : `/teams/${selectedTeam._id}/projects/${project._id}/viewer`;
+            const route = (userRole === 'owner' || userRole === 'admin' || userRole === 'editor')
+                ? `/teams/${selectedTeam._id}/projects/${projectId}/constructor`
+                : `/teams/${selectedTeam._id}/projects/${projectId}/viewer`;
 
             console.log('Navigating to:', route);
             navigate(route);
         } catch (error) {
             console.error('Error in handleProjectClick:', error);
+            setError('Произошла ошибка при открытии проекта');
         }
     };
 
@@ -613,10 +1136,10 @@ function TeamManagement() {
                                         </ListItem>
                                     ) : (
                                         teams.map((team) => (
-                                            <React.Fragment key={team._id}>
+                                            <React.Fragment key={team._id || team.id}>
                                                 <ListItem
                                                     button
-                                                    selected={selectedTeam && selectedTeam._id === team._id}
+                                                    selected={selectedTeam && (selectedTeam._id === team._id || selectedTeam._id === team.id || selectedTeam.id === team._id || selectedTeam.id === team.id)}
                                                     onClick={() => handleSelectTeam(team)}
                                                 >
                                                     <ListItemText
@@ -679,7 +1202,7 @@ function TeamManagement() {
                                                     {selectedTeam.owner && (
                                                         <ListItem>
                                                             <ListItemText
-                                                                primary={selectedTeam.owner.username || 'Владелец'}
+                                                                primary={selectedTeam.owner.username || selectedTeam.owner.name || 'Владелец'}
                                                                 secondary={selectedTeam.owner.email || ''}
                                                             />
                                                             <Chip label="Владелец" color="primary" size="small" />
@@ -688,37 +1211,90 @@ function TeamManagement() {
                                                     <Divider />
 
                                                     {/* Members */}
-                                                    {selectedTeam.members?.map((member) => (
-                                                        member.userId && member.userId._id &&
-                                                        (!selectedTeam.owner || member.userId._id !== selectedTeam.owner._id) && (
-                                                            <React.Fragment key={member.userId._id}>
-                                                                <ListItem>
-                                                                    <ListItemText
-                                                                        primary={member.userId.username || 'Неизвестный пользователь'}
-                                                                        secondary={member.userId.email || ''}
-                                                                    />
-                                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                        <Chip
-                                                                            label={member.role === 'admin' ? 'Админ' :
-                                                                                member.role === 'editor' ? 'Редактор' : 'Просмотр'}
-                                                                            color={member.role === 'admin' ? 'secondary' :
-                                                                                member.role === 'editor' ? 'info' : 'default'}
-                                                                            size="small"
-                                                                            sx={{ mr: 1 }}
+                                                    {console.log('Team members data:', selectedTeam.members)}
+
+                                                    {Array.isArray(selectedTeam.members) && selectedTeam.members.length > 0 ? (
+                                                        selectedTeam.members.map((member) => {
+                                                            console.log('Rendering member:', member);
+
+                                                            // Проверка на наличие данных пользователя
+                                                            if (!member || !member.userId) {
+                                                                console.log('Invalid member data:', member);
+                                                                return null;
+                                                            }
+
+                                                            // Адаптация к разным форматам данных с сервера
+                                                            const userId = typeof member.userId === 'object' ?
+                                                                (member.userId._id || member.userId.id) :
+                                                                member.userId;
+
+                                                            const username = typeof member.userId === 'object' ?
+                                                                (member.userId.username || member.userId.name || 'Неизвестный пользователь') :
+                                                                (member.name || 'Неизвестный пользователь');
+
+                                                            const email = typeof member.userId === 'object' ?
+                                                                member.userId.email :
+                                                                member.email;
+
+                                                            // Проверка, что это не владелец команды
+                                                            const isOwner = selectedTeam.owner &&
+                                                                (userId === (typeof selectedTeam.owner === 'object' ?
+                                                                    (selectedTeam.owner._id || selectedTeam.owner.id) :
+                                                                    selectedTeam.owner));
+
+                                                            if (isOwner) {
+                                                                console.log('Skipping owner in members list');
+                                                                return null;
+                                                            }
+
+                                                            // Получаем данные текущего пользователя
+                                                            const currentUser = JSON.parse(localStorage.getItem('user'));
+                                                            const currentUserId = currentUser?._id || currentUser?.id;
+
+                                                            // Определяем, имеет ли текущий пользователь право удалять участников
+                                                            const currentUserRole = getUserRole(selectedTeam, currentUserId);
+                                                            const canRemoveMember = currentUserRole === 'owner' ||
+                                                                (currentUserRole === 'admin' && member.role !== 'admin');
+
+                                                            return (
+                                                                <React.Fragment key={userId}>
+                                                                    <ListItem>
+                                                                        <ListItemText
+                                                                            primary={username}
+                                                                            secondary={email || ''}
                                                                         />
-                                                                        <IconButton
-                                                                            edge="end"
-                                                                            size="small"
-                                                                            onClick={() => handleRemoveMember(member.userId._id)}
-                                                                        >
-                                                                            <DeleteIcon />
-                                                                        </IconButton>
-                                                                    </Box>
-                                                                </ListItem>
-                                                                <Divider />
-                                                            </React.Fragment>
-                                                        )
-                                                    ))}
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                            <Chip
+                                                                                label={member.role === 'admin' ? 'Админ' :
+                                                                                    member.role === 'editor' ? 'Редактор' : 'Просмотр'}
+                                                                                color={member.role === 'admin' ? 'secondary' :
+                                                                                    member.role === 'editor' ? 'info' : 'default'}
+                                                                                size="small"
+                                                                                sx={{ mr: 1 }}
+                                                                            />
+                                                                            {canRemoveMember && (
+                                                                                <IconButton
+                                                                                    edge="end"
+                                                                                    size="small"
+                                                                                    onClick={() => handleRemoveMember(userId)}
+                                                                                    title={member.role === 'admin' ?
+                                                                                        'Удалить администратора' :
+                                                                                        'Удалить участника'}
+                                                                                >
+                                                                                    <DeleteIcon />
+                                                                                </IconButton>
+                                                                            )}
+                                                                        </Box>
+                                                                    </ListItem>
+                                                                    <Divider />
+                                                                </React.Fragment>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <ListItem>
+                                                            <ListItemText primary="В команде пока нет участников кроме владельца" />
+                                                        </ListItem>
+                                                    )}
                                                 </List>
                                             </Box>
                                         )}
@@ -739,46 +1315,74 @@ function TeamManagement() {
                                                 </Box>
 
                                                 <List>
-                                                    {selectedTeam.projects?.length === 0 ? (
+                                                    {!Array.isArray(selectedTeam.projects) || selectedTeam.projects.length === 0 ? (
                                                         <ListItem>
                                                             <ListItemText primary="У команды пока нет проектов" />
                                                         </ListItem>
                                                     ) : (
-                                                        selectedTeam.projects?.map((project) => (
-                                                            <React.Fragment key={project._id}>
-                                                                <ListItem
-                                                                    button
-                                                                    onClick={() => handleProjectClick(project)}
-                                                                    sx={{
-                                                                        '&:hover': {
-                                                                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                                                                        },
-                                                                        cursor: 'pointer',
-                                                                        display: 'flex',
-                                                                        justifyContent: 'space-between',
-                                                                        alignItems: 'center'
-                                                                    }}
-                                                                >
-                                                                    <ListItemText
-                                                                        primary={project.name}
-                                                                        secondary={project.description || 'Без описания'}
-                                                                    />
-                                                                    {getUserRole(selectedTeam, JSON.parse(localStorage.getItem('user'))._id) === 'admin' && (
-                                                                        <IconButton
-                                                                            edge="end"
-                                                                            size="small"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleRemoveProject(project._id);
-                                                                            }}
-                                                                        >
-                                                                            <DeleteIcon />
-                                                                        </IconButton>
-                                                                    )}
-                                                                </ListItem>
-                                                                <Divider />
-                                                            </React.Fragment>
-                                                        ))
+                                                        selectedTeam.projects.map((project) => {
+                                                            // Получаем данные пользователя один раз для всего блока рендеринга
+                                                            const currentUser = JSON.parse(localStorage.getItem('user'));
+                                                            const currentUserId = currentUser?._id || currentUser?.id;
+                                                            const userRole = getUserRole(selectedTeam, currentUserId);
+
+                                                            console.log('Rendering project in list:', project);
+
+                                                            // Убедимся, что у проекта есть ID
+                                                            const projectId = project._id || project.id;
+                                                            if (!projectId) {
+                                                                console.error('Project without ID in render:', project);
+                                                                return null;
+                                                            }
+
+                                                            // Проверка наличия имени проекта
+                                                            const projectName = project.name || 'Без названия';
+                                                            const projectDesc = project.description || 'Без описания';
+
+                                                            return (
+                                                                <React.Fragment key={projectId}>
+                                                                    <ListItem
+                                                                        button
+                                                                        onClick={() => {
+                                                                            console.log('Project item clicked:', project);
+                                                                            handleProjectClick(project);
+                                                                        }}
+                                                                        sx={{
+                                                                            '&:hover': {
+                                                                                backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                                                            },
+                                                                            cursor: 'pointer',
+                                                                            display: 'flex',
+                                                                            justifyContent: 'space-between',
+                                                                            alignItems: 'center'
+                                                                        }}
+                                                                    >
+                                                                        <ListItemText
+                                                                            primary={projectName}
+                                                                            secondary={projectDesc}
+                                                                        />
+                                                                        {(userRole === 'admin' || userRole === 'owner') && (
+                                                                            <IconButton
+                                                                                edge="end"
+                                                                                size="small"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    console.log('Remove project button clicked:', {
+                                                                                        projectId,
+                                                                                        project
+                                                                                    });
+                                                                                    handleRemoveProject(projectId);
+                                                                                }}
+                                                                                title="Удалить проект из команды"
+                                                                            >
+                                                                                <DeleteIcon />
+                                                                            </IconButton>
+                                                                        )}
+                                                                    </ListItem>
+                                                                    <Divider />
+                                                                </React.Fragment>
+                                                            );
+                                                        })
                                                     )}
                                                 </List>
                                             </Box>
@@ -873,14 +1477,18 @@ function TeamManagement() {
                         sx={{ mb: 2 }}
                     />
 
-                    {searchQuery && users.length > 0 && (
-                        <List sx={{ maxHeight: 200, overflow: 'auto', mb: 2 }}>
+                    {users.length > 0 ? (
+                        <List sx={{ maxHeight: 200, overflow: 'auto', mb: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
                             {users.map((user) => (
                                 <ListItem
                                     key={user._id}
                                     button
                                     onClick={() => handleUserSelect(user)}
                                     selected={selectedUserId === user._id}
+                                    sx={{
+                                        '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
+                                        backgroundColor: selectedUserId === user._id ? 'rgba(25, 118, 210, 0.12)' : 'transparent'
+                                    }}
                                 >
                                     <ListItemText
                                         primary={user.username}
@@ -889,6 +1497,18 @@ function TeamManagement() {
                                 </ListItem>
                             ))}
                         </List>
+                    ) : searchQuery ? (
+                        <Box sx={{ mb: 2, p: 1, textAlign: 'center', color: 'text.secondary' }}>
+                            Пользователи не найдены
+                        </Box>
+                    ) : null}
+
+                    {selectedUserId && (
+                        <Box sx={{ mb: 2, p: 1, border: 1, borderColor: 'primary.main', borderRadius: 1, bgcolor: 'background.paper' }}>
+                            <Typography variant="body2" color="primary">
+                                Выбран пользователь: {searchQuery}
+                            </Typography>
+                        </Box>
                     )}
 
                     <FormControl fullWidth margin="dense">
@@ -912,8 +1532,8 @@ function TeamManagement() {
                     }}>Отмена</Button>
                     <Button
                         onClick={handleAddMember}
-                        disabled={!selectedUserId}
                         variant="contained"
+                        color="primary"
                     >
                         Добавить
                     </Button>
@@ -935,30 +1555,99 @@ function TeamManagement() {
                         <InputLabel>Проект</InputLabel>
                         <Select
                             value={selectedProjectId}
-                            onChange={(e) => setSelectedProjectId(e.target.value)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                console.log('Selected project ID from dropdown:', value);
+                                if (value && value !== 'undefined' && value !== 'null') {
+                                    setSelectedProjectId(value);
+                                } else {
+                                    console.error('Invalid project ID selected:', value);
+                                    setError('Выбран некорректный проект');
+                                }
+                            }}
                             label="Проект"
                             required
                         >
                             <MenuItem value="" disabled>Выберите проект</MenuItem>
-                            {projects
-                                .filter(project => selectedTeam && (
-                                    // Filter out already added projects
-                                    !selectedTeam.projects ||
-                                    !selectedTeam.projects.some(teamProject => teamProject._id === project._id)
-                                ))
-                                .map((project) => (
-                                    <MenuItem key={project._id} value={project._id}>
-                                        {project.name}
-                                    </MenuItem>
-                                ))
-                            }
+                            {projects && projects.length > 0 ? (
+                                projects
+                                    .filter(project => {
+                                        // Проверяем, есть ли у проекта ID
+                                        const projectId = project._id || project.id;
+                                        if (!projectId) {
+                                            console.log('Project without ID in dropdown filter:', project);
+                                            return false;
+                                        }
+
+                                        // Fix: properly handle project filtering
+                                        if (!selectedTeam || !selectedTeam.projects) {
+                                            return true; // If no projects in team, show all
+                                        }
+
+                                        // Convert the team's project array to ensure we're comparing properly
+                                        const teamProjectIds = Array.isArray(selectedTeam.projects)
+                                            ? selectedTeam.projects.map(teamProject => {
+                                                console.log('Team project item:', teamProject);
+                                                if (typeof teamProject === 'string') {
+                                                    return teamProject;
+                                                } else if (teamProject && (teamProject._id || teamProject.id)) {
+                                                    return teamProject._id || teamProject.id;
+                                                }
+                                                return null;
+                                            }).filter(id => id !== null)
+                                            : [];
+                                        console.log('Team project IDs:', teamProjectIds);
+                                        console.log('Current project ID:', projectId);
+                                        const isInTeam = teamProjectIds.includes(projectId);
+                                        console.log(`Project ${project.name} (${projectId}) already in team: ${isInTeam}`);
+                                        return !isInTeam;
+                                    })
+                                    .map((project) => {
+                                        const projectId = project._id || project.id;
+                                        return (
+                                            <MenuItem key={projectId} value={projectId}>
+                                                {project.name || 'Без названия'} ({projectId})
+                                            </MenuItem>
+                                        );
+                                    })
+                            ) : (
+                                <MenuItem disabled>
+                                    Нет доступных проектов
+                                </MenuItem>
+                            )}
                         </Select>
                     </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setAddProjectDialog(false)}>Отмена</Button>
                     <Button
-                        onClick={handleAddProject}
+                        onClick={() => {
+                            console.log('Add project button clicked');
+                            console.log('Current selectedProjectId:', selectedProjectId);
+
+                            // Дополнительная проверка валидности ID
+                            if (!selectedProjectId || selectedProjectId === 'undefined' || selectedProjectId === 'null') {
+                                console.error('Invalid project ID:', selectedProjectId);
+                                setError('Выбран некорректный проект. Пожалуйста, выберите другой проект из списка.');
+                                return;
+                            }
+
+                            // Проверяем, существует ли проект с таким ID в списке
+                            const selectedProject = projects.find(p => {
+                                const projectId = p._id || p.id;
+                                return projectId === selectedProjectId;
+                            });
+
+                            if (!selectedProject) {
+                                console.error('Selected project not found in projects list');
+                                setError('Выбранный проект не найден в списке доступных проектов');
+                                return;
+                            }
+
+                            console.log('Selected project object:', selectedProject);
+                            console.log('Is button disabled:', !selectedProjectId);
+                            handleAddProject();
+                        }}
                         disabled={!selectedProjectId}
                         variant="contained"
                     >

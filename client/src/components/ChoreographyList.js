@@ -40,55 +40,60 @@ const ChoreographyList = ({ choreographies, onDelete }) => {
 
     return (
         <List>
-            {choreographies.map((choreography, index) => (
-                <React.Fragment key={choreography.id || index}>
-                    <ListItem
-                        alignItems="flex-start"
-                        secondaryAction={
-                            <Box>
-                                <IconButton
-                                    edge="end"
-                                    aria-label="view"
-                                    onClick={() => navigateToProject(choreography.id, '/projects')}
-                                >
-                                    <VisibilityIcon />
-                                </IconButton>
-                                <IconButton
-                                    edge="end"
-                                    aria-label="edit"
-                                    onClick={() => navigateToProject(choreography.id, '/constructor')}
-                                >
-                                    <EditIcon />
-                                </IconButton>
-                                <IconButton
-                                    edge="end"
-                                    aria-label="delete"
-                                    onClick={() => onDelete(choreography.id)}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            </Box>
-                        }
-                    >
-                        <ListItemText
-                            primary={choreography.name}
-                            secondary={
-                                <React.Fragment>
-                                    <Typography
-                                        component="span"
-                                        variant="body2"
-                                        color="text.primary"
+            {choreographies.map((choreography, index) => {
+                // Use _id for MongoDB documents, fall back to id, or use index as last resort
+                const uniqueKey = choreography._id || choreography.id || `choreography-${index}`;
+
+                return (
+                    <React.Fragment key={uniqueKey}>
+                        <ListItem
+                            alignItems="flex-start"
+                            secondaryAction={
+                                <Box>
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="view"
+                                        onClick={() => navigateToProject(choreography._id || choreography.id, '/projects')}
                                     >
-                                        {new Date(choreography.createdAt).toLocaleDateString()}
-                                    </Typography>
-                                    {` — ${choreography.description || 'Нет описания'}`}
-                                </React.Fragment>
+                                        <VisibilityIcon />
+                                    </IconButton>
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="edit"
+                                        onClick={() => navigateToProject(choreography._id || choreography.id, '/constructor')}
+                                    >
+                                        <EditIcon />
+                                    </IconButton>
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="delete"
+                                        onClick={() => onDelete(choreography._id || choreography.id)}
+                                    >
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Box>
                             }
-                        />
-                    </ListItem>
-                    {index < choreographies.length - 1 && <Divider component="li" />}
-                </React.Fragment>
-            ))}
+                        >
+                            <ListItemText
+                                primary={choreography.name}
+                                secondary={
+                                    <React.Fragment>
+                                        <Typography
+                                            component="span"
+                                            variant="body2"
+                                            color="text.primary"
+                                        >
+                                            {new Date(choreography.createdAt).toLocaleDateString()}
+                                        </Typography>
+                                        {` — ${choreography.description || 'Нет описания'}`}
+                                    </React.Fragment>
+                                }
+                            />
+                        </ListItem>
+                        {index < choreographies.length - 1 && <Divider component="li" />}
+                    </React.Fragment>
+                );
+            })}
         </List>
     );
 };

@@ -29,10 +29,10 @@ const NavButton = styled(Button)(({ theme, active }) => ({
     borderRadius: '20px',
     textTransform: 'none',
     fontWeight: 500,
-    backgroundColor: active ? theme.palette.primary.light : 'transparent',
-    color: active ? theme.palette.primary.main : theme.palette.primary.main,
+    backgroundColor: active === 'true' ? theme.palette.primary.light : 'transparent',
+    color: active === 'true' ? theme.palette.primary.main : theme.palette.primary.main,
     '&:hover': {
-        backgroundColor: active ? theme.palette.primary.light : theme.palette.action.hover,
+        backgroundColor: active === 'true' ? theme.palette.primary.light : theme.palette.action.hover,
     },
 }));
 
@@ -46,7 +46,7 @@ function Navbar() {
         setIsAuthenticated(!!token);
     }, []);
 
-    const isActive = (path) => {
+    const checkActive = (path) => {
         return location.pathname === path;
     };
 
@@ -70,7 +70,8 @@ function Navbar() {
                                     color="primary"
                                     variant="text"
                                     onClick={() => navigate('/teams')}
-                                    active={isActive('/teams')}
+                                    active={checkActive('/teams').toString()}
+                                    data-active={checkActive('/teams').toString()}
                                 >
                                     Команды
                                 </NavButton>
@@ -78,7 +79,8 @@ function Navbar() {
                                     color="primary"
                                     variant="text"
                                     onClick={() => navigate('/constructor')}
-                                    active={isActive('/constructor')}
+                                    active={checkActive('/constructor').toString()}
+                                    data-active={checkActive('/constructor').toString()}
                                 >
                                     Конструктор
                                 </NavButton>
@@ -86,7 +88,8 @@ function Navbar() {
                                     color="primary"
                                     variant="text"
                                     onClick={() => navigate('/dashboard')}
-                                    active={isActive('/dashboard')}
+                                    active={checkActive('/dashboard').toString()}
+                                    data-active={checkActive('/dashboard').toString()}
                                 >
                                     Личный кабинет
                                 </NavButton>

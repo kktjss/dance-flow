@@ -10,6 +10,108 @@ import Canvas from '../components/Canvas';
 import ModelViewer from '../components/ModelViewer';
 import VideoViewer from '../components/VideoViewer';
 
+// Функция для преобразования элементов в правильный формат
+const normalizeElements = (elements) => {
+    if (!elements || !Array.isArray(elements)) {
+        console.warn('Elements is not an array or undefined:', elements);
+        return [];
+    }
+
+    console.log('Raw elements from server:', JSON.stringify(elements, null, 2));
+
+    // Если элементы приходят в виде строки JSON, попробуем распарсить
+    let parsedElements = elements;
+    if (elements.length === 1 && typeof elements[0] === 'string') {
+        try {
+            const parsed = JSON.parse(elements[0]);
+            if (Array.isArray(parsed)) {
+                parsedElements = parsed;
+                console.log('Successfully parsed elements from JSON string');
+            }
+        } catch (e) {
+            console.error('Failed to parse elements JSON string:', e);
+        }
+    }
+
+    // Создаем уникальные ID для элементов, если их нет
+    let idCounter = 1;
+
+    const normalized = parsedElements.map(el => {
+        // Если элемент вообще null или undefined, создаем базовый элемент
+        if (!el) {
+            const newId = `generated-${idCounter++}`;
+            console.log('Created new element with ID:', newId);
+            return {
+                id: newId,
+                type: 'rectangle',
+                position: { x: 100, y: 100 },
+                size: { width: 100, height: 100 },
+                style: { opacity: 1, backgroundColor: '#cccccc' },
+                content: '',
+                keyframes: []
+            };
+        }
+
+        // Проверяем наличие обязательных полей
+        let elementId = el.id;
+
+        // Если нет id, проверяем _id или генерируем новый
+        if (!elementId) {
+            if (el._id) {
+                elementId = el._id;
+                console.log('Used _id as id for element:', elementId);
+            } else {
+                elementId = `generated-${idCounter++}`;
+                console.log('Generated new id for element:', elementId);
+            }
+        }
+
+        // Определяем тип элемента
+        let elementType = el.type;
+        if (!elementType) {
+            if (el.originalType) {
+                elementType = el.originalType;
+                console.log('Used originalType as type for element:', elementType);
+            } else {
+                elementType = 'rectangle'; // Тип по умолчанию
+                console.log('Used default type for element:', elementId);
+            }
+        }
+
+        // Создаем базовый элемент с обязательными полями
+        const normalizedElement = {
+            id: elementId,
+            type: elementType,
+            position: el.position || { x: 100, y: 100 },
+            size: el.size || { width: 100, height: 100 },
+            style: el.style || { opacity: 1, backgroundColor: '#cccccc' },
+            content: el.content || '',
+            keyframes: el.keyframes || []
+        };
+
+        // Проверяем и исправляем позицию
+        if (!normalizedElement.position.x || isNaN(normalizedElement.position.x)) {
+            normalizedElement.position.x = 100;
+        }
+        if (!normalizedElement.position.y || isNaN(normalizedElement.position.y)) {
+            normalizedElement.position.y = 100;
+        }
+
+        // Проверяем и исправляем размер
+        if (!normalizedElement.size.width || isNaN(normalizedElement.size.width)) {
+            normalizedElement.size.width = 100;
+        }
+        if (!normalizedElement.size.height || isNaN(normalizedElement.size.height)) {
+            normalizedElement.size.height = 100;
+        }
+
+        return normalizedElement;
+    });
+
+    console.log('Final normalized elements:', normalized);
+    return normalized;
+};
+
 const ProjectViewer = () => {
     const { teamId, projectId } = useParams();
     const navigate = useNavigate();
@@ -21,6 +123,7 @@ const ProjectViewer = () => {
     const [showVideoPlayer, setShowVideoPlayer] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [normalizedElements, setNormalizedElements] = useState([]);
 
     useEffect(() => {
         const fetchProject = async () => {
@@ -42,7 +145,49 @@ const ProjectViewer = () => {
                 );
 
                 if (response.data.success) {
-                    setProject(response.data.project);
+                    const fetchedProject = response.data.project;
+                    console.log('Fetched project:', JSON.stringify(fetchedProject, null, 2));
+                    setProject(fetchedProject);
+
+                    // Пробуем разные источники данных для элементов
+                    if (fetchedProject.elements && Array.isArray(fetchedProject.elements) && fetchedProject.elements.length > 0) {
+                        console.log('Using elements array from project');
+                        const normalized = normalizeElements(fetchedProject.elements);
+                        setNormalizedElements(normalized);
+                    } else if (fetchedProject.keyframesJSON) {
+                        // Пробуем использовать keyframesJSON как источник элементов
+                        try {
+                            console.log('Trying to parse keyframesJSON:', fetchedProject.keyframesJSON.substring(0, 100) + '...');
+                            const parsedKeyframes = JSON.parse(fetchedProject.keyframesJSON);
+                            if (parsedKeyframes && Array.isArray(parsedKeyframes)) {
+                                console.log('Using keyframesJSON as elements source');
+                                const normalized = normalizeElements(parsedKeyframes);
+                                setNormalizedElements(normalized);
+                            } else if (parsedKeyframes && parsedKeyframes.elements && Array.isArray(parsedKeyframes.elements)) {
+                                console.log('Using keyframesJSON.elements as elements source');
+                                const normalized = normalizeElements(parsedKeyframes.elements);
+                                setNormalizedElements(normalized);
+                            } else {
+                                console.warn('keyframesJSON does not contain valid elements array');
+                                setNormalizedElements([]);
+                            }
+                        } catch (e) {
+                            console.error('Failed to parse keyframesJSON:', e);
+                            setNormalizedElements([]);
+                        }
+                    } else {
+                        console.warn('Project has no elements array or keyframesJSON');
+                        // Создаем базовый элемент, чтобы холст не был пустым
+                        setNormalizedElements([{
+                            id: 'default-element',
+                            type: 'rectangle',
+                            position: { x: 100, y: 100 },
+                            size: { width: 100, height: 100 },
+                            style: { opacity: 1, backgroundColor: '#cccccc' },
+                            content: '',
+                            keyframes: []
+                        }]);
+                    }
                 } else {
                     setError(response.data.message || 'Не удалось загрузить проект');
                 }
@@ -224,7 +369,7 @@ const ProjectViewer = () => {
                                     {/* Canvas View */}
                                     {viewerMode === 'canvas' && (
                                         <Canvas
-                                            elements={project.elements}
+                                            elements={normalizedElements}
                                             currentTime={currentTime}
                                             isPlaying={isPlaying}
                                             readOnly={true}
@@ -247,28 +392,31 @@ const ProjectViewer = () => {
                                             </Typography>
                                         </Box>
                                     )}
+
+                                    {/* Video View - with video */}
+                                    {viewerMode === 'video' && videoUrl && (
+                                        <VideoViewer
+                                            videoUrl={videoUrl}
+                                            isPlaying={isPlaying}
+                                            currentTime={currentTime}
+                                            onClose={handleHideVideoPlayer}
+                                        />
+                                    )}
+
+                                    {/* 3D Model View */}
+                                    {viewerMode === '3d' && (
+                                        <ModelViewer
+                                            project={project}
+                                            isPlaying={isPlaying}
+                                            currentTime={currentTime}
+                                            onClose={handleHide3DModel}
+                                        />
+                                    )}
                                 </Box>
                             </Paper>
-
-                            {/* 3D Model Viewer (full-screen overlay) */}
-                            <ModelViewer
-                                isVisible={show3DModel}
-                                onClose={handleHide3DModel}
-                            />
-
-                            {/* Video Player (when video is available) */}
-                            {videoUrl && viewerMode === 'video' && (
-                                <VideoViewer
-                                    isVisible={showVideoPlayer}
-                                    videoUrl={videoUrl}
-                                    onClose={handleHideVideoPlayer}
-                                />
-                            )}
                         </>
                     ) : (
-                        <Typography color="error">
-                            Проект не найден
-                        </Typography>
+                        <Alert severity="info">Проект не найден</Alert>
                     )}
                 </Container>
             </Box>

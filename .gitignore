@@ -11,9 +11,9 @@ node_modules/
 /dist
 /server_backup
 
-client/public/audio
-client/public/models
-client/src/assets/models
+/client/public/audio
+/client/public/models
+/client/src/assets/models
 
 # Misc
 .DS_Store
@@ -27,6 +27,7 @@ client/src/assets/models
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+/server/go/logs
 
 # IDE
 .idea/

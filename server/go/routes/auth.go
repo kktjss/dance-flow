@@ -132,12 +132,8 @@ func login(cfg *config.Config) gin.HandlerFunc {
 		log.Printf("User found: ID=%s, Username=%s, Password hash=%s", 
 			user.ID.Hex(), user.Username, user.Password)
 
-		// Для отладки - просто выведем хэш пароля и посмотрим, как работает bcrypt
-		testPassword := "test"
-		log.Printf("Testing bcrypt compare: raw password='%s', hash='%s'", 
-			testPassword, user.Password)
-		
 		// Verify password
+		log.Printf("Comparing provided password with stored hash")
 		if !user.ComparePassword(input.Password) {
 			log.Println("Password verification failed")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})

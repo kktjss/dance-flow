@@ -102,6 +102,8 @@ func main() {
 	routes.RegisterHistoryRoutes(api, cfg)
 	routes.RegisterDirectKeyframesRoutes(api, cfg)
 	routes.RegisterTestRoutes(api, cfg)
+	routes.RegisterTeamRoutes(api, cfg)
+	routes.RegisterUserRoutes(api, cfg)
 	
 	log.Println("All routes registered successfully!")
 

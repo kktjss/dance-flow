@@ -10,6 +10,22 @@ import VideoViewer from './VideoViewer';
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
 
+// Default element to use when none are provided
+const DEFAULT_ELEMENT = {
+    id: 'default-element',
+    type: 'rectangle',
+    position: { x: 100, y: 100 },
+    size: { width: 200, height: 100 },
+    style: {
+        backgroundColor: '#e0e0e0',
+        borderColor: '#cccccc',
+        borderWidth: 1,
+        opacity: 1,
+        zIndex: 0
+    },
+    keyframes: []
+};
+
 const Canvas = ({
     elements = [],
     currentTime,
@@ -19,6 +35,9 @@ const Canvas = ({
     onElementSelect,
     readOnly = false
 }) => {
+    // Use default element if elements array is empty
+    const effectiveElements = elements.length > 0 ? elements : [DEFAULT_ELEMENT];
+
     const containerRef = useRef(null);
     const canvasContainerRef = useRef(null);
     const canvasId = useRef(`canvas-${uuidv4()}`);
@@ -186,7 +205,7 @@ const Canvas = ({
             const elementId = modifiedObject.data.elementId;
             console.log('Modified element ID:', elementId);
 
-            const element = elements.find(el => el.id === elementId);
+            const element = effectiveElements.find(el => el.id === elementId);
 
             if (!element) {
                 console.warn('Element not found in elements array:', elementId);
@@ -227,14 +246,14 @@ const Canvas = ({
                 console.log('Updated element keyframes count:', updatedElement.keyframes?.length || 0);
 
                 // Update the elements array
-                updatedElements = elements.map(elem =>
+                updatedElements = effectiveElements.map(elem =>
                     elem.id === elementId ? updatedElement : elem
                 );
             } else {
                 console.log('Recording keyframe mode is NOT active, updating base properties');
 
                 // Update base properties while preserving keyframes
-                updatedElements = elements.map(elem => {
+                updatedElements = effectiveElements.map(elem => {
                     if (elem.id === elementId) {
                         return {
                             ...elem,
@@ -269,7 +288,7 @@ const Canvas = ({
             if (e.selected && e.selected.length > 0) {
                 const selectedObject = e.selected[0];
                 if (selectedObject.data && selectedObject.data.elementId) {
-                    const element = elements.find(el => el.id === selectedObject.data.elementId);
+                    const element = effectiveElements.find(el => el.id === selectedObject.data.elementId);
                     if (element) {
                         setTimeout(() => {
                             onElementSelect(element);
@@ -283,7 +302,7 @@ const Canvas = ({
             if (e.selected && e.selected.length > 0) {
                 const selectedObject = e.selected[0];
                 if (selectedObject.data && selectedObject.data.elementId) {
-                    const element = elements.find(el => el.id === selectedObject.data.elementId);
+                    const element = effectiveElements.find(el => el.id === selectedObject.data.elementId);
                     if (element) {
                         setTimeout(() => {
                             onElementSelect(element);
@@ -298,7 +317,7 @@ const Canvas = ({
                 onElementSelect(null);
             }, 0);
         });
-    }, [elements, currentTime, isRecordingKeyframe, onElementsChange, onElementSelect, readOnly]);
+    }, [effectiveElements, currentTime, isRecordingKeyframe, onElementsChange, onElementSelect, readOnly]);
 
     // Функция для применения эффектов анимации
     const applyAnimationEffects = useCallback((fabricObject, element) => {
@@ -567,19 +586,19 @@ const Canvas = ({
         }
 
         // Добавляем дублированный элемент в массив элементов
-        const updatedElements = [...elements, duplicatedElement];
+        const updatedElements = [...effectiveElements, duplicatedElement];
         onElementsChange(updatedElements);
 
         // Выбираем новый элемент
         onElementSelect(duplicatedElement);
-    }, [elements, selectedElement, onElementsChange, onElementSelect]);
+    }, [effectiveElements, selectedElement, onElementsChange, onElementSelect]);
 
     // Функция удаления выбранного элемента
     const handleDeleteElement = useCallback(() => {
         if (!selectedElement) return;
 
         // Создаем новый массив элементов без удаляемого элемента
-        const updatedElements = elements.filter(elem => elem.id !== selectedElement.id);
+        const updatedElements = effectiveElements.filter(elem => elem.id !== selectedElement.id);
 
         // Обновляем состояние
         onElementsChange(updatedElements);
@@ -593,7 +612,7 @@ const Canvas = ({
             fabricCanvas.discardActiveObject();
             fabricCanvas.renderAll();
         }
-    }, [elements, selectedElement, onElementsChange, onElementSelect, canvasId]);
+    }, [effectiveElements, selectedElement, onElementsChange, onElementSelect, canvasId]);
 
     // Обновляем canvas при изменении элементов или времени
     useEffect(() => {
@@ -610,7 +629,7 @@ const Canvas = ({
                 }
 
                 // Check if elements is defined and is an array
-                if (!elements) {
+                if (!effectiveElements) {
                     console.warn('Elements array is undefined');
                     fabricCanvas.clear();
                     fabricCanvas.backgroundColor = '#ffffff';
@@ -618,8 +637,8 @@ const Canvas = ({
                     return;
                 }
 
-                if (!Array.isArray(elements)) {
-                    console.error('Elements is not an array:', elements);
+                if (!Array.isArray(effectiveElements)) {
+                    console.error('Elements is not an array:', effectiveElements);
                     fabricCanvas.clear();
                     fabricCanvas.backgroundColor = '#ffffff';
                     fabricCanvas.renderAll();
@@ -627,38 +646,73 @@ const Canvas = ({
                 }
 
                 // Check for valid elements with required fields
-                const validElements = elements.filter(el => el && el.id && el.type && el.position);
+                const validElements = effectiveElements.filter(el => el && el.id && el.type && el.position);
 
                 if (validElements.length === 0) {
                     console.error('No valid elements found with required fields (id, type, position)');
-                    if (elements.length > 0) {
+                    if (effectiveElements.length > 0) {
                         console.error('Found elements but they are invalid:',
-                            elements.map(el => ({ id: el?.id || 'undefined', type: el?.type || 'undefined' })));
+                            effectiveElements.map(el => ({ id: el?.id || 'undefined', type: el?.type || 'undefined' })));
                     }
+
+                    // Clear the canvas
                     fabricCanvas.clear();
                     fabricCanvas.backgroundColor = '#ffffff';
+
+                    // Use the DEFAULT_ELEMENT constant
+                    const defaultElement = DEFAULT_ELEMENT;
+
+                    // Create a rectangle for the default element
+                    const fabricObject = new fabric.Rect({
+                        left: defaultElement.position.x,
+                        top: defaultElement.position.y,
+                        width: defaultElement.size.width,
+                        height: defaultElement.size.height,
+                        fill: defaultElement.style.backgroundColor,
+                        stroke: defaultElement.style.borderColor,
+                        strokeWidth: defaultElement.style.borderWidth,
+                        opacity: defaultElement.style.opacity,
+                        selectable: true,
+                        hasControls: true
+                    });
+
+                    // Add data to the object
+                    fabricObject.data = {
+                        elementId: defaultElement.id,
+                        element: defaultElement
+                    };
+
+                    // Add the default element to the canvas
+                    fabricCanvas.add(fabricObject);
                     fabricCanvas.renderAll();
+                    console.log('Added default element to canvas');
                     return;
                 }
 
                 // Debug info
-                console.log(`Canvas update: found ${elements.length} elements, ${validElements.length} valid`);
+                console.log(`Canvas update: found ${effectiveElements.length} elements, ${validElements.length} valid`);
 
                 // Log all element types to debug
-                elements.forEach((el, i) => {
+                effectiveElements.forEach((el, i) => {
                     console.log(`Element ${i}: id=${el?.id || 'undefined'}, type=${el?.type || 'undefined'}, originalType=${el?.originalType || 'none'}`);
                 });
 
-                // Очищаем canvas
-                fabricCanvas.clear();
-                fabricCanvas.backgroundColor = '#ffffff';
+                // Store current objects for later comparison
+                const existingObjects = fabricCanvas.getObjects();
+                const existingObjectsMap = new Map();
+                existingObjects.forEach(obj => {
+                    if (obj.data && obj.data.elementId) {
+                        existingObjectsMap.set(obj.data.elementId, obj);
+                    }
+                });
 
-                // Добавляем элементы на canvas
+                // Track new objects to add
+                const objectsToAdd = [];
                 const imageLoadPromises = [];
 
                 // Use only valid elements for rendering
                 validElements.forEach((element, index) => {
-                    console.log(`Rendering element ${index}: id=${element.id}, type=${element.type}, pos=(${element.position?.x},${element.position?.y})`);
+                    console.log(`Processing element ${index}: id=${element.id}, type=${element.type}, pos=(${element.position?.x},${element.position?.y})`);
 
                     // Ensure position exists and has valid values
                     if (!element.position || typeof element.position.x !== 'number' || typeof element.position.y !== 'number') {
@@ -671,136 +725,184 @@ const Canvas = ({
                     const endTime = element.animation?.endTime;
 
                     if (currentTime >= startTime && (endTime === null || endTime === undefined || currentTime <= endTime)) {
-                        let fabricObject;
+                        // Check if this element already exists on canvas
+                        let fabricObject = existingObjectsMap.get(element.id);
 
-                        // Ensure size exists and has valid values
-                        if (!element.size || typeof element.size.width !== 'number' || typeof element.size.height !== 'number') {
-                            console.warn(`Element ${element.id} has invalid size:`, element.size);
-                            element.size = { width: 100, height: 100 };
-                        }
+                        // If object exists, update it with animation effects
+                        if (fabricObject) {
+                            console.log(`Updating existing element ${element.id} on canvas`);
 
-                        // Ensure style exists with minimum properties
-                        if (!element.style) {
-                            console.warn(`Element ${element.id} has no style, creating default`);
-                            element.style = {
-                                backgroundColor: '#cccccc',
-                                borderColor: '#000000',
-                                borderWidth: 1,
-                                color: '#000000',
-                                opacity: 1,
-                                zIndex: 0
+                            // Update the element reference in case it changed
+                            fabricObject.data = {
+                                elementId: element.id,
+                                element: element
                             };
-                        }
 
-                        // Создаем fabric объект на основе типа элемента
-                        switch (element.type) {
-                            case 'rectangle':
-                                console.log(`Creating rectangle element: id=${element.id}, pos=(${element.position.x},${element.position.y})`);
-                                fabricObject = new fabric.Rect({
-                                    left: element.position.x,
-                                    top: element.position.y,
-                                    width: element.size.width,
-                                    height: element.size.height,
-                                    fill: element.style.backgroundColor || '#cccccc',
-                                    stroke: element.style.borderColor || '#000000',
-                                    strokeWidth: element.style.borderWidth || 1,
-                                    opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
-                                    selectable: true,
-                                    hasControls: true
-                                });
-                                break;
+                            // Apply animation effects to the existing object
+                            applyAnimationEffects(fabricObject, element);
 
-                            case 'circle':
-                                console.log(`Creating circle element: id=${element.id}, pos=(${element.position.x},${element.position.y})`);
-                                fabricObject = new fabric.Circle({
-                                    left: element.position.x,
-                                    top: element.position.y,
-                                    radius: Math.min(element.size.width, element.size.height) / 2,
-                                    fill: element.style.backgroundColor || '#cccccc',
-                                    stroke: element.style.borderColor || '#000000',
-                                    strokeWidth: element.style.borderWidth || 1,
-                                    opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
-                                    selectable: true,
-                                    hasControls: true
-                                });
-                                break;
+                            // Remove from map to track which objects need to be kept
+                            existingObjectsMap.delete(element.id);
+                        } else {
+                            // Create new object if it doesn't exist
+                            console.log(`Creating new element ${element.id} for canvas`);
 
-                            case 'text':
-                                console.log(`Creating text element: id=${element.id}, content=${element.content ? element.content.substring(0, 20) : 'empty'}`);
-                                fabricObject = new fabric.Text(element.content || 'Text', {
-                                    left: element.position.x,
-                                    top: element.position.y,
-                                    fontSize: element.size.height,
-                                    fill: element.style.color || '#000000',
-                                    opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
-                                    selectable: true,
-                                    hasControls: true
-                                });
-                                break;
+                            // Ensure size exists and has valid values
+                            if (!element.size || typeof element.size.width !== 'number' || typeof element.size.height !== 'number') {
+                                console.warn(`Element ${element.id} has invalid size:`, element.size);
+                                element.size = { width: 100, height: 100 };
+                            }
 
-                            case 'image':
-                                console.log(`Creating image element: id=${element.id}, content URL exists: ${Boolean(element.content)}`);
-                                if (!element.content) {
-                                    console.warn(`Image element ${element.id} is missing content URL, skipping`);
-                                    return; // Skip this element
-                                }
+                            // Ensure style exists with minimum properties
+                            if (!element.style) {
+                                console.warn(`Element ${element.id} has no style, creating default`);
+                                element.style = {
+                                    backgroundColor: '#cccccc',
+                                    borderColor: '#000000',
+                                    borderWidth: 1,
+                                    color: '#000000',
+                                    opacity: 1,
+                                    zIndex: 0
+                                };
+                            }
 
-                                const promise = new Promise((resolve) => {
-                                    fabric.Image.fromURL(element.content, (img) => {
-                                        img.set({
-                                            left: element.position.x,
-                                            top: element.position.y,
-                                            opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
-                                            selectable: true,
-                                            hasControls: true
-                                        });
-                                        img.scaleToWidth(element.size.width);
-                                        img.scaleToHeight(element.size.height);
+                            // Создаем fabric объект на основе типа элемента
+                            switch (element.type) {
+                                case 'rectangle':
+                                    console.log(`Creating rectangle element: id=${element.id}, pos=(${element.position.x},${element.position.y})`);
+                                    fabricObject = new fabric.Rect({
+                                        left: element.position.x,
+                                        top: element.position.y,
+                                        width: element.size.width,
+                                        height: element.size.height,
+                                        fill: element.style.backgroundColor || '#cccccc',
+                                        stroke: element.style.borderColor || '#000000',
+                                        strokeWidth: element.style.borderWidth || 1,
+                                        opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
+                                        selectable: !readOnly,
+                                        hasControls: !readOnly
+                                    });
 
-                                        // Сохраняем полные данные об элементе для доступа к keyframes
-                                        img.data = {
-                                            elementId: element.id,
-                                            element: element // Сохраняем полный элемент для доступа к keyframes
-                                        };
+                                    // Save element data
+                                    fabricObject.data = {
+                                        elementId: element.id,
+                                        element: element
+                                    };
 
-                                        // Применяем эффекты анимации на основе keyframes
-                                        applyAnimationEffects(img, element);
+                                    // Apply animation effects
+                                    applyAnimationEffects(fabricObject, element);
 
-                                        fabricCanvas.add(img);
-                                        console.log(`Added image element ${element.id} to canvas`);
-                                        resolve();
-                                    }, { crossOrigin: 'anonymous' });
-                                });
+                                    // Add to list of objects to add to canvas
+                                    objectsToAdd.push(fabricObject);
+                                    break;
 
-                                imageLoadPromises.push(promise);
-                                return; // Пропускаем остальное для изображений
+                                case 'circle':
+                                    console.log(`Creating circle element: id=${element.id}, pos=(${element.position.x},${element.position.y})`);
+                                    fabricObject = new fabric.Circle({
+                                        left: element.position.x,
+                                        top: element.position.y,
+                                        radius: Math.min(element.size.width, element.size.height) / 2,
+                                        fill: element.style.backgroundColor || '#cccccc',
+                                        stroke: element.style.borderColor || '#000000',
+                                        strokeWidth: element.style.borderWidth || 1,
+                                        opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
+                                        selectable: !readOnly,
+                                        hasControls: !readOnly
+                                    });
 
-                            default:
-                                console.error(`Unknown element type: "${element.type}" for element id=${element.id}`);
-                                if (element.type) {
-                                    console.warn(`Element type '${element.type}' not directly supported, checking original data`);
+                                    // Save element data
+                                    fabricObject.data = {
+                                        elementId: element.id,
+                                        element: element
+                                    };
 
-                                    // Don't create a default rectangle, just skip this element if type is unknown
+                                    // Apply animation effects
+                                    applyAnimationEffects(fabricObject, element);
+
+                                    // Add to list of objects to add to canvas
+                                    objectsToAdd.push(fabricObject);
+                                    break;
+
+                                case 'text':
+                                    console.log(`Creating text element: id=${element.id}, content=${element.content ? element.content.substring(0, 20) : 'empty'}`);
+                                    fabricObject = new fabric.Text(element.content || 'Text', {
+                                        left: element.position.x,
+                                        top: element.position.y,
+                                        fontSize: element.size.height,
+                                        fill: element.style.color || '#000000',
+                                        opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
+                                        selectable: !readOnly,
+                                        hasControls: !readOnly
+                                    });
+
+                                    // Save element data
+                                    fabricObject.data = {
+                                        elementId: element.id,
+                                        element: element
+                                    };
+
+                                    // Apply animation effects
+                                    applyAnimationEffects(fabricObject, element);
+
+                                    // Add to list of objects to add to canvas
+                                    objectsToAdd.push(fabricObject);
+                                    break;
+
+                                case 'image':
+                                    console.log(`Creating image element: id=${element.id}, content URL exists: ${Boolean(element.content)}`);
+                                    if (!element.content) {
+                                        console.warn(`Image element ${element.id} is missing content URL, skipping`);
+                                        return; // Skip this element
+                                    }
+
+                                    const promise = new Promise((resolve) => {
+                                        fabric.Image.fromURL(element.content, (img) => {
+                                            img.set({
+                                                left: element.position.x,
+                                                top: element.position.y,
+                                                opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
+                                                selectable: !readOnly,
+                                                hasControls: !readOnly
+                                            });
+                                            img.scaleToWidth(element.size.width);
+                                            img.scaleToHeight(element.size.height);
+
+                                            // Сохраняем полные данные об элементе для доступа к keyframes
+                                            img.data = {
+                                                elementId: element.id,
+                                                element: element // Сохраняем полный элемент для доступа к keyframes
+                                            };
+
+                                            // Применяем эффекты анимации на основе keyframes
+                                            applyAnimationEffects(img, element);
+
+                                            fabricCanvas.add(img);
+                                            console.log(`Added image element ${element.id} to canvas`);
+                                            resolve();
+                                        }, { crossOrigin: 'anonymous' });
+                                    });
+
+                                    imageLoadPromises.push(promise);
+                                    return; // Пропускаем остальное для изображений
+
+                                default:
+                                    console.error(`Unknown element type: "${element.type}" for element id=${element.id}`);
                                     return;
-                                } else {
-                                    console.error(`Element ${element.id} has no type defined, skipping`);
-                                    return;
-                                }
+                            }
                         }
-
-                        // Save element data and apply animations
-                        fabricObject.data = {
-                            elementId: element.id,
-                            element: element
-                        };
-
-                        // Apply animation effects
-                        applyAnimationEffects(fabricObject, element);
-
-                        // Add to canvas
-                        fabricCanvas.add(fabricObject);
-                        console.log(`Added ${element.type} element ${element.id} to canvas`);
                     }
+                });
+
+                // Remove objects that are no longer in the elements list
+                existingObjectsMap.forEach(obj => {
+                    console.log(`Removing object with ID ${obj.data.elementId} from canvas`);
+                    fabricCanvas.remove(obj);
+                });
+
+                // Add new objects to canvas
+                objectsToAdd.forEach(obj => {
+                    fabricCanvas.add(obj);
+                    console.log(`Added ${obj.type} element ${obj.data.elementId} to canvas`);
                 });
 
                 // Restore event handlers
@@ -853,6 +955,14 @@ const Canvas = ({
 
         const animateCanvas = () => {
             if (isPlaying) {
+                // Update all objects based on current time
+                const objects = fabricCanvas.getObjects();
+                objects.forEach(obj => {
+                    if (obj.data && obj.data.element) {
+                        applyAnimationEffects(obj, obj.data.element);
+                    }
+                });
+
                 fabricCanvas.renderAll();
                 animationFrame = requestAnimationFrame(animateCanvas);
             }
@@ -868,7 +978,7 @@ const Canvas = ({
                 cancelAnimationFrame(animationFrame);
             }
         };
-    }, [initialized, elements, currentTime, selectedElement, isPlaying, setupEventHandlers, applyAnimationEffects]);
+    }, [initialized, effectiveElements, currentTime, selectedElement, isPlaying, setupEventHandlers, applyAnimationEffects, readOnly]);
 
     // Переключение записи keyframe
     const toggleKeyframeRecording = useCallback(() => {

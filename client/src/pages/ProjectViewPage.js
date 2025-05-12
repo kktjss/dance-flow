@@ -13,6 +13,139 @@ import VideoViewer from '../components/VideoViewer';
 
 const API_URL = 'http://localhost:5000/api';
 
+// Функция для преобразования элементов в правильный формат
+const normalizeElements = (elements) => {
+    // Default element to return if no valid elements are found
+    const DEFAULT_ELEMENT = {
+        id: 'default-element',
+        type: 'rectangle',
+        position: { x: 100, y: 100 },
+        size: { width: 200, height: 100 },
+        style: {
+            opacity: 1,
+            backgroundColor: '#e0e0e0',
+            borderColor: '#cccccc',
+            borderWidth: 1,
+            zIndex: 0
+        },
+        content: '',
+        keyframes: []
+    };
+
+    if (!elements || !Array.isArray(elements)) {
+        console.warn('Elements is not an array or undefined:', elements);
+        // Return a default element to prevent "No valid elements" error
+        return [DEFAULT_ELEMENT];
+    }
+
+    console.log('Raw elements from server:', JSON.stringify(elements, null, 2));
+
+    // Если элементы приходят в виде строки JSON, попробуем распарсить
+    let parsedElements = elements;
+    if (elements.length === 1 && typeof elements[0] === 'string') {
+        try {
+            const parsed = JSON.parse(elements[0]);
+            if (Array.isArray(parsed)) {
+                parsedElements = parsed;
+                console.log('Successfully parsed elements from JSON string');
+            }
+        } catch (e) {
+            console.error('Failed to parse elements JSON string:', e);
+        }
+    }
+
+    // Создаем уникальные ID для элементов, если их нет
+    let idCounter = 1;
+
+    const normalized = parsedElements.map(el => {
+        // Если элемент вообще null или undefined, создаем базовый элемент
+        if (!el) {
+            const newId = `generated-${idCounter++}`;
+            console.log('Created new element with ID:', newId);
+            return {
+                id: newId,
+                type: 'rectangle',
+                position: { x: 100, y: 100 },
+                size: { width: 100, height: 100 },
+                style: { opacity: 1, backgroundColor: '#cccccc' },
+                content: '',
+                keyframes: []
+            };
+        }
+
+        // Проверяем наличие обязательных полей
+        let elementId = el.id;
+
+        // Если нет id, проверяем _id или генерируем новый
+        if (!elementId) {
+            if (el._id) {
+                elementId = el._id;
+                console.log('Used _id as id for element:', elementId);
+            } else {
+                elementId = `generated-${idCounter++}`;
+                console.log('Generated new id for element:', elementId);
+            }
+        }
+
+        // Определяем тип элемента
+        let elementType = el.type;
+        if (!elementType) {
+            if (el.originalType) {
+                elementType = el.originalType;
+                console.log('Used originalType as type for element:', elementType);
+            } else {
+                elementType = 'rectangle'; // Тип по умолчанию
+                console.log('Used default type for element:', elementId);
+            }
+        }
+
+        // Создаем базовый элемент с обязательными полями
+        const normalizedElement = {
+            id: elementId,
+            type: elementType,
+            position: el.position || { x: 100, y: 100 },
+            size: el.size || { width: 100, height: 100 },
+            style: el.style || { opacity: 1, backgroundColor: '#cccccc' },
+            content: el.content || '',
+            keyframes: el.keyframes || []
+        };
+
+        // Проверяем и исправляем позицию
+        if (!normalizedElement.position.x || isNaN(normalizedElement.position.x)) {
+            normalizedElement.position.x = 100;
+        }
+        if (!normalizedElement.position.y || isNaN(normalizedElement.position.y)) {
+            normalizedElement.position.y = 100;
+        }
+
+        // Проверяем и исправляем размер
+        if (!normalizedElement.size.width || isNaN(normalizedElement.size.width)) {
+            normalizedElement.size.width = 100;
+        }
+        if (!normalizedElement.size.height || isNaN(normalizedElement.size.height)) {
+            normalizedElement.size.height = 100;
+        }
+
+        return normalizedElement;
+    });
+
+    // If no valid elements were found, add a default one
+    if (normalized.length === 0) {
+        console.warn('No elements found after normalization, adding a default element');
+        normalized.push(DEFAULT_ELEMENT);
+    }
+
+    // Additional check to ensure all elements have the required fields
+    const validElements = normalized.filter(el => el && el.id && el.type && el.position);
+    if (validElements.length === 0) {
+        console.warn('No valid elements after normalization, using default element');
+        return [DEFAULT_ELEMENT];
+    }
+
+    console.log('Final normalized elements:', validElements);
+    return validElements;
+};
+
 const ProjectViewPage = () => {
     // State for project data
     const [project, setProject] = useState({
@@ -25,6 +158,7 @@ const ProjectViewPage = () => {
         loading: true
     });
 
+    const [normalizedElements, setNormalizedElements] = useState([]);
     const [currentTime, setCurrentTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [error, setError] = useState(null);
@@ -54,10 +188,10 @@ const ProjectViewPage = () => {
                 const elapsed = timestamp - lastTimeRef.current;
 
                 if (elapsed > 33) { // ~30fps
-                    const newTime = Math.min(currentTime + elapsed / 1000, project.duration);
+                    const newTime = Math.min(currentTime + elapsed / 1000, project.duration || 60);
                     setCurrentTime(newTime);
 
-                    if (newTime >= project.duration) {
+                    if (newTime >= (project.duration || 60)) {
                         setIsPlaying(false);
                         setCurrentTime(0);
                     }
@@ -104,17 +238,47 @@ const ProjectViewPage = () => {
                 throw new Error('No project data returned');
             }
 
-            // Ensure elements have keyframes
-            if (response.data.elements) {
-                response.data.elements.forEach(element => {
-                    if (!element.keyframes) {
-                        element.keyframes = [];
+            console.log('Project data received:', response.data);
+
+            // Process keyframesJson if available
+            let elementsToNormalize = response.data.elements || [];
+
+            if (response.data.keyframesJson) {
+                try {
+                    console.log('KeyframesJson found, parsing...');
+                    const keyframesData = JSON.parse(response.data.keyframesJson);
+
+                    // Add keyframes to corresponding elements
+                    if (keyframesData && typeof keyframesData === 'object') {
+                        elementsToNormalize = elementsToNormalize.map(element => {
+                            if (element.id && keyframesData[element.id]) {
+                                console.log(`Adding ${keyframesData[element.id].length} keyframes to element ${element.id}`);
+                                return {
+                                    ...element,
+                                    keyframes: keyframesData[element.id]
+                                };
+                            }
+                            return element;
+                        });
                     }
-                });
+                } catch (err) {
+                    console.error('Error parsing keyframesJson:', err);
+                }
             }
 
+            // Normalize elements
+            if (elementsToNormalize.length > 0) {
+                const normalized = normalizeElements(elementsToNormalize);
+                console.log('Normalized elements:', normalized);
+                setNormalizedElements(normalized);
+            } else {
+                setNormalizedElements([]);
+            }
+
+            // Set project data with a default duration if none is provided
             setProject({
                 ...response.data,
+                duration: response.data.duration || 60,
                 loading: false
             });
         } catch (err) {
@@ -126,11 +290,13 @@ const ProjectViewPage = () => {
 
     // Handle time update from player
     const handleTimeUpdate = (time) => {
+        console.log('Time updated to:', time);
         setCurrentTime(time);
     };
 
     // Handle play/pause
     const handlePlayPause = (playing) => {
+        console.log('Play state changed to:', playing);
         setIsPlaying(playing);
     };
 
@@ -291,7 +457,7 @@ const ProjectViewPage = () => {
                                     {/* Canvas View - only render when it's the active view */}
                                     {viewerMode === 'canvas' && (
                                         <Canvas
-                                            elements={project.elements}
+                                            elements={normalizedElements}
                                             currentTime={currentTime}
                                             isPlaying={isPlaying}
                                             readOnly={true}
