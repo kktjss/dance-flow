@@ -3,8 +3,10 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +22,78 @@ func RegisterTestRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	testGroup.Use(middleware.AuthMiddleware(cfg))
 
 	testGroup.POST("/test-save-keyframes", testSaveKeyframes)
+	
+	// Add proxy route for process-frame
+	router.POST("/process-frame", proxyProcessFrame)
+}
+
+// proxyProcessFrame forwards requests to the Python server
+func proxyProcessFrame(c *gin.Context) {
+	log.Println("[PROXY] Forwarding /api/process-frame request to Python server")
+	
+	// Create target URL
+	target, err := url.Parse("http://127.0.0.1:8000/process-frame")
+	if err != nil {
+		log.Printf("[PROXY] Error parsing target URL: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Proxy error"})
+		return
+	}
+	
+	// Copy query parameters
+	query := target.Query()
+	for k, v := range c.Request.URL.Query() {
+		for _, vv := range v {
+			query.Add(k, vv)
+		}
+	}
+	target.RawQuery = query.Encode()
+	
+	// Create HTTP client
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+	
+	// Create new request
+	req, err := http.NewRequest(c.Request.Method, target.String(), c.Request.Body)
+	if err != nil {
+		log.Printf("[PROXY] Error creating request: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Proxy error"})
+		return
+	}
+	
+	// Copy headers
+	for k, v := range c.Request.Header {
+		if k != "Content-Length" { // Skip content length as it will be set automatically
+			for _, vv := range v {
+				req.Header.Add(k, vv)
+			}
+		}
+	}
+	
+	// Send request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("[PROXY] Error forwarding request: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Proxy error", "error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+	
+	// Copy response headers
+	for k, v := range resp.Header {
+		for _, vv := range v {
+			c.Header(k, vv)
+		}
+	}
+	
+	// Set status code
+	c.Status(resp.StatusCode)
+	
+	// Copy response body
+	_, err = io.Copy(c.Writer, resp.Body)
+	if err != nil {
+		log.Printf("[PROXY] Error copying response: %v", err)
+	}
 }
 
 // testSaveKeyframes handles direct test operations for saving keyframes

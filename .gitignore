@@ -29,6 +29,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 /server/go/logs
+*.log
+/server/python/backend.log
 
 # IDE
 .idea/
@@ -37,4 +39,14 @@ yarn-error.log*
 *.swo
 
 # Cache
-.cache/ 
+.cache/
+
+# Python
+/server/python/venv/
+/server/python/__pycache__/
+/server/python/.models/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/ 

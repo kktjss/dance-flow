@@ -36,9 +36,16 @@ function Login() {
         setLoading(true);
 
         try {
+            console.log('Attempting login for:', formData.username);
+
             const response = await axios.post('http://localhost:5000/api/auth/login', {
                 username: formData.username,
                 password: formData.password,
+            });
+
+            console.log('Login successful, received data:', {
+                hasToken: !!response.data.token,
+                hasUser: !!response.data.user
             });
 
             // Сохраняем токен и данные пользователя
@@ -48,7 +55,30 @@ function Login() {
             // Перенаправляем на дашборд
             navigate('/dashboard');
         } catch (error) {
-            setError(error.response?.data?.message || 'Ошибка при входе');
+            console.error('Login error:', error);
+
+            if (error.response) {
+                console.log('Error response:', error.response.status, error.response.data);
+
+                // Обработка конкретных ошибок
+                if (error.response.status === 401) {
+                    setError('Неверное имя пользователя или пароль');
+                } else if (error.response.status === 500) {
+                    setError('Ошибка сервера. Пожалуйста, попробуйте позже.');
+                } else {
+                    setError(
+                        error.response.data.error ||
+                        error.response.data.message ||
+                        `Ошибка сервера: ${error.response.status}`
+                    );
+                }
+            } else if (error.request) {
+                // Запрос был отправлен, но ответ не получен
+                setError('Не удалось соединиться с сервером. Проверьте подключение к интернету.');
+            } else {
+                // Ошибка при настройке запроса
+                setError('Ошибка при входе: ' + error.message);
+            }
         } finally {
             setLoading(false);
         }

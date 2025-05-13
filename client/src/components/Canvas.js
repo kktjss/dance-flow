@@ -10,22 +10,6 @@ import VideoViewer from './VideoViewer';
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
 
-// Default element to use when none are provided
-const DEFAULT_ELEMENT = {
-    id: 'default-element',
-    type: 'rectangle',
-    position: { x: 100, y: 100 },
-    size: { width: 200, height: 100 },
-    style: {
-        backgroundColor: '#e0e0e0',
-        borderColor: '#cccccc',
-        borderWidth: 1,
-        opacity: 1,
-        zIndex: 0
-    },
-    keyframes: []
-};
-
 const Canvas = ({
     elements = [],
     currentTime,
@@ -35,8 +19,8 @@ const Canvas = ({
     onElementSelect,
     readOnly = false
 }) => {
-    // Use default element if elements array is empty
-    const effectiveElements = elements.length > 0 ? elements : [DEFAULT_ELEMENT];
+    // Use elements as provided without a default element
+    const effectiveElements = elements;
 
     const containerRef = useRef(null);
     const canvasContainerRef = useRef(null);
@@ -85,12 +69,26 @@ const Canvas = ({
 
             fabricInstances.set(canvasId.current, fabricCanvas);
 
+            console.log('Canvas initialized with settings:', {
+                readOnly,
+                selection: !readOnly,
+                interactive: !readOnly,
+                width: canvasContainer.clientWidth,
+                height: canvasContainer.clientHeight
+            });
+
             // Set selection properties based on readOnly mode
             if (readOnly) {
                 fabricCanvas.selection = false;
                 fabricCanvas.skipTargetFind = true;
                 fabricCanvas.selectable = false;
                 fabricCanvas.hoverCursor = 'default';
+            } else {
+                // Ensure selection is enabled for editable mode
+                fabricCanvas.selection = true;
+                fabricCanvas.skipTargetFind = false;
+                fabricCanvas.selectable = true;
+                fabricCanvas.hoverCursor = 'move';
             }
 
             // Устанавливаем обработчики событий
@@ -205,6 +203,12 @@ const Canvas = ({
             const elementId = modifiedObject.data.elementId;
             console.log('Modified element ID:', elementId);
 
+            // Check if effectiveElements exists and has items
+            if (!effectiveElements || effectiveElements.length === 0) {
+                console.warn('No elements available in the elements array');
+                return;
+            }
+
             const element = effectiveElements.find(el => el.id === elementId);
 
             if (!element) {
@@ -285,25 +289,36 @@ const Canvas = ({
 
         // Обработчик выбора элемента
         fabricCanvas.on('selection:created', (e) => {
+            console.log('Selection created event fired', e);
             if (e.selected && e.selected.length > 0) {
                 const selectedObject = e.selected[0];
+                console.log('Selected object:', selectedObject);
                 if (selectedObject.data && selectedObject.data.elementId) {
                     const element = effectiveElements.find(el => el.id === selectedObject.data.elementId);
                     if (element) {
+                        console.log('Found matching element in data:', element.id);
                         setTimeout(() => {
                             onElementSelect(element);
                         }, 0);
+                    } else {
+                        console.warn('No matching element found for selected object:', selectedObject.data.elementId);
                     }
+                } else {
+                    console.warn('Selected object has no data or elementId');
                 }
+            } else {
+                console.warn('Selection event has no selected objects');
             }
         });
 
         fabricCanvas.on('selection:updated', (e) => {
+            console.log('Selection updated event fired', e);
             if (e.selected && e.selected.length > 0) {
                 const selectedObject = e.selected[0];
                 if (selectedObject.data && selectedObject.data.elementId) {
                     const element = effectiveElements.find(el => el.id === selectedObject.data.elementId);
                     if (element) {
+                        console.log('Selection updated to element:', element.id);
                         setTimeout(() => {
                             onElementSelect(element);
                         }, 0);
@@ -313,9 +328,20 @@ const Canvas = ({
         });
 
         fabricCanvas.on('selection:cleared', () => {
+            console.log('Selection cleared event fired');
             setTimeout(() => {
                 onElementSelect(null);
             }, 0);
+        });
+
+        // Add mouse:down event to debug selection issues
+        fabricCanvas.on('mouse:down', (e) => {
+            console.log('Mouse down event:', e);
+            if (e.target) {
+                console.log('Clicked on object:', e.target);
+            } else {
+                console.log('Clicked on canvas background');
+            }
         });
     }, [effectiveElements, currentTime, isRecordingKeyframe, onElementsChange, onElementSelect, readOnly]);
 
@@ -620,6 +646,9 @@ const Canvas = ({
 
         const fabricCanvas = fabricInstances.get(canvasId.current);
 
+        // Ensure event handlers are properly set up
+        setupEventHandlers(fabricCanvas);
+
         // Используем requestAnimationFrame для обеспечения синхронизации с рендерингом браузера
         const updateCanvas = () => {
             try {
@@ -658,34 +687,7 @@ const Canvas = ({
                     // Clear the canvas
                     fabricCanvas.clear();
                     fabricCanvas.backgroundColor = '#ffffff';
-
-                    // Use the DEFAULT_ELEMENT constant
-                    const defaultElement = DEFAULT_ELEMENT;
-
-                    // Create a rectangle for the default element
-                    const fabricObject = new fabric.Rect({
-                        left: defaultElement.position.x,
-                        top: defaultElement.position.y,
-                        width: defaultElement.size.width,
-                        height: defaultElement.size.height,
-                        fill: defaultElement.style.backgroundColor,
-                        stroke: defaultElement.style.borderColor,
-                        strokeWidth: defaultElement.style.borderWidth,
-                        opacity: defaultElement.style.opacity,
-                        selectable: true,
-                        hasControls: true
-                    });
-
-                    // Add data to the object
-                    fabricObject.data = {
-                        elementId: defaultElement.id,
-                        element: defaultElement
-                    };
-
-                    // Add the default element to the canvas
-                    fabricCanvas.add(fabricObject);
                     fabricCanvas.renderAll();
-                    console.log('Added default element to canvas');
                     return;
                 }
 
@@ -780,7 +782,8 @@ const Canvas = ({
                                         strokeWidth: element.style.borderWidth || 1,
                                         opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
                                         selectable: !readOnly,
-                                        hasControls: !readOnly
+                                        hasControls: !readOnly,
+                                        hasBorders: !readOnly
                                     });
 
                                     // Save element data
@@ -807,7 +810,8 @@ const Canvas = ({
                                         strokeWidth: element.style.borderWidth || 1,
                                         opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
                                         selectable: !readOnly,
-                                        hasControls: !readOnly
+                                        hasControls: !readOnly,
+                                        hasBorders: !readOnly
                                     });
 
                                     // Save element data
@@ -832,7 +836,8 @@ const Canvas = ({
                                         fill: element.style.color || '#000000',
                                         opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
                                         selectable: !readOnly,
-                                        hasControls: !readOnly
+                                        hasControls: !readOnly,
+                                        hasBorders: !readOnly
                                     });
 
                                     // Save element data
@@ -862,7 +867,8 @@ const Canvas = ({
                                                 top: element.position.y,
                                                 opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
                                                 selectable: !readOnly,
-                                                hasControls: !readOnly
+                                                hasControls: !readOnly,
+                                                hasBorders: !readOnly
                                             });
                                             img.scaleToWidth(element.size.width);
                                             img.scaleToHeight(element.size.height);
@@ -901,8 +907,13 @@ const Canvas = ({
 
                 // Add new objects to canvas
                 objectsToAdd.forEach(obj => {
+                    // Ensure object is selectable
+                    obj.selectable = !readOnly;
+                    obj.hasControls = !readOnly;
+                    obj.hasBorders = !readOnly;
+
                     fabricCanvas.add(obj);
-                    console.log(`Added ${obj.type} element ${obj.data.elementId} to canvas`);
+                    console.log(`Added ${obj.type} element ${obj.data.elementId} to canvas with selectable=${obj.selectable}`);
                 });
 
                 // Restore event handlers

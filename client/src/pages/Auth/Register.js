@@ -57,20 +57,45 @@ function Register() {
             });
 
             console.log('Registration response:', response.data);
+            console.log('Response contains token:', !!response.data.token);
+            console.log('Response contains user:', !!response.data.user);
+
+            // Проверяем, что получили токен и данные пользователя
+            if (!response.data.token || !response.data.user) {
+                throw new Error('Сервер не вернул необходимые данные для авторизации');
+            }
 
             // Сохраняем токен в localStorage
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
 
+            console.log('Saved to localStorage:', {
+                token: !!response.data.token,
+                user: JSON.stringify(response.data.user).substring(0, 50) + '...'
+            });
+
             // Перенаправляем на главную страницу
             navigate('/');
         } catch (error) {
             console.error('Registration error:', error);
-            setError(
-                error.response?.data?.details ||
-                error.response?.data?.message ||
-                'Ошибка при регистрации. Проверьте подключение к серверу.'
-            );
+            // Улучшаем обработку ошибок
+            if (error.response) {
+                console.log('Error response data:', error.response.data);
+                if (error.response.status === 409) {
+                    setError('Пользователь с таким email или именем уже существует');
+                } else {
+                    setError(
+                        error.response.data.error ||
+                        error.response.data.details ||
+                        error.response.data.message ||
+                        `Ошибка сервера: ${error.response.status}`
+                    );
+                }
+            } else if (error.request) {
+                setError('Не удалось соединиться с сервером. Проверьте подключение к интернету.');
+            } else {
+                setError('Ошибка при регистрации: ' + error.message);
+            }
         } finally {
             setLoading(false);
         }

@@ -10,17 +10,14 @@ python-multipart==0.0.6
 
 # Image processing and AI
 opencv-python==4.8.0.76
-numpy==1.24.3
+numpy>=1.26.0
 
 # MediaPipe - use prebuilt wheel if possible
 --extra-index-url https://google-coral.github.io/py-repo/
-mediapipe==0.10.5
+mediapipe>=0.10.13
 
 # System monitoring
 psutil==5.9.5
-
-# Optional optimizations
-python-turbojpeg==0.6.0  # Optional: faster JPEG encoding, can be omitted if installation issues occur
 
 # Authentication - only needed for user auth features
 python-jose==3.3.0

@@ -33,7 +33,7 @@ echo "Go API сервер запущен на порту 5000"
 # Запускаем Python сервер в фоновом режиме
 echo "Запускаем Python сервер анализа видео..."
 cd python
-python run_server.py &
+python3.12 -m uvicorn video_analyzer.detector:app --host 0.0.0.0 --port 8000 &
 PYTHON_PID=$!
 cd ..
 

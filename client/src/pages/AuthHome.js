@@ -28,10 +28,19 @@ function AuthHome() {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-            setUser(JSON.parse(userData));
-        } else {
+        try {
+            const userData = localStorage.getItem('user');
+            if (userData && userData !== 'undefined' && userData !== 'null') {
+                setUser(JSON.parse(userData));
+            } else {
+                console.log('No valid user data found in localStorage, redirecting to login');
+                navigate('/login');
+            }
+        } catch (error) {
+            console.error('Error parsing user data from localStorage:', error);
+            // Очищаем поврежденные данные
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
             navigate('/login');
         }
     }, [navigate]);
