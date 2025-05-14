@@ -1030,61 +1030,18 @@ const Canvas = ({
 
     // ВРЕМЕННО: Функция для получения URL видео из элементов - будет удалена позже
     const getVideoUrl = useCallback(() => {
-        console.log('Canvas: Checking for video URL in elements', elements);
+        console.log('Canvas: Checking for video URL in project');
 
-        // Проверяем, есть ли у выбранного элемента видео
-        if (selectedElement) {
-            console.log('Canvas: Checking selected element for video', selectedElement);
-
-            if (selectedElement.videoUrl) {
-                console.log('Canvas: Found videoUrl in selected element:', selectedElement.videoUrl);
-                return selectedElement.videoUrl;
-            }
-
-            if (selectedElement.properties && selectedElement.properties.videoUrl) {
-                console.log('Canvas: Found videoUrl in selected element properties:', selectedElement.properties.videoUrl);
-                return selectedElement.properties.videoUrl;
-            }
-        }
-
-        // Если у выбранного элемента нет видео, ищем в других элементах
-        const videoElement = elements.find(el => {
-            if (!el) return false;
-
-            if (el.type === 'video' || el.type === 'videoChoreography') {
-                console.log('Canvas: Found video element by type:', el);
-                return true;
-            }
-
-            if (el.videoUrl) {
-                console.log('Canvas: Found element with videoUrl:', el);
-                return true;
-            }
-
-            if (el.properties && el.properties.videoUrl) {
-                console.log('Canvas: Found element with videoUrl in properties:', el);
-                return true;
-            }
-
-            return false;
-        });
-
-        if (videoElement) {
-            if (videoElement.videoUrl) {
-                console.log('Canvas: Using videoUrl from found element:', videoElement.videoUrl);
-                return videoElement.videoUrl;
-            }
-
-            if (videoElement.properties && videoElement.properties.videoUrl) {
-                console.log('Canvas: Using videoUrl from found element properties:', videoElement.properties.videoUrl);
-                return videoElement.properties.videoUrl;
-            }
+        // Проверяем наличие видео в проекте
+        if (project && project.videoUrl) {
+            console.log('Canvas: Found videoUrl in project:', project.videoUrl);
+            return project.videoUrl;
         }
 
         // Проверяем наличие тестового видео для отладки
-        console.log('Canvas: No video found in elements');
+        console.log('Canvas: No video found in project');
         return null;
-    }, [elements, selectedElement]);
+    }, [project]);
 
     // ВРЕМЕННО: Функция для показа комбинированного просмотрщика - будет удалена позже
     const handleShowCombinedViewer = useCallback(() => {
@@ -1162,34 +1119,6 @@ const Canvas = ({
                             >
                                 <Delete fontSize="small" />
                             </IconButton>
-
-                            <IconButton
-                                onClick={() => handleViewModeChange('3d')}
-                                sx={{
-                                    backgroundColor: 'rgba(52, 152, 219, 0.7)',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(52, 152, 219, 0.9)',
-                                    },
-                                    pointerEvents: 'auto'
-                                }}
-                                title="Просмотр 3D модели"
-                            >
-                                <ThreeDRotation fontSize="small" />
-                            </IconButton>
-
-                            <IconButton
-                                onClick={() => handleViewModeChange('video')}
-                                sx={{
-                                    backgroundColor: 'rgba(76, 175, 80, 0.7)',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(76, 175, 80, 0.9)',
-                                    },
-                                    pointerEvents: 'auto'
-                                }}
-                                title="Просмотр видео"
-                            >
-                                <Videocam fontSize="small" />
-                            </IconButton>
                         </div>
                     )}
                 </>,
@@ -1259,6 +1188,8 @@ const Canvas = ({
 
     // ВРЕМЕННО: Рендер модального окна хореографии - будет удалено позже
     const renderChoreoModal = () => {
+        const videoSource = getVideoUrl();
+
         return (
             <Modal
                 open={showChoreoModal}
@@ -1296,7 +1227,7 @@ const Canvas = ({
                         ) : (
                             <VideoViewer
                                 isVisible={true}
-                                videoUrl={selectedElement?.videoUrl}
+                                videoUrl={videoSource}
                                 onClose={() => setShowChoreoModal(false)}
                             />
                         )}

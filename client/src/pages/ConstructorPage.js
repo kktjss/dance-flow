@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment, Menu, MenuItem, Snackbar, Alert, List, ListItem, ListItemIcon, ListItemText, ButtonGroup } from '@mui/material';
-import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy, VideoLibrary, Delete as DeleteIcon, MusicNote as MusicNoteIcon } from '@mui/icons-material';
+import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy, VideoLibrary, Delete as DeleteIcon, MusicNote as MusicNoteIcon, CloudUpload } from '@mui/icons-material';
 import ThreeDRotation from '@mui/icons-material/ThreeDRotation';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
@@ -52,7 +52,7 @@ const ConstructorPage = () => {
 
     // Автоматическое переключение на режим видео при загрузке видео
     useEffect(() => {
-        if (project.videoUrl) {
+        if (project.videoUrl && viewMode !== 'video' && viewMode !== '2d') {
             setViewMode('video');
         } else if (viewMode === '3d') {
             // Если режим был установлен в '3d', переключаем на '2d'
@@ -970,9 +970,6 @@ See console for complete details.`);
                     return updated;
                 });
 
-                // Switch to video view mode
-                setViewMode('video');
-
                 showNotification('Видео успешно загружено', 'success');
             })
             .catch(error => {
@@ -1725,7 +1722,7 @@ See console for complete details.`);
                                     <Button
                                         variant="outlined"
                                         component="label"
-                                        startIcon={<VideoLibrary />}
+                                        startIcon={<CloudUpload />}
                                         size="small"
                                         sx={{ ml: 1 }}
                                     >
@@ -1735,22 +1732,6 @@ See console for complete details.`);
                                             accept="video/*"
                                             hidden
                                             onChange={handleVideoUpload}
-                                        />
-                                    </Button>
-
-                                    <Button
-                                        variant="outlined"
-                                        component="label"
-                                        startIcon={<ThreeDRotation />}
-                                        size="small"
-                                        sx={{ ml: 1 }}
-                                    >
-                                        Загрузить GLB
-                                        <input
-                                            type="file"
-                                            accept=".glb"
-                                            hidden
-                                            onChange={handleGlbUpload}
                                         />
                                     </Button>
                                 </Box>

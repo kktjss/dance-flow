@@ -11,16 +11,27 @@ import (
 	"github.com/google/uuid"
 	"github.com/kktjss/dance-flow/config"
 	"github.com/kktjss/dance-flow/middleware"
-	"github.com/kktjss/dance-flow/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// Model представляет 3D модель в системе
+type Model struct {
+	ID           primitive.ObjectID `json:"id" bson:"_id"`
+	Name         string             `json:"name" bson:"name"`
+	Filename     string             `json:"filename" bson:"filename"`
+	OriginalName string             `json:"originalName" bson:"originalName"`
+	Size         int64              `json:"size" bson:"size"`
+	UserID       primitive.ObjectID `json:"userId" bson:"userId"`
+	CreatedAt    time.Time          `json:"createdAt" bson:"createdAt"`
+	URL          string             `json:"url" bson:"-"` // URL не хранится в базе данных
+}
+
 // RegisterModelRoutes registers the routes for 3D models
 func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 	models := api.Group("/models")
-	models.Use(middleware.Auth())
+	models.Use(middleware.JWTMiddleware(cfg))
 
 	// Create models directory if it doesn't exist
 	modelsDir := "./uploads/models"
@@ -54,7 +65,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 		defer cursor.Close(c)
 
 		// Decode models
-		var modelsList []models.Model
+		var modelsList []Model
 		if err := cursor.All(c, &modelsList); err != nil {
 			config.LogError("MODELS", fmt.Errorf("error decoding models: %w", err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode models"})
@@ -119,7 +130,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 		}
 
 		// Create model record
-		model := models.Model{
+		model := Model{
 			ID:           primitive.NewObjectID(),
 			Name:         modelName,
 			Filename:     filename,
@@ -167,7 +178,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 
 		// Get model from database
 		collection := config.GetCollection("models")
-		var model models.Model
+		var model Model
 		err = collection.FindOne(c, bson.M{"_id": modelObjectID}).Decode(&model)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
@@ -216,7 +227,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 
 		// Get model from database
 		collection := config.GetCollection("models")
-		var model models.Model
+		var model Model
 		err = collection.FindOne(c, bson.M{"_id": modelObjectID}).Decode(&model)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {

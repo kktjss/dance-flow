@@ -574,78 +574,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                 </AccordionDetails>
             </Accordion>
 
-            {/* Блок для загрузки видео с хореографией */}
-            <Accordion
-                sx={{ mt: 2 }}
-                defaultExpanded={false}
-            >
-                <AccordionSummary
-                    expandIcon={<ExpandMore />}
-                >
-                    <Typography variant="subtitle1">Видео хореографии</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            {properties.videoUrl ? (
-                                <>
-                                    <Typography variant="body2" gutterBottom>
-                                        Загружено видео
-                                    </Typography>
-                                    <Box sx={{ mb: 2, width: '100%', height: '120px', display: 'flex', justifyContent: 'center', alignItems: 'center', bgcolor: '#f0f0f0', borderRadius: 1 }}>
-                                        <video
-                                            src={properties.videoUrl}
-                                            controls
-                                            style={{ maxWidth: '100%', maxHeight: '100%' }}
-                                        />
-                                    </Box>
-                                    <Button
-                                        variant="outlined"
-                                        color="error"
-                                        fullWidth
-                                        onClick={() => handlePropertyChange('videoUrl', null)}
-                                    >
-                                        Удалить видео
-                                    </Button>
-                                </>
-                            ) : (
-                                <>
-                                    <Typography variant="body2" gutterBottom>
-                                        Загрузите видео с хореографией:
-                                    </Typography>
-                                    <input
-                                        type="file"
-                                        accept="video/*"
-                                        style={{ display: 'none' }}
-                                        id="video-upload"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
-                                            if (file) {
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    handlePropertyChange('videoUrl', reader.result);
-                                                };
-                                                reader.readAsDataURL(file);
-                                            }
-                                        }}
-                                    />
-                                    <label htmlFor="video-upload">
-                                        <Button
-                                            variant="contained"
-                                            component="span"
-                                            fullWidth
-                                        >
-                                            Выбрать файл
-                                        </Button>
-                                    </label>
-                                </>
-                            )}
-                        </Grid>
-                    </Grid>
-                </AccordionDetails>
-            </Accordion>
-
-            {/* After Video Choreography accordion */}
+            {/* 3D Model accordion */}
             <Accordion
                 sx={{ mt: 2 }}
                 defaultExpanded={false}

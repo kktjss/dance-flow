@@ -146,10 +146,10 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false }) => {
                                     maxWidth: 500
                                 }}
                             >
-                                Видео не загружено для этого элемента
+                                Видео не загружено
                             </Alert>
                             <Typography variant="body1" sx={{ color: 'white', mb: 2, textAlign: 'center' }}>
-                                Чтобы добавить видео, загрузите его в свойствах элемента в разделе "Видео хореографии"
+                                Чтобы добавить видео, загрузите его через кнопку "Загрузить видео" в верхней панели проекта
                             </Typography>
                         </MuiBox>
                     )}
