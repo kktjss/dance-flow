@@ -13,6 +13,8 @@ import ProjectViewPage from './pages/ProjectViewPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectViewer from './pages/ProjectViewer';
 import ProjectConstructor from './pages/ProjectConstructor';
+import DebugPage from './pages/DebugPage';
+import ModelDebugPage from './pages/ModelDebugPage';
 
 const theme = createTheme({
     palette: {
@@ -146,6 +148,18 @@ function App() {
                         element={<ConstructorPage />}
                     />
 
+                    {/* Для отладки 3D модели */}
+                    <Route
+                        path="/debug-model"
+                        element={<DebugPage />}
+                    />
+
+                    {/* Для управления 3D моделями */}
+                    <Route
+                        path="/models"
+                        element={<ModelDebugPage />}
+                    />
+
                     <Route
                         path="/teams/:teamId/projects/:projectId/viewer"
                         element={
@@ -159,6 +173,15 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <ProjectConstructor />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/debug"
+                        element={
+                            <ProtectedRoute>
+                                <DebugPage />
                             </ProtectedRoute>
                         }
                     />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Paper, CircularProgress, Alert, Button } from '@mui/material';
+import { Box, Container, Typography, Paper, CircularProgress, Alert, Button, TextField, IconButton, Snackbar } from '@mui/material';
+import { Edit, Save, Cancel } from '@mui/icons-material';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import { API_BASE_URL } from '../constants';
@@ -11,6 +12,9 @@ const ProjectConstructor = () => {
     const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState({ name: '', description: '' });
+    const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
     useEffect(() => {
         const fetchProject = async () => {
@@ -51,6 +55,10 @@ const ProjectConstructor = () => {
 
                     console.log('Processed project data:', projectData);
                     setProject(projectData);
+                    setEditData({
+                        name: projectData.name || '',
+                        description: projectData.description || ''
+                    });
                     setError(null);
                 } catch (projectError) {
                     console.error('Error fetching project data:', projectError);
@@ -97,6 +105,73 @@ const ProjectConstructor = () => {
         fetchProject();
     }, [teamId, projectId]);
 
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditData({
+            ...editData,
+            [name]: value
+        });
+    };
+
+    const startEditing = () => {
+        setEditData({
+            name: project.name || '',
+            description: project.description || ''
+        });
+        setIsEditing(true);
+    };
+
+    const cancelEditing = () => {
+        setIsEditing(false);
+    };
+
+    const saveProjectDetails = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('Требуется авторизация');
+                return;
+            }
+
+            const projectID = project._id || project.id;
+            const response = await axios.put(
+                `${API_BASE_URL}/api/projects/${projectID}`,
+                {
+                    name: editData.name,
+                    description: editData.description
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            // Update local project data
+            setProject({
+                ...project,
+                name: editData.name,
+                description: editData.description
+            });
+
+            setIsEditing(false);
+            setNotification({
+                open: true,
+                message: 'Данные проекта успешно обновлены',
+                severity: 'success'
+            });
+        } catch (err) {
+            console.error('Error updating project:', err);
+            setNotification({
+                open: true,
+                message: `Ошибка при обновлении проекта: ${err.response?.data?.error || err.message}`,
+                severity: 'error'
+            });
+        }
+    };
+
+    const handleCloseNotification = () => {
+        setNotification({ ...notification, open: false });
+    };
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Navbar />
@@ -116,38 +191,81 @@ const ProjectConstructor = () => {
                         ) : project ? (
                             <Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                                    <Typography variant="h4" component="h1">
-                                        {project.name}
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', gap: 2 }}>
-                                        <Button
+                                    {isEditing ? (
+                                        <TextField
+                                            name="name"
+                                            label="Название проекта"
+                                            value={editData.name}
+                                            onChange={handleEditChange}
+                                            fullWidth
                                             variant="outlined"
-                                            color="primary"
-                                            onClick={() => {
-                                                const projectID = project._id || project.id;
-                                                console.log(`Navigating to view project: ${projectID}`);
-                                                navigate(`/teams/${teamId}/projects/${projectID}/viewer`);
-                                            }}
-                                        >
-                                            Посмотреть
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            color="primary"
-                                            onClick={() => {
-                                                const projectID = project._id || project.id;
-                                                console.log(`Navigating to edit project: ${projectID}`);
-                                                navigate(`/teams/${teamId}/projects/${projectID}/constructor`);
-                                            }}
-                                        >
-                                            Редактировать
-                                        </Button>
+                                            sx={{ mr: 2 }}
+                                        />
+                                    ) : (
+                                        <Typography variant="h4" component="h1">
+                                            {project.name}
+                                        </Typography>
+                                    )}
+
+                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                        {isEditing ? (
+                                            <>
+                                                <IconButton color="primary" onClick={saveProjectDetails}>
+                                                    <Save />
+                                                </IconButton>
+                                                <IconButton color="default" onClick={cancelEditing}>
+                                                    <Cancel />
+                                                </IconButton>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <IconButton color="primary" onClick={startEditing}>
+                                                    <Edit />
+                                                </IconButton>
+                                                <Button
+                                                    variant="outlined"
+                                                    color="primary"
+                                                    onClick={() => {
+                                                        const projectID = project._id || project.id;
+                                                        console.log(`Navigating to view project: ${projectID}`);
+                                                        navigate(`/teams/${teamId}/projects/${projectID}/viewer`);
+                                                    }}
+                                                >
+                                                    Посмотреть
+                                                </Button>
+                                                <Button
+                                                    variant="contained"
+                                                    color="primary"
+                                                    onClick={() => {
+                                                        const projectID = project._id || project.id;
+                                                        console.log(`Navigating to edit project: ${projectID}`);
+                                                        navigate(`/teams/${teamId}/projects/${projectID}/constructor`);
+                                                    }}
+                                                >
+                                                    Редактировать
+                                                </Button>
+                                            </>
+                                        )}
                                     </Box>
                                 </Box>
 
-                                <Typography variant="body1" color="text.secondary" paragraph>
-                                    {project.description || 'Нет описания'}
-                                </Typography>
+                                {isEditing ? (
+                                    <TextField
+                                        name="description"
+                                        label="Описание проекта"
+                                        value={editData.description}
+                                        onChange={handleEditChange}
+                                        fullWidth
+                                        multiline
+                                        rows={4}
+                                        variant="outlined"
+                                        sx={{ mb: 3 }}
+                                    />
+                                ) : (
+                                    <Typography variant="body1" color="text.secondary" paragraph>
+                                        {project.description || 'Нет описания'}
+                                    </Typography>
+                                )}
 
                                 <Box sx={{ mt: 4 }}>
                                     <Typography variant="h6" gutterBottom>
@@ -169,6 +287,21 @@ const ProjectConstructor = () => {
                     </Paper>
                 </Container>
             </Box>
+
+            <Snackbar
+                open={notification.open}
+                autoHideDuration={6000}
+                onClose={handleCloseNotification}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseNotification}
+                    severity={notification.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {notification.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

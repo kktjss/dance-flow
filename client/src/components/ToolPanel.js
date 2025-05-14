@@ -19,11 +19,13 @@ import {
     ViewInAr
 } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
+// ВРЕМЕННО: Импорт ModelViewer - будет удален позже
 import ModelViewer from './ModelViewer';
 
 const ToolPanel = ({ onAddElement }) => {
-    const dragImageRef = useRef(null);
+    // ВРЕМЕННО: Состояние для показа 3D модели - будет удалено позже
     const [showModelViewer, setShowModelViewer] = useState(false);
+    const dragImageRef = useRef(null);
 
     // Create a container for drag images
     useEffect(() => {
@@ -228,6 +230,7 @@ const ToolPanel = ({ onAddElement }) => {
 
             <Divider sx={{ my: 2 }} />
 
+            {/* ВРЕМЕННО: Кнопка для показа 3D модели - будет удалена позже */}
             <Button
                 variant="outlined"
                 startIcon={<ViewInAr />}
@@ -243,9 +246,11 @@ const ToolPanel = ({ onAddElement }) => {
                 </Typography>
             </Box>
 
+            {/* ВРЕМЕННО: Компонент ModelViewer - будет удален позже */}
             <ModelViewer
                 isVisible={showModelViewer}
                 onClose={() => setShowModelViewer(false)}
+                playerDuration={60}
             />
         </Paper>
     );

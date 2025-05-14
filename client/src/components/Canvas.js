@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState, useCallback, createRef } from 'react';
 import { fabric } from 'fabric';
-import { Box, IconButton, Modal, Typography, Grid, Button } from '@mui/material';
-import { ContentCopy, Delete, Visibility, ThreeDRotation, Videocam } from '@mui/icons-material';
+import { Box, IconButton, Modal, Typography, Grid, Button, Tooltip, Paper } from '@mui/material';
+import { ContentCopy, Delete, Visibility, ThreeDRotation, Videocam, PlayArrow } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import ReactDOM from 'react-dom';
+// ВРЕМЕННО: Импорты для 3D и видео просмотрщиков - будут удалены позже
 import ModelViewer from './ModelViewer';
 import VideoViewer from './VideoViewer';
+import CombinedViewer from './CombinedViewer';
 
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
@@ -17,7 +19,10 @@ const Canvas = ({
     onElementsChange,
     selectedElement,
     onElementSelect,
-    readOnly = false
+    readOnly = false,
+    isRecordingKeyframes = false,
+    project = null,
+    onToggleRecording = null
 }) => {
     // Use elements as provided without a default element
     const effectiveElements = elements;
@@ -25,11 +30,13 @@ const Canvas = ({
     const containerRef = useRef(null);
     const canvasContainerRef = useRef(null);
     const canvasId = useRef(`canvas-${uuidv4()}`);
-    const [isRecordingKeyframe, setIsRecordingKeyframe] = useState(false);
     const [initialized, setInitialized] = useState(false);
     const buttonContainerRef = useRef(null);
+
+    // ВРЕМЕННО: Состояния для модальных окон 3D и видео - будут удалены позже
     const [showChoreoModal, setShowChoreoModal] = useState(false);
     const [viewMode, setViewMode] = useState('3d'); // '3d' or 'video'
+    const [showCombinedViewer, setShowCombinedViewer] = useState(false);
 
     // Инициализация canvas и контейнера
     useEffect(() => {
@@ -153,20 +160,18 @@ const Canvas = ({
             };
         }, 0);
 
-        // Создаем контейнер для кнопок, только если не в режиме чтения
-        if (!readOnly) {
-            const btnContainer = document.createElement('div');
-            btnContainer.id = `btn-container-${canvasId.current}`;
-            btnContainer.style.position = 'absolute';
-            btnContainer.style.top = '0';
-            btnContainer.style.left = '0';
-            btnContainer.style.width = '100%';
-            btnContainer.style.height = '100%';
-            btnContainer.style.pointerEvents = 'none';
-            btnContainer.style.zIndex = '10';
-            containerRef.current.appendChild(btnContainer);
-            buttonContainerRef.current = btnContainer;
-        }
+        // Создаем контейнер для кнопок (для всех режимов)
+        const btnContainer = document.createElement('div');
+        btnContainer.id = `btn-container-${canvasId.current}`;
+        btnContainer.style.position = 'absolute';
+        btnContainer.style.top = '0';
+        btnContainer.style.left = '0';
+        btnContainer.style.width = '100%';
+        btnContainer.style.height = '100%';
+        btnContainer.style.pointerEvents = 'none';
+        btnContainer.style.zIndex = '10';
+        containerRef.current.appendChild(btnContainer);
+        buttonContainerRef.current = btnContainer;
 
         return () => {
             // Удаляем DOM элементы
@@ -224,7 +229,7 @@ const Canvas = ({
             let updatedElements;
 
             // If recording keyframes is active, update keyframes
-            if (isRecordingKeyframe) {
+            if (isRecordingKeyframes) {
                 console.log('Recording keyframe mode is active, creating keyframe');
 
                 // Create properties for the keyframe
@@ -343,7 +348,7 @@ const Canvas = ({
                 console.log('Clicked on canvas background');
             }
         });
-    }, [effectiveElements, currentTime, isRecordingKeyframe, onElementsChange, onElementSelect, readOnly]);
+    }, [effectiveElements, currentTime, isRecordingKeyframes, onElementsChange, onElementSelect, readOnly]);
 
     // Функция для применения эффектов анимации
     const applyAnimationEffects = useCallback((fabricObject, element) => {
@@ -993,28 +998,102 @@ const Canvas = ({
 
     // Переключение записи keyframe
     const toggleKeyframeRecording = useCallback(() => {
-        setIsRecordingKeyframe(prev => {
-            const newState = !prev;
-            console.log(`Recording mode toggled from ${prev} to ${newState}`);
+        if (onElementsChange) {
+            // Instead of trying to set state directly, emit an event to the parent
+            console.log(`Requesting recording mode toggle from current state: ${isRecordingKeyframes}`);
+            // Pass the toggled value to the parent component
+            const newRecordingState = !isRecordingKeyframes;
+            // This will notify the parent to update its state
+            onElementsChange(effectiveElements);
+            // Notify parent about recording toggle through a separate callback if available
+            if (typeof onToggleRecording === 'function') {
+                onToggleRecording(newRecordingState);
+            }
+        }
+    }, [isRecordingKeyframes, onElementsChange, effectiveElements, onToggleRecording]);
 
-            return newState;
-        });
-    }, []);
-
-    // Функция для открытия модального окна с хореографией
+    // ВРЕМЕННО: Функция для открытия модального окна с хореографией - будет удалена позже
     const handleShowChoreography = useCallback(() => {
         setShowChoreoModal(true);
     }, []);
 
-    // Функция для закрытия модального окна с хореографией
+    // ВРЕМЕННО: Функция для закрытия модального окна с хореографией - будет удалена позже
     const handleCloseChoreography = useCallback(() => {
         setShowChoreoModal(false);
     }, []);
 
-    // Функция для переключения между 3D моделью и видео
+    // ВРЕМЕННО: Функция для переключения между 3D моделью и видео - будет удалена позже
     const handleViewModeChange = useCallback((mode) => {
         setViewMode(mode);
         setShowChoreoModal(true);
+    }, []);
+
+    // ВРЕМЕННО: Функция для получения URL видео из элементов - будет удалена позже
+    const getVideoUrl = useCallback(() => {
+        console.log('Canvas: Checking for video URL in elements', elements);
+
+        // Проверяем, есть ли у выбранного элемента видео
+        if (selectedElement) {
+            console.log('Canvas: Checking selected element for video', selectedElement);
+
+            if (selectedElement.videoUrl) {
+                console.log('Canvas: Found videoUrl in selected element:', selectedElement.videoUrl);
+                return selectedElement.videoUrl;
+            }
+
+            if (selectedElement.properties && selectedElement.properties.videoUrl) {
+                console.log('Canvas: Found videoUrl in selected element properties:', selectedElement.properties.videoUrl);
+                return selectedElement.properties.videoUrl;
+            }
+        }
+
+        // Если у выбранного элемента нет видео, ищем в других элементах
+        const videoElement = elements.find(el => {
+            if (!el) return false;
+
+            if (el.type === 'video' || el.type === 'videoChoreography') {
+                console.log('Canvas: Found video element by type:', el);
+                return true;
+            }
+
+            if (el.videoUrl) {
+                console.log('Canvas: Found element with videoUrl:', el);
+                return true;
+            }
+
+            if (el.properties && el.properties.videoUrl) {
+                console.log('Canvas: Found element with videoUrl in properties:', el);
+                return true;
+            }
+
+            return false;
+        });
+
+        if (videoElement) {
+            if (videoElement.videoUrl) {
+                console.log('Canvas: Using videoUrl from found element:', videoElement.videoUrl);
+                return videoElement.videoUrl;
+            }
+
+            if (videoElement.properties && videoElement.properties.videoUrl) {
+                console.log('Canvas: Using videoUrl from found element properties:', videoElement.properties.videoUrl);
+                return videoElement.properties.videoUrl;
+            }
+        }
+
+        // Проверяем наличие тестового видео для отладки
+        console.log('Canvas: No video found in elements');
+        return null;
+    }, [elements, selectedElement]);
+
+    // ВРЕМЕННО: Функция для показа комбинированного просмотрщика - будет удалена позже
+    const handleShowCombinedViewer = useCallback(() => {
+        setShowCombinedViewer(true);
+    }, []);
+
+    // ВРЕМЕННО: Функция для скрытия комбинированного просмотрщика - будет удалена позже
+    const handleCloseCombinedViewer = useCallback(() => {
+        setShowCombinedViewer(false);
     }, []);
 
     // Используем ReactDOM.createPortal для рендеринга кнопок в отдельном контейнере
@@ -1034,7 +1113,7 @@ const Canvas = ({
                             top: 10,
                             right: 10,
                             zIndex: 100,
-                            backgroundColor: isRecordingKeyframe ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
+                            backgroundColor: isRecordingKeyframes ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
                             color: 'white',
                             padding: '4px 8px',
                             borderRadius: 4,
@@ -1044,7 +1123,7 @@ const Canvas = ({
                         }}
                         onClick={toggleKeyframeRecording}
                     >
-                        {isRecordingKeyframe ? 'Запись ключевых кадров (ВКЛ)' : 'Запись ключевых кадров (ВЫКЛ)'}
+                        {isRecordingKeyframes ? 'Запись ключевых кадров (ВКЛ)' : 'Запись ключевых кадров (ВЫКЛ)'}
                     </div>
 
                     {selectedElement && (
@@ -1122,63 +1201,180 @@ const Canvas = ({
         }
     };
 
+    // ВРЕМЕННО: Рендер кнопки просмотра 3D/видео - будет удалено позже
+    const renderViewerButton = () => {
+        // Только если инициализирован canvas и есть контейнер для кнопок
+        if (!initialized || !buttonContainerRef.current) return null;
+
+        // Кнопка должна быть видна только при выборе элемента
+        if (!selectedElement) return null;
+
+        const videoUrl = getVideoUrl();
+        console.log('Canvas: Video URL for combined viewer button:', videoUrl);
+
+        return ReactDOM.createPortal(
+            <Box
+                sx={{
+                    position: 'absolute',
+                    bottom: '20px',
+                    right: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    pointerEvents: 'auto',
+                    zIndex: 100
+                }}
+            >
+                <Paper
+                    elevation={6}
+                    sx={{
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                    }}
+                >
+                    <Button
+                        variant="contained"
+                        onClick={handleShowCombinedViewer}
+                        startIcon={<PlayArrow />}
+                        size="large"
+                        sx={{
+                            backgroundColor: 'primary.main',
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: 'primary.dark',
+                            },
+                            px: 3,
+                            py: 1.5,
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        Просмотр 3D и видео
+                    </Button>
+                </Paper>
+            </Box>,
+            buttonContainerRef.current
+        );
+    };
+
+    // ВРЕМЕННО: Рендер модального окна хореографии - будет удалено позже
+    const renderChoreoModal = () => {
+        return (
+            <Modal
+                open={showChoreoModal}
+                onClose={() => setShowChoreoModal(false)}
+                aria-labelledby="choreography-modal-title"
+            >
+                <Box sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '80%',
+                    height: '80%',
+                    bgcolor: 'background.paper',
+                    boxShadow: 24,
+                    p: 4,
+                    borderRadius: 2,
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <Typography id="choreography-modal-title" variant="h6" component="h2" gutterBottom>
+                        {viewMode === '3d' ? '3D модель' : 'Видео'} для {selectedElement?.title || 'танцора'}
+                    </Typography>
+                    <Box sx={{ flexGrow: 1 }}>
+                        {viewMode === '3d' ? (
+                            <ModelViewer
+                                isVisible={true}
+                                onClose={() => setShowChoreoModal(false)}
+                                playerDuration={60} // Default duration of 60 seconds
+                                currentTime={currentTime}
+                                isPlaying={isPlaying}
+                                elementKeyframes={selectedElement?.keyframes || []}
+                                elementId={selectedElement?.id}
+                            />
+                        ) : (
+                            <VideoViewer
+                                isVisible={true}
+                                videoUrl={selectedElement?.videoUrl}
+                                onClose={() => setShowChoreoModal(false)}
+                            />
+                        )}
+                    </Box>
+                </Box>
+            </Modal>
+        );
+    };
+
+    // ВРЕМЕННО: Получаем GLB анимации для проекта - будет удалено позже
+    const getGlbAnimations = () => {
+        // Если у нас есть доступ к glbAnimations через props
+        if (project && project.glbAnimations) {
+            console.log('Canvas: Getting GLB animations from project:', project.glbAnimations);
+            return project.glbAnimations;
+        }
+        console.log('Canvas: No GLB animations found in project');
+        return [];
+    };
+
+    // ВРЕМЕННО: Обработчик сохранения анимаций - будет удален позже
+    const handleSaveAnimations = (animations, elementId) => {
+        if (!onElementsChange || !elements || !elementId) return;
+
+        try {
+            // Найти элемент по ID
+            const updatedElements = elements.map(element => {
+                if (element.id === elementId) {
+                    // Сохраняем анимации в свойство glbAnimations элемента
+                    return {
+                        ...element,
+                        glbAnimations: animations
+                    };
+                }
+                return element;
+            });
+
+            // Обновить элементы
+            onElementsChange(updatedElements);
+            console.log(`Saved ${animations.length} animation presets to element ${elementId}`);
+        } catch (error) {
+            console.error('Error saving animations to element:', error);
+        }
+    };
+
     return (
         <Box
             ref={containerRef}
             sx={{
+                position: 'relative',
                 width: '100%',
                 height: '100%',
-                border: '1px solid #ccc',
-                position: 'relative',
-                overflow: 'hidden',
-                borderRadius: 1,
-                backgroundColor: '#ffffff'
+                overflow: 'hidden'
             }}
         >
-            {/* Only render buttons if fully initialized */}
-            {initialized && buttonContainerRef.current && renderButtons()}
+            {/* Рендерим кнопки только если не в режиме чтения */}
+            {!readOnly && renderButtons()}
 
-            {/* Modal for choreography view */}
-            {showChoreoModal && (
-                <Modal
-                    open={showChoreoModal}
-                    onClose={handleCloseChoreography}
-                    aria-labelledby="choreography-modal-title"
-                >
-                    <Box sx={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: '80%',
-                        height: '80%',
-                        bgcolor: 'background.paper',
-                        boxShadow: 24,
-                        p: 4,
-                        borderRadius: 2,
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}>
-                        <Typography id="choreography-modal-title" variant="h6" component="h2" gutterBottom>
-                            {viewMode === '3d' ? '3D модель' : 'Видео'} для {selectedElement?.title || 'танцора'}
-                        </Typography>
-                        <Box sx={{ flexGrow: 1 }}>
-                            {viewMode === '3d' ? (
-                                <ModelViewer
-                                    isVisible={true}
-                                    onClose={() => setShowChoreoModal(false)}
-                                />
-                            ) : (
-                                <VideoViewer
-                                    isVisible={true}
-                                    videoUrl={selectedElement?.videoUrl}
-                                    onClose={() => setShowChoreoModal(false)}
-                                />
-                            )}
-                        </Box>
-                    </Box>
-                </Modal>
-            )}
+            {/* ВРЕМЕННО: Рендерим кнопку просмотра 3D/видео - будет удалено позже */}
+            {renderViewerButton()}
+
+            {/* ВРЕМЕННО: Модальное окно выбора хореографии - будет удалено позже */}
+            {showChoreoModal && renderChoreoModal()}
+
+            {/* ВРЕМЕННО: Комбинированный просмотрщик 3D и видео - будет удален позже */}
+            <CombinedViewer
+                isVisible={showCombinedViewer}
+                onClose={handleCloseCombinedViewer}
+                videoUrl={getVideoUrl()}
+                playerDuration={60} // Используйте актуальную длительность проекта
+                currentTime={currentTime}
+                isPlaying={isPlaying}
+                onTimeUpdate={() => { }} // Добавьте обработчик обновления времени при необходимости
+                elementKeyframes={selectedElement?.keyframes || []}
+                elementId={selectedElement?.id}
+                onSaveAnimations={handleSaveAnimations}
+                glbAnimations={getGlbAnimations()}
+            />
         </Box>
     );
 };

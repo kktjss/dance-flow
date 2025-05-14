@@ -104,6 +104,7 @@ func main() {
 	routes.RegisterTestRoutes(api, cfg)
 	routes.RegisterTeamRoutes(api, cfg)
 	routes.RegisterUserRoutes(api, cfg)
+	routes.RegisterModelRoutes(api, cfg)
 	
 	log.Println("All routes registered successfully!")
 

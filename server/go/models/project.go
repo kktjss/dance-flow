@@ -25,8 +25,17 @@ type Project struct {
 	IsPrivate     bool               `json:"isPrivate" bson:"isPrivate"`
 	Title         string             `json:"title" bson:"title"`
 	Elements      []interface{}      `json:"elements,omitempty" bson:"elements,omitempty"`
-	Duration      int                `json:"duration,omitempty" bson:"duration,omitempty"`
+	Duration      int                `json:"duration" bson:"duration"`
 	AudioURL      string             `json:"audioUrl,omitempty" bson:"audioUrl,omitempty"`
+	GlbAnimations []GlbAnimation     `json:"glbAnimations,omitempty" bson:"glbAnimations,omitempty"`
+}
+
+// GlbAnimation represents a GLB animation file
+type GlbAnimation struct {
+	ID          string `json:"id" bson:"id"`
+	URL         string `json:"url" bson:"url"`
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description,omitempty" bson:"description,omitempty"`
 }
 
 // Element represents a project element
@@ -292,24 +301,30 @@ type KeyframeRef struct {
 
 // ProjectCreateInput is the input for creating a project
 type ProjectCreateInput struct {
-	Name        string   `json:"name" binding:"required"`
-	Description string   `json:"description"`
-	TeamID      string   `json:"teamId,omitempty"`
-	Tags        []string `json:"tags,omitempty"`
-	Title       string   `json:"title"`
-	IsPrivate   bool     `json:"isPrivate"`
+	Name          string         `json:"name" binding:"required"`
+	Description   string         `json:"description"`
+	TeamID        string         `json:"teamId,omitempty"`
+	Tags          []string       `json:"tags,omitempty"`
+	Title         string         `json:"title"`
+	IsPrivate     bool           `json:"isPrivate"`
+	Duration      int            `json:"duration"`
+	AudioURL      string         `json:"audioUrl,omitempty"`
+	VideoURL      string         `json:"videoUrl,omitempty"`
+	Elements      []interface{}  `json:"elements,omitempty"`
+	GlbAnimations []GlbAnimation `json:"glbAnimations,omitempty"`
 }
 
 // ProjectUpdateInput is the input for updating a project
 type ProjectUpdateInput struct {
-	Name        string        `json:"name,omitempty"`
-	Description string        `json:"description,omitempty"`
-	TeamID      string        `json:"teamId,omitempty"`
-	VideoURL    string        `json:"videoUrl,omitempty"`
-	Tags        []string      `json:"tags,omitempty"`
-	Title       string        `json:"title,omitempty"`
-	IsPrivate   *bool         `json:"isPrivate,omitempty"`
-	Elements    []interface{} `json:"elements,omitempty"`
-	Duration    *int          `json:"duration,omitempty"`
-	AudioURL    string        `json:"audioUrl,omitempty"`
+	Name          string         `json:"name,omitempty"`
+	Description   string         `json:"description,omitempty"`
+	TeamID        string         `json:"teamId,omitempty"`
+	VideoURL      string         `json:"videoUrl,omitempty"`
+	Tags          []string       `json:"tags,omitempty"`
+	Title         string         `json:"title,omitempty"`
+	IsPrivate     *bool          `json:"isPrivate,omitempty"`
+	Elements      []interface{}  `json:"elements,omitempty"`
+	Duration      *int           `json:"duration,omitempty"`
+	AudioURL      string         `json:"audioUrl,omitempty"`
+	GlbAnimations []GlbAnimation `json:"glbAnimations,omitempty"`
 } 

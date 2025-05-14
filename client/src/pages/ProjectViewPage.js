@@ -8,8 +8,7 @@ import axios from 'axios';
 import Player from '../components/Player';
 import Canvas from '../components/Canvas';
 import Navbar from '../components/Navbar';
-import ModelViewer from '../components/ModelViewer';
-import VideoViewer from '../components/VideoViewer';
+import CombinedViewer from '../components/CombinedViewer';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -158,13 +157,13 @@ const ProjectViewPage = () => {
         loading: true
     });
 
+    const [selectedElement, setSelectedElement] = useState(null);
     const [normalizedElements, setNormalizedElements] = useState([]);
     const [currentTime, setCurrentTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [error, setError] = useState(null);
     const [viewerMode, setViewerMode] = useState('canvas'); // 'canvas', '3d', or 'video'
-    const [show3DModel, setShow3DModel] = useState(false);
-    const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+    const [showCombinedViewer, setShowCombinedViewer] = useState(false);
     const animationRef = useRef(null);
     const lastTimeRef = useRef(null);
 
@@ -300,33 +299,18 @@ const ProjectViewPage = () => {
         setIsPlaying(playing);
     };
 
-    // Show 3D Model
-    const handleShow3DModel = () => {
-        setShow3DModel(true);
-        // Pause animation when showing 3D model
+    // Show Combined Viewer
+    const handleShowCombinedViewer = () => {
+        setShowCombinedViewer(true);
+        // Pause animation when showing viewer
         if (isPlaying) {
             setIsPlaying(false);
         }
     };
 
-    // Hide 3D Model
-    const handleHide3DModel = () => {
-        setShow3DModel(false);
-        setViewerMode('canvas');
-    };
-
-    // Show Video Player
-    const handleShowVideoPlayer = () => {
-        setShowVideoPlayer(true);
-        // Pause animation when showing video
-        if (isPlaying) {
-            setIsPlaying(false);
-        }
-    };
-
-    // Hide Video Player
-    const handleHideVideoPlayer = () => {
-        setShowVideoPlayer(false);
+    // Hide Combined Viewer
+    const handleHideCombinedViewer = () => {
+        setShowCombinedViewer(false);
         setViewerMode('canvas');
     };
 
@@ -334,10 +318,8 @@ const ProjectViewPage = () => {
     const handleModeChange = (mode) => {
         setViewerMode(mode);
 
-        if (mode === '3d') {
-            handleShow3DModel();
-        } else if (mode === 'video') {
-            handleShowVideoPlayer();
+        if (mode === '3d' || mode === 'video') {
+            handleShowCombinedViewer();
         }
     };
 
@@ -361,6 +343,12 @@ const ProjectViewPage = () => {
     };
 
     const videoUrl = getVideoUrl();
+
+    // Handle element selection
+    const handleElementSelect = (element) => {
+        console.log('Element selected:', element);
+        setSelectedElement(element);
+    };
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -446,6 +434,7 @@ const ProjectViewPage = () => {
                                             onClick={() => handleModeChange('video')}
                                             variant={viewerMode === 'video' ? 'contained' : 'outlined'}
                                             color={viewerMode === 'video' ? 'primary' : 'inherit'}
+                                            disabled={!videoUrl}
                                         >
                                             Видео
                                         </Button>
@@ -461,49 +450,25 @@ const ProjectViewPage = () => {
                                             currentTime={currentTime}
                                             isPlaying={isPlaying}
                                             readOnly={true}
+                                            selectedElement={selectedElement}
+                                            onElementSelect={handleElementSelect}
                                         />
-                                    )}
-
-                                    {/* Video View - fallback content when no video */}
-                                    {viewerMode === 'video' && !videoUrl && (
-                                        <Box sx={{
-                                            width: '100%',
-                                            height: '100%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexDirection: 'column',
-                                            gap: 2
-                                        }}>
-                                            <Typography variant="h6" color="text.secondary">
-                                                Видео не загружено для этого проекта
-                                            </Typography>
-                                            <Button
-                                                variant="outlined"
-                                                onClick={() => handleModeChange('canvas')}
-                                                startIcon={<Close />}
-                                            >
-                                                Вернуться к анимации
-                                            </Button>
-                                        </Box>
                                     )}
                                 </Box>
                             </Paper>
 
-                            {/* 3D Model Viewer (full-screen overlay) */}
-                            <ModelViewer
-                                isVisible={show3DModel}
-                                onClose={handleHide3DModel}
+                            {/* Combined Viewer (3D Model + Video) */}
+                            <CombinedViewer
+                                isVisible={showCombinedViewer}
+                                onClose={handleHideCombinedViewer}
+                                videoUrl={videoUrl}
+                                playerDuration={project.duration}
+                                currentTime={currentTime}
+                                isPlaying={isPlaying}
+                                onTimeUpdate={handleTimeUpdate}
+                                elementKeyframes={selectedElement?.keyframes || []}
+                                elementId={selectedElement?.id}
                             />
-
-                            {/* Video Player (when video is available) */}
-                            {videoUrl && viewerMode === 'video' && (
-                                <VideoViewer
-                                    isVisible={showVideoPlayer}
-                                    videoUrl={videoUrl}
-                                    onClose={handleHideVideoPlayer}
-                                />
-                            )}
                         </>
                     )}
                 </Container>

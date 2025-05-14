@@ -1,18 +1,18 @@
 import React, { useRef, useState, useEffect, Suspense, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, useGLTF, Grid } from '@react-three/drei';
-import { Box as MuiBox, CircularProgress, Button, IconButton, Slider, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, Menu, MenuItem, Select, FormControl, InputLabel, Tabs, Tab } from '@mui/material';
-import { PlayArrow, Pause, AddCircleOutline, Delete, Edit, DragIndicator, Save, FolderOpen, Upload } from '@mui/icons-material';
+import { Box as MuiBox, CircularProgress, Button, IconButton, Slider, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, Menu, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { PlayArrow, Pause, AddCircleOutline, Delete, Edit, DragIndicator, Save, FolderOpen } from '@mui/icons-material';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import ModelUploader from './ModelUploader';
 
 // Model component for Xbot
 const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDuration, animationMarkers = [], activeAnimations = [], glbAnimationUrl = null }) => {
-    // We're not using the default Xbot model anymore
-    const [customModel, setCustomModel] = useState(null);
-    const [loadingError, setLoadingError] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
+    console.log('XbotModel: Loading model from /models/xbot.glb');
+    const gltf = useGLTF('/models/xbot.glb');
+    console.log('XbotModel: Model loaded via useGLTF:', gltf);
+    console.log('XbotModel: Model scene:', gltf.scene);
+    console.log('XbotModel: Model animations:', gltf.animations);
 
     const mixer = useRef(null);
     const lastTimeRef = useRef(null);
@@ -22,11 +22,21 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     const animationsRef = useRef([]);
     const activeActionsRef = useRef({});
     const [externalAnimations, setExternalAnimations] = useState({});
+    const [customModel, setCustomModel] = useState(null);
+    const [loadingError, setLoadingError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Load custom GLB model if URL is provided
     useEffect(() => {
         if (glbAnimationUrl) {
             console.log('XbotModel: Loading custom GLB model from URL:', glbAnimationUrl);
+            console.log('XbotModel: URL type:', typeof glbAnimationUrl);
+            console.log('XbotModel: Full URL details:', {
+                url: glbAnimationUrl,
+                length: glbAnimationUrl.length,
+                startsWithHttp: glbAnimationUrl.startsWith('http'),
+                containsGlb: glbAnimationUrl.includes('.glb')
+            });
 
             setIsLoading(true);
             setLoadingError(null);
@@ -38,45 +48,51 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
             console.log('XbotModel: Processed URL for loading:', processedUrl);
 
-            try {
-                // Use GLTFLoader directly
-                const loader = new GLTFLoader();
-                loader.load(
-                    processedUrl,
-                    (gltf) => {
-                        console.log('XbotModel: Custom model loaded successfully with animations:', gltf.animations);
+            const loadModel = async () => {
+                try {
+                    console.log('XbotModel: Starting to load model from URL:', processedUrl);
 
-                        // Apply default transformations to the model
-                        gltf.scene.traverse((child) => {
-                            if (child.isMesh) {
-                                child.castShadow = true;
-                                child.receiveShadow = true;
+                    // Use GLTFLoader directly
+                    const loader = new GLTFLoader();
+                    loader.load(
+                        processedUrl,
+                        (gltf) => {
+                            console.log('XbotModel: Custom model loaded successfully with animations:', gltf.animations);
+
+                            // Apply default transformations to the model
+                            gltf.scene.traverse((child) => {
+                                if (child.isMesh) {
+                                    child.castShadow = true;
+                                    child.receiveShadow = true;
+                                }
+                            });
+
+                            setCustomModel({ scene: gltf.scene, animations: gltf.animations });
+
+                            // Pass animations to parent if available
+                            if (gltf.animations && gltf.animations.length > 0) {
+                                onModelLoad(gltf.animations);
                             }
-                        });
 
-                        setCustomModel({ scene: gltf.scene, animations: gltf.animations });
-
-                        // Pass animations to parent if available
-                        if (gltf.animations && gltf.animations.length > 0) {
-                            onModelLoad(gltf.animations);
+                            setIsLoading(false);
+                        },
+                        (xhr) => {
+                            console.log(`Loading progress: ${Math.round(xhr.loaded / xhr.total * 100)}%`);
+                        },
+                        (error) => {
+                            console.error('XbotModel: Error loading custom GLB model:', error);
+                            setLoadingError(`Ошибка загрузки модели: ${error.message}`);
+                            setIsLoading(false);
                         }
+                    );
+                } catch (error) {
+                    console.error('XbotModel: Error in loadModel function:', error);
+                    setLoadingError(`Ошибка загрузки модели: ${error.message}`);
+                    setIsLoading(false);
+                }
+            };
 
-                        setIsLoading(false);
-                    },
-                    (xhr) => {
-                        console.log(`Loading progress: ${Math.round(xhr.loaded / xhr.total * 100)}%`);
-                    },
-                    (error) => {
-                        console.error('XbotModel: Error loading custom GLB model:', error);
-                        setLoadingError(`Ошибка загрузки модели: ${error.message}`);
-                        setIsLoading(false);
-                    }
-                );
-            } catch (error) {
-                console.error('XbotModel: Error in loadModel function:', error);
-                setLoadingError(`Ошибка загрузки модели: ${error.message}`);
-                setIsLoading(false);
-            }
+            loadModel();
         } else {
             setCustomModel(null);
             setLoadingError(null);
@@ -86,24 +102,27 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
     // Initialize animation mixer
     useEffect(() => {
-        if (customModel && customModel.animations && customModel.animations.length > 0) {
-            console.log('XbotModel: Model loaded successfully with animations:', customModel.animations);
-            console.log('XbotModel: Animation names:', customModel.animations.map(anim => anim.name));
+        // Use custom model if available, otherwise use default Xbot model
+        const model = customModel || gltf;
+
+        if (model && model.animations && model.animations.length > 0) {
+            console.log('XbotModel: Model loaded successfully with animations:', model.animations);
+            console.log('XbotModel: Animation names:', model.animations.map(anim => anim.name));
 
             // Create a new mixer for the current model
-            mixer.current = new THREE.AnimationMixer(customModel.scene);
-            animationsRef.current = customModel.animations;
+            mixer.current = new THREE.AnimationMixer(model.scene);
+            animationsRef.current = model.animations;
 
             // Store original model animation duration from the first animation
-            modelDuration.current = customModel.animations[0].duration;
+            modelDuration.current = model.animations[0].duration;
             console.log('XbotModel: Model duration:', modelDuration.current);
 
             // Pass animations to parent
-            onModelLoad(customModel.animations);
-        } else if (customModel) {
-            console.warn('XbotModel: Model loaded but no animations found:', customModel);
+            onModelLoad(model.animations);
+        } else {
+            console.warn('XbotModel: Model loaded but no animations found:', model);
         }
-    }, [customModel, onModelLoad]);
+    }, [gltf, customModel, onModelLoad]);
 
     // Load external animation
     const loadExternalAnimation = useCallback(async (url) => {
@@ -412,12 +431,10 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     return (
         <>
             {isLoading && (
-                <>
-                    <mesh position={[0, 0, 0]}>
-                        <sphereGeometry args={[0.5, 16, 16]} />
-                        <meshStandardMaterial color="gray" wireframe />
-                    </mesh>
-                </>
+                <mesh position={[0, 0, 0]}>
+                    <sphereGeometry args={[0.5, 16, 16]} />
+                    <meshStandardMaterial color="#4285F4" wireframe />
+                </mesh>
             )}
 
             {loadingError && (
@@ -426,20 +443,34 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         <boxGeometry args={[1, 1, 1]} />
                         <meshStandardMaterial color="red" />
                     </mesh>
+                    <mesh position={[0, 1.5, 0]}>
+                        <textGeometry args={[`Ошибка: ${loadingError}`]} />
+                        <meshStandardMaterial color="white" />
+                    </mesh>
                 </>
             )}
 
-            {!isLoading && !loadingError && customModel && (
+            {!isLoading && !loadingError && (
                 <>
-                    {/* Render the custom model */}
-                    <primitive
-                        object={customModel.scene}
-                        scale={[1.0, 1.0, 1.0]}
-                        position={[0, 0, 0]}
-                        rotation={[0, 0, 0]}
-                    />
+                    {/* Render the appropriate model */}
+                    {customModel ? (
+                        <primitive
+                            object={customModel.scene}
+                            scale={[1.0, 1.0, 1.0]}
+                            position={[0, 0, 0]}
+                            rotation={[0, 0, 0]}
+                        />
+                    ) : (
+                        <primitive
+                            object={gltf.scene}
+                            scale={[1.0, 1.0, 1.0]}
+                            position={[0, 0, 0]}
+                            rotation={[0, 0, 0]}
+                        />
+                    )}
                 </>
             )}
+            <gridHelper args={[10, 10]} />
         </>
     );
 };
@@ -521,6 +552,9 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
     const [selectedAnimIndex, setSelectedAnimIndex] = useState(null);
     const [animationDialogOpen, setAnimationDialogOpen] = useState(false);
     const [currentAnimation, setCurrentAnimation] = useState(null);
+    const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+    const [animationUrl, setAnimationUrl] = useState('');
+    const fileInputRef = useRef(null);
 
     // Animation dialog form state
     const [animName, setAnimName] = useState('');
@@ -529,6 +563,7 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
     const [animEnd, setAnimEnd] = useState(10);
     const [animWeight, setAnimWeight] = useState(1);
     const [animTimeScale, setAnimTimeScale] = useState(1);
+    const [animUrl, setAnimUrl] = useState('');
     const [animExternalIndex, setAnimExternalIndex] = useState(0);
 
     // Generate a unique ID for new animations
@@ -561,6 +596,7 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
         setAnimEnd(10);
         setAnimWeight(1);
         setAnimTimeScale(1);
+        setAnimUrl('');
         setAnimExternalIndex(0);
 
         setAnimationDialogOpen(true);
@@ -577,6 +613,7 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
         setAnimEnd(anim.end || 10);
         setAnimWeight(anim.weight || 1);
         setAnimTimeScale(anim.timeScale || 1);
+        setAnimUrl(anim.url || '');
         setAnimExternalIndex(anim.externalIndex || 0);
 
         setAnimationDialogOpen(true);
@@ -605,6 +642,7 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
                         end: animEnd,
                         weight: animWeight,
                         timeScale: animTimeScale,
+                        url: animUrl,
                         externalIndex: animExternalIndex
                     }
                     : anim
@@ -620,12 +658,56 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
                 end: animEnd,
                 weight: animWeight,
                 timeScale: animTimeScale,
+                url: animUrl,
                 externalIndex: animExternalIndex
             };
             onAnimationsChange([...activeAnimations, newAnimation]);
         }
 
         setAnimationDialogOpen(false);
+    };
+
+    // Open upload dialog
+    const handleOpenUploadDialog = () => {
+        setUploadDialogOpen(true);
+    };
+
+    // Close upload dialog
+    const handleCloseUploadDialog = () => {
+        setUploadDialogOpen(false);
+    };
+
+    // Handle file input change
+    const handleFileInputChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            setAnimationUrl(url);
+        }
+    };
+
+    // Handle animation URL submit
+    const handleAnimationUrlSubmit = () => {
+        setAnimUrl(animationUrl);
+        setUploadDialogOpen(false);
+
+        // If we're in the animation dialog, update the URL there
+        if (animationDialogOpen) {
+            setAnimUrl(animationUrl);
+        } else {
+            // Otherwise, create a new animation with this URL
+            const newAnimation = {
+                id: generateUniqueId(),
+                name: `Анимация из ${animationUrl.split('/').pop()}`,
+                start: 0,
+                end: 10,
+                weight: 1,
+                timeScale: 1,
+                url: animationUrl,
+                externalIndex: 0
+            };
+            onAnimationsChange([...activeAnimations, newAnimation]);
+        }
     };
 
     return (
@@ -642,9 +724,18 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
                     </IconButton>
                 </Typography>
 
+                <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleOpenUploadDialog}
+                    sx={{ mb: 2 }}
+                >
+                    Загрузить .glb анимацию
+                </Button>
+
                 {activeAnimations.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
-                        Нет активных анимаций. Нажмите + чтобы добавить анимацию.
+                        Нет активных анимаций. Нажмите + чтобы добавить или загрузите .glb файл.
                     </Typography>
                 ) : (
                     <List dense sx={{ bgcolor: 'rgba(0,0,0,0.3)', borderRadius: 1 }}>
@@ -668,10 +759,13 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
                             >
                                 <DragIndicator sx={{ mr: 1, opacity: 0.5, fontSize: '1rem' }} />
                                 <ListItemText
-                                    primary={anim.name || `Анимация ${animations[anim.index]?.name || anim.index}`}
+                                    primary={anim.name || (anim.url ? `Анимация из ${anim.url.split('/').pop()}` : `Анимация ${animations[anim.index]?.name || anim.index}`)}
                                     secondary={
                                         <>
                                             {`${anim.start}с - ${anim.end}с (скорость: ${anim.timeScale}x)`}
+                                            {anim.url && <Typography variant="caption" component="div" sx={{ color: 'primary.light' }}>
+                                                Внешняя анимация
+                                            </Typography>}
                                         </>
                                     }
                                     primaryTypographyProps={{ variant: 'body2' }}
@@ -713,21 +807,69 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
                         sx={{ mb: 2 }}
                     />
 
-                    {/* Выбор анимации */}
-                    <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
-                        <InputLabel>Анимация</InputLabel>
-                        <Select
-                            value={animIndex}
-                            onChange={(e) => setAnimIndex(Number(e.target.value))}
-                            label="Анимация"
-                        >
-                            {animations.map((anim, index) => (
-                                <MenuItem key={index} value={index}>
-                                    {anim.name || `Анимация ${index + 1}`}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                    {/* Выбор между встроенной и внешней анимацией */}
+                    <Typography variant="subtitle2" gutterBottom>
+                        Источник анимации:
+                    </Typography>
+
+                    {!animUrl ? (
+                        <>
+                            <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
+                                <InputLabel>Встроенная анимация</InputLabel>
+                                <Select
+                                    value={animIndex}
+                                    onChange={(e) => setAnimIndex(Number(e.target.value))}
+                                    label="Встроенная анимация"
+                                >
+                                    {animations.filter(anim => !anim.isExternal).map((anim, index) => (
+                                        <MenuItem key={index} value={index}>
+                                            {anim.name || `Анимация ${index + 1}`}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            <Button
+                                variant="outlined"
+                                onClick={handleOpenUploadDialog}
+                                sx={{ mb: 2 }}
+                            >
+                                Использовать внешнюю анимацию
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <TextField
+                                margin="dense"
+                                label="URL анимации"
+                                type="text"
+                                fullWidth
+                                value={animUrl}
+                                disabled
+                                sx={{ mb: 1 }}
+                            />
+
+                            <TextField
+                                margin="dense"
+                                label="Индекс анимации в файле"
+                                type="number"
+                                fullWidth
+                                value={animExternalIndex}
+                                onChange={(e) => setAnimExternalIndex(Number(e.target.value))}
+                                inputProps={{ min: 0 }}
+                                sx={{ mb: 2 }}
+                                helperText="Индекс анимации в файле (обычно 0 для первой анимации)"
+                            />
+
+                            <Button
+                                variant="outlined"
+                                onClick={() => setAnimUrl('')}
+                                sx={{ mb: 2 }}
+                            >
+                                Использовать встроенную анимацию
+                            </Button>
+                        </>
+                    )}
 
                     <TextField
                         margin="dense"
@@ -777,6 +919,59 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
                 <DialogActions>
                     <Button onClick={() => setAnimationDialogOpen(false)}>Отмена</Button>
                     <Button onClick={handleSaveAnimation} color="primary">Сохранить</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Upload Animation Dialog */}
+            <Dialog open={uploadDialogOpen} onClose={handleCloseUploadDialog}>
+                <DialogTitle>
+                    Загрузить анимацию
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                        Выберите .glb файл с анимацией или введите URL
+                    </Typography>
+
+                    <input
+                        type="file"
+                        accept=".glb"
+                        style={{ display: 'none' }}
+                        ref={fileInputRef}
+                        onChange={handleFileInputChange}
+                    />
+
+                    <Button
+                        variant="contained"
+                        onClick={() => fileInputRef.current.click()}
+                        sx={{ mb: 2 }}
+                    >
+                        Выбрать файл
+                    </Button>
+
+                    <Typography variant="body2" sx={{ mt: 2, mb: 1 }}>
+                        Или введите URL:
+                    </Typography>
+
+                    <TextField
+                        margin="dense"
+                        label="URL .glb файла"
+                        type="text"
+                        fullWidth
+                        value={animationUrl}
+                        onChange={(e) => setAnimationUrl(e.target.value)}
+                        sx={{ mb: 2 }}
+                        placeholder="https://example.com/animation.glb"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseUploadDialog}>Отмена</Button>
+                    <Button
+                        onClick={handleAnimationUrlSubmit}
+                        color="primary"
+                        disabled={!animationUrl}
+                    >
+                        Добавить
+                    </Button>
                 </DialogActions>
             </Dialog>
         </>
@@ -1006,34 +1201,12 @@ const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 
                 ))}
             </MuiBox>
 
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.5, display: 'block' }}>
                 Перетаскивайте блоки для изменения позиции. Растягивайте за края для изменения длительности.
             </Typography>
         </MuiBox>
     );
 };
-
-// Add this TabPanel component before the ModelViewer component
-function TabPanel(props) {
-    const { children, value, index, ...other } = props;
-
-    return (
-        <div
-            role="tabpanel"
-            hidden={value !== index}
-            id={`model-tabpanel-${index}`}
-            aria-labelledby={`model-tab-${index}`}
-            {...other}
-            style={{ width: '100%' }}
-        >
-            {value === index && (
-                <MuiBox sx={{ p: 2 }}>
-                    {children}
-                </MuiBox>
-            )}
-        </div>
-    );
-}
 
 const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialTime = 0, isPlaying: initialPlaying = false, onTimeUpdate: externalTimeUpdate, elementKeyframes = [], elementId = null, embedded = false, onSaveAnimations = null, glbAnimationUrl = null }) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -1058,10 +1231,6 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
     const [savedAnimations, setSavedAnimations] = useState([]);
     const [loadDialogOpen, setLoadDialogOpen] = useState(false);
     const prevElementIdRef = useRef(null);
-    const [selectedModel, setSelectedModel] = useState(null);
-    const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-    const fileInputRef = useRef(null);
-    const [glbUrl, setGlbUrl] = useState('');
 
     // Load saved animations from localStorage on component mount
     useEffect(() => {
@@ -1201,26 +1370,8 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 setDuration(animDuration);
             }
 
-            // Автоматически добавляем первую анимацию из модели
-            setActiveAnimations(current => {
-                // Если уже есть анимации, не добавляем новую
-                if (current && current.length > 0) {
-                    return current;
-                }
-
-                // Добавляем первую анимацию из загруженной модели
-                const newAnimation = {
-                    id: 'anim_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-                    name: animations[0].name || 'Анимация 1',
-                    index: 0,
-                    start: 0,
-                    end: playerDuration || animDuration,
-                    weight: 1,
-                    timeScale: 1
-                };
-
-                return [newAnimation];
-            });
+            // We no longer add default animation automatically
+            // Let the user add animations explicitly
 
             setModelLoaded(true);
 
@@ -1379,51 +1530,6 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         localStorage.setItem('savedAnimations', JSON.stringify(updatedSavedAnimations));
     };
 
-    // Handle model selection from uploader
-    const handleModelSelect = (model) => {
-        console.log('Selected model:', model);
-        setSelectedModel(model);
-
-        // Update the glbAnimationUrl to use the selected model
-        // This will trigger the useEffect in XbotModel to load the new model
-        if (model && model.url) {
-            // We'll use this URL to load the model
-            console.log('Setting model URL:', model.url);
-        }
-    };
-
-    // Handle opening the upload dialog
-    const handleOpenUploadDialog = () => {
-        setUploadDialogOpen(true);
-    };
-
-    // Handle closing the upload dialog
-    const handleCloseUploadDialog = () => {
-        setUploadDialogOpen(false);
-    };
-
-    // Handle file input change
-    const handleFileInputChange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const url = URL.createObjectURL(file);
-            setGlbUrl(url);
-        }
-    };
-
-    // Handle GLB URL submit
-    const handleGlbUrlSubmit = () => {
-        if (glbUrl) {
-            // Create a model object similar to what ModelUploader would return
-            const modelObj = {
-                url: glbUrl,
-                name: glbUrl.split('/').pop() || 'Uploaded GLB'
-            };
-            setSelectedModel(modelObj);
-            setUploadDialogOpen(false);
-        }
-    };
-
     if (!isVisible) return null;
 
     return (
@@ -1489,7 +1595,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                                         playerDuration={playerDuration}
                                         animationMarkers={animationMarkers}
                                         activeAnimations={activeAnimations}
-                                        glbAnimationUrl={selectedModel ? selectedModel.url : glbAnimationUrl}
+                                        glbAnimationUrl={glbAnimationUrl}
                                     />
                                     <Grid
                                         position={[0, -1, 0]}
@@ -1564,215 +1670,6 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                             </Typography>
                         </MuiBox>
 
-                        {/* Upload GLB button and animation controls */}
-                        <MuiBox sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={handleOpenUploadDialog}
-                                startIcon={<Upload />}
-                            >
-                                Загрузить GLB
-                            </Button>
-
-                            {selectedModel && (
-                                <Typography variant="body2" color="text.secondary">
-                                    Загружено: {selectedModel.name}
-                                </Typography>
-                            )}
-                        </MuiBox>
-
-                        <AnimationManager
-                            animations={availableAnimations}
-                            activeAnimations={activeAnimations}
-                            onAnimationsChange={handleAnimationsChange}
-                        />
-
-                        <AnimationTimeline
-                            animations={availableAnimations}
-                            activeAnimations={activeAnimations}
-                            duration={duration}
-                            currentTime={currentTime}
-                            onAnimationsChange={handleAnimationsChange}
-                        />
-
                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
                             {elementId ?
-                                `Маркеры синхронизированы с ключевыми кадрами элемента. ${elementKeyframes.length} ключевых кадров.` :
-                                'Маркеры не синхронизированы с элементами.'}
-                        </Typography>
-                    </MuiBox>
-                </>
-            )}
-
-            {/* Marker Dialog */}
-            <Dialog open={markerDialogOpen} onClose={() => setMarkerDialogOpen(false)}>
-                <DialogTitle>
-                    {currentMarker !== null ? 'Редактировать маркер' : 'Добавить маркер'}
-                </DialogTitle>
-                <DialogContent>
-                    <TextField
-                        margin="dense"
-                        label="Время (секунды)"
-                        type="number"
-                        fullWidth
-                        value={newMarkerTime}
-                        onChange={(e) => setNewMarkerTime(Number(e.target.value))}
-                        inputProps={{ step: 0.1, min: 0, max: duration }}
-                        sx={{ mb: 2 }}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Время модели (секунды)"
-                        type="number"
-                        fullWidth
-                        value={newMarkerModelTime}
-                        onChange={(e) => setNewMarkerModelTime(Number(e.target.value))}
-                        inputProps={{ step: 0.1, min: 0, max: modelDuration }}
-                        sx={{ mb: 2 }}
-                        helperText={`Время в анимации модели (от 0 до ${modelDuration.toFixed(2)} секунд)`}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Название"
-                        type="text"
-                        fullWidth
-                        value={newMarkerLabel}
-                        onChange={(e) => setNewMarkerLabel(e.target.value)}
-                        sx={{ mb: 2 }}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Цвет"
-                        type="color"
-                        fullWidth
-                        value={newMarkerColor}
-                        onChange={(e) => setNewMarkerColor(e.target.value)}
-                        sx={{ mb: 2 }}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setMarkerDialogOpen(false)}>Отмена</Button>
-                    <Button onClick={handleSaveMarker} color="primary">Сохранить</Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Save Animation Dialog */}
-            <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)}>
-                <DialogTitle>
-                    Сохранить анимацию
-                </DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Название анимации"
-                        type="text"
-                        fullWidth
-                        value={saveAnimationName}
-                        onChange={(e) => setSaveAnimationName(e.target.value)}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setSaveDialogOpen(false)}>Отмена</Button>
-                    <Button onClick={handleSaveAnimations} color="primary" disabled={!saveAnimationName.trim()}>
-                        Сохранить
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Load Animation Dialog */}
-            <Dialog open={loadDialogOpen} onClose={() => setLoadDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>
-                    Загрузить анимацию
-                </DialogTitle>
-                <DialogContent>
-                    {savedAnimations.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                            Нет сохраненных анимаций
-                        </Typography>
-                    ) : (
-                        <List>
-                            {savedAnimations.map((preset) => (
-                                <ListItem
-                                    key={preset.id}
-                                    button
-                                    onClick={() => handleLoadAnimationPreset(preset)}
-                                    secondaryAction={
-                                        <IconButton edge="end" onClick={() => handleDeleteAnimationPreset(preset.id)}>
-                                            <Delete />
-                                        </IconButton>
-                                    }
-                                >
-                                    <ListItemText
-                                        primary={preset.name}
-                                        secondary={`Создано: ${new Date(preset.createdAt).toLocaleString()}`}
-                                    />
-                                </ListItem>
-                            ))}
-                        </List>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setLoadDialogOpen(false)}>Закрыть</Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Upload GLB Dialog */}
-            <Dialog open={uploadDialogOpen} onClose={handleCloseUploadDialog}>
-                <DialogTitle>
-                    Загрузить GLB модель
-                </DialogTitle>
-                <DialogContent>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
-                        Выберите .glb файл с моделью и анимациями или введите URL
-                    </Typography>
-
-                    <input
-                        type="file"
-                        accept=".glb"
-                        style={{ display: 'none' }}
-                        ref={fileInputRef}
-                        onChange={handleFileInputChange}
-                    />
-
-                    <Button
-                        variant="contained"
-                        onClick={() => fileInputRef.current.click()}
-                        sx={{ mb: 2 }}
-                        fullWidth
-                    >
-                        Выбрать файл
-                    </Button>
-
-                    <Typography variant="body2" sx={{ mt: 2, mb: 1 }}>
-                        Или введите URL:
-                    </Typography>
-
-                    <TextField
-                        margin="dense"
-                        label="URL .glb файла"
-                        type="text"
-                        fullWidth
-                        value={glbUrl}
-                        onChange={(e) => setGlbUrl(e.target.value)}
-                        sx={{ mb: 2 }}
-                        placeholder="https://example.com/model.glb"
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseUploadDialog}>Отмена</Button>
-                    <Button
-                        onClick={handleGlbUrlSubmit}
-                        color="primary"
-                        disabled={!glbUrl}
-                    >
-                        Загрузить
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </MuiBox>
-    );
-};
-
-export default ModelViewer;
+                                `Маркеры синхронизированы с ключевыми кадрами элемента. ${elementKeyframes.length} ключевых кадров.`

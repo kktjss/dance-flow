@@ -283,15 +283,20 @@ func createProject(c *gin.Context) {
 
 	// Create project
 	project := models.Project{
-		ID:          primitive.NewObjectID(),
-		Name:        input.Name,
-		Description: input.Description,
-		Owner:       userID,
-		Tags:        input.Tags,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		IsPrivate:   input.IsPrivate,
-		Title:       input.Title,
+		ID:           primitive.NewObjectID(),
+		Name:         input.Name,
+		Description:  input.Description,
+		Owner:        userID,
+		Tags:         input.Tags,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+		IsPrivate:    input.IsPrivate,
+		Title:        input.Title,
+		Duration:     input.Duration,
+		AudioURL:     input.AudioURL,
+		VideoURL:     input.VideoURL,
+		Elements:     input.Elements,
+		GlbAnimations: input.GlbAnimations,
 	}
 
 	// Add team ID if provided
@@ -412,11 +417,18 @@ func updateProject(c *gin.Context) {
 			}
 		}
 	}
+	
+	// Always save duration even if it's 0
 	if input.Duration != nil {
 		update["$set"].(bson.M)["duration"] = *input.Duration
 	}
-	if input.AudioURL != "" {
-		update["$set"].(bson.M)["audioUrl"] = input.AudioURL
+	
+	// Always save audioUrl even if empty to allow removing audio
+	update["$set"].(bson.M)["audioUrl"] = input.AudioURL
+	
+	// Handle GLB animations
+	if input.GlbAnimations != nil {
+		update["$set"].(bson.M)["glbAnimations"] = input.GlbAnimations
 	}
 
 	// Update project

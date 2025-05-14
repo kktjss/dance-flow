@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment, Menu, MenuItem, Snackbar, Alert } from '@mui/material';
-import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy } from '@mui/icons-material';
+import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment, Menu, MenuItem, Snackbar, Alert, List, ListItem, ListItemIcon, ListItemText, ButtonGroup } from '@mui/material';
+import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy, VideoLibrary, Delete as DeleteIcon, MusicNote as MusicNoteIcon } from '@mui/icons-material';
+import ThreeDRotation from '@mui/icons-material/ThreeDRotation';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -13,6 +14,7 @@ import ToolPanel from '../components/ToolPanel';
 import PropertyPanel from '../components/PropertyPanel';
 import ProjectsList from '../components/ProjectsList';
 import ModelViewer from '../components/ModelViewer';
+import CombinedViewer from '../components/CombinedViewer';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -23,8 +25,10 @@ const ConstructorPage = () => {
         name: 'Новый проект',
         description: '',
         duration: 60,
-        audioUrl: null,
-        elements: []
+        audioUrl: '',
+        videoUrl: '',
+        elements: [],
+        glbAnimations: []
     });
 
     // State for UI
@@ -40,9 +44,45 @@ const ConstructorPage = () => {
     const [clipboardElement, setClipboardElement] = useState(null);
     const [clipboardKeyframes, setClipboardKeyframes] = useState(null);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+    const [isLoading, setIsLoading] = useState(false);
+    const [viewMode, setViewMode] = useState('2d'); // '2d' или 'video'
 
     const navigate = useNavigate();
     const params = useParams();
+
+    // Автоматическое переключение на режим видео при загрузке видео
+    useEffect(() => {
+        if (project.videoUrl) {
+            setViewMode('video');
+        } else if (viewMode === '3d') {
+            // Если режим был установлен в '3d', переключаем на '2d'
+            setViewMode('2d');
+        }
+    }, [project.videoUrl, viewMode]);
+
+    // Инициализация проекта
+    useEffect(() => {
+        console.log('ConstructorPage: Initializing project');
+
+        // Проверяем наличие ID в URL
+        const projectId = params.id;
+        if (projectId) {
+            console.log('ConstructorPage: Found project ID in URL:', projectId);
+            handleSelectProject(projectId);
+        } else {
+            console.log('ConstructorPage: Creating new project');
+            setProject({
+                id: null,
+                name: 'Новый проект',
+                description: '',
+                duration: 60,
+                audioUrl: '',
+                videoUrl: '',
+                elements: [],
+                glbAnimations: []
+            });
+        }
+    }, [params.id]);
 
     // Загружаем проект при монтировании, если есть projectId в URL
     useEffect(() => {
@@ -615,6 +655,9 @@ See console for complete details.`);
                         description: projectToSave.description || '',
                         duration: projectToSave.duration || 60,
                         elements: projectToSave.elements || [],
+                        audioUrl: projectToSave.audioUrl || '',
+                        videoUrl: projectToSave.videoUrl || '',
+                        glbAnimations: projectToSave.glbAnimations || [],
                         isPrivate: true
                     };
 
@@ -850,10 +893,192 @@ See console for complete details.`);
         const file = e.target.files[0];
         if (!file) return;
 
-        // For now, we'll use a local URL
-        // In a real app, you'd upload to a server and get a URL
-        const audioUrl = URL.createObjectURL(file);
-        setProject(prev => ({ ...prev, audioUrl }));
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setIsLoading(true);
+
+        const token = localStorage.getItem('token');
+        axios.post(`${API_URL}/upload`, formData, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+            .then(response => {
+                setProject(prev => ({
+                    ...prev,
+                    audioUrl: response.data.url
+                }));
+
+                showNotification('Аудио успешно загружено', 'success');
+            })
+            .catch(error => {
+                console.error('Error uploading audio:', error);
+                showNotification('Ошибка при загрузке аудио', 'error');
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    };
+
+    // Handle video upload
+    const handleVideoUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        console.log('Video upload started with file:', file.name, file.type, file.size);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setIsLoading(true);
+        showNotification('Загрузка видео...', 'info');
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('No authentication token found');
+            showNotification('Ошибка: Не найден токен авторизации', 'error');
+            setIsLoading(false);
+            return;
+        }
+
+        console.log('Sending video upload request to:', `${API_URL}/upload`);
+
+        axios.post(`${API_URL}/upload`, formData, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+            .then(response => {
+                console.log('Video upload successful, response:', response.data);
+
+                if (!response.data || !response.data.url) {
+                    console.error('Invalid response from server, missing URL');
+                    showNotification('Ошибка: Неверный ответ сервера', 'error');
+                    return;
+                }
+
+                // Update project with video URL
+                setProject(prev => {
+                    const updated = {
+                        ...prev,
+                        videoUrl: response.data.url
+                    };
+                    console.log('Updated project state with videoUrl:', updated.videoUrl);
+                    return updated;
+                });
+
+                // Switch to video view mode
+                setViewMode('video');
+
+                showNotification('Видео успешно загружено', 'success');
+            })
+            .catch(error => {
+                console.error('Error uploading video:', error);
+
+                if (error.response) {
+                    console.error('Server response:', error.response.status, error.response.data);
+                }
+
+                showNotification(`Ошибка при загрузке видео: ${error.message}`, 'error');
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    };
+
+    // Handle uploading GLB animation files
+    const handleGlbUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        console.log('GLB upload started with file:', file.name, file.type, file.size);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setIsLoading(true);
+        showNotification('Загрузка GLB модели...', 'info');
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('No authentication token found');
+            showNotification('Ошибка: Не найден токен авторизации', 'error');
+            setIsLoading(false);
+            return;
+        }
+
+        axios.post(`${API_URL}/upload`, formData, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+            .then(response => {
+                console.log('GLB upload successful, response:', response.data);
+                console.log('GLB upload response type:', typeof response.data);
+                console.log('GLB upload response structure:', Object.keys(response.data));
+
+                if (!response.data || !response.data.url) {
+                    console.error('Invalid response from server, missing URL');
+                    console.error('Response data:', response.data);
+                    showNotification('Ошибка: Неверный ответ сервера', 'error');
+                    return;
+                }
+
+                // Проверка URL
+                console.log('GLB upload URL from server:', response.data.url);
+                console.log('GLB upload URL type:', typeof response.data.url);
+
+                // Убедимся, что URL правильный
+                const url = response.data.url.startsWith('http')
+                    ? response.data.url
+                    : `${API_URL}${response.data.url.startsWith('/') ? '' : '/'}${response.data.url}`;
+
+                console.log('GLB upload processed URL:', url);
+
+                const newGlbAnimation = {
+                    id: `glb-${Date.now()}`,
+                    url: url,
+                    name: file.name,
+                    description: ''
+                };
+
+                console.log('ConstructorPage: Creating new GLB animation:', newGlbAnimation);
+
+                setProject(prev => {
+                    const updatedProject = {
+                        ...prev,
+                        glbAnimations: [...(prev.glbAnimations || []), newGlbAnimation]
+                    };
+                    console.log('ConstructorPage: Updated project with GLB animations:', updatedProject.glbAnimations);
+                    return updatedProject;
+                });
+
+                showNotification('GLB анимация успешно загружена. Теперь вы можете использовать её для объектов', 'success');
+            })
+            .catch(error => {
+                console.error('Error uploading GLB animation:', error);
+
+                if (error.response) {
+                    console.error('Server response:', error.response.status, error.response.data);
+                }
+
+                showNotification(`Ошибка при загрузке GLB анимации: ${error.message}`, 'error');
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    };
+
+    // Remove GLB animation
+    const handleRemoveGlbAnimation = (id) => {
+        setProject(prev => ({
+            ...prev,
+            glbAnimations: prev.glbAnimations.filter(anim => anim.id !== id)
+        }));
     };
 
     // Handle project selection
@@ -1018,8 +1243,10 @@ See console for complete details.`);
                 name: 'Новый проект',
                 description: '',
                 duration: 60,
-                audioUrl: null,
-                elements: []
+                audioUrl: '',
+                videoUrl: '',
+                elements: [],
+                glbAnimations: []
             });
             showNotification(`Не удалось загрузить проект. ${err.message}`);
             // Reset project ID if there was an error
@@ -1461,23 +1688,100 @@ See console for complete details.`);
                                     </Box>
                                 )}
 
-                                {!project.audioUrl && (
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    {/* View mode toggle buttons */}
+                                    <ButtonGroup variant="outlined" size="small" sx={{ mr: 2 }}>
+                                        <Button
+                                            onClick={() => setViewMode('2d')}
+                                            variant={viewMode === '2d' ? 'contained' : 'outlined'}
+                                        >
+                                            2D
+                                        </Button>
+                                        <Button
+                                            onClick={() => setViewMode('video')}
+                                            variant={viewMode === 'video' ? 'contained' : 'outlined'}
+                                        >
+                                            Видео
+                                        </Button>
+                                    </ButtonGroup>
+
+                                    {!project.audioUrl && (
+                                        <Button
+                                            variant="outlined"
+                                            component="label"
+                                            startIcon={<UploadIcon />}
+                                            size="small"
+                                        >
+                                            Загрузить аудио
+                                            <input
+                                                type="file"
+                                                accept="audio/*"
+                                                hidden
+                                                onChange={handleAudioUpload}
+                                            />
+                                        </Button>
+                                    )}
+
                                     <Button
                                         variant="outlined"
                                         component="label"
-                                        startIcon={<UploadIcon />}
+                                        startIcon={<VideoLibrary />}
                                         size="small"
+                                        sx={{ ml: 1 }}
                                     >
-                                        Загрузить аудио
+                                        Загрузить видео
                                         <input
                                             type="file"
-                                            accept="audio/*"
+                                            accept="video/*"
                                             hidden
-                                            onChange={handleAudioUpload}
+                                            onChange={handleVideoUpload}
                                         />
                                     </Button>
-                                )}
+
+                                    <Button
+                                        variant="outlined"
+                                        component="label"
+                                        startIcon={<ThreeDRotation />}
+                                        size="small"
+                                        sx={{ ml: 1 }}
+                                    >
+                                        Загрузить GLB
+                                        <input
+                                            type="file"
+                                            accept=".glb"
+                                            hidden
+                                            onChange={handleGlbUpload}
+                                        />
+                                    </Button>
+                                </Box>
                             </Box>
+
+                            {/* Display GLB animations if any */}
+                            {project.glbAnimations && project.glbAnimations.length > 0 && (
+                                <Box sx={{ mt: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1, mb: 2 }}>
+                                    <Typography variant="subtitle1">GLB Анимации:</Typography>
+                                    <List dense>
+                                        {project.glbAnimations.map((anim) => (
+                                            <ListItem
+                                                key={anim.id}
+                                                secondaryAction={
+                                                    <IconButton edge="end" onClick={() => handleRemoveGlbAnimation(anim.id)}>
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                }
+                                            >
+                                                <ListItemIcon>
+                                                    <ThreeDRotation />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={anim.name}
+                                                    secondary={anim.description || 'Без описания'}
+                                                />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </Box>
+                            )}
 
                             <Player
                                 audioUrl={project.audioUrl}
@@ -1486,6 +1790,8 @@ See console for complete details.`);
                                 onTimeUpdate={handleTimeUpdate}
                                 isPlaying={isPlaying}
                                 onPlayPause={handlePlayPause}
+                                keyframeRecording={isRecordingKeyframes}
+                                toggleKeyframeRecording={toggleKeyframeRecording}
                             />
                         </Grid>
 
@@ -1569,14 +1875,79 @@ See console for complete details.`);
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={handleDrop}
                             >
-                                <Canvas
-                                    elements={project.elements}
-                                    currentTime={currentTime}
-                                    isPlaying={isPlaying}
-                                    onElementsChange={handleElementsUpdate}
-                                    selectedElement={selectedElement}
-                                    onElementSelect={handleElementSelect}
-                                />
+                                {/* Show different content based on view mode */}
+                                {viewMode === '2d' && (
+                                    <Canvas
+                                        elements={project.elements}
+                                        onElementsChange={handleElementsUpdate}
+                                        onElementSelect={handleElementSelect}
+                                        selectedElement={selectedElement}
+                                        currentTime={currentTime}
+                                        isPlaying={isPlaying}
+                                        isRecordingKeyframes={isRecordingKeyframes}
+                                        project={project}
+                                        onToggleRecording={toggleKeyframeRecording}
+                                    />
+                                )}
+
+                                {viewMode === 'video' && (
+                                    <Box sx={{
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        backgroundColor: '#000'
+                                    }}>
+                                        {/* Video Section */}
+                                        <Box sx={{
+                                            flex: '1',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            p: 2
+                                        }}>
+                                            {project.videoUrl ? (
+                                                <>
+                                                    <video
+                                                        src={project.videoUrl}
+                                                        controls
+                                                        style={{
+                                                            width: '100%',
+                                                            maxHeight: '100%'
+                                                        }}
+                                                    />
+                                                    <Box sx={{ mt: 2, width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                                        <Button
+                                                            variant="contained"
+                                                            color="error"
+                                                            size="small"
+                                                            onClick={() => {
+                                                                setProject(prev => ({ ...prev, videoUrl: '' }));
+                                                                showNotification('Видео удалено', 'info');
+                                                            }}
+                                                        >
+                                                            Удалить видео
+                                                        </Button>
+                                                    </Box>
+                                                </>
+                                            ) : (
+                                                <Box sx={{
+                                                    textAlign: 'center',
+                                                    p: 4,
+                                                    color: '#fff'
+                                                }}>
+                                                    <VideoLibrary sx={{ fontSize: 60, mb: 2 }} />
+                                                    <Typography variant="h5" gutterBottom>
+                                                        Видео
+                                                    </Typography>
+                                                    <Typography>
+                                                        Нажмите на кнопку "Загрузить видео" чтобы добавить видео к проекту
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                )}
                             </Box>
 
                             {/* Animation tips */}
