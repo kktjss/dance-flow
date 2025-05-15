@@ -64,6 +64,16 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
 
         current[path[path.length - 1]] = value;
 
+        // Add debug logging for position changes
+        if (name.startsWith('position.')) {
+            console.log(`PropertyPanel: Changed ${name} to ${value}`, {
+                elementId: updatedProperties.id,
+                position: updatedProperties.position,
+                has3DModel: updatedProperties.has3DModel || false,
+                modelPath: updatedProperties.modelPath || 'none'
+            });
+        }
+
         // Update local state
         setProperties(updatedProperties);
 

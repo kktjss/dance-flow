@@ -448,7 +448,8 @@ const Canvas = ({
             objectVisible: fabricObject.visible,
             objectOpacity: fabricObject.opacity,
             hasModelPath: !!element.modelPath,
-            modelPath: element.modelPath || 'none'
+            modelPath: element.modelPath || 'none',
+            has3DModel: !!element.has3DModel
         });
 
         // Always ensure the object is visible regardless of animation state
@@ -461,7 +462,7 @@ const Canvas = ({
         });
 
         // Check if element has a 3D model but no model icon
-        if (element.modelPath && !fabricObject.modelIcon) {
+        if ((element.modelPath || element.has3DModel) && !fabricObject.modelIcon) {
             console.log(`Element ${element.id} has 3D model path: ${element.modelPath}, adding 3D icon`);
 
             // Create 3D model icon
@@ -489,7 +490,7 @@ const Canvas = ({
             }
         }
         // Ensure existing model icon is visible and positioned correctly
-        else if (element.modelPath && fabricObject.modelIcon) {
+        else if ((element.modelPath || element.has3DModel) && fabricObject.modelIcon) {
             const oldIconVisible = fabricObject.modelIcon.visible;
 
             fabricObject.modelIcon.set({
@@ -503,6 +504,17 @@ const Canvas = ({
                 iconVisibilityBefore: oldIconVisible,
                 iconVisibilityAfter: fabricObject.modelIcon.visible
             });
+
+            // Если это элемент с 3D моделью и прямоугольник, обновляем стиль
+            if ((element.type === 'rectangle' || element.originalType === 'rectangle') && (element.modelPath || element.has3DModel)) {
+                fabricObject.set({
+                    fill: 'rgba(0, 0, 255, 0.2)',
+                    stroke: 'rgba(0, 0, 255, 0.7)',
+                    strokeWidth: 2,
+                    rx: 10, // Rounded corners
+                    ry: 10  // Rounded corners
+                });
+            }
         }
 
         console.log(`Set basic visibility for element ${element.id}:`, {
@@ -586,22 +598,10 @@ const Canvas = ({
                 opacity: currentOpacity,
                 visible: true // Explicitly ensure visibility
             });
-
-            // If this is a 3D element, also update the model path display
-            if (element.type === '3d' && element.modelPath) {
-                // Add model path information to the tooltip or label
-                fabricObject.set({
-                    fill: 'rgba(0, 0, 255, 0.2)',
-                    stroke: 'rgba(0, 0, 255, 0.7)',
-                    strokeWidth: 2,
-                    rx: 10, // Ensure rounded corners are preserved
-                    ry: 10  // Ensure rounded corners are preserved
-                });
-            }
         }
 
         console.log(`Applied interpolated properties: x=${currentX}, y=${currentY}, opacity=${currentOpacity}, scale=${currentScale}`);
-    }, [currentTime]);
+    }, [currentTime, canvasId]);
 
     // Функция добавления или обновления keyframe
     const addOrUpdateKeyframe = (element, time, properties = {}) => {
@@ -792,10 +792,14 @@ const Canvas = ({
                 validElements.forEach((element, index) => {
                     console.log(`Processing element ${index}: id=${element.id}, type=${element.type}, pos=(${element.position?.x},${element.position?.y})`);
 
-                    // Ensure elements with modelPath are marked as 3D type
-                    if (element.modelPath && element.type !== '3d') {
-                        console.log(`Element ${element.id} has modelPath but type is not '3d', updating type`);
-                        element.type = '3d';
+                    // Ensure elements with modelPath have has3DModel flag instead of changing type
+                    if (element.modelPath && !element.has3DModel) {
+                        console.log(`Element ${element.id} has modelPath but no has3DModel flag, adding flag`);
+                        element.has3DModel = true;
+                        // Сохраняем оригинальный тип, если его еще нет
+                        if (!element.originalType) {
+                            element.originalType = element.type;
+                        }
                     }
 
                     // Ensure position exists and has valid values
@@ -816,6 +820,16 @@ const Canvas = ({
                         if (fabricObject) {
                             console.log(`Updating existing element ${element.id} on canvas`);
 
+                            // Update position and other properties from element data
+                            fabricObject.set({
+                                left: element.position.x,
+                                top: element.position.y,
+                                width: element.size?.width,
+                                height: element.size?.height,
+                                opacity: element.style?.opacity || 1,
+                                visible: true
+                            });
+
                             // Update the element reference in case it changed
                             fabricObject.data = {
                                 elementId: element.id,
@@ -832,7 +846,7 @@ const Canvas = ({
                             console.log(`Creating new element ${element.id} on canvas`);
 
                             // Check if element has a 3D model
-                            const has3DModel = element.modelPath || element.type === '3d';
+                            const has3DModel = element.modelPath || element.has3DModel;
                             if (has3DModel) {
                                 console.log(`Element ${element.id} is a 3D element or has a 3D model path: ${element.modelPath || 'none'}`);
                             }
@@ -866,6 +880,30 @@ const Canvas = ({
 
                                     // Add to list of objects to add to canvas
                                     objectsToAdd.push(fabricObject);
+
+                                    // Если у элемента есть 3D модель, добавляем иконку
+                                    if (has3DModel) {
+                                        // Create 3D label
+                                        const modelLabel = new fabric.Text('3D', {
+                                            left: element.position.x + 5,
+                                            top: element.position.y + 5,
+                                            fontSize: 16,
+                                            fill: '#FFFFFF',
+                                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
+                                            padding: 5,
+                                            selectable: false,
+                                            evented: false,
+                                            visible: true
+                                        });
+
+                                        // Link label to object
+                                        fabricObject.modelIcon = modelLabel;
+
+                                        // Add label to canvas
+                                        fabricCanvas.add(modelLabel);
+
+                                        console.log(`Added 3D model icon for rectangle element ${element.id}`);
+                                    }
                                     break;
 
                                 case 'circle':
@@ -894,6 +932,30 @@ const Canvas = ({
 
                                     // Add to list of objects to add to canvas
                                     objectsToAdd.push(fabricObject);
+
+                                    // Если у элемента есть 3D модель, добавляем иконку
+                                    if (has3DModel) {
+                                        // Create 3D label
+                                        const modelLabel = new fabric.Text('3D', {
+                                            left: element.position.x + 5,
+                                            top: element.position.y + 5,
+                                            fontSize: 16,
+                                            fill: '#FFFFFF',
+                                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
+                                            padding: 5,
+                                            selectable: false,
+                                            evented: false,
+                                            visible: true
+                                        });
+
+                                        // Link label to object
+                                        fabricObject.modelIcon = modelLabel;
+
+                                        // Add label to canvas
+                                        fabricCanvas.add(modelLabel);
+
+                                        console.log(`Added 3D model icon for circle element ${element.id}`);
+                                    }
                                     break;
 
                                 case 'text':
@@ -920,12 +982,37 @@ const Canvas = ({
 
                                     // Add to list of objects to add to canvas
                                     objectsToAdd.push(fabricObject);
+
+                                    // Если у элемента есть 3D модель, добавляем иконку
+                                    if (has3DModel) {
+                                        // Create 3D label
+                                        const modelLabel = new fabric.Text('3D', {
+                                            left: element.position.x + 5,
+                                            top: element.position.y + 5,
+                                            fontSize: 16,
+                                            fill: '#FFFFFF',
+                                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
+                                            padding: 5,
+                                            selectable: false,
+                                            evented: false,
+                                            visible: true
+                                        });
+
+                                        // Link label to object
+                                        fabricObject.modelIcon = modelLabel;
+
+                                        // Add label to canvas
+                                        fabricCanvas.add(modelLabel);
+
+                                        console.log(`Added 3D model icon for text element ${element.id}`);
+                                    }
                                     break;
 
                                 case '3d':
-                                    console.log(`Creating 3D element: id=${element.id}, pos=(${element.position.x},${element.position.y}), modelPath=${element.modelPath || 'none'}`);
+                                    // Этот блок больше не нужен, так как мы обрабатываем 3D модели для каждого типа элемента
+                                    // Для совместимости со старыми данными, создадим прямоугольник
+                                    console.log(`Converting legacy 3D element to rectangle: id=${element.id}, pos=(${element.position.x},${element.position.y})`);
 
-                                    // For 3D elements, we create a rectangle with a 3D label
                                     fabricObject = new fabric.Rect({
                                         left: element.position.x,
                                         top: element.position.y,
@@ -1004,12 +1091,13 @@ const Canvas = ({
                                             };
 
                                             // Проверяем, есть ли у элемента 3D модель
-                                            if (element.modelPath) {
-                                                console.log(`Element ${element.id} has 3D model: ${element.modelPath}`, {
+                                            if (element.modelPath || element.has3DModel) {
+                                                console.log(`Element ${element.id} has 3D model: ${element.modelPath || 'has3DModel flag'}`, {
                                                     elementVisible: element.visible,
                                                     elementOpacity: element.style?.opacity,
                                                     imgVisible: img.visible,
-                                                    imgOpacity: img.opacity
+                                                    imgOpacity: img.opacity,
+                                                    has3DModel: element.has3DModel
                                                 });
 
                                                 // Создаем значок 3D модели поверх изображения
@@ -1086,7 +1174,7 @@ const Canvas = ({
 
                     // Если это элемент с 3D моделью, добавляем значок
                     const element = obj.data.element;
-                    if (element && element.modelPath && !obj.modelIcon) {
+                    if (element && (element.modelPath || element.has3DModel) && !obj.modelIcon) {
                         console.log(`Adding 3D model icon for element ${element.id}`);
 
                         // Создаем значок 3D модели
@@ -1114,7 +1202,8 @@ const Canvas = ({
                         console.log(`Added 3D model icon for element ${element.id}, object visibility:`, {
                             objVisible: obj.visible,
                             objOpacity: obj.opacity,
-                            iconVisible: modelIcon.visible
+                            iconVisible: modelIcon.visible,
+                            has3DModel: element.has3DModel
                         });
                     }
                 });
@@ -1315,8 +1404,10 @@ const Canvas = ({
                     },
                     // Ensure the element is visible in the current state
                     visible: visible,
-                    // Set the element type as '3d' to ensure it's recognized
-                    type: '3d'
+                    // Вместо изменения типа, добавляем флаг has3DModel
+                    has3DModel: true,
+                    // Сохраняем оригинальный тип, если его еще нет
+                    originalType: element.originalType || element.type
                 };
 
                 // Ensure modelPath and modelUrl are consistent and not empty
