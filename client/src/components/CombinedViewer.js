@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box as MuiBox, Typography, Button, IconButton, Tooltip, Paper, Alert } from '@mui/material';
-import { ThreeDRotation, Videocam, Close } from '@mui/icons-material';
+import { Box as MuiBox, Typography, Button, IconButton, Tooltip, Paper, Alert, Box } from '@mui/material';
+import { ThreeDRotation, Videocam, Close, Save } from '@mui/icons-material';
 import ModelViewer from './ModelViewer';
 import VideoViewer from './VideoViewer';
 
@@ -40,8 +40,33 @@ const CombinedViewer = ({
         }
     }, [videoUrl, activeView, glbAnimations, embedded]);
 
-    // Выбираем первую GLB анимацию, если она доступна и еще не выбрана
+    // Выбираем первую GLB анимацию или используем modelPath из элемента
     useEffect(() => {
+        // Сначала проверяем, есть ли modelPath у выбранного элемента
+        if (elementId && elementKeyframes && elementKeyframes.length > 0) {
+            // Находим элемент по ID в keyframes
+            const element = elementKeyframes.find(kf =>
+                kf.id === elementId ||
+                kf.elementId === elementId
+            );
+
+            if (element && element.modelPath) {
+                console.log('CombinedViewer: Found modelPath in element:', element.modelPath);
+
+                // Создаем объект анимации из modelPath элемента
+                const elementModel = {
+                    id: `model_${elementId}`,
+                    name: element.modelName || 'Модель элемента',
+                    url: element.modelPath
+                };
+
+                setSelectedGlbAnimation(elementModel);
+                console.log('CombinedViewer: Using model from element:', elementModel);
+                return;
+            }
+        }
+
+        // Если у элемента нет modelPath, используем первую доступную анимацию
         if (glbAnimations && glbAnimations.length > 0 && !selectedGlbAnimation) {
             // Проверяем URL первой анимации
             const firstAnimation = glbAnimations[0];
@@ -54,7 +79,7 @@ const CombinedViewer = ({
             setSelectedGlbAnimation(firstAnimation);
             console.log('CombinedViewer: Auto-selected first GLB animation:', firstAnimation);
         }
-    }, [glbAnimations, selectedGlbAnimation]);
+    }, [glbAnimations, selectedGlbAnimation, elementId, elementKeyframes]);
 
     // Переключаем на 3D вид, если видео отсутствует и пользователь пытается переключиться на видео
     useEffect(() => {
@@ -68,9 +93,128 @@ const CombinedViewer = ({
     const isVideoAvailable = Boolean(videoUrl);
 
     // Обработчик сохранения анимаций
-    const handleSaveAnimations = (animations) => {
+    const handleSaveAnimations = (data, elemId) => {
         if (onSaveAnimations) {
-            onSaveAnimations(animations, elementId);
+            // Проверяем формат данных
+            if (typeof data === 'object' && data.modelUrl) {
+                // Если данные уже содержат modelUrl, просто передаем их дальше
+                console.log('CombinedViewer: Forwarding complete model data:', {
+                    modelUrl: data.modelUrl,
+                    animationsCount: data.animations ? data.animations.length : 0,
+                    elementId: elemId || elementId,
+                    isLocalFile: data.isLocalFile || false
+                });
+                onSaveAnimations(data, elemId || elementId);
+            } else {
+                // Если данные не содержат modelUrl, добавляем URL выбранной анимации
+                const modelUrl = selectedGlbAnimation ? selectedGlbAnimation.url : null;
+                const animations = Array.isArray(data) ? data : [];
+                const isLocalFile = modelUrl && modelUrl.startsWith('blob:');
+
+                console.log('CombinedViewer: Selected animation for saving:', selectedGlbAnimation);
+                console.log('CombinedViewer: Model URL to save:', modelUrl);
+
+                if (!modelUrl) {
+                    console.warn('CombinedViewer: No model URL available for saving!');
+                }
+
+                const dataToSave = {
+                    animations: animations,
+                    modelUrl: modelUrl
+                };
+
+                // Если URL модели начинается с blob:, это локальный файл, который нужно обработать особым образом
+                if (isLocalFile) {
+                    console.log('CombinedViewer: Detected blob URL for model, will handle as local file');
+
+                    // Сохраняем информацию о том, что это локальный файл
+                    dataToSave.isLocalFile = true;
+
+                    // Если это локальный файл, добавляем имя файла, если оно доступно
+                    if (selectedGlbAnimation && selectedGlbAnimation.name) {
+                        dataToSave.modelName = selectedGlbAnimation.name;
+                    }
+                }
+
+                console.log('CombinedViewer: Saving model data with constructed object:', {
+                    modelUrl: modelUrl || 'не указан',
+                    modelName: selectedGlbAnimation ? selectedGlbAnimation.name : 'не выбрана',
+                    animationsCount: animations.length,
+                    elementId: elemId || elementId,
+                    isLocalFile: isLocalFile,
+                    fullData: JSON.stringify(dataToSave).substring(0, 100) + '...'
+                });
+
+                onSaveAnimations(dataToSave, elemId || elementId);
+            }
+        } else {
+            console.error('CombinedViewer: Cannot save - no onSaveAnimations callback provided');
+        }
+    };
+
+    // Обработчик закрытия просмотрщика
+    const handleClose = () => {
+        console.log('CombinedViewer: Closing viewer, preparing to save model state');
+
+        // Сохраняем текущие анимации перед закрытием
+        if (onSaveAnimations && selectedGlbAnimation) {
+            const modelUrl = selectedGlbAnimation ? selectedGlbAnimation.url : null;
+            const isLocalFile = modelUrl && modelUrl.startsWith('blob:');
+
+            console.log('CombinedViewer: Selected model details:', {
+                name: selectedGlbAnimation.name,
+                url: selectedGlbAnimation.url,
+                isLocalFile: isLocalFile
+            });
+
+            // Создаем объект с анимациями и URL модели
+            const dataToSave = {
+                animations: glbAnimations || [],
+                modelUrl: modelUrl,
+                // Explicitly set visibility to true to ensure the object remains visible
+                visible: true,
+                style: {
+                    opacity: 1 // Ensure opacity is set to fully visible
+                }
+            };
+
+            // Если URL модели начинается с blob:, это локальный файл, который нужно обработать особым образом
+            if (isLocalFile) {
+                console.log('CombinedViewer: Detected blob URL for model on close, will handle as local file');
+
+                // Сохраняем информацию о том, что это локальный файл
+                dataToSave.isLocalFile = true;
+
+                // Если это локальный файл, добавляем имя файла, если оно доступно
+                if (selectedGlbAnimation && selectedGlbAnimation.name) {
+                    dataToSave.modelName = selectedGlbAnimation.name;
+                }
+            }
+
+            console.log('CombinedViewer: Saving data on close:', {
+                modelUrl: dataToSave.modelUrl || 'не указан',
+                modelName: selectedGlbAnimation ? selectedGlbAnimation.name : 'не выбрана',
+                animationsCount: glbAnimations ? glbAnimations.length : 0,
+                elementId: elementId || 'не указан',
+                isLocalFile: isLocalFile,
+                visible: dataToSave.visible,
+                opacity: dataToSave.style.opacity,
+                fullData: JSON.stringify(dataToSave).substring(0, 100) + '...'
+            });
+
+            // Call the save animations callback
+            onSaveAnimations(dataToSave, elementId);
+            console.log('CombinedViewer: onSaveAnimations callback executed with elementId:', elementId);
+        } else if (!selectedGlbAnimation) {
+            console.warn('CombinedViewer: No model selected, nothing to save on close');
+        } else if (!onSaveAnimations) {
+            console.error('CombinedViewer: Cannot save - no onSaveAnimations callback provided');
+        }
+
+        // Вызываем onClose из props
+        if (onClose) {
+            console.log('CombinedViewer: Calling onClose callback');
+            onClose();
         }
     };
 
@@ -87,6 +231,21 @@ const CombinedViewer = ({
             console.log('CombinedViewer: URL to pass to ModelViewer:', selectedGlbAnimation.url);
         }
     }, [selectedGlbAnimation]);
+
+    // Эффект для проверки наличия локальных файлов моделей при монтировании компонента
+    useEffect(() => {
+        // Проверяем, есть ли у элемента локальный файл модели
+        if (elementId && elementKeyframes && elementKeyframes.length > 0) {
+            const element = elementKeyframes.find(el => el.id === elementId);
+            if (element && element.isLocalModelFile && element.modelPath && element.modelPath.startsWith('blob:')) {
+                // Локальный файл модели не может быть восстановлен после перезагрузки страницы
+                console.warn('CombinedViewer: Element has local model file that cannot be restored:', element.modelPath);
+
+                // Показываем уведомление пользователю
+                alert('Внимание: Локальный файл 3D модели не может быть восстановлен после перезагрузки страницы. Пожалуйста, загрузите модель снова.');
+            }
+        }
+    }, [elementId, elementKeyframes]);
 
     if (!isVisible) return null;
 
@@ -223,7 +382,7 @@ const CombinedViewer = ({
                 >
                     <ModelViewer
                         isVisible={activeView === '3d'}
-                        onClose={() => { }}
+                        onClose={handleClose}
                         playerDuration={playerDuration}
                         currentTime={currentTime}
                         isPlaying={isPlaying}
@@ -250,7 +409,7 @@ const CombinedViewer = ({
                 >
                     <VideoViewer
                         isVisible={activeView === 'video'}
-                        onClose={() => { }}
+                        onClose={handleClose}
                         videoUrl={videoUrl}
                         embedded={true}
                     />
@@ -259,14 +418,54 @@ const CombinedViewer = ({
 
             {/* Кнопка закрытия - только если не в режиме embedded */}
             {!embedded && (
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={onClose}
-                    sx={{ mt: 2 }}
-                >
-                    Закрыть
-                </Button>
+                <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<Save />}
+                        onClick={() => {
+                            // Сохраняем текущие анимации
+                            if (onSaveAnimations) {
+                                const dataToSave = {
+                                    animations: glbAnimations || [],
+                                    modelUrl: selectedGlbAnimation ? selectedGlbAnimation.url : null,
+                                    // Explicitly set visibility to true to ensure the object remains visible
+                                    visible: true,
+                                    style: {
+                                        opacity: 1 // Ensure opacity is set to fully visible
+                                    }
+                                };
+
+                                console.log('CombinedViewer: Saving from save button:', {
+                                    modelUrl: dataToSave.modelUrl || 'не указан',
+                                    modelName: selectedGlbAnimation ? selectedGlbAnimation.name : 'не выбрана',
+                                    animationsCount: glbAnimations ? glbAnimations.length : 0,
+                                    elementId: elementId || 'не указан'
+                                });
+
+                                onSaveAnimations(dataToSave, elementId);
+
+                                // Показываем уведомление с подробной информацией
+                                const modelName = selectedGlbAnimation ? selectedGlbAnimation.name : 'Модель';
+                                const animCount = glbAnimations ? glbAnimations.length : 0;
+                                const animInfo = animCount > 0 ? ` и ${animCount} анимаций` : '';
+
+                                alert(`${modelName}${animInfo} успешно сохранена!`);
+                            } else {
+                                console.error('CombinedViewer: Cannot save - no onSaveAnimations callback provided');
+                                alert('Ошибка: Невозможно сохранить модель. Обратитесь к разработчику.');
+                            }
+                        }}
+                    >
+                        Сохранить
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={handleClose}
+                    >
+                        Закрыть
+                    </Button>
+                </Box>
             )}
         </MuiBox>
     );

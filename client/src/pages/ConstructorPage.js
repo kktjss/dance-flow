@@ -19,36 +19,53 @@ import CombinedViewer from '../components/CombinedViewer';
 const API_URL = 'http://localhost:5000/api';
 
 const ConstructorPage = () => {
-    // State for project data
     const [project, setProject] = useState({
-        id: null,
         name: 'Новый проект',
         description: '',
         duration: 60,
+        elements: [],
         audioUrl: '',
         videoUrl: '',
-        elements: [],
         glbAnimations: []
     });
-
-    // State for UI
     const [currentTime, setCurrentTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [selectedElement, setSelectedElement] = useState(null);
-    const [tabIndex, setTabIndex] = useState(0);
-    const [showProjects, setShowProjects] = useState(false);
     const [error, setError] = useState(null);
-    const [isEditingDuration, setIsEditingDuration] = useState(false);
-    const [isRecordingKeyframes, setIsRecordingKeyframes] = useState(false);
-    const [copyMenuAnchor, setCopyMenuAnchor] = useState(null);
-    const [clipboardElement, setClipboardElement] = useState(null);
-    const [clipboardKeyframes, setClipboardKeyframes] = useState(null);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
-    const [isLoading, setIsLoading] = useState(false);
-    const [viewMode, setViewMode] = useState('2d'); // '2d' или 'video'
-
+    const [isRecordingKeyframes, setIsRecordingKeyframes] = useState(false);
+    const [showProjects, setShowProjects] = useState(false);
+    const [copiedProperties, setCopiedProperties] = useState(null);
+    const [copiedAnimations, setCopiedAnimations] = useState(null);
+    const [copyMenuAnchorEl, setCopyMenuAnchorEl] = useState(null);
+    const [isUploading, setIsUploading] = useState({
+        audio: false,
+        video: false,
+        glb: false
+    });
+    const { id } = useParams();
     const navigate = useNavigate();
-    const params = useParams();
+
+    // Экспортируем функцию сохранения проекта в глобальную область видимости
+    // для доступа из других компонентов
+    useEffect(() => {
+        // Создаем функцию-обертку, которая будет вызывать handleSaveProject
+        window.saveProject = () => {
+            console.log('Global saveProject function called');
+            handleSaveProject();
+        };
+
+        // Очистка при размонтировании компонента
+        return () => {
+            window.saveProject = undefined;
+            console.log('Global saveProject function removed');
+        };
+    }, [project]); // Зависимость от project, чтобы функция всегда имела доступ к актуальному состоянию
+
+    // State for UI
+    const [tabIndex, setTabIndex] = useState(0);
+    const [isEditingDuration, setIsEditingDuration] = useState(false);
+    const [viewMode, setViewMode] = useState('2d'); // '2d' или 'video'
 
     // Автоматическое переключение на режим видео при загрузке видео
     useEffect(() => {
@@ -65,7 +82,7 @@ const ConstructorPage = () => {
         console.log('ConstructorPage: Initializing project');
 
         // Проверяем наличие ID в URL
-        const projectId = params.id;
+        const projectId = id;
         if (projectId) {
             console.log('ConstructorPage: Found project ID in URL:', projectId);
             handleSelectProject(projectId);
@@ -82,16 +99,16 @@ const ConstructorPage = () => {
                 glbAnimations: []
             });
         }
-    }, [params.id]);
+    }, [id]);
 
     // Загружаем проект при монтировании, если есть projectId в URL
     useEffect(() => {
-        const projectId = params.projectId;
+        const projectId = id;
         if (projectId && !project.id) {
             console.log('Loading project from URL parameter:', projectId);
             handleSelectProject(projectId);
         }
-    }, [params.projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Expose jumpToTime function to the window for PropertyPanel's keyframe navigation
     useEffect(() => {
@@ -138,13 +155,13 @@ const ConstructorPage = () => {
     // Open Copy menu
     const handleOpenCopyMenu = (event) => {
         if (selectedElement) {
-            setCopyMenuAnchor(event.currentTarget);
+            setCopyMenuAnchorEl(event.currentTarget);
         }
     };
 
     // Close Copy menu
     const handleCloseCopyMenu = () => {
-        setCopyMenuAnchor(null);
+        setCopyMenuAnchorEl(null);
     };
 
     // Copy element properties (without animations)
@@ -157,7 +174,7 @@ const ConstructorPage = () => {
                 content: selectedElement.content
             };
 
-            setClipboardElement(elementProperties);
+            setCopiedProperties(elementProperties);
             handleCloseCopyMenu();
         }
     };
@@ -167,24 +184,24 @@ const ConstructorPage = () => {
         if (selectedElement && selectedElement.keyframes) {
             // Deep copy keyframes
             const keyframesCopy = JSON.parse(JSON.stringify(selectedElement.keyframes));
-            setClipboardKeyframes(keyframesCopy);
+            setCopiedAnimations(keyframesCopy);
             handleCloseCopyMenu();
         }
     };
 
     // Paste element properties to selected element
     const handlePasteElementProperties = () => {
-        if (selectedElement && clipboardElement) {
+        if (selectedElement && copiedProperties) {
             const updatedElement = {
                 ...selectedElement,
-                size: { ...clipboardElement.size },
-                style: { ...clipboardElement.style }
+                size: { ...copiedProperties.size },
+                style: { ...copiedProperties.style }
             };
 
             // Paste content only if types match
-            if (selectedElement.type === clipboardElement.type &&
+            if (selectedElement.type === copiedProperties.type &&
                 (selectedElement.type === 'text' || selectedElement.type === 'image')) {
-                updatedElement.content = clipboardElement.content;
+                updatedElement.content = copiedProperties.content;
             }
 
             handleElementUpdate(updatedElement);
@@ -193,11 +210,11 @@ const ConstructorPage = () => {
 
     // Paste animations to selected element
     const handlePasteElementAnimations = () => {
-        if (selectedElement && clipboardKeyframes) {
+        if (selectedElement && copiedAnimations) {
             // Create a new version of the element with copied keyframes
             const updatedElement = {
                 ...selectedElement,
-                keyframes: JSON.parse(JSON.stringify(clipboardKeyframes))
+                keyframes: JSON.parse(JSON.stringify(copiedAnimations))
             };
 
             handleElementUpdate(updatedElement);
@@ -205,8 +222,8 @@ const ConstructorPage = () => {
     };
 
     // Check if we can paste properties or animations
-    const canPasteProperties = Boolean(clipboardElement && selectedElement);
-    const canPasteAnimations = Boolean(clipboardKeyframes && selectedElement);
+    const canPasteProperties = Boolean(copiedProperties && selectedElement);
+    const canPasteAnimations = Boolean(copiedAnimations && selectedElement);
 
     // Handle drag and drop from tool panel
     const handleDrop = (e) => {
@@ -896,7 +913,7 @@ See console for complete details.`);
         const formData = new FormData();
         formData.append('file', file);
 
-        setIsLoading(true);
+        setIsUploading(prev => ({ ...prev, audio: true }));
 
         const token = localStorage.getItem('token');
         axios.post(`${API_URL}/upload`, formData, {
@@ -918,7 +935,7 @@ See console for complete details.`);
                 showNotification('Ошибка при загрузке аудио', 'error');
             })
             .finally(() => {
-                setIsLoading(false);
+                setIsUploading(prev => ({ ...prev, audio: false }));
             });
     };
 
@@ -932,14 +949,14 @@ See console for complete details.`);
         const formData = new FormData();
         formData.append('file', file);
 
-        setIsLoading(true);
+        setIsUploading(prev => ({ ...prev, video: true }));
         showNotification('Загрузка видео...', 'info');
 
         const token = localStorage.getItem('token');
         if (!token) {
             console.error('No authentication token found');
             showNotification('Ошибка: Не найден токен авторизации', 'error');
-            setIsLoading(false);
+            setIsUploading(prev => ({ ...prev, video: false }));
             return;
         }
 
@@ -982,7 +999,7 @@ See console for complete details.`);
                 showNotification(`Ошибка при загрузке видео: ${error.message}`, 'error');
             })
             .finally(() => {
-                setIsLoading(false);
+                setIsUploading(prev => ({ ...prev, video: false }));
             });
     };
 
@@ -996,14 +1013,14 @@ See console for complete details.`);
         const formData = new FormData();
         formData.append('file', file);
 
-        setIsLoading(true);
+        setIsUploading(prev => ({ ...prev, glb: true }));
         showNotification('Загрузка GLB модели...', 'info');
 
         const token = localStorage.getItem('token');
         if (!token) {
             console.error('No authentication token found');
             showNotification('Ошибка: Не найден токен авторизации', 'error');
-            setIsLoading(false);
+            setIsUploading(prev => ({ ...prev, glb: false }));
             return;
         }
 
@@ -1066,7 +1083,7 @@ See console for complete details.`);
                 showNotification(`Ошибка при загрузке GLB анимации: ${error.message}`, 'error');
             })
             .finally(() => {
-                setIsLoading(false);
+                setIsUploading(prev => ({ ...prev, glb: false }));
             });
     };
 
@@ -1807,8 +1824,8 @@ See console for complete details.`);
                                         </IconButton>
 
                                         <Menu
-                                            anchorEl={copyMenuAnchor}
-                                            open={Boolean(copyMenuAnchor)}
+                                            anchorEl={copyMenuAnchorEl}
+                                            open={Boolean(copyMenuAnchorEl)}
                                             onClose={handleCloseCopyMenu}
                                         >
                                             <MenuItem onClick={handleCopyElementProperties}>

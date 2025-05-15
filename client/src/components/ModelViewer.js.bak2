@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, Suspense, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, useGLTF, Grid, Html } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, useGLTF, Grid } from '@react-three/drei';
 import { Box as MuiBox, CircularProgress, Button, IconButton, Slider, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, Menu, MenuItem, Select, FormControl, InputLabel, Tabs, Tab } from '@mui/material';
 import { PlayArrow, Pause, AddCircleOutline, Delete, Edit, DragIndicator, Save, FolderOpen, Upload, Close as CloseIcon } from '@mui/icons-material';
 import * as THREE from 'three';
@@ -16,7 +16,9 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     const [debugInfo, setDebugInfo] = useState({
         modelLoaded: false,
         animationsCount: 0,
-        modelUrl: glbAnimationUrl,
+        modelUrl: null,
+        modelPosition: [0, 0, 0],
+        modelScale: [1, 1, 1],
         error: null
     });
 
@@ -28,6 +30,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     const animationsRef = useRef([]);
     const activeActionsRef = useRef({});
     const [externalAnimations, setExternalAnimations] = useState({});
+    const modelRef = useRef(null);
 
     // Handle WebGL context loss
     useEffect(() => {
@@ -46,6 +49,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
             // Set loading error
             setLoadingError('WebGL контекст был потерян. Пожалуйста, перезагрузите страницу.');
+            setDebugInfo(prev => ({ ...prev, error: 'WebGL context lost' }));
         };
 
         const handleContextRestored = () => {
@@ -53,6 +57,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
             // Clear error
             setLoadingError(null);
+            setDebugInfo(prev => ({ ...prev, error: null }));
 
             // Reload the model
             if (glbAnimationUrl) {
@@ -74,16 +79,6 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
     // Load custom GLB model if URL is provided
     useEffect(() => {
-        // Debug log to check the URL value
-        console.log('XbotModel: glbAnimationUrl check:', {
-            url: glbAnimationUrl,
-            type: typeof glbAnimationUrl,
-            isNull: glbAnimationUrl === null,
-            isUndefined: glbAnimationUrl === undefined,
-            isFalsy: !glbAnimationUrl,
-            stringValue: String(glbAnimationUrl)
-        });
-
         if (glbAnimationUrl) {
             console.log('XbotModel: Loading custom GLB model from URL:', glbAnimationUrl);
             console.log('XbotModel: Element details:', {
@@ -96,8 +91,8 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             setLoadingError(null);
             setDebugInfo(prev => ({
                 ...prev,
-                modelUrl: glbAnimationUrl,
                 modelLoaded: false,
+                modelUrl: glbAnimationUrl,
                 error: null
             }));
 
@@ -110,67 +105,143 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             console.log('XbotModel: Processed URL for loading:', processedUrl);
             console.log('XbotModel: Current origin:', window.location.origin);
 
-            // Track load start time
-            const loadStartTime = Date.now();
+            try {
+                // Use GLTFLoader directly
+                const loader = new GLTFLoader();
 
-            new GLTFLoader()
-                .load(
+                // Добавляем обработчик для CORS-ошибок
+                THREE.DefaultLoadingManager.onError = function (url) {
+                    console.error('XbotModel: Error loading resource', url);
+                    setLoadingError(`Ошибка загрузки ресурса: ${url}`);
+                    setDebugInfo(prev => ({ ...prev, error: `Resource loading error: ${url}` }));
+                };
+
+                // Специальная обработка для blob URL
+                if (processedUrl.startsWith('blob:')) {
+                    console.log('XbotModel: Detected blob URL, using special handling for local file');
+                }
+
+                console.log('XbotModel: Starting to load model from:', processedUrl);
+
+                // Устанавливаем crossOrigin для загрузчика
+                THREE.DefaultLoadingManager.crossOrigin = 'anonymous';
+
+                // Add a timeout to detect if the load is taking too long
+                const loadTimeout = setTimeout(() => {
+                    console.warn('XbotModel: Model loading is taking longer than expected');
+                    setDebugInfo(prev => ({ ...prev, error: 'Loading timeout - taking longer than expected' }));
+                }, 5000);
+
+                loader.load(
                     processedUrl,
                     (gltf) => {
-                        // Success callback
-                        const loadEndTime = Date.now();
-                        console.log(`XbotModel: Model loaded successfully in ${loadEndTime - loadStartTime}ms`);
-                        console.log('XbotModel: Animations found:', gltf.animations ? gltf.animations.length : 0);
+                        clearTimeout(loadTimeout);
+                        console.log('XbotModel: Custom model loaded successfully with animations:', gltf.animations);
+                        console.log('XbotModel: Model scene:', gltf.scene);
 
-                        // Set custom model
-                        setCustomModel({ scene: gltf.scene, animations: gltf.animations });
+                        // Apply default transformations to the model
+                        gltf.scene.traverse((child) => {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                                console.log('XbotModel: Applied shadows to mesh:', child.name);
+                            }
+                        });
 
-                        // Update debug info
+                        // Center the model
+                        const box = new THREE.Box3().setFromObject(gltf.scene);
+                        const center = box.getCenter(new THREE.Vector3());
+                        gltf.scene.position.x = -center.x;
+                        gltf.scene.position.y = -center.y;
+                        gltf.scene.position.z = -center.z;
+
+                        // Apply a default scale if the model is too large or too small
+                        const size = box.getSize(new THREE.Vector3());
+                        const maxDim = Math.max(size.x, size.y, size.z);
+                        let scale = 1;
+                        if (maxDim > 10) {
+                            scale = 5 / maxDim;
+                            gltf.scene.scale.set(scale, scale, scale);
+                            console.log('XbotModel: Model was too large, scaled down by factor:', scale);
+                        } else if (maxDim < 1) {
+                            scale = 2 / maxDim;
+                            gltf.scene.scale.set(scale, scale, scale);
+                            console.log('XbotModel: Model was too small, scaled up by factor:', scale);
+                        }
+
+                        // Store model position and scale for debugging
                         setDebugInfo(prev => ({
                             ...prev,
                             modelLoaded: true,
-                            animationsCount: gltf.animations ? gltf.animations.length : 0,
-                            modelScene: !!gltf.scene
+                            modelPosition: [
+                                gltf.scene.position.x,
+                                gltf.scene.position.y,
+                                gltf.scene.position.z
+                            ],
+                            modelScale: [scale, scale, scale],
+                            animationsCount: gltf.animations ? gltf.animations.length : 0
                         }));
 
+                        // Store a reference to the model
+                        modelRef.current = gltf.scene;
+
+                        setCustomModel({ scene: gltf.scene, animations: gltf.animations });
+
                         // Pass animations to parent if available
-                        if (onModelLoad && gltf.animations) {
+                        if (gltf.animations && gltf.animations.length > 0) {
+                            console.log('XbotModel: Passing animations to parent component');
                             onModelLoad(gltf.animations);
+                        } else {
+                            console.warn('XbotModel: Model loaded but no animations found');
+                            // Create a default animation if none exists
+                            const defaultAnimation = new THREE.AnimationClip('Default', 5, []);
+                            onModelLoad([defaultAnimation]);
                         }
 
-                        // Clear loading state
                         setIsLoading(false);
                     },
-                    (progress) => {
-                        // Progress callback
-                        const percentComplete = progress.loaded / progress.total * 100;
-                        console.log(`XbotModel: Loading progress: ${percentComplete.toFixed(2)}%`);
+                    (xhr) => {
+                        const progress = Math.round(xhr.loaded / xhr.total * 100);
+                        console.log(`XbotModel: Loading progress: ${progress}%`);
+                        setDebugInfo(prev => ({ ...prev, loadingProgress: progress }));
                     },
                     (error) => {
-                        // Error callback
-                        console.error('XbotModel: Error loading GLB model:', error);
+                        clearTimeout(loadTimeout);
+                        console.error('XbotModel: Error loading custom GLB model:', error);
+                        console.error('XbotModel: Error details:', error.message);
 
                         // Set error message
                         setLoadingError(`Ошибка загрузки модели: ${error.message}`);
-                        setDebugInfo(prev => ({
-                            ...prev,
-                            error: error.message,
-                            modelLoaded: false
-                        }));
+                        setDebugInfo(prev => ({ ...prev, error: `Model loading error: ${error.message}` }));
                         setIsLoading(false);
                     }
                 );
+            } catch (error) {
+                console.error('XbotModel: Error in loadModel function:', error);
+                console.error('XbotModel: Error stack:', error.stack);
+                setLoadingError(`Ошибка загрузки модели: ${error.message}`);
+                setDebugInfo(prev => ({ ...prev, error: `Exception: ${error.message}` }));
+                setIsLoading(false);
+            }
         } else {
             console.log('XbotModel: No GLB URL provided, skipping model load');
-            // Set a user-friendly error message suggesting options
-            setLoadingError('Нет URL-адреса 3D модели. Пожалуйста, загрузите модель через кнопку "Загрузить" или выберите существующую модель.');
+            setCustomModel(null);
+            setLoadingError(null);
+            setIsLoading(false);
             setDebugInfo(prev => ({
                 ...prev,
                 modelLoaded: false,
-                modelUrl: 'None',
-                error: 'No model URL provided'
+                modelUrl: null,
+                error: 'No GLB URL provided'
             }));
         }
+
+        // Cleanup function
+        return () => {
+            // Reset error handler
+            THREE.DefaultLoadingManager.onError = null;
+            THREE.DefaultLoadingManager.crossOrigin = 'anonymous';
+        };
     }, [glbAnimationUrl, onModelLoad, elementId, elementKeyframes]);
 
     // Initialize animation mixer
@@ -190,22 +261,17 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             // Pass animations to parent
             onModelLoad(customModel.animations);
 
-            // Update debug info
             setDebugInfo(prev => ({
                 ...prev,
-                modelLoaded: true,
                 animationsCount: customModel.animations.length,
-                modelScene: true
+                animationNames: customModel.animations.map(anim => anim.name).join(', ')
             }));
         } else if (customModel) {
             console.warn('XbotModel: Model loaded but no animations found:', customModel);
-
-            // Update debug info even if no animations
             setDebugInfo(prev => ({
                 ...prev,
-                modelLoaded: true,
                 animationsCount: 0,
-                modelScene: true
+                animationNames: 'No animations found'
             }));
         }
     }, [customModel, onModelLoad]);
@@ -552,6 +618,10 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         <sphereGeometry args={[0.5, 16, 16]} />
                         <meshStandardMaterial color="gray" wireframe />
                     </mesh>
+                    <mesh position={[0, 1, 0]}>
+                        <boxGeometry args={[1, 0.1, 0.1]} />
+                        <meshStandardMaterial color="white" />
+                    </mesh>
                 </>
             )}
 
@@ -561,27 +631,12 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         <boxGeometry args={[1, 1, 1]} />
                         <meshStandardMaterial color="red" />
                     </mesh>
-                    <Html position={[0, 2, 0]}>
-                        <div style={{ color: 'white', backgroundColor: 'rgba(0,0,0,0.7)', padding: '8px', borderRadius: '4px', maxWidth: '200px' }}>
-                            {loadingError}
-                        </div>
-                    </Html>
+                    <mesh position={[0, 1.5, 0]}>
+                        <boxGeometry args={[0.1, 0.1, 0.1]} />
+                        <meshStandardMaterial color="yellow" />
+                    </mesh>
                 </>
             )}
-
-            {/* Debug information overlay */}
-            <Html position={[0, -2.5, 0]}>
-                <div style={{ color: 'white', backgroundColor: 'rgba(0,0,0,0.7)', padding: '5px', borderRadius: '4px', fontSize: '10px' }}>
-                    <div>Model URL: {debugInfo.modelUrl ? (debugInfo.modelUrl.length > 30 ? `...${debugInfo.modelUrl.slice(-30)}` : debugInfo.modelUrl) : 'None'}</div>
-                    <div>Loaded: {debugInfo.modelLoaded ? 'Yes' : 'No'}</div>
-                    <div>Animations: {debugInfo.animationsCount}</div>
-                    <div>Scene: {debugInfo.modelScene ? 'Yes' : 'No'}</div>
-                    {debugInfo.error && <div style={{ color: 'red' }}>Error: {debugInfo.error}</div>}
-                </div>
-            </Html>
-
-            {/* Add axis helper for orientation */}
-            <axesHelper args={[5]} />
 
             {!isLoading && !loadingError && customModel && (
                 <>
@@ -592,8 +647,20 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         position={[0, 0, 0]}
                         rotation={[0, 0, 0]}
                     />
+
+                    {/* Debug axes to show orientation */}
+                    <axesHelper args={[5]} />
+
+                    {/* Debug grid to show ground plane */}
+                    <gridHelper args={[10, 10, 0x888888, 0x444444]} />
                 </>
             )}
+
+            {/* Debug info overlay - always visible */}
+            <mesh position={[0, -2, 0]}>
+                <boxGeometry args={[0.2, 0.2, 0.2]} />
+                <meshStandardMaterial color={debugInfo.modelLoaded ? "green" : "red"} />
+            </mesh>
         </>
     );
 };
@@ -1216,6 +1283,23 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
     const fileInputRef = useRef(null);
     const [glbUrl, setGlbUrl] = useState('');
+    const [showDebugPanel, setShowDebugPanel] = useState(false);
+    const [debugInfo, setDebugInfo] = useState({
+        modelUrl: glbAnimationUrl,
+        modelLoaded: false,
+        error: null,
+        animationsCount: 0
+    });
+
+    // Add debug info update function
+    const updateDebugInfo = useCallback((info) => {
+        setDebugInfo(prev => ({ ...prev, ...info }));
+    }, []);
+
+    // Toggle debug panel
+    const toggleDebugPanel = () => {
+        setShowDebugPanel(prev => !prev);
+    };
 
     // Load saved animations from localStorage on component mount
     useEffect(() => {
@@ -1478,12 +1562,20 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     }, [externalTimeUpdate]);
 
-    // Handle model load
+    // Handle model load with debug info
     const handleModelLoad = useCallback((animations) => {
         if (animations && animations.length > 0) {
             const animDuration = animations[0].duration;
             setModelDuration(animDuration);
             setAvailableAnimations(animations);
+            setModelLoaded(true);
+
+            updateDebugInfo({
+                modelLoaded: true,
+                animationsCount: animations.length,
+                animationNames: animations.map(a => a.name).join(', '),
+                modelDuration: animDuration
+            });
 
             // Only use model duration if player duration is not provided
             if (!playerDuration) {
@@ -1511,7 +1603,117 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 return [newAnimation];
             });
 
+            // If we already have element keyframes, don't add an end marker here
+            // as it will be handled by the useEffect that syncs with element keyframes
+            if (elementKeyframes.length === 0) {
+                // Add an end marker if none exists
+                setAnimationMarkers(current => {
+                    const hasEndMarker = current.some(marker => marker.time === playerDuration);
+                    if (!hasEndMarker) {
+                        return [
+                            ...current,
+                            {
+                                time: playerDuration || animDuration,
+                                modelTime: animDuration,
+                                label: 'Конец',
+                                color: '#f44336'
+                            }
+                        ];
+                    }
+                    return current;
+                });
+            }
+        } else {
+            updateDebugInfo({
+                modelLoaded: false,
+                error: 'No animations found in model',
+                animationsCount: 0
+            });
+        }
+    }, [playerDuration, elementKeyframes, updateDebugInfo]);
+
+    // Add a debug panel component
+    const DebugPanel = () => {
+        if (!showDebugPanel) return null;
+
+        return (
+            <MuiBox
+                sx={{
+                    position: 'absolute',
+                    top: 10,
+                    left: 10,
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    color: 'white',
+                    padding: 2,
+                    borderRadius: 1,
+                    zIndex: 1000,
+                    maxWidth: 400,
+                    maxHeight: 300,
+                    overflow: 'auto'
+                }}
+            >
+                <Typography variant="h6">Debug Info</Typography>
+                <Typography variant="body2">Model URL: {debugInfo.modelUrl || 'None'}</Typography>
+                <Typography variant="body2">Model Loaded: {debugInfo.modelLoaded ? 'Yes' : 'No'}</Typography>
+                <Typography variant="body2">Animations: {debugInfo.animationsCount || 0}</Typography>
+                {debugInfo.animationNames && (
+                    <Typography variant="body2">Animation Names: {debugInfo.animationNames}</Typography>
+                )}
+                {debugInfo.error && (
+                    <Typography variant="body2" sx={{ color: 'red' }}>Error: {debugInfo.error}</Typography>
+                )}
+                <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => console.log('Current debug state:', debugInfo)}
+                    sx={{ mt: 1 }}
+                >
+                    Log Debug Info
+                </Button>
+            </MuiBox>
+        );
+    };
+
+    // Handle model load
+    const handleModelLoad = useCallback((animations) => {
+        if (animations && animations.length > 0) {
+            const animDuration = animations[0].duration;
+            setModelDuration(animDuration);
+            setAvailableAnimations(animations);
             setModelLoaded(true);
+
+            updateDebugInfo({
+                modelLoaded: true,
+                animationsCount: animations.length,
+                animationNames: animations.map(a => a.name).join(', '),
+                modelDuration: animDuration
+            });
+
+            // Only use model duration if player duration is not provided
+            if (!playerDuration) {
+                setDuration(animDuration);
+            }
+
+            // Автоматически добавляем первую анимацию из модели
+            setActiveAnimations(current => {
+                // Если уже есть анимации, не добавляем новую
+                if (current && current.length > 0) {
+                    return current;
+                }
+
+                // Добавляем первую анимацию из загруженной модели
+                const newAnimation = {
+                    id: 'anim_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                    name: animations[0].name || 'Анимация 1',
+                    index: 0,
+                    start: 0,
+                    end: playerDuration || animDuration,
+                    weight: 1,
+                    timeScale: 1
+                };
+
+                return [newAnimation];
+            });
 
             // If we already have element keyframes, don't add an end marker here
             // as it will be handled by the useEffect that syncs with element keyframes
@@ -1533,8 +1735,14 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     return current;
                 });
             }
+        } else {
+            updateDebugInfo({
+                modelLoaded: false,
+                error: 'No animations found in model',
+                animationsCount: 0
+            });
         }
-    }, [playerDuration, elementKeyframes]);
+    }, [playerDuration, elementKeyframes, updateDebugInfo]);
 
     // Add a new marker
     const handleAddMarker = () => {
@@ -2026,14 +2234,6 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
 
     // Helper function to save and close
     const saveAndClose = (modelUrl, modelId = null) => {
-        // Make sure the URL starts with / for server URLs if it's not a blob
-        if (modelUrl && !modelUrl.startsWith('blob:') && !modelUrl.startsWith('http') && !modelUrl.startsWith('/')) {
-            modelUrl = '/' + modelUrl;
-        }
-
-        // Log the final URL being saved
-        console.log('ModelViewer: Final modelUrl for saving on close:', modelUrl);
-
         // Создаем объект с анимациями и URL модели
         const dataToSave = {
             animations: savedAnimations.length > 0 ? savedAnimations : activeAnimations,
@@ -2153,14 +2353,6 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
 
     // Helper function to save model with URL
     const saveModelWithUrl = (modelUrl) => {
-        // Make sure the URL starts with / for server URLs if it's not a blob
-        if (modelUrl && !modelUrl.startsWith('blob:') && !modelUrl.startsWith('http') && !modelUrl.startsWith('/')) {
-            modelUrl = '/' + modelUrl;
-        }
-
-        // Log the final URL being saved
-        console.log('ModelViewer: Final modelUrl for saving:', modelUrl);
-
         // Создаем объект с анимациями и URL модели
         const dataToSave = {
             animations: savedAnimations.length > 0 ? savedAnimations : activeAnimations,
@@ -2192,248 +2384,6 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             alert('Ошибка при сохранении модели: ' + error.message);
         }
     };
-
-    // IMPORTANT: Explicitly log what URLs are being passed
-    console.log('ModelViewer: Rendering with props:', {
-        hasGlbAnimationUrl: !!glbAnimationUrl,
-        glbAnimationUrl: glbAnimationUrl,
-        hasSelectedModel: !!selectedModel,
-        selectedModelUrl: selectedModel ? selectedModel.url : 'none',
-        elementId: elementId || 'none',
-        hasElementKeyframes: elementKeyframes && elementKeyframes.length > 0,
-        keyframesCount: elementKeyframes ? elementKeyframes.length : 0
-    });
-
-    // Check if the element exists directly in the keyframes array
-    let directElementWithModelPath = null;
-    if (elementId && elementKeyframes && elementKeyframes.length > 0) {
-        // Direct check for the element itself
-        directElementWithModelPath = elementKeyframes.find(kf =>
-            (kf.id === elementId || kf.elementId === elementId) && kf.modelPath
-        );
-
-        if (directElementWithModelPath) {
-            console.log('ModelViewer: Found direct element with modelPath:', directElementWithModelPath.modelPath);
-        } else {
-            // Check if any keyframe has modelPath
-            const keyframeWithModelPath = elementKeyframes.find(kf => kf.modelPath);
-            if (keyframeWithModelPath) {
-                console.log('ModelViewer: Found keyframe with modelPath:', keyframeWithModelPath.modelPath);
-                directElementWithModelPath = keyframeWithModelPath;
-            }
-        }
-    }
-
-    // Detailed logging of element keyframes
-    if (elementKeyframes && elementKeyframes.length > 0) {
-        console.log('ModelViewer: All element keyframes:', elementKeyframes);
-        console.log('ModelViewer: Looking for keyframes with elementId:', elementId);
-
-        // Check if there's a keyframe matching our elementId
-        const matchingKeyframes = elementKeyframes.filter(kf =>
-            kf.id === elementId || kf.elementId === elementId
-        );
-
-        if (matchingKeyframes.length > 0) {
-            console.log('ModelViewer: Keyframes matching elementId:', matchingKeyframes);
-            matchingKeyframes.forEach((kf, idx) => {
-                console.log(`ModelViewer: Keyframe ${idx} details:`, {
-                    id: kf.id,
-                    elementId: kf.elementId,
-                    hasModelPath: !!kf.modelPath,
-                    modelPath: kf.modelPath || 'none',
-                    hasModelUrl: !!kf.modelUrl,
-                    modelUrl: kf.modelUrl || 'none',
-                    hasType: !!kf.type,
-                    type: kf.type || 'none',
-                    hasModel3D: kf.type === '3d' || kf.is3d || false
-                });
-            });
-        } else {
-            // If no direct match, log all keyframe IDs for debugging
-            console.log('ModelViewer: No keyframes match elementId:', elementId);
-            console.log('ModelViewer: Available keyframe IDs:', elementKeyframes.map(kf => ({
-                id: kf.id || 'none',
-                elementId: kf.elementId || 'none'
-            })));
-        }
-    }
-
-    // Check for model URL explicitly from various sources
-    const elementWithModel = elementKeyframes ? elementKeyframes.find(kf =>
-        (kf.id === elementId || kf.elementId === elementId) &&
-        (kf.modelPath || kf.modelUrl)
-    ) : null;
-
-    if (elementWithModel) {
-        console.log('ModelViewer: Found element with model in keyframes:', {
-            modelPath: elementWithModel.modelPath || 'none',
-            modelUrl: elementWithModel.modelUrl || 'none'
-        });
-    }
-
-    // Make sure we're using the correct URL by checking multiple sources
-    const findModelUrlInElement = () => {
-        // First, check if the element itself is passed with modelPath
-        if (elementId && elementKeyframes) {
-            console.log('ModelViewer: findModelUrlInElement - elementId:', elementId);
-            console.log('ModelViewer: findModelUrlInElement - elementKeyframes:',
-                elementKeyframes.map(kf => ({
-                    id: kf.id || 'none',
-                    elementId: kf.elementId || 'none',
-                    modelPath: kf.modelPath || 'none'
-                }))
-            );
-
-            // Check direct keyframes match
-            const directMatch = elementKeyframes.find(kf =>
-                (kf.id === elementId || kf.elementId === elementId)
-            );
-
-            if (directMatch) {
-                console.log('ModelViewer: Direct element match found:', directMatch);
-                // Check if this element has a modelPath
-                if (directMatch.modelPath) {
-                    console.log('ModelViewer: Using modelPath from direct element match:', directMatch.modelPath);
-                    return directMatch.modelPath;
-                }
-
-                // Check for modelUrl property
-                if (directMatch.modelUrl) {
-                    console.log('ModelViewer: Using modelUrl from direct element match:', directMatch.modelUrl);
-                    return directMatch.modelUrl;
-                }
-            } else {
-                // If no direct match, check if the element itself is in the keyframes array
-                console.log('ModelViewer: No direct match found, checking if element itself is in keyframes array');
-
-                // Check if the first keyframe has a modelPath (might be the element itself)
-                if (elementKeyframes.length > 0) {
-                    const firstKeyframe = elementKeyframes[0];
-                    console.log('ModelViewer: Checking first keyframe:', firstKeyframe);
-
-                    if (firstKeyframe.modelPath) {
-                        console.log('ModelViewer: Using modelPath from first keyframe:', firstKeyframe.modelPath);
-                        return firstKeyframe.modelPath;
-                    }
-
-                    if (firstKeyframe.modelUrl) {
-                        console.log('ModelViewer: Using modelUrl from first keyframe:', firstKeyframe.modelUrl);
-                        return firstKeyframe.modelUrl;
-                    }
-                }
-            }
-        }
-
-        return null;
-    };
-
-    // Store the URL from element in a state variable so it persists
-    const [elementModelUrl, setElementModelUrl] = useState(null);
-
-    // Effect to find the model URL when component mounts or elementId/keyframes change
-    useEffect(() => {
-        const foundUrl = findModelUrlInElement();
-        if (foundUrl) {
-            console.log('ModelViewer: Found model URL in element, setting state:', foundUrl);
-            setElementModelUrl(foundUrl);
-        } else if (elementKeyframes && elementKeyframes.length > 0) {
-            // Проверяем первый ключевой кадр на наличие свойств modelPath или modelUrl
-            const firstKeyframe = elementKeyframes[0];
-            console.log('ModelViewer: Checking first keyframe for modelPath:', firstKeyframe);
-
-            if (firstKeyframe.modelPath) {
-                console.log('ModelViewer: Found modelPath in first keyframe:', firstKeyframe.modelPath);
-                setElementModelUrl(firstKeyframe.modelPath);
-            } else if (firstKeyframe.modelUrl) {
-                console.log('ModelViewer: Found modelUrl in first keyframe:', firstKeyframe.modelUrl);
-                setElementModelUrl(firstKeyframe.modelUrl);
-            } else {
-                // Если у нас есть загруженные ранее модели, используем последнюю из логов
-                const lastKnownModelUrl = '/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
-                console.log('ModelViewer: Using last known model URL as fallback:', lastKnownModelUrl);
-                setElementModelUrl(lastKnownModelUrl);
-            }
-        }
-    }, [elementId, elementKeyframes, findModelUrlInElement]);
-
-    // Then in the effectiveModelUrl calculation:
-    const effectiveModelUrl = (() => {
-        // Special case: If we found a direct element with modelPath above, use it
-        if (directElementWithModelPath && directElementWithModelPath.modelPath) {
-            console.log('ModelViewer: Using modelPath from direct element check:', directElementWithModelPath.modelPath);
-            return directElementWithModelPath.modelPath;
-        }
-
-        // First priority: selectedModel URL
-        if (selectedModel && selectedModel.url) {
-            console.log('ModelViewer: Using URL from selectedModel:', selectedModel.url);
-            return selectedModel.url;
-        }
-
-        // Second priority: glbAnimationUrl prop
-        if (glbAnimationUrl) {
-            console.log('ModelViewer: Using URL from glbAnimationUrl prop:', glbAnimationUrl);
-            return glbAnimationUrl;
-        }
-
-        // Third priority: Check if we have the element directly and it has a modelPath
-        if (elementId && elementKeyframes && elementKeyframes.length > 0) {
-            // First check if the element itself is in the keyframes array
-            const elementKeyframe = elementKeyframes.find(kf => kf.id === elementId);
-            if (elementKeyframe && elementKeyframe.modelPath) {
-                console.log('ModelViewer: Using modelPath directly from element:', elementKeyframe.modelPath);
-                return elementKeyframe.modelPath;
-            }
-
-            // Check if any keyframe has the modelPath property
-            for (const keyframe of elementKeyframes) {
-                if (keyframe.modelPath) {
-                    console.log('ModelViewer: Found modelPath in keyframe:', keyframe.modelPath);
-                    return keyframe.modelPath;
-                }
-
-                // Также проверяем свойство modelUrl
-                if (keyframe.modelUrl) {
-                    console.log('ModelViewer: Found modelUrl in keyframe:', keyframe.modelUrl);
-                    return keyframe.modelUrl;
-                }
-            }
-
-            // Then check the first keyframe (which might be the element)
-            const firstKeyframe = elementKeyframes[0];
-            if (firstKeyframe && firstKeyframe.modelPath) {
-                console.log('ModelViewer: Using modelPath from first keyframe:', firstKeyframe.modelPath);
-                return firstKeyframe.modelPath;
-            }
-
-            // Также проверяем свойство modelUrl в первом ключевом кадре
-            if (firstKeyframe && firstKeyframe.modelUrl) {
-                console.log('ModelViewer: Using modelUrl from first keyframe:', firstKeyframe.modelUrl);
-                return firstKeyframe.modelUrl;
-            }
-        }
-
-        // Fourth priority: URL from element model URL state
-        if (elementModelUrl) {
-            console.log('ModelViewer: Using URL from elementModelUrl state:', elementModelUrl);
-            return elementModelUrl;
-        }
-
-        // Fifth priority: URL from element keyframes find function
-        const urlFromFindFunction = findModelUrlInElement();
-        if (urlFromFindFunction) {
-            console.log('ModelViewer: Using URL from findModelUrlInElement function:', urlFromFindFunction);
-            return urlFromFindFunction;
-        }
-
-        // Fallback to a default URL if nothing else works
-        const fallbackUrl = '/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
-        console.log('ModelViewer: Using fallback URL:', fallbackUrl);
-        return fallbackUrl;
-    })();
-
-    console.log('ModelViewer: Final effective model URL:', effectiveModelUrl);
 
     if (!isVisible) return null;
 
@@ -2500,7 +2450,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                                         playerDuration={playerDuration}
                                         animationMarkers={animationMarkers}
                                         activeAnimations={activeAnimations}
-                                        glbAnimationUrl={effectiveModelUrl}
+                                        glbAnimationUrl={selectedModel ? selectedModel.url : glbAnimationUrl}
                                         elementId={elementId}
                                         elementKeyframes={elementKeyframes}
                                     />
@@ -2527,6 +2477,26 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                                     panSpeed={0.5}
                                 />
                             </Canvas>
+
+                            {/* Debug button */}
+                            <IconButton
+                                onClick={toggleDebugPanel}
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: 10,
+                                    right: 10,
+                                    backgroundColor: 'rgba(0,0,0,0.5)',
+                                    color: 'white',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(0,0,0,0.7)'
+                                    }
+                                }}
+                            >
+                                <span style={{ fontSize: '12px' }}>DEBUG</span>
+                            </IconButton>
+
+                            {/* Debug panel */}
+                            <DebugPanel />
                         </MuiBox>
                     </MuiBox>
 

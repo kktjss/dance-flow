@@ -358,13 +358,59 @@ const Canvas = ({
             return;
         }
 
-        console.log(`Applying animation to ${element.type} element ${element.id} at time ${currentTime}`);
+        console.log(`Applying animation to ${element.type} element ${element.id} at time ${currentTime}`, {
+            elementVisible: element.visible,
+            elementOpacity: element.style?.opacity,
+            objectVisible: fabricObject.visible,
+            objectOpacity: fabricObject.opacity,
+            hasModelPath: !!element.modelPath,
+            modelPath: element.modelPath || 'none'
+        });
 
-        // Set basic visibility properties first to ensure element is visible
+        // Always ensure the object is visible regardless of animation state
+        const oldVisible = fabricObject.visible;
+        const oldOpacity = fabricObject.opacity;
+
         fabricObject.set({
             visible: true,
             opacity: element.style?.opacity !== undefined ? element.style.opacity : 1
         });
+
+        console.log(`Set basic visibility for element ${element.id}:`, {
+            visibilityBefore: oldVisible,
+            visibilityAfter: fabricObject.visible,
+            opacityBefore: oldOpacity,
+            opacityAfter: fabricObject.opacity
+        });
+
+        // Проверяем, есть ли у элемента 3D модель, и добавляем значок, если его нет
+        if (element.modelPath && !fabricObject.modelIcon) {
+            console.log(`Element ${element.id} has 3D model path: ${element.modelPath}, adding 3D icon`);
+
+            // Создаем значок 3D модели
+            const modelIcon = new fabric.Text('3D', {
+                left: fabricObject.left + 5,
+                top: fabricObject.top + 5,
+                fontSize: 16,
+                fill: '#FFFFFF',
+                backgroundColor: 'rgba(0, 0, 255, 0.7)',
+                padding: 5,
+                selectable: false,
+                evented: false,
+                visible: true
+            });
+
+            // Добавляем значок на холст
+            if (fabricInstances.has(canvasId.current)) {
+                const fabricCanvas = fabricInstances.get(canvasId.current);
+                fabricCanvas.add(modelIcon);
+
+                // Связываем значок с объектом
+                fabricObject.modelIcon = modelIcon;
+
+                console.log(`Added 3D model icon for element ${element.id}`);
+            }
+        }
 
         // If no keyframes or invalid ones, use base properties
         if (!element.keyframes || !Array.isArray(element.keyframes) || element.keyframes.length === 0) {
@@ -374,9 +420,20 @@ const Canvas = ({
             fabricObject.set({
                 left: element.position.x,
                 top: element.position.y,
-                scaleX: 1,
-                scaleY: 1
+                scaleX: element.size && element.size.width ? element.size.width / fabricObject.width : 1,
+                scaleY: element.size && element.size.height ? element.size.height / fabricObject.height : 1,
+                visible: true // Explicitly ensure visibility
             });
+
+            // Обновляем позицию значка 3D модели, если он есть
+            if (fabricObject.modelIcon) {
+                fabricObject.modelIcon.set({
+                    left: element.position.x + 5,
+                    top: element.position.y + 5,
+                    visible: true
+                });
+            }
+
             return;
         }
 
@@ -403,8 +460,9 @@ const Canvas = ({
                 left: element.position.x,
                 top: element.position.y,
                 opacity: element.style?.opacity || 1,
-                scaleX: 1,
-                scaleY: 1
+                scaleX: element.size && element.size.width ? element.size.width / fabricObject.width : 1,
+                scaleY: element.size && element.size.height ? element.size.height / fabricObject.height : 1,
+                visible: true // Explicitly ensure visibility
             });
             return;
         }
@@ -430,10 +488,34 @@ const Canvas = ({
                 top: posY,
                 opacity: opacity,
                 scaleX: scale,
-                scaleY: scale
+                scaleY: scale,
+                visible: true // Explicitly ensure visibility
             });
 
             console.log(`Applied keyframe properties: x=${posX}, y=${posY}, opacity=${opacity}, scale=${scale}`);
+
+            // Обновляем позицию значка 3D модели, если он есть
+            if (fabricObject.modelIcon) {
+                fabricObject.modelIcon.set({
+                    left: posX + 5,
+                    top: posY + 5,
+                    opacity: opacity,
+                    visible: true // Explicitly ensure visibility
+                });
+
+                // If this is a 3D element, also update the model path display
+                if (element.type === '3d' && element.modelPath) {
+                    // Add model path information to the tooltip or label
+                    fabricObject.set({
+                        fill: 'rgba(0, 0, 255, 0.2)',
+                        stroke: 'rgba(0, 0, 255, 0.7)',
+                        strokeWidth: 2,
+                        rx: 10, // Ensure rounded corners are preserved
+                        ry: 10  // Ensure rounded corners are preserved
+                    });
+                }
+            }
+
             return;
         }
 
@@ -460,8 +542,9 @@ const Canvas = ({
                 left: element.position.x,
                 top: element.position.y,
                 opacity: element.style.opacity,
-                scaleX: 1,
-                scaleY: 1
+                scaleX: element.size && element.size.width ? element.size.width / fabricObject.width : 1,
+                scaleY: element.size && element.size.height ? element.size.height / fabricObject.height : 1,
+                visible: true // Explicitly ensure visibility
             });
             return;
         }
@@ -491,7 +574,8 @@ const Canvas = ({
                 top: prevKeyframe.position?.y ?? element.position.y,
                 opacity: prevKeyframe.opacity !== undefined ? prevKeyframe.opacity : element.style.opacity,
                 scaleX: prevKeyframe.scale || 1,
-                scaleY: prevKeyframe.scale || 1
+                scaleY: prevKeyframe.scale || 1,
+                visible: true // Explicitly ensure visibility
             });
             return;
         }
@@ -526,8 +610,31 @@ const Canvas = ({
             top: currentY,
             opacity: currentOpacity,
             scaleX: currentScale,
-            scaleY: currentScale
+            scaleY: currentScale,
+            visible: true // Explicitly ensure visibility
         });
+
+        // Обновляем позицию значка 3D модели, если он есть
+        if (fabricObject.modelIcon) {
+            fabricObject.modelIcon.set({
+                left: currentX + 5,
+                top: currentY + 5,
+                opacity: currentOpacity,
+                visible: true // Explicitly ensure visibility
+            });
+
+            // If this is a 3D element, also update the model path display
+            if (element.type === '3d' && element.modelPath) {
+                // Add model path information to the tooltip or label
+                fabricObject.set({
+                    fill: 'rgba(0, 0, 255, 0.2)',
+                    stroke: 'rgba(0, 0, 255, 0.7)',
+                    strokeWidth: 2,
+                    rx: 10, // Ensure rounded corners are preserved
+                    ry: 10  // Ensure rounded corners are preserved
+                });
+            }
+        }
 
         console.log(`Applied interpolated properties: x=${currentX}, y=${currentY}, opacity=${currentOpacity}, scale=${currentScale}`);
     }, [currentTime]);
@@ -721,6 +828,12 @@ const Canvas = ({
                 validElements.forEach((element, index) => {
                     console.log(`Processing element ${index}: id=${element.id}, type=${element.type}, pos=(${element.position?.x},${element.position?.y})`);
 
+                    // Ensure elements with modelPath are marked as 3D type
+                    if (element.modelPath && element.type !== '3d') {
+                        console.log(`Element ${element.id} has modelPath but type is not '3d', updating type`);
+                        element.type = '3d';
+                    }
+
                     // Ensure position exists and has valid values
                     if (!element.position || typeof element.position.x !== 'number' || typeof element.position.y !== 'number') {
                         console.warn(`Element ${element.id} has invalid position:`, element.position);
@@ -858,6 +971,59 @@ const Canvas = ({
                                     objectsToAdd.push(fabricObject);
                                     break;
 
+                                case '3d':
+                                    console.log(`Creating 3D element: id=${element.id}, pos=(${element.position.x},${element.position.y}), modelPath=${element.modelPath || 'none'}`);
+
+                                    // For 3D elements, we create a rectangle with a 3D label
+                                    fabricObject = new fabric.Rect({
+                                        left: element.position.x,
+                                        top: element.position.y,
+                                        width: element.size?.width || 100,
+                                        height: element.size?.height || 100,
+                                        fill: 'rgba(0, 0, 255, 0.2)',
+                                        stroke: 'rgba(0, 0, 255, 0.7)',
+                                        strokeWidth: 2,
+                                        opacity: typeof element.style?.opacity === 'number' ? element.style.opacity : 1,
+                                        selectable: !readOnly,
+                                        hasControls: !readOnly,
+                                        hasBorders: !readOnly,
+                                        rx: 10, // Rounded corners
+                                        ry: 10  // Rounded corners
+                                    });
+
+                                    // Save element data
+                                    fabricObject.data = {
+                                        elementId: element.id,
+                                        element: element
+                                    };
+
+                                    // Apply animation effects
+                                    applyAnimationEffects(fabricObject, element);
+
+                                    // Add to list of objects to add to canvas
+                                    objectsToAdd.push(fabricObject);
+
+                                    // Create 3D label
+                                    const modelLabel = new fabric.Text('3D', {
+                                        left: element.position.x + 5,
+                                        top: element.position.y + 5,
+                                        fontSize: 16,
+                                        fill: '#FFFFFF',
+                                        backgroundColor: 'rgba(0, 0, 255, 0.7)',
+                                        padding: 5,
+                                        selectable: false,
+                                        evented: false,
+                                        visible: true
+                                    });
+
+                                    // Add label to canvas
+                                    fabricCanvas.add(modelLabel);
+
+                                    // Link label to object
+                                    fabricObject.modelIcon = modelLabel;
+
+                                    break;
+
                                 case 'image':
                                     console.log(`Creating image element: id=${element.id}, content URL exists: ${Boolean(element.content)}`);
                                     if (!element.content) {
@@ -884,6 +1050,44 @@ const Canvas = ({
                                                 element: element // Сохраняем полный элемент для доступа к keyframes
                                             };
 
+                                            // Проверяем, есть ли у элемента 3D модель
+                                            if (element.modelPath) {
+                                                console.log(`Element ${element.id} has 3D model: ${element.modelPath}`, {
+                                                    elementVisible: element.visible,
+                                                    elementOpacity: element.style?.opacity,
+                                                    imgVisible: img.visible,
+                                                    imgOpacity: img.opacity
+                                                });
+
+                                                // Создаем значок 3D модели поверх изображения
+                                                const modelIcon = new fabric.Text('3D', {
+                                                    left: img.left + 5,
+                                                    top: img.top + 5,
+                                                    fontSize: 16,
+                                                    fill: '#FFFFFF',
+                                                    backgroundColor: 'rgba(0, 0, 255, 0.7)',
+                                                    padding: 5,
+                                                    selectable: false,
+                                                    evented: false,
+                                                    visible: true // Ensure icon is visible
+                                                });
+
+                                                // Добавляем значок на холст
+                                                fabricCanvas.add(modelIcon);
+
+                                                // Связываем значок с изображением
+                                                img.modelIcon = modelIcon;
+
+                                                // Ensure the image is visible
+                                                img.set({ visible: true, opacity: element.style?.opacity || 1 });
+
+                                                console.log(`Added 3D model icon for element ${element.id}, image visibility after:`, {
+                                                    imgVisible: img.visible,
+                                                    imgOpacity: img.opacity,
+                                                    iconVisible: modelIcon.visible
+                                                });
+                                            }
+
                                             // Применяем эффекты анимации на основе keyframes
                                             applyAnimationEffects(img, element);
 
@@ -907,6 +1111,13 @@ const Canvas = ({
                 // Remove objects that are no longer in the elements list
                 existingObjectsMap.forEach(obj => {
                     console.log(`Removing object with ID ${obj.data.elementId} from canvas`);
+
+                    // Если у объекта есть связанный значок 3D модели, удаляем и его
+                    if (obj.modelIcon) {
+                        console.log(`Removing 3D model icon for element ${obj.data.elementId}`);
+                        fabricCanvas.remove(obj.modelIcon);
+                    }
+
                     fabricCanvas.remove(obj);
                 });
 
@@ -919,6 +1130,34 @@ const Canvas = ({
 
                     fabricCanvas.add(obj);
                     console.log(`Added ${obj.type} element ${obj.data.elementId} to canvas with selectable=${obj.selectable}`);
+
+                    // Если это элемент с 3D моделью, добавляем значок
+                    const element = obj.data.element;
+                    if (element && element.modelPath && !obj.modelIcon) {
+                        console.log(`Adding 3D model icon for element ${element.id}`);
+
+                        // Создаем значок 3D модели
+                        const modelIcon = new fabric.Text('3D', {
+                            left: obj.left + 5,
+                            top: obj.top + 5,
+                            fontSize: 16,
+                            fill: '#FFFFFF',
+                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
+                            padding: 5,
+                            selectable: false,
+                            evented: false,
+                            visible: true // Ensure icon is visible
+                        });
+
+                        // Добавляем значок на холст
+                        fabricCanvas.add(modelIcon);
+
+                        // Связываем значок с объектом
+                        obj.modelIcon = modelIcon;
+
+                        // Ensure the object is visible
+                        obj.set({ visible: true });
+                    }
                 });
 
                 // Restore event handlers
@@ -1048,10 +1287,208 @@ const Canvas = ({
         setShowCombinedViewer(true);
     }, []);
 
+    // ВРЕМЕННО: Обработчик сохранения анимаций - будет удален позже
+    const handleSaveAnimations = useCallback((data, elementId) => {
+        if (!onElementsChange || !elements || !elementId) {
+            console.error('Canvas: Cannot save animations - missing required parameters', {
+                hasElements: !!elements,
+                hasElementId: !!elementId,
+                hasOnElementsChange: !!onElementsChange
+            });
+            return;
+        }
+
+        // Extract the animation data and model information
+        const {
+            animations = [],
+            modelUrl,
+            modelId,
+            isLocalFile = false,
+            modelName,
+            visible = true,
+            style = {}
+        } = data;
+
+        // Default opacity to 1 if not provided
+        const opacity = style.opacity || 1;
+
+        console.log('Canvas: Saving animations and model path for element:', {
+            elementId: elementId,
+            animationsCount: animations.length,
+            modelUrl: modelUrl || 'none',
+            modelId: modelId || 'none',
+            isLocalFile: isLocalFile,
+            modelName: modelName || 'none',
+            visible: visible,
+            opacity: opacity
+        });
+
+        // Find the element in the elements array
+        const element = elements.find(e => e.id === elementId);
+        if (!element) {
+            console.error(`Canvas: Element with ID ${elementId} not found in elements array`);
+            return;
+        }
+
+        console.log('Canvas: Current element details:', {
+            id: element.id,
+            type: element.type,
+            currentModelPath: element.modelPath || 'none',
+            hasKeyframes: !!element.keyframes && element.keyframes.length > 0,
+            keyframesCount: element.keyframes ? element.keyframes.length : 0
+        });
+
+        // Update the elements array with the new animations and model path
+        const updatedElements = elements.map(element => {
+            if (element.id === elementId) {
+                // Create updated element with animations and model info
+                const updatedElement = {
+                    ...element,
+                    glbAnimations: animations,
+                    // IMPORTANT: Always set modelPath explicitly if modelUrl is provided
+                    modelPath: modelUrl || element.modelPath,
+                    // Также сохраняем modelUrl для совместимости
+                    modelUrl: modelUrl || element.modelUrl,
+                    // Ensure visibility is explicitly set
+                    style: {
+                        ...element.style,
+                        opacity: opacity
+                    },
+                    // Ensure the element is visible in the current state
+                    visible: visible,
+                    // Set the element type as '3d' to ensure it's recognized
+                    type: '3d'
+                };
+
+                // Если у элемента есть ключевые кадры, добавляем modelPath и modelUrl в каждый кадр
+                if (updatedElement.keyframes && updatedElement.keyframes.length > 0) {
+                    updatedElement.keyframes = updatedElement.keyframes.map(keyframe => ({
+                        ...keyframe,
+                        modelPath: modelUrl || keyframe.modelPath || element.modelPath,
+                        modelUrl: modelUrl || keyframe.modelUrl || element.modelUrl
+                    }));
+
+                    console.log(`Canvas: Updated modelPath in ${updatedElement.keyframes.length} keyframes`);
+                } else if (modelUrl) {
+                    // Если у элемента нет ключевых кадров, но есть modelUrl, создаем ключевой кадр
+                    updatedElement.keyframes = [
+                        {
+                            time: 0,
+                            position: element.position,
+                            opacity: opacity,
+                            scale: 1,
+                            modelPath: modelUrl,
+                            modelUrl: modelUrl
+                        }
+                    ];
+
+                    console.log('Canvas: Created new keyframe with modelPath');
+                }
+
+                // If this is a local file (blob URL), save additional information
+                if (isLocalFile) {
+                    updatedElement.isLocalModelFile = true;
+                    if (modelName) {
+                        updatedElement.modelName = modelName;
+                    }
+                }
+
+                // If we have a model ID from the server, save it
+                if (modelId) {
+                    updatedElement.modelId = modelId;
+                }
+
+                console.log(`Canvas: Updated element ${elementId} with:`, {
+                    animationsCount: animations.length,
+                    oldModelPath: element.modelPath || 'none',
+                    newModelPath: updatedElement.modelPath || 'none',
+                    modelUrl: modelUrl || 'unchanged',
+                    isLocalFile: isLocalFile,
+                    modelName: modelName || 'none',
+                    visible: updatedElement.visible,
+                    opacity: updatedElement.style?.opacity,
+                    hasType: !!updatedElement.type,
+                    type: updatedElement.type || 'none',
+                    keyframesCount: updatedElement.keyframes ? updatedElement.keyframes.length : 0
+                });
+
+                return updatedElement;
+            }
+            return element;
+        });
+
+        // Update the elements array
+        onElementsChange(updatedElements);
+    }, [elements, onElementsChange]);
+
     // ВРЕМЕННО: Функция для скрытия комбинированного просмотрщика - будет удалена позже
     const handleCloseCombinedViewer = useCallback(() => {
+        // ModelViewer сам вызовет onSaveAnimations при закрытии
+        // Просто скрываем просмотрщик
         setShowCombinedViewer(false);
-    }, []);
+
+        console.log('Canvas: Closing combined viewer, refreshing canvas objects');
+
+        // Force refresh the canvas to ensure all objects are visible
+        if (fabricInstances.has(canvasId.current)) {
+            const fabricCanvas = fabricInstances.get(canvasId.current);
+
+            console.log('Canvas: Objects before refresh:', fabricCanvas.getObjects().map(obj => ({
+                id: obj.data?.elementId || 'unknown',
+                type: obj.type,
+                visible: obj.visible,
+                opacity: obj.opacity,
+                hasModelIcon: !!obj.modelIcon,
+                modelIconVisible: obj.modelIcon ? obj.modelIcon.visible : 'N/A'
+            })));
+
+            // Ensure all objects are visible
+            fabricCanvas.getObjects().forEach(obj => {
+                if (obj.data && obj.data.element) {
+                    const oldVisible = obj.visible;
+                    const oldOpacity = obj.opacity;
+
+                    obj.set({ visible: true });
+
+                    // Also ensure 3D model icons are visible
+                    if (obj.modelIcon) {
+                        const oldIconVisible = obj.modelIcon.visible;
+                        obj.modelIcon.set({ visible: true });
+
+                        console.log(`Canvas: Updated 3D model icon for element ${obj.data.elementId}:`, {
+                            iconVisibilityBefore: oldIconVisible,
+                            iconVisibilityAfter: obj.modelIcon.visible
+                        });
+                    }
+
+                    console.log(`Canvas: Updated object visibility for element ${obj.data.elementId}:`, {
+                        visibilityBefore: oldVisible,
+                        visibilityAfter: obj.visible,
+                        opacityBefore: oldOpacity,
+                        opacityAfter: obj.opacity,
+                        hasModelPath: !!obj.data.element.modelPath,
+                        modelPath: obj.data.element.modelPath || 'none'
+                    });
+                }
+            });
+
+            // Re-render the canvas
+            fabricCanvas.renderAll();
+
+            console.log('Canvas: Objects after refresh:', fabricCanvas.getObjects().map(obj => ({
+                id: obj.data?.elementId || 'unknown',
+                type: obj.type,
+                visible: obj.visible,
+                opacity: obj.opacity,
+                hasModelIcon: !!obj.modelIcon,
+                modelIconVisible: obj.modelIcon ? obj.modelIcon.visible : 'N/A'
+            })));
+
+            console.log('Canvas: Refreshed after closing 3D model viewer');
+        } else {
+            console.warn('Canvas: Cannot refresh canvas - no fabric instance found');
+        }
+    }, [canvasId]);
 
     // Используем ReactDOM.createPortal для рендеринга кнопок в отдельном контейнере
     const renderButtons = () => {
@@ -1248,30 +1685,65 @@ const Canvas = ({
         return [];
     };
 
-    // ВРЕМЕННО: Обработчик сохранения анимаций - будет удален позже
-    const handleSaveAnimations = (animations, elementId) => {
-        if (!onElementsChange || !elements || !elementId) return;
+    // Функция для получения модели элемента
+    const getElementModel = useCallback((element) => {
+        if (!element) return null;
 
-        try {
-            // Найти элемент по ID
-            const updatedElements = elements.map(element => {
-                if (element.id === elementId) {
-                    // Сохраняем анимации в свойство glbAnimations элемента
-                    return {
-                        ...element,
-                        glbAnimations: animations
-                    };
-                }
-                return element;
+        // Проверяем наличие пути к модели
+        if (element.modelPath) {
+            console.log('Canvas: Element has model path:', element.modelPath);
+
+            // Если это локальный файл (blob URL), мы не можем его восстановить напрямую
+            // Поэтому возвращаем информацию о модели для отображения
+            if (element.isLocalModelFile) {
+                console.log('Canvas: Element has local model file');
+                return {
+                    isLocalFile: true,
+                    name: element.modelName || 'Локальная модель',
+                    message: 'Локальный файл модели недоступен после перезагрузки страницы. Пожалуйста, загрузите модель снова.'
+                };
+            }
+
+            return {
+                url: element.modelPath,
+                name: element.modelName || element.modelPath.split('/').pop() || 'Модель'
+            };
+        }
+
+        return null;
+    }, []);
+
+    // Эффект для загрузки моделей при монтировании компонента
+    useEffect(() => {
+        if (selectedElement) {
+            console.log('Canvas: Selected element changed:', {
+                id: selectedElement.id,
+                type: selectedElement.type,
+                hasModelPath: !!selectedElement.modelPath,
+                modelPath: selectedElement.modelPath || 'none',
+                visible: selectedElement.visible !== undefined ? selectedElement.visible : 'not set',
+                opacity: selectedElement.style?.opacity || 'not set'
             });
 
-            // Обновить элементы
-            onElementsChange(updatedElements);
-            console.log(`Saved ${animations.length} animation presets to element ${elementId}`);
-        } catch (error) {
-            console.error('Error saving animations to element:', error);
+            const model = getElementModel(selectedElement);
+            if (model) {
+                console.log('Canvas: Model for selected element:', {
+                    isLocalFile: model.isLocalFile || false,
+                    name: model.name || 'unnamed',
+                    url: model.url || 'none',
+                    message: model.message || 'none'
+                });
+
+                if (model.isLocalFile) {
+                    console.warn('Canvas: Selected element has a local model file that may not be accessible');
+                }
+            } else {
+                console.log('Canvas: No model found for selected element');
+            }
+        } else {
+            console.log('Canvas: No element selected');
         }
-    };
+    }, [selectedElement, getElementModel]);
 
     return (
         <Box
