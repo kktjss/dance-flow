@@ -645,10 +645,16 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                                                         const formData = new FormData();
                                                         formData.append('model', file);
 
-                                                        // Upload file to server
-                                                        fetch('/api/upload/model', {
+                                                        // Get API URL from environment or use default
+                                                        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+                                                        // Upload file to server - using the correct endpoint
+                                                        fetch(`${API_URL}/models/upload`, {
                                                             method: 'POST',
                                                             body: formData,
+                                                            headers: {
+                                                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                                            }
                                                         })
                                                             .then(response => {
                                                                 if (!response.ok) {
@@ -657,19 +663,33 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                                                                 return response.json();
                                                             })
                                                             .then(data => {
-                                                                if (data.success) {
-                                                                    console.log("Model uploaded successfully:", data);
+                                                                console.log("Model upload response:", data);
 
-                                                                    // Update with the path returned from server
-                                                                    // We're adding a timestamp query parameter to bypass caching
-                                                                    const modelPathWithCache = `${data.modelPath}?t=${Date.now()}`;
+                                                                if (data.url || data.id) {
+                                                                    // Ensure we have a properly formatted URL
+                                                                    let modelPath = data.url;
+
+                                                                    // If the URL doesn't start with http or /, add /models/ prefix
+                                                                    if (!modelPath.startsWith('http') && !modelPath.startsWith('/')) {
+                                                                        modelPath = `/models/${modelPath}`;
+                                                                    } else if (modelPath.startsWith('/uploads/models/')) {
+                                                                        // Convert /uploads/models/ to /models/ format
+                                                                        const filename = modelPath.split('/').pop();
+                                                                        modelPath = `/models/${filename}`;
+                                                                    }
+
+                                                                    // Add cache-busting parameter
+                                                                    const modelPathWithCache = `${modelPath}?t=${Date.now()}`;
+                                                                    console.log("Setting model path to:", modelPathWithCache);
+
+                                                                    // Update the element with the model path
                                                                     handlePropertyChange('modelPath', modelPathWithCache);
 
                                                                     // Log success to help user track completion
                                                                     console.log("3D model loaded and ready to use!");
                                                                 } else {
-                                                                    console.error("Server returned error:", data);
-                                                                    alert('Ошибка загрузки модели: ' + (data.message || 'Неизвестная ошибка'));
+                                                                    console.error("Server returned invalid response:", data);
+                                                                    alert('Ошибка загрузки модели: Неверный ответ сервера');
                                                                 }
                                                             })
                                                             .catch(error => {

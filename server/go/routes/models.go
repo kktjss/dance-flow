@@ -31,16 +31,43 @@ type Model struct {
 // RegisterModelRoutes registers the routes for 3D models
 func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 	models := api.Group("/models")
-	models.Use(middleware.JWTMiddleware(cfg))
-
+	
 	// Create models directory if it doesn't exist
 	modelsDir := "./uploads/models"
 	if err := os.MkdirAll(modelsDir, 0755); err != nil {
 		config.LogError("MODELS", fmt.Errorf("failed to create models directory: %w", err))
 	}
+	
+	// Public endpoint for accessing model files without authentication
+	models.GET("/file/:filename", func(c *gin.Context) {
+		filename := c.Param("filename")
+		filePath := filepath.Join(modelsDir, filename)
+		
+		// Log the request
+		fmt.Printf("Accessing model file: %s\n", filePath)
+		
+		// Check if file exists
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			fmt.Printf("Model file not found: %s\n", filePath)
+			c.JSON(http.StatusNotFound, gin.H{"error": "Model file not found"})
+			return
+		}
+		
+		// Set appropriate headers for GLB files
+		c.Header("Content-Type", "model/gltf-binary")
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Cache-Control", "public, max-age=3600")
+		
+		// Serve the file
+		c.File(filePath)
+	})
+
+	// The following routes require authentication
+	authenticated := models.Group("")
+	authenticated.Use(middleware.JWTMiddleware(cfg))
 
 	// Get all models for the current user
-	models.GET("", func(c *gin.Context) {
+	authenticated.GET("", func(c *gin.Context) {
 		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
@@ -81,7 +108,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 	})
 
 	// Upload a new model
-	models.POST("/upload", func(c *gin.Context) {
+	authenticated.POST("/upload", func(c *gin.Context) {
 		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
@@ -154,7 +181,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 	})
 
 	// Get a specific model
-	models.GET("/:id", func(c *gin.Context) {
+	authenticated.GET("/:id", func(c *gin.Context) {
 		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
@@ -203,7 +230,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 	})
 
 	// Delete a model
-	models.DELETE("/:id", func(c *gin.Context) {
+	authenticated.DELETE("/:id", func(c *gin.Context) {
 		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})

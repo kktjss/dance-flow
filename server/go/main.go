@@ -44,9 +44,9 @@ func main() {
 	// Configure CORS
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.AllowedOrigins,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
@@ -77,9 +77,34 @@ func main() {
 		)
 	})
 
-	// Serve static files from uploads directory
-	router.Static("/uploads", "./uploads")
-
+	// Add a special handler for model files to ensure proper content type
+	// This must come BEFORE the StaticFS to avoid conflicts with wildcard routes
+	router.GET("/models/:filename", func(c *gin.Context) {
+		filename := c.Param("filename")
+		filepath := fmt.Sprintf("./uploads/models/%s", filename)
+		
+		// Log the request
+		log.Printf("Serving model file: %s", filepath)
+		
+		// Check if file exists
+		if _, err := os.Stat(filepath); os.IsNotExist(err) {
+			log.Printf("Model file not found: %s", filepath)
+			c.JSON(http.StatusNotFound, gin.H{"error": "Model file not found"})
+			return
+		}
+		
+		// Set appropriate headers
+		c.Header("Content-Type", "model/gltf-binary")
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Cache-Control", "public, max-age=3600")
+		
+		// Serve the file
+		c.File(filepath)
+	})
+	
+	// Serve static files from uploads directory with proper headers
+	router.StaticFS("/uploads", http.Dir("./uploads"))
+	
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

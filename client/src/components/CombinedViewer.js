@@ -42,35 +42,80 @@ const CombinedViewer = ({
 
     // Выбираем первую GLB анимацию или используем modelPath из элемента
     useEffect(() => {
+        // Подробное логирование для отладки
+        console.log('CombinedViewer: Selecting model with params:', {
+            elementId,
+            hasElementKeyframes: !!(elementKeyframes && elementKeyframes.length > 0),
+            glbAnimationsCount: glbAnimations?.length || 0
+        });
+
         // Сначала проверяем, есть ли modelPath у выбранного элемента
         if (elementId && elementKeyframes && elementKeyframes.length > 0) {
-            // Находим элемент по ID в keyframes
-            const element = elementKeyframes.find(kf =>
-                kf.id === elementId ||
-                kf.elementId === elementId
-            );
+            const element = elementKeyframes.find(kf => kf.id === elementId || kf.elementId === elementId);
+            console.log('CombinedViewer: Looking for element with ID:', elementId, {
+                found: !!element,
+                hasModelPath: !!element?.modelPath,
+                modelPath: element?.modelPath || 'none'
+            });
 
             if (element && element.modelPath) {
                 console.log('CombinedViewer: Found modelPath in element:', element.modelPath);
 
+                // Process the model URL to ensure it's correctly formatted
+                let modelUrl = element.modelPath;
+
+                // If the URL doesn't start with http or blob, ensure it has the correct prefix
+                if (!modelUrl.startsWith('http') && !modelUrl.startsWith('blob:')) {
+                    // Convert /uploads/models/ to /models/ if needed
+                    if (modelUrl.startsWith('/uploads/models/')) {
+                        const filename = modelUrl.split('/').pop();
+                        modelUrl = `/models/${filename}`;
+                    } else if (modelUrl.startsWith('uploads/models/')) {
+                        const filename = modelUrl.split('/').pop();
+                        modelUrl = `/models/${filename}`;
+                    }
+
+                    // If it doesn't start with /, add it
+                    if (!modelUrl.startsWith('/')) {
+                        modelUrl = `/models/${modelUrl.split('/').pop()}`;
+                    }
+
+                    // If it's not a full URL, add the origin
+                    if (!modelUrl.includes('://')) {
+                        modelUrl = `${window.location.origin}${modelUrl}`;
+                    }
+                }
+
+                console.log('CombinedViewer: Processed model URL:', modelUrl);
+
                 // Создаем объект анимации из modelPath элемента
-                const elementModel = {
-                    id: `model_${elementId}`,
+                const elementAnimation = {
+                    id: `element-model-${elementId}`,
                     name: element.modelName || 'Модель элемента',
-                    url: element.modelPath
+                    url: modelUrl
                 };
 
-                setSelectedGlbAnimation(elementModel);
-                console.log('CombinedViewer: Using model from element:', elementModel);
+                setSelectedGlbAnimation(elementAnimation);
+                setActiveView('3d'); // Автоматически переключаемся на 3D вид
+                return;
+            } else {
+                console.log('CombinedViewer: Element does not have a modelPath');
+                // Если у элемента нет modelPath, не показываем модель
+                setSelectedGlbAnimation(null);
+                // Переключаемся на видео, если оно доступно
+                if (videoUrl) {
+                    console.log('CombinedViewer: Switching to video view because element has no model');
+                    setActiveView('video');
+                }
                 return;
             }
         }
 
-        // Если у элемента нет modelPath, используем первую доступную анимацию
-        if (glbAnimations && glbAnimations.length > 0 && !selectedGlbAnimation) {
+        // Если нет elementId (общий просмотр) и есть glbAnimations, используем первую
+        if (!elementId && glbAnimations && glbAnimations.length > 0) {
             // Проверяем URL первой анимации
             const firstAnimation = glbAnimations[0];
-            console.log('CombinedViewer: First animation URL check:', {
+            console.log('CombinedViewer: No elementId, using first animation from glbAnimations:', {
                 url: firstAnimation.url,
                 valid: Boolean(firstAnimation.url),
                 type: typeof firstAnimation.url
@@ -78,8 +123,17 @@ const CombinedViewer = ({
 
             setSelectedGlbAnimation(firstAnimation);
             console.log('CombinedViewer: Auto-selected first GLB animation:', firstAnimation);
+            setActiveView('3d'); // Автоматически переключаемся на 3D вид
+        } else {
+            console.log('CombinedViewer: No animations available for the element, not showing 3D model');
+            setSelectedGlbAnimation(null);
+            // Переключаемся на видео, если оно доступно
+            if (videoUrl) {
+                console.log('CombinedViewer: Switching to video view because no models are available');
+                setActiveView('video');
+            }
         }
-    }, [glbAnimations, selectedGlbAnimation, elementId, elementKeyframes]);
+    }, [glbAnimations, elementId, elementKeyframes, videoUrl]);
 
     // Переключаем на 3D вид, если видео отсутствует и пользователь пытается переключиться на видео
     useEffect(() => {
@@ -158,12 +212,39 @@ const CombinedViewer = ({
 
         // Сохраняем текущие анимации перед закрытием
         if (onSaveAnimations && selectedGlbAnimation) {
-            const modelUrl = selectedGlbAnimation ? selectedGlbAnimation.url : null;
+            let modelUrl = selectedGlbAnimation ? selectedGlbAnimation.url : null;
+
+            // Process the model URL to ensure it's properly formatted
+            if (modelUrl) {
+                // Extract the filename from the path
+                const filename = modelUrl.split('/').pop();
+                console.log('CombinedViewer: Extracted filename on close:', filename);
+
+                // Try using the API endpoint if we have a filename
+                if (filename && !modelUrl.startsWith('blob:')) {
+                    modelUrl = `${window.location.origin}/api/models/file/${filename}`;
+                    console.log('CombinedViewer: Using API endpoint URL on close:', modelUrl);
+                } else if (modelUrl.startsWith('/') && !modelUrl.startsWith('//')) {
+                    // URL starts with a single slash - add origin
+                    modelUrl = `${window.location.origin}${modelUrl}`;
+                    console.log('CombinedViewer: Added origin to URL on close:', modelUrl);
+                } else if (modelUrl.startsWith('uploads/')) {
+                    // URL starts with 'uploads/' - add slash and origin
+                    modelUrl = `${window.location.origin}/${modelUrl}`;
+                    console.log('CombinedViewer: Added slash and origin to uploads URL on close:', modelUrl);
+                } else if (!modelUrl.startsWith('http') && !modelUrl.startsWith('blob:') && !modelUrl.startsWith('/')) {
+                    // URL doesn't start with protocol, blob: or / - consider it relative
+                    modelUrl = `${window.location.origin}/${modelUrl}`;
+                    console.log('CombinedViewer: Converted to absolute URL on close:', modelUrl);
+                }
+            }
+
             const isLocalFile = modelUrl && modelUrl.startsWith('blob:');
 
             console.log('CombinedViewer: Selected model details:', {
                 name: selectedGlbAnimation.name,
-                url: selectedGlbAnimation.url,
+                url: modelUrl,
+                originalUrl: selectedGlbAnimation.url,
                 isLocalFile: isLocalFile
             });
 
@@ -391,7 +472,7 @@ const CombinedViewer = ({
                         elementId={elementId}
                         embedded={true}
                         onSaveAnimations={handleSaveAnimations}
-                        glbAnimationUrl={selectedGlbAnimation && selectedGlbAnimation.url ? selectedGlbAnimation.url : null}
+                        glbAnimationUrl={selectedGlbAnimation ? selectedGlbAnimation.url : null}
                     />
                 </MuiBox>
 

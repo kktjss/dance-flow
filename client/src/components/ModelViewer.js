@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useRef, useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, useGLTF, Grid, Html } from '@react-three/drei';
-import { Box as MuiBox, CircularProgress, Button, IconButton, Slider, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, Menu, MenuItem, Select, FormControl, InputLabel, Tabs, Tab } from '@mui/material';
+import { Box as MuiBox, CircularProgress, Button, IconButton, Slider, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, Menu, MenuItem, Select, FormControl, InputLabel, Tabs, Tab, Box } from '@mui/material';
 import { PlayArrow, Pause, AddCircleOutline, Delete, Edit, DragIndicator, Save, FolderOpen, Upload, Close as CloseIcon } from '@mui/icons-material';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -101,56 +101,139 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 error: null
             }));
 
-            // Преобразование относительного URL в абсолютный, если необходимо
+            // Improved URL processing logic
             let processedUrl = glbAnimationUrl;
-            if (glbAnimationUrl.startsWith('/') && !glbAnimationUrl.startsWith('//')) {
-                processedUrl = `${window.location.origin}${glbAnimationUrl}`;
+
+            // Handle relative URLs
+            if (processedUrl && !processedUrl.startsWith('blob:') && !processedUrl.startsWith('http')) {
+                // Ensure URL starts with /
+                if (!processedUrl.startsWith('/')) {
+                    processedUrl = '/' + processedUrl;
+                }
+
+                // Convert to absolute URL if it's a relative path
+                if (!processedUrl.includes('://')) {
+                    processedUrl = `${window.location.origin}${processedUrl}`;
+                }
             }
 
             console.log('XbotModel: Processed URL for loading:', processedUrl);
             console.log('XbotModel: Current origin:', window.location.origin);
 
-            // Track load start time
-            const loadStartTime = Date.now();
+            // First check if the URL is accessible
+            fetch(processedUrl, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('XbotModel: URL is accessible:', processedUrl);
+                        loadModelFromUrl(processedUrl);
+                    } else {
+                        console.error('XbotModel: URL is not accessible:', processedUrl, 'Status:', response.status);
 
-            new GLTFLoader()
-                .load(
-                    processedUrl,
-                    (gltf) => {
-                        // Success callback
-                        const loadEndTime = Date.now();
-                        console.log(`XbotModel: Model loaded successfully in ${loadEndTime - loadStartTime}ms`);
-                        console.log('XbotModel: Animations found:', gltf.animations ? gltf.animations.length : 0);
-
-                        // Set custom model
-                        setCustomModel({ scene: gltf.scene, animations: gltf.animations });
-
-                        // Update debug info
-                        setDebugInfo(prev => ({
-                            ...prev,
-                            modelLoaded: true,
-                            animationsCount: gltf.animations ? gltf.animations.length : 0,
-                            modelScene: !!gltf.scene
-                        }));
-
-                        // Pass animations to parent if available
-                        if (onModelLoad && gltf.animations) {
-                            onModelLoad(gltf.animations);
+                        // Try alternative URL formats
+                        if (processedUrl.includes('/uploads/models/')) {
+                            const filename = processedUrl.split('/').pop();
+                            const alternativeUrl = `${window.location.origin}/models/${filename}`;
+                            console.log('XbotModel: Trying alternative URL:', alternativeUrl);
+                            loadModelFromUrl(alternativeUrl);
+                        } else {
+                            // Try direct loading anyway
+                            loadModelFromUrl(processedUrl);
                         }
+                    }
+                })
+                .catch(error => {
+                    console.error('XbotModel: Error checking URL accessibility:', error);
+                    // Try direct loading anyway
+                    loadModelFromUrl(processedUrl);
+                });
+        } else {
+            console.log('XbotModel: No GLB URL provided');
+            setIsLoading(false);
+            setLoadingError('No 3D model URL provided');
+        }
+    }, [glbAnimationUrl, onModelLoad, elementId, elementKeyframes]);
 
-                        // Clear loading state
-                        setIsLoading(false);
-                    },
-                    (progress) => {
-                        // Progress callback
-                        const percentComplete = progress.loaded / progress.total * 100;
-                        console.log(`XbotModel: Loading progress: ${percentComplete.toFixed(2)}%`);
-                    },
-                    (error) => {
-                        // Error callback
-                        console.error('XbotModel: Error loading GLB model:', error);
+    // Helper function to load model from URL
+    const loadModelFromUrl = useCallback((url) => {
+        console.log('XbotModel: Loading model from URL:', url);
 
-                        // Set error message
+        // Track load start time
+        const loadStartTime = Date.now();
+
+        new GLTFLoader()
+            .load(
+                url,
+                (gltf) => {
+                    // Success callback
+                    const loadEndTime = Date.now();
+                    console.log(`XbotModel: Model loaded successfully in ${loadEndTime - loadStartTime}ms`);
+                    console.log('XbotModel: Animations found:', gltf.animations ? gltf.animations.length : 0);
+
+                    // Set custom model
+                    setCustomModel({ scene: gltf.scene, animations: gltf.animations });
+
+                    // Update debug info
+                    setDebugInfo(prev => ({
+                        ...prev,
+                        modelLoaded: true,
+                        animationsCount: gltf.animations ? gltf.animations.length : 0,
+                        modelScene: !!gltf.scene
+                    }));
+
+                    // Pass animations to parent if available
+                    if (onModelLoad && gltf.animations) {
+                        onModelLoad(gltf.animations);
+                    }
+
+                    // Clear loading state
+                    setIsLoading(false);
+                },
+                (progress) => {
+                    // Progress callback
+                    const percentComplete = progress.loaded / progress.total * 100;
+                    console.log(`XbotModel: Loading progress: ${percentComplete.toFixed(2)}%`);
+                },
+                (error) => {
+                    // Error callback
+                    console.error('XbotModel: Error loading GLB model:', error);
+                    console.error('XbotModel: Failed URL was:', url);
+
+                    // Try with a fallback URL if the error is a 404
+                    if (error.message.includes('404') || error.message.includes('load')) {
+                        console.log('XbotModel: Trying fallback URL: /uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb');
+                        const fallbackUrl = `${window.location.origin}/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
+
+                        new GLTFLoader().load(
+                            fallbackUrl,
+                            (gltf) => {
+                                console.log('XbotModel: Fallback model loaded successfully');
+                                setCustomModel({ scene: gltf.scene, animations: gltf.animations });
+                                setDebugInfo(prev => ({
+                                    ...prev,
+                                    modelLoaded: true,
+                                    animationsCount: gltf.animations ? gltf.animations.length : 0,
+                                    modelScene: !!gltf.scene,
+                                    fallbackUsed: true
+                                }));
+                                if (onModelLoad && gltf.animations) {
+                                    onModelLoad(gltf.animations);
+                                }
+                                setIsLoading(false);
+                            },
+                            null,
+                            (fallbackError) => {
+                                console.error('XbotModel: Error loading fallback GLB model:', fallbackError);
+                                setLoadingError(`Ошибка загрузки модели: ${error.message}. Также не удалось загрузить запасную модель.`);
+                                setDebugInfo(prev => ({
+                                    ...prev,
+                                    error: error.message + ' + fallback failed',
+                                    modelLoaded: false
+                                }));
+                                setIsLoading(false);
+                            }
+                        );
+                    } else {
+                        // Set error message for non-404 errors
                         setLoadingError(`Ошибка загрузки модели: ${error.message}`);
                         setDebugInfo(prev => ({
                             ...prev,
@@ -159,19 +242,9 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         }));
                         setIsLoading(false);
                     }
-                );
-        } else {
-            console.log('XbotModel: No GLB URL provided, skipping model load');
-            // Set a user-friendly error message suggesting options
-            setLoadingError('Нет URL-адреса 3D модели. Пожалуйста, загрузите модель через кнопку "Загрузить" или выберите существующую модель.');
-            setDebugInfo(prev => ({
-                ...prev,
-                modelLoaded: false,
-                modelUrl: 'None',
-                error: 'No model URL provided'
-            }));
-        }
-    }, [glbAnimationUrl, onModelLoad, elementId, elementKeyframes]);
+                }
+            );
+    }, [onModelLoad]);
 
     // Initialize animation mixer
     useEffect(() => {
@@ -313,10 +386,23 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 // Store the action reference
                 activeActionsRef.current[anim.id] = action;
 
-                // Set time scale if specified
-                if (typeof anim.timeScale === 'number') {
-                    action.timeScale = anim.timeScale;
+                // Calculate the correct timeScale based on player and model durations
+                let effectiveTimeScale = anim.timeScale || 1;
+
+                // If we have both durations, ensure the timeScale is correctly set
+                if (playerDuration && modelDuration.current && animation.duration) {
+                    // This ensures the animation completes within the player duration
+                    const correctTimeScale = playerDuration / animation.duration;
+
+                    // If the animation's timeScale is very different from what it should be, update it
+                    if (Math.abs(effectiveTimeScale - correctTimeScale) > 0.1) {
+                        console.log(`ModelViewer: Correcting timeScale from ${effectiveTimeScale} to ${correctTimeScale}`);
+                        effectiveTimeScale = correctTimeScale;
+                    }
                 }
+
+                // Set time scale
+                action.timeScale = effectiveTimeScale;
 
                 // Set weight if specified (for blending)
                 if (typeof anim.weight === 'number') {
@@ -339,7 +425,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         if (mixer.current) {
             mixer.current.update(0);
         }
-    }, [activeAnimations, externalAnimations, loadExternalAnimation, customModel]);
+    }, [activeAnimations, externalAnimations, loadExternalAnimation, customModel, playerDuration, modelDuration]);
 
     // Find the current animation segment based on markers
     const getCurrentAnimationSegment = useCallback(() => {
@@ -410,11 +496,14 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     scaledTime = segment.modelStart + segmentProgress * (segment.modelEnd - segment.modelStart);
                 } else {
                     // Default scaling when no markers are present
-                    scaledTime = playerDuration
+                    // Fix: Ensure proper scaling between player duration and model duration
+                    // If player time is 2.5s in a 5s timeline, and model is 10s, we need to be at 5s in the model
+                    scaledTime = playerDuration && modelDuration.current
                         ? (currentTime / playerDuration) * modelDuration.current
                         : currentTime;
                 }
 
+                // Apply the scaled time to the mixer
                 mixer.current.time = scaledTime;
 
                 // Force update mixer to apply changes
@@ -455,16 +544,24 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         const elapsed = timestamp - lastTimeRef.current;
 
         if (mixer.current && isPlaying) {
+            // Calculate delta time for animation update
             const delta = clock.current.getDelta();
-            mixer.current.update(delta);
+
+            // Fix: Invert the scale factor to make animation play faster when playerDuration is shorter
+            // If model duration is 10s and player duration is 5s, we need to play at 2x speed
+            const scaleFactor = playerDuration && modelDuration.current ? playerDuration / modelDuration.current : 1;
+            const scaledDelta = delta * scaleFactor;
+
+            // Update the mixer with the scaled delta time
+            mixer.current.update(scaledDelta);
 
             // Update time approximately 30 times per second
             if (elapsed > 33) { // ~30fps
                 // Get active animations at current time
                 const activeAnimsAtTime = getActiveAnimationAtTime();
 
-                // Update player time based on animation progress
-                let playerTime = currentTime + delta;
+                // Update player time based on animation progress but respect the scaling
+                let playerTime = currentTime + (delta * scaleFactor);
 
                 // If we have active animations at this time, check if we need to adjust the player time
                 if (activeAnimsAtTime.length > 0) {
@@ -1167,28 +1264,6 @@ const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 
     );
 };
 
-// Add this TabPanel component before the ModelViewer component
-function TabPanel(props) {
-    const { children, value, index, ...other } = props;
-
-    return (
-        <div
-            role="tabpanel"
-            hidden={value !== index}
-            id={`model-tabpanel-${index}`}
-            aria-labelledby={`model-tab-${index}`}
-            {...other}
-            style={{ width: '100%' }}
-        >
-            {value === index && (
-                <MuiBox sx={{ p: 2 }}>
-                    {children}
-                </MuiBox>
-            )}
-        </div>
-    );
-}
-
 const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialTime = 0, isPlaying: initialPlaying = false, onTimeUpdate: externalTimeUpdate, elementKeyframes = [], elementId = null, embedded = false, onSaveAnimations = null, glbAnimationUrl = null }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isPlaying, setIsPlaying] = useState(initialPlaying);
@@ -1285,8 +1360,25 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
     useEffect(() => {
         if (playerDuration) {
             setDuration(playerDuration);
+
+            // Update the timeScale of active animations when playerDuration changes
+            if (modelDuration && activeAnimations.length > 0) {
+                // Calculate the new timeScale based on the ratio of player duration to model duration
+                const newTimeScale = playerDuration / modelDuration;
+
+                // Update all active animations with the new timeScale
+                setActiveAnimations(current =>
+                    current.map(anim => ({
+                        ...anim,
+                        end: Math.min(anim.end, playerDuration), // Ensure end time doesn't exceed player duration
+                        timeScale: newTimeScale
+                    }))
+                );
+
+                console.log(`ModelViewer: Updated animation timeScale to ${newTimeScale} for playerDuration ${playerDuration}`);
+            }
         }
-    }, [playerDuration]);
+    }, [playerDuration, modelDuration]);
 
     useEffect(() => {
         setCurrentTime(initialTime);
@@ -1497,6 +1589,10 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     return current;
                 }
 
+                // Fix: Invert the timeScale calculation to make animation play at correct speed
+                // If model duration is 10s and player duration is 5s, we need to play at 2x speed
+                const timeScale = playerDuration && animDuration ? playerDuration / animDuration : 1;
+
                 // Добавляем первую анимацию из загруженной модели
                 const newAnimation = {
                     id: 'anim_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
@@ -1505,7 +1601,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     start: 0,
                     end: playerDuration || animDuration,
                     weight: 1,
-                    timeScale: 1
+                    timeScale: timeScale // Corrected timeScale
                 };
 
                 return [newAnimation];
@@ -1724,64 +1820,23 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
 
             if (!token) {
                 console.error('ModelViewer: No authentication token found');
-
-                // Create a blob URL as fallback when not authenticated
-                const url = URL.createObjectURL(file);
-                console.log('ModelViewer: Not authenticated, creating blob URL as fallback:', url);
-
-                // Set the GLB URL
-                setGlbUrl(url);
-
-                // Create a model object with the blob URL
-                const modelObj = {
-                    url: url,
-                    name: file.name,
-                    isLocalFile: true
-                };
-
-                // Set the selected model
-                setSelectedModel(modelObj);
-
-                // Save the blob URL immediately
-                if (onSaveAnimations) {
-                    const dataToSave = {
-                        animations: savedAnimations.length > 0 ? savedAnimations : activeAnimations,
-                        modelUrl: url,
-                        isLocalFile: true,
-                        modelName: file.name,
-                        visible: true,
-                        style: {
-                            opacity: 1
-                        }
-                    };
-
-                    console.log('ModelViewer: Saving blob URL as fallback (not authenticated):', url);
-                    onSaveAnimations(dataToSave, elementId);
-
-                    // Alert user about authentication and local file limitations
-                    setTimeout(() => {
-                        alert('Вы не авторизованы. Модель сохранена локально и будет доступна только в текущей сессии браузера. Для сохранения на сервере, пожалуйста, войдите в систему.');
-                    }, 500);
-                }
-
-                setIsLoading(false);
-                return;
+                throw new Error('Authentication required. Please log in.');
             }
-
-            console.log('ModelViewer: Using authentication token for upload');
 
             // Create form data
             const formData = new FormData();
             formData.append('model', file);
             formData.append('name', file.name.split('.')[0]);
 
-            // Upload to server with proper authentication
-            const response = await fetch('/api/models/upload', {
+            // Get API URL from environment or use default
+            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+            // Upload to server with authentication
+            const response = await fetch(`${API_URL}/models/upload`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
                 headers: {
-                    // Don't set Content-Type for FormData, browser will set it with boundary
                     'Authorization': `Bearer ${token}`
                 }
             });
@@ -1995,8 +2050,11 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             formData.append('model', file);
             formData.append('name', file.name.split('.')[0]);
 
+            // Get API URL from environment or use default
+            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
             // Upload to server with authentication
-            const response = await fetch('/api/models/upload', {
+            const response = await fetch(`${API_URL}/models/upload`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
@@ -2359,59 +2417,45 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
 
     // Then in the effectiveModelUrl calculation:
     const effectiveModelUrl = (() => {
-        // Special case: If we found a direct element with modelPath above, use it
-        if (directElementWithModelPath && directElementWithModelPath.modelPath) {
-            console.log('ModelViewer: Using modelPath from direct element check:', directElementWithModelPath.modelPath);
-            return directElementWithModelPath.modelPath;
-        }
+        // Log all possible model URL sources for debugging
+        console.log('ModelViewer: Calculating effectiveModelUrl with sources:', {
+            elementId: elementId || 'none',
+            keyframesCount: elementKeyframes ? elementKeyframes.length : 0,
+            selectedModelUrl: selectedModel ? selectedModel.url : 'none',
+            glbAnimationUrl: glbAnimationUrl || 'none',
+            elementModelUrl: elementModelUrl || 'none'
+        });
 
-        // First priority: selectedModel URL
+        // First priority: selectedModel URL (user just selected a model)
         if (selectedModel && selectedModel.url) {
             console.log('ModelViewer: Using URL from selectedModel:', selectedModel.url);
             return selectedModel.url;
         }
 
-        // Second priority: glbAnimationUrl prop
+        // Second priority: Direct element modelPath/modelUrl if we have elementId
+        if (elementId && elementKeyframes && elementKeyframes.length > 0) {
+            // Find the element in keyframes
+            const element = elementKeyframes.find(kf =>
+                kf.id === elementId ||
+                kf.elementId === elementId
+            );
+
+            // Check for modelPath or modelUrl in the element
+            if (element) {
+                if (element.modelPath) {
+                    console.log('ModelViewer: Using modelPath from element:', element.modelPath);
+                    return element.modelPath;
+                } else if (element.modelUrl) {
+                    console.log('ModelViewer: Using modelUrl from element:', element.modelUrl);
+                    return element.modelUrl;
+                }
+            }
+        }
+
+        // Third priority: glbAnimationUrl prop
         if (glbAnimationUrl) {
             console.log('ModelViewer: Using URL from glbAnimationUrl prop:', glbAnimationUrl);
             return glbAnimationUrl;
-        }
-
-        // Third priority: Check if we have the element directly and it has a modelPath
-        if (elementId && elementKeyframes && elementKeyframes.length > 0) {
-            // First check if the element itself is in the keyframes array
-            const elementKeyframe = elementKeyframes.find(kf => kf.id === elementId);
-            if (elementKeyframe && elementKeyframe.modelPath) {
-                console.log('ModelViewer: Using modelPath directly from element:', elementKeyframe.modelPath);
-                return elementKeyframe.modelPath;
-            }
-
-            // Check if any keyframe has the modelPath property
-            for (const keyframe of elementKeyframes) {
-                if (keyframe.modelPath) {
-                    console.log('ModelViewer: Found modelPath in keyframe:', keyframe.modelPath);
-                    return keyframe.modelPath;
-                }
-
-                // Также проверяем свойство modelUrl
-                if (keyframe.modelUrl) {
-                    console.log('ModelViewer: Found modelUrl in keyframe:', keyframe.modelUrl);
-                    return keyframe.modelUrl;
-                }
-            }
-
-            // Then check the first keyframe (which might be the element)
-            const firstKeyframe = elementKeyframes[0];
-            if (firstKeyframe && firstKeyframe.modelPath) {
-                console.log('ModelViewer: Using modelPath from first keyframe:', firstKeyframe.modelPath);
-                return firstKeyframe.modelPath;
-            }
-
-            // Также проверяем свойство modelUrl в первом ключевом кадре
-            if (firstKeyframe && firstKeyframe.modelUrl) {
-                console.log('ModelViewer: Using modelUrl from first keyframe:', firstKeyframe.modelUrl);
-                return firstKeyframe.modelUrl;
-            }
         }
 
         // Fourth priority: URL from element model URL state
@@ -2423,17 +2467,147 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         // Fifth priority: URL from element keyframes find function
         const urlFromFindFunction = findModelUrlInElement();
         if (urlFromFindFunction) {
-            console.log('ModelViewer: Using URL from findModelUrlInElement function:', urlFromFindFunction);
+            console.log('ModelViewer: Using URL from findModelUrlInElement:', urlFromFindFunction);
             return urlFromFindFunction;
         }
 
-        // Fallback to a default URL if nothing else works
-        const fallbackUrl = '/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
-        console.log('ModelViewer: Using fallback URL:', fallbackUrl);
-        return fallbackUrl;
+        // Default: return null if no URL found
+        console.log('ModelViewer: No valid model URL found');
+        return null;
     })();
 
     console.log('ModelViewer: Final effective model URL:', effectiveModelUrl);
+
+    // Determine if we should display a model
+    const shouldDisplayModel = () => {
+        console.log('ModelViewer: shouldDisplayModel check:', {
+            elementId: elementId || 'none',
+            hasKeyframes: elementKeyframes && elementKeyframes.length > 0,
+            keyframesCount: elementKeyframes ? elementKeyframes.length : 0,
+            hasGlbAnimationUrl: !!glbAnimationUrl,
+            glbAnimationUrl: glbAnimationUrl || 'none',
+            hasSelectedModel: !!selectedModel,
+            selectedModelUrl: selectedModel ? selectedModel.url : 'none',
+            effectiveModelUrl: effectiveModelUrl || 'none'
+        });
+
+        // Если есть elementId, ищем модель в ключевых кадрах
+        if (elementId && elementKeyframes && elementKeyframes.length > 0) {
+            console.log(`ModelViewer: Looking for model in keyframes for element ${elementId}`);
+
+            // Ищем первый ключевой кадр с modelPath
+            const keyframeWithModel = elementKeyframes.find(kf => kf.modelPath);
+            if (keyframeWithModel) {
+                console.log(`ModelViewer: Found keyframe with modelPath: ${keyframeWithModel.modelPath}`);
+                return true;
+            }
+
+            // Если не нашли в ключевых кадрах, ищем в элементе
+            const element = elementKeyframes.find(kf => kf.id === elementId || kf.elementId === elementId);
+            if (element) {
+                console.log(`ModelViewer: Found element in keyframes with ID: ${elementId}`, {
+                    hasModelPath: !!element.modelPath,
+                    modelPath: element.modelPath || 'none'
+                });
+            }
+
+            // Показываем модель, только если у элемента есть modelPath
+            if (element && element.modelPath) {
+                console.log(`ModelViewer: Element ${elementId} has modelPath: ${element.modelPath}`);
+                return true;
+            }
+
+            console.log(`ModelViewer: Element ${elementId} does not have modelPath`);
+            return false;
+        }
+
+        // Если нет elementId, показываем модель только если явно предоставлен URL
+        if (!elementId) {
+            const shouldShow = !!(glbAnimationUrl || (selectedModel && selectedModel.url));
+            console.log(`ModelViewer: No elementId, will ${shouldShow ? 'show' : 'not show'} model`);
+            return shouldShow;
+        }
+
+        // Если есть URL модели в props или выбранная модель, но нет elementId,
+        // показываем модель (для общего просмотра)
+        if (!elementId && (glbAnimationUrl || (selectedModel && selectedModel.url))) {
+            console.log('ModelViewer: No elementId but has model URL, showing model');
+            return true;
+        }
+
+        // По умолчанию не показываем модель
+        console.log('ModelViewer: Default case - not showing model');
+        return false;
+    };
+
+    // Only render the model if we should display it
+    const renderModel = () => {
+        const shouldShow = shouldDisplayModel();
+        console.log(`ModelViewer: renderModel - shouldDisplayModel() returned ${shouldShow}`);
+
+        if (!shouldShow) {
+            return (
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                    color: 'white'
+                }}>
+                    <Typography variant="h6">
+                        У этого элемента нет 3D модели
+                    </Typography>
+                </Box>
+            );
+        }
+
+        console.log('ModelViewer: Rendering model with URL:', effectiveModelUrl);
+
+        return (
+            <Canvas style={{ background: '#111' }}>
+                <ambientLight intensity={0.6} />
+                <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
+                <directionalLight position={[-5, 5, 5]} intensity={0.5} />
+                <directionalLight position={[0, 5, -5]} intensity={0.5} />
+                <PerspectiveCamera makeDefault position={[0, 2, 10]} />
+                <Suspense fallback={null}>
+                    <XbotModel
+                        currentTime={currentTime}
+                        isPlaying={isPlaying}
+                        onTimeUpdate={handleTimeUpdate}
+                        onModelLoad={handleModelLoad}
+                        playerDuration={duration}
+                        animationMarkers={animationMarkers}
+                        activeAnimations={activeAnimations}
+                        glbAnimationUrl={effectiveModelUrl}
+                        elementId={elementId}
+                        elementKeyframes={elementKeyframes}
+                    />
+                </Suspense>
+                <OrbitControls
+                    makeDefault
+                    enableDamping
+                    dampingFactor={0.1}
+                    rotateSpeed={0.5}
+                    enableZoom={true}
+                    zoomSpeed={0.8}
+                    enablePan={true}
+                    panSpeed={0.5}
+                />
+                <Grid
+                    position={[0, -1, 0]}
+                    args={[10, 10]}
+                    cellSize={1}
+                    cellThickness={1}
+                    cellColor="#555"
+                    sectionSize={3}
+                    sectionThickness={1.5}
+                    sectionColor="#888"
+                    fadeDistance={30}
+                />
+            </Canvas>
+        );
+    };
 
     if (!isVisible) return null;
 
@@ -2485,48 +2659,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                                 }
                             }}
                         >
-                            <Canvas style={{ background: '#111' }}>
-                                <ambientLight intensity={0.6} />
-                                <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
-                                <directionalLight position={[-5, 5, 5]} intensity={0.5} />
-                                <directionalLight position={[0, 5, -5]} intensity={0.5} />
-                                <PerspectiveCamera makeDefault position={[0, 2, 10]} />
-                                <Suspense fallback={null}>
-                                    <XbotModel
-                                        currentTime={currentTime}
-                                        isPlaying={isPlaying}
-                                        onTimeUpdate={handleTimeUpdate}
-                                        onModelLoad={handleModelLoad}
-                                        playerDuration={playerDuration}
-                                        animationMarkers={animationMarkers}
-                                        activeAnimations={activeAnimations}
-                                        glbAnimationUrl={effectiveModelUrl}
-                                        elementId={elementId}
-                                        elementKeyframes={elementKeyframes}
-                                    />
-                                    <Grid
-                                        position={[0, -1, 0]}
-                                        args={[10, 10]}
-                                        cellSize={1}
-                                        cellThickness={1}
-                                        cellColor="#555"
-                                        sectionSize={3}
-                                        sectionThickness={1.5}
-                                        sectionColor="#888"
-                                        fadeDistance={30}
-                                    />
-                                </Suspense>
-                                <OrbitControls
-                                    makeDefault
-                                    enableDamping
-                                    dampingFactor={0.1}
-                                    rotateSpeed={0.5}
-                                    enableZoom={true}
-                                    zoomSpeed={0.8}
-                                    enablePan={true}
-                                    panSpeed={0.5}
-                                />
-                            </Canvas>
+                            {renderModel()}
                         </MuiBox>
                     </MuiBox>
 

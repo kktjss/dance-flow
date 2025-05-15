@@ -561,6 +561,35 @@ See console for complete details.`);
                         console.error(`Converting non-array keyframes to empty array for element ${element.id}`);
                         element.keyframes = [];
                     }
+
+                    // CRITICAL FIX: Ensure modelPath and modelUrl are properly preserved
+                    if (element.type === '3d') {
+                        console.log(`Ensuring model data is preserved for 3D element ${element.id}:`, {
+                            modelPath: element.modelPath || 'none',
+                            modelUrl: element.modelUrl || 'none'
+                        });
+
+                        // Make sure modelPath and modelUrl are consistent
+                        if (element.modelPath && !element.modelUrl) {
+                            element.modelUrl = element.modelPath;
+                            console.log(`Set missing modelUrl to modelPath for element ${element.id}`);
+                        } else if (element.modelUrl && !element.modelPath) {
+                            element.modelPath = element.modelUrl;
+                            console.log(`Set missing modelPath to modelUrl for element ${element.id}`);
+                        }
+
+                        // If element has keyframes, make sure they all have the model information
+                        if (element.keyframes && element.keyframes.length > 0) {
+                            const modelPath = element.modelPath || element.modelUrl;
+                            if (modelPath) {
+                                element.keyframes.forEach(keyframe => {
+                                    keyframe.modelPath = modelPath;
+                                    keyframe.modelUrl = modelPath;
+                                });
+                                console.log(`Propagated model path to ${element.keyframes.length} keyframes for element ${element.id}`);
+                            }
+                        }
+                    }
                 });
             }
 
@@ -1225,6 +1254,38 @@ See console for complete details.`);
                 // Ensure keyframes is an array
                 keyframes: Array.isArray(element.keyframes) ? element.keyframes : []
             }));
+
+            // CRITICAL FIX: Ensure 3D model paths are properly loaded and consistent
+            validatedProject.elements = validatedProject.elements.map(element => {
+                // Only process 3D elements
+                if (element.type === '3d') {
+                    console.log(`Processing 3D element ${element.id} model data:`, {
+                        modelPath: element.modelPath || 'none',
+                        modelUrl: element.modelUrl || 'none'
+                    });
+
+                    // Make sure modelPath and modelUrl are consistent
+                    if (element.modelPath && !element.modelUrl) {
+                        element.modelUrl = element.modelPath;
+                        console.log(`Set missing modelUrl to modelPath for element ${element.id}`);
+                    } else if (element.modelUrl && !element.modelPath) {
+                        element.modelPath = element.modelUrl;
+                        console.log(`Set missing modelPath to modelUrl for element ${element.id}`);
+                    }
+
+                    // If element has keyframes, ensure they have model information
+                    const modelPath = element.modelPath || element.modelUrl;
+                    if (modelPath && element.keyframes && element.keyframes.length > 0) {
+                        element.keyframes = element.keyframes.map(keyframe => ({
+                            ...keyframe,
+                            modelPath: modelPath,
+                            modelUrl: modelPath
+                        }));
+                        console.log(`Added model path to ${element.keyframes.length} keyframes for element ${element.id}`);
+                    }
+                }
+                return element;
+            });
 
             setProject(validatedProject);
 

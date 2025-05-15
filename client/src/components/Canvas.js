@@ -1,7 +1,23 @@
 import React, { useEffect, useRef, useState, useCallback, createRef } from 'react';
 import { fabric } from 'fabric';
 import { Box, IconButton, Modal, Typography, Grid, Button, Tooltip, Paper } from '@mui/material';
-import { ContentCopy, Delete, Visibility, ThreeDRotation, Videocam, PlayArrow } from '@mui/icons-material';
+import {
+    ContentCopy,
+    Delete,
+    Visibility,
+    ThreeDRotation,
+    Videocam,
+    PlayArrow,
+    Stop,
+    FiberManualRecord,
+    AddCircleOutline,
+    Edit,
+    DragIndicator,
+    Save,
+    FolderOpen,
+    Upload,
+    Close as CloseIcon
+} from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import ReactDOM from 'react-dom';
 // ВРЕМЕННО: Импорты для 3D и видео просмотрщиков - будут удалены позже
@@ -348,6 +364,74 @@ const Canvas = ({
                 console.log('Clicked on canvas background');
             }
         });
+
+        // Handle object movement
+        fabricCanvas.on('object:moving', (e) => {
+            console.log('Object moving:', e.target.data?.elementId);
+
+            // Update 3D model icon position if it exists
+            if (e.target.modelIcon) {
+                e.target.modelIcon.set({
+                    left: e.target.left + 5,
+                    top: e.target.top + 5
+                });
+            }
+        });
+
+        // Handle object scaling
+        fabricCanvas.on('object:scaling', (e) => {
+            console.log('Object scaling:', e.target.data?.elementId);
+
+            // Update 3D model icon position if it exists
+            if (e.target.modelIcon) {
+                e.target.modelIcon.set({
+                    left: e.target.left + 5,
+                    top: e.target.top + 5
+                });
+            }
+        });
+
+        // Handle object modification complete
+        fabricCanvas.on('object:modified', (e) => {
+            if (!e.target || !e.target.data) return;
+            console.log('Object modified:', e.target.data.elementId);
+
+            // Update 3D model icon position if it exists
+            if (e.target.modelIcon) {
+                e.target.modelIcon.set({
+                    left: e.target.left + 5,
+                    top: e.target.top + 5
+                });
+                fabricCanvas.renderAll();
+            }
+
+            // Skip the rest if in read-only mode
+            if (readOnly) return;
+
+            // Update element properties based on object position and size
+            const elementId = e.target.data.elementId;
+            const updatedElements = effectiveElements.map(element => {
+                if (element.id === elementId) {
+                    // Extract position from the fabricjs object
+                    return {
+                        ...element,
+                        position: {
+                            x: e.target.left,
+                            y: e.target.top
+                        },
+                        // Update other properties like size based on scaling
+                        size: {
+                            width: e.target.width * e.target.scaleX,
+                            height: e.target.height * e.target.scaleY
+                        }
+                    };
+                }
+                return element;
+            });
+
+            // Notify parent component about the changes
+            onElementsChange(updatedElements);
+        });
     }, [effectiveElements, currentTime, isRecordingKeyframes, onElementsChange, onElementSelect, readOnly]);
 
     // Функция для применения эффектов анимации
@@ -376,18 +460,11 @@ const Canvas = ({
             opacity: element.style?.opacity !== undefined ? element.style.opacity : 1
         });
 
-        console.log(`Set basic visibility for element ${element.id}:`, {
-            visibilityBefore: oldVisible,
-            visibilityAfter: fabricObject.visible,
-            opacityBefore: oldOpacity,
-            opacityAfter: fabricObject.opacity
-        });
-
-        // Проверяем, есть ли у элемента 3D модель, и добавляем значок, если его нет
+        // Check if element has a 3D model but no model icon
         if (element.modelPath && !fabricObject.modelIcon) {
             console.log(`Element ${element.id} has 3D model path: ${element.modelPath}, adding 3D icon`);
 
-            // Создаем значок 3D модели
+            // Create 3D model icon
             const modelIcon = new fabric.Text('3D', {
                 left: fabricObject.left + 5,
                 top: fabricObject.top + 5,
@@ -400,203 +477,90 @@ const Canvas = ({
                 visible: true
             });
 
-            // Добавляем значок на холст
+            // Add icon to canvas
             if (fabricInstances.has(canvasId.current)) {
                 const fabricCanvas = fabricInstances.get(canvasId.current);
                 fabricCanvas.add(modelIcon);
 
-                // Связываем значок с объектом
+                // Link icon to object
                 fabricObject.modelIcon = modelIcon;
 
                 console.log(`Added 3D model icon for element ${element.id}`);
             }
         }
+        // Ensure existing model icon is visible and positioned correctly
+        else if (element.modelPath && fabricObject.modelIcon) {
+            const oldIconVisible = fabricObject.modelIcon.visible;
 
-        // If no keyframes or invalid ones, use base properties
-        if (!element.keyframes || !Array.isArray(element.keyframes) || element.keyframes.length === 0) {
-            console.log(`No keyframes for element ${element.id}, using base properties`);
-
-            // Ensure base properties are applied
-            fabricObject.set({
-                left: element.position.x,
-                top: element.position.y,
-                scaleX: element.size && element.size.width ? element.size.width / fabricObject.width : 1,
-                scaleY: element.size && element.size.height ? element.size.height / fabricObject.height : 1,
-                visible: true // Explicitly ensure visibility
+            fabricObject.modelIcon.set({
+                left: fabricObject.left + 5,
+                top: fabricObject.top + 5,
+                visible: true,
+                opacity: fabricObject.opacity
             });
 
-            // Обновляем позицию значка 3D модели, если он есть
-            if (fabricObject.modelIcon) {
-                fabricObject.modelIcon.set({
-                    left: element.position.x + 5,
-                    top: element.position.y + 5,
-                    visible: true
-                });
-            }
-
-            return;
+            console.log(`Updated 3D model icon for element ${element.id}:`, {
+                iconVisibilityBefore: oldIconVisible,
+                iconVisibilityAfter: fabricObject.modelIcon.visible
+            });
         }
 
-        console.log(`Element ${element.id} has ${element.keyframes.length} keyframes`);
-
-        // Filter out invalid keyframes
-        const validKeyframes = element.keyframes.filter(kf => {
-            const isValid = kf &&
-                typeof kf.time === 'number' && !isNaN(kf.time) &&
-                kf.position &&
-                typeof kf.position.x === 'number' && !isNaN(kf.position.x) &&
-                typeof kf.position.y === 'number' && !isNaN(kf.position.y);
-
-            if (!isValid) {
-                console.warn(`Skipping invalid keyframe in element ${element.id}:`, kf);
-            }
-            return isValid;
+        console.log(`Set basic visibility for element ${element.id}:`, {
+            visibilityBefore: oldVisible,
+            visibilityAfter: fabricObject.visible,
+            opacityBefore: oldOpacity,
+            opacityAfter: fabricObject.opacity,
+            hasModelIcon: !!fabricObject.modelIcon,
+            modelIconVisible: fabricObject.modelIcon ? fabricObject.modelIcon.visible : 'N/A'
         });
 
-        // If no valid keyframes after filtering, use base properties
-        if (validKeyframes.length === 0) {
-            console.log(`No valid keyframes for element ${element.id}, using base properties`);
-            fabricObject.set({
-                left: element.position.x,
-                top: element.position.y,
-                opacity: element.style?.opacity || 1,
-                scaleX: element.size && element.size.width ? element.size.width / fabricObject.width : 1,
-                scaleY: element.size && element.size.height ? element.size.height / fabricObject.height : 1,
-                visible: true // Explicitly ensure visibility
-            });
+        // If there are no keyframes, just return with the basic visibility
+        if (!element.keyframes || element.keyframes.length === 0) {
             return;
         }
 
-        console.log(`Element ${element.id} has ${validKeyframes.length} valid keyframes, current time: ${currentTime}`);
+        // Find the keyframes before and after the current time
+        const sortedKeyframes = [...element.keyframes].sort((a, b) => a.time - b.time);
 
-        // Sort keyframes by time
-        const sortedKeyframes = [...validKeyframes].sort((a, b) => a.time - b.time);
-
-        // Если текущее время точно соответствует ключевому кадру, используем его без интерполяции
-        const exactKeyframe = sortedKeyframes.find(k => Math.abs(k.time - currentTime) < 0.01);
-        if (exactKeyframe) {
-            console.log(`Using exact keyframe at time ${exactKeyframe.time}`);
-
-            // Make sure all properties exist and are valid
-            const posX = exactKeyframe.position?.x ?? element.position.x;
-            const posY = exactKeyframe.position?.y ?? element.position.y;
-            const opacity = exactKeyframe.opacity !== undefined ? exactKeyframe.opacity : element.style.opacity;
-            const scale = exactKeyframe.scale || 1;
-
-            fabricObject.set({
-                left: posX,
-                top: posY,
-                opacity: opacity,
-                scaleX: scale,
-                scaleY: scale,
-                visible: true // Explicitly ensure visibility
-            });
-
-            console.log(`Applied keyframe properties: x=${posX}, y=${posY}, opacity=${opacity}, scale=${scale}`);
-
-            // Обновляем позицию значка 3D модели, если он есть
-            if (fabricObject.modelIcon) {
-                fabricObject.modelIcon.set({
-                    left: posX + 5,
-                    top: posY + 5,
-                    opacity: opacity,
-                    visible: true // Explicitly ensure visibility
-                });
-
-                // If this is a 3D element, also update the model path display
-                if (element.type === '3d' && element.modelPath) {
-                    // Add model path information to the tooltip or label
-                    fabricObject.set({
-                        fill: 'rgba(0, 0, 255, 0.2)',
-                        stroke: 'rgba(0, 0, 255, 0.7)',
-                        strokeWidth: 2,
-                        rx: 10, // Ensure rounded corners are preserved
-                        ry: 10  // Ensure rounded corners are preserved
-                    });
-                }
-            }
-
-            return;
-        }
-
-        // Находим предыдущий и следующий ключевые кадры
         let prevKeyframe = null;
         let nextKeyframe = null;
 
-        // Находим два keyframe между которыми находимся
         for (let i = 0; i < sortedKeyframes.length; i++) {
             if (sortedKeyframes[i].time <= currentTime) {
                 prevKeyframe = sortedKeyframes[i];
             }
-
             if (sortedKeyframes[i].time > currentTime && !nextKeyframe) {
                 nextKeyframe = sortedKeyframes[i];
             }
         }
 
-        // Если у нас нет обоих keyframes, используем ближайший
-        if (!prevKeyframe && !nextKeyframe) {
-            console.log(`No applicable keyframes for element ${element.id} at time ${currentTime}`);
-            // Если нет keyframes вообще, используем базовые свойства
-            fabricObject.set({
-                left: element.position.x,
-                top: element.position.y,
-                opacity: element.style.opacity,
-                scaleX: element.size && element.size.width ? element.size.width / fabricObject.width : 1,
-                scaleY: element.size && element.size.height ? element.size.height / fabricObject.height : 1,
-                visible: true // Explicitly ensure visibility
-            });
+        // If we're before the first keyframe or after the last keyframe, use the closest one
+        if (!prevKeyframe && nextKeyframe) {
+            prevKeyframe = nextKeyframe;
+        } else if (prevKeyframe && !nextKeyframe) {
+            nextKeyframe = prevKeyframe;
+        }
+
+        // If we still don't have keyframes, just return
+        if (!prevKeyframe || !nextKeyframe) {
             return;
         }
 
-        if (!prevKeyframe) {
-            // Если нет предыдущего кадра, используем первый с базовыми свойствами элемента для предыдущего
-            prevKeyframe = {
-                time: 0,
-                position: { x: element.position.x, y: element.position.y },
-                opacity: element.style.opacity,
-                scale: 1
-            };
-        }
-
-        if (!nextKeyframe) {
-            // Если нет следующего кадра, используем последний с его же свойствами
-            nextKeyframe = sortedKeyframes[sortedKeyframes.length - 1];
-        }
-
-        // Вычисляем прогресс между keyframes
-        const totalDuration = nextKeyframe.time - prevKeyframe.time;
-        if (totalDuration === 0 || prevKeyframe === nextKeyframe) {
-            console.log(`Using single keyframe at time ${prevKeyframe.time}`);
-            // Если кадры совпадают по времени, используем свойства кадра
-            fabricObject.set({
-                left: prevKeyframe.position?.x ?? element.position.x,
-                top: prevKeyframe.position?.y ?? element.position.y,
-                opacity: prevKeyframe.opacity !== undefined ? prevKeyframe.opacity : element.style.opacity,
-                scaleX: prevKeyframe.scale || 1,
-                scaleY: prevKeyframe.scale || 1,
-                visible: true // Explicitly ensure visibility
-            });
-            return;
-        }
-
-        const progress = (currentTime - prevKeyframe.time) / totalDuration;
-
-        console.log(`Interpolating between keyframes at ${prevKeyframe.time} and ${nextKeyframe.time} (progress: ${progress})`);
-
-        // Обеспечиваем существование свойств position или используем базовые свойства элемента
-        const prevX = prevKeyframe.position?.x ?? element.position.x;
-        const prevY = prevKeyframe.position?.y ?? element.position.y;
-        const nextX = nextKeyframe.position?.x ?? element.position.x;
-        const nextY = nextKeyframe.position?.y ?? element.position.y;
+        // Calculate progress between keyframes
+        const keyframeDuration = nextKeyframe.time - prevKeyframe.time;
+        const progress = keyframeDuration > 0 ? (currentTime - prevKeyframe.time) / keyframeDuration : 0;
 
         // Интерполируем позицию
+        const prevX = prevKeyframe.position.x;
+        const prevY = prevKeyframe.position.y;
+        const nextX = nextKeyframe.position.x;
+        const nextY = nextKeyframe.position.y;
         const currentX = prevX + (nextX - prevX) * progress;
         const currentY = prevY + (nextY - prevY) * progress;
 
         // Интерполируем прозрачность
-        const prevOpacity = prevKeyframe.opacity !== undefined ? prevKeyframe.opacity : element.style.opacity;
-        const nextOpacity = nextKeyframe.opacity !== undefined ? nextKeyframe.opacity : element.style.opacity;
+        const prevOpacity = prevKeyframe.opacity !== undefined ? prevKeyframe.opacity : 1;
+        const nextOpacity = nextKeyframe.opacity !== undefined ? nextKeyframe.opacity : 1;
         const currentOpacity = prevOpacity + (nextOpacity - prevOpacity) * progress;
 
         // Интерполируем масштаб
@@ -864,26 +828,13 @@ const Canvas = ({
                             // Remove from map to track which objects need to be kept
                             existingObjectsMap.delete(element.id);
                         } else {
-                            // Create new object if it doesn't exist
-                            console.log(`Creating new element ${element.id} for canvas`);
+                            // Element doesn't exist yet, create it
+                            console.log(`Creating new element ${element.id} on canvas`);
 
-                            // Ensure size exists and has valid values
-                            if (!element.size || typeof element.size.width !== 'number' || typeof element.size.height !== 'number') {
-                                console.warn(`Element ${element.id} has invalid size:`, element.size);
-                                element.size = { width: 100, height: 100 };
-                            }
-
-                            // Ensure style exists with minimum properties
-                            if (!element.style) {
-                                console.warn(`Element ${element.id} has no style, creating default`);
-                                element.style = {
-                                    backgroundColor: '#cccccc',
-                                    borderColor: '#000000',
-                                    borderWidth: 1,
-                                    color: '#000000',
-                                    opacity: 1,
-                                    zIndex: 0
-                                };
+                            // Check if element has a 3D model
+                            const has3DModel = element.modelPath || element.type === '3d';
+                            if (has3DModel) {
+                                console.log(`Element ${element.id} is a 3D element or has a 3D model path: ${element.modelPath || 'none'}`);
                             }
 
                             // Создаем fabric объект на основе типа элемента
@@ -1025,29 +976,31 @@ const Canvas = ({
                                     break;
 
                                 case 'image':
-                                    console.log(`Creating image element: id=${element.id}, content URL exists: ${Boolean(element.content)}`);
-                                    if (!element.content) {
-                                        console.warn(`Image element ${element.id} is missing content URL, skipping`);
-                                        return; // Skip this element
-                                    }
+                                    console.log(`Creating image element: id=${element.id}, content=${element.content ? element.content.substring(0, 20) : 'empty'}`);
 
+                                    // For images, we need to load them asynchronously
                                     const promise = new Promise((resolve) => {
                                         fabric.Image.fromURL(element.content, (img) => {
                                             img.set({
                                                 left: element.position.x,
                                                 top: element.position.y,
-                                                opacity: typeof element.style.opacity === 'number' ? element.style.opacity : 1,
                                                 selectable: !readOnly,
                                                 hasControls: !readOnly,
-                                                hasBorders: !readOnly
+                                                hasBorders: !readOnly,
+                                                opacity: typeof element.style?.opacity === 'number' ? element.style.opacity : 1,
+                                                visible: true // Explicitly ensure visibility
                                             });
-                                            img.scaleToWidth(element.size.width);
-                                            img.scaleToHeight(element.size.height);
 
-                                            // Сохраняем полные данные об элементе для доступа к keyframes
+                                            // Scale image if size is specified
+                                            if (element.size && element.size.width && element.size.height) {
+                                                img.scaleToWidth(element.size.width);
+                                                img.scaleToHeight(element.size.height);
+                                            }
+
+                                            // Save element data
                                             img.data = {
                                                 elementId: element.id,
-                                                element: element // Сохраняем полный элемент для доступа к keyframes
+                                                element: element
                                             };
 
                                             // Проверяем, есть ли у элемента 3D модель
@@ -1156,7 +1109,13 @@ const Canvas = ({
                         obj.modelIcon = modelIcon;
 
                         // Ensure the object is visible
-                        obj.set({ visible: true });
+                        obj.set({ visible: true, opacity: element.style?.opacity || 1 });
+
+                        console.log(`Added 3D model icon for element ${element.id}, object visibility:`, {
+                            objVisible: obj.visible,
+                            objOpacity: obj.opacity,
+                            iconVisible: modelIcon.visible
+                        });
                     }
                 });
 
@@ -1360,6 +1319,18 @@ const Canvas = ({
                     type: '3d'
                 };
 
+                // Ensure modelPath and modelUrl are consistent and not empty
+                if (updatedElement.modelPath || updatedElement.modelUrl) {
+                    const modelPathToUse = updatedElement.modelPath || updatedElement.modelUrl;
+                    updatedElement.modelPath = modelPathToUse;
+                    updatedElement.modelUrl = modelPathToUse;
+
+                    console.log(`Canvas: Ensured consistent model paths for element ${elementId}:`, {
+                        modelPath: updatedElement.modelPath,
+                        modelUrl: updatedElement.modelUrl
+                    });
+                }
+
                 // Если у элемента есть ключевые кадры, добавляем modelPath и modelUrl в каждый кадр
                 if (updatedElement.keyframes && updatedElement.keyframes.length > 0) {
                     updatedElement.keyframes = updatedElement.keyframes.map(keyframe => ({
@@ -1448,17 +1419,52 @@ const Canvas = ({
                     const oldVisible = obj.visible;
                     const oldOpacity = obj.opacity;
 
-                    obj.set({ visible: true });
+                    // Force visibility - explicitly set visible to true
+                    obj.set({
+                        visible: true,
+                        opacity: obj.data.element.style?.opacity || 1
+                    });
 
                     // Also ensure 3D model icons are visible
                     if (obj.modelIcon) {
                         const oldIconVisible = obj.modelIcon.visible;
-                        obj.modelIcon.set({ visible: true });
+
+                        // Force model icon visibility
+                        obj.modelIcon.set({
+                            visible: true,
+                            opacity: obj.opacity
+                        });
 
                         console.log(`Canvas: Updated 3D model icon for element ${obj.data.elementId}:`, {
                             iconVisibilityBefore: oldIconVisible,
-                            iconVisibilityAfter: obj.modelIcon.visible
+                            iconVisibilityAfter: obj.modelIcon.visible,
+                            iconOpacity: obj.modelIcon.opacity
                         });
+                    }
+                    // If the element has a model path but no icon, create one
+                    else if (obj.data.element.modelPath && !obj.modelIcon) {
+                        console.log(`Canvas: Element ${obj.data.elementId} has modelPath but no icon, creating one`);
+
+                        // Create a new 3D model icon
+                        const modelIcon = new fabric.Text('3D', {
+                            left: obj.left + 5,
+                            top: obj.top + 5,
+                            fontSize: 16,
+                            fill: '#FFFFFF',
+                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
+                            padding: 5,
+                            selectable: false,
+                            evented: false,
+                            visible: true
+                        });
+
+                        // Add the icon to the canvas
+                        fabricCanvas.add(modelIcon);
+
+                        // Link the icon to the object
+                        obj.modelIcon = modelIcon;
+
+                        console.log(`Canvas: Created new 3D model icon for element ${obj.data.elementId}`);
                     }
 
                     console.log(`Canvas: Updated object visibility for element ${obj.data.elementId}:`, {
@@ -1472,9 +1478,10 @@ const Canvas = ({
                 }
             });
 
-            // Re-render the canvas
+            // Force canvas re-rendering
             fabricCanvas.renderAll();
 
+            // Double-check after refresh to make sure everything is visible
             console.log('Canvas: Objects after refresh:', fabricCanvas.getObjects().map(obj => ({
                 id: obj.data?.elementId || 'unknown',
                 type: obj.type,
@@ -1485,86 +1492,137 @@ const Canvas = ({
             })));
 
             console.log('Canvas: Refreshed after closing 3D model viewer');
-        } else {
-            console.warn('Canvas: Cannot refresh canvas - no fabric instance found');
         }
-    }, [canvasId]);
+    }, []);
 
     // Используем ReactDOM.createPortal для рендеринга кнопок в отдельном контейнере
     const renderButtons = () => {
-        // Safety check: don't try to render if the ref isn't available
-        if (!buttonContainerRef.current) {
-            console.warn('Button container ref is not available');
-            return null;
-        }
+        // Только если инициализирован canvas и есть контейнер для кнопок
+        if (!initialized || !buttonContainerRef.current) return null;
 
-        try {
-            return ReactDOM.createPortal(
-                <>
-                    <div
-                        style={{
+        return ReactDOM.createPortal(
+            <>
+                {/* Кнопки управления выбранным элементом - в левом верхнем углу */}
+                {selectedElement && (
+                    <Box
+                        sx={{
                             position: 'absolute',
-                            top: 10,
-                            right: 10,
-                            zIndex: 100,
-                            backgroundColor: isRecordingKeyframes ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
-                            color: 'white',
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: '0.8rem',
-                            cursor: 'pointer',
-                            pointerEvents: 'auto'
-                        }}
-                        onClick={toggleKeyframeRecording}
-                    >
-                        {isRecordingKeyframes ? 'Запись ключевых кадров (ВКЛ)' : 'Запись ключевых кадров (ВЫКЛ)'}
-                    </div>
-
-                    {selectedElement && (
-                        <div style={{
-                            position: 'absolute',
-                            top: 10,
-                            left: 10,
-                            zIndex: 100,
+                            top: '20px',
+                            left: '20px',
                             display: 'flex',
-                            gap: '8px'
-                        }}>
-                            <IconButton
-                                onClick={handleDuplicateElement}
-                                sx={{
-                                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                    },
-                                    pointerEvents: 'auto'
-                                }}
-                                title="Дублировать элемент"
-                            >
-                                <ContentCopy fontSize="small" />
-                            </IconButton>
+                            gap: 1,
+                            pointerEvents: 'auto',
+                            zIndex: 100
+                        }}
+                    >
+                        {/* Кнопка копирования элемента */}
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => {
+                                // Создаем копию выбранного элемента
+                                const elementCopy = {
+                                    ...selectedElement,
+                                    id: `${selectedElement.type}-${Date.now()}`, // Новый ID
+                                    position: {
+                                        x: selectedElement.position.x + 20,
+                                        y: selectedElement.position.y + 20
+                                    }
+                                };
 
-                            <IconButton
-                                onClick={handleDeleteElement}
-                                sx={{
-                                    backgroundColor: 'rgba(255, 87, 87, 0.7)',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(255, 87, 87, 0.9)',
-                                    },
-                                    pointerEvents: 'auto'
-                                }}
-                                title="Удалить элемент (Delete)"
-                            >
-                                <Delete fontSize="small" />
-                            </IconButton>
-                        </div>
-                    )}
-                </>,
-                buttonContainerRef.current
-            );
-        } catch (error) {
-            console.error('Error rendering buttons:', error);
-            return null;
-        }
+                                // Добавляем копию в список элементов
+                                onElementsChange([...effectiveElements, elementCopy]);
+
+                                // Выбираем новый элемент
+                                onElementSelect(elementCopy);
+                            }}
+                            sx={{
+                                backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(33, 150, 243, 0.9)',
+                                },
+                                minWidth: '40px',
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%'
+                            }}
+                        >
+                            <ContentCopy />
+                        </Button>
+
+                        {/* Кнопка удаления элемента */}
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={handleDeleteElement}
+                            sx={{
+                                backgroundColor: 'rgba(255, 87, 87, 0.7)',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 87, 87, 0.9)',
+                                },
+                                minWidth: '40px',
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%'
+                            }}
+                        >
+                            <Delete />
+                        </Button>
+                    </Box>
+                )}
+
+                {/* Отладочная кнопка в правом верхнем углу */}
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '20px',
+                        right: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1,
+                        pointerEvents: 'auto',
+                        zIndex: 100
+                    }}
+                >
+                    {/* Отладочная кнопка для проверки 3D моделей */}
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={() => {
+                            console.log('Canvas: Debug - Checking all elements for 3D models');
+
+                            // Проверяем все элементы на наличие 3D моделей
+                            const elementsWithModels = effectiveElements.filter(el => el.modelPath);
+
+                            console.log('Canvas: Elements with 3D models:', {
+                                count: elementsWithModels.length,
+                                elements: elementsWithModels.map(el => ({
+                                    id: el.id,
+                                    type: el.type,
+                                    modelPath: el.modelPath
+                                }))
+                            });
+
+                            // Если есть элементы с моделями, выбираем первый и открываем просмотрщик
+                            if (elementsWithModels.length > 0) {
+                                const element = elementsWithModels[0];
+                                console.log('Canvas: Selecting element with 3D model:', element.id);
+                                onElementSelect(element);
+                                setViewMode('3d');
+                                setShowChoreoModal(true);
+                            } else {
+                                console.log('Canvas: No elements with 3D models found');
+                                alert('Нет элементов с 3D моделями');
+                            }
+                        }}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        Проверить 3D модели
+                    </Button>
+                </Box>
+            </>,
+            buttonContainerRef.current
+        );
     };
 
     // ВРЕМЕННО: Рендер кнопки просмотра 3D/видео - будет удалено позже
@@ -1627,6 +1685,33 @@ const Canvas = ({
     const renderChoreoModal = () => {
         const videoSource = getVideoUrl();
 
+        // Проверяем, есть ли у выбранного элемента 3D модель
+        const has3dModel = selectedElement && selectedElement.modelPath;
+        console.log('Canvas: renderChoreoModal - checking for 3D model:', {
+            hasSelectedElement: !!selectedElement,
+            elementId: selectedElement?.id,
+            has3dModel: has3dModel,
+            modelPath: selectedElement?.modelPath || 'none',
+            viewMode: viewMode
+        });
+
+        // Если есть выбранный элемент, проверим его keyframes
+        if (selectedElement) {
+            console.log('Canvas: Selected element keyframes:', {
+                hasKeyframes: !!(selectedElement.keyframes && selectedElement.keyframes.length > 0),
+                keyframesCount: selectedElement.keyframes ? selectedElement.keyframes.length : 0
+            });
+
+            // Если есть keyframes, проверим их на наличие modelPath
+            if (selectedElement.keyframes && selectedElement.keyframes.length > 0) {
+                const keyframesWithModel = selectedElement.keyframes.filter(kf => kf.modelPath);
+                console.log('Canvas: Keyframes with modelPath:', {
+                    count: keyframesWithModel.length,
+                    paths: keyframesWithModel.map(kf => kf.modelPath)
+                });
+            }
+        }
+
         return (
             <Modal
                 open={showChoreoModal}
@@ -1651,22 +1736,29 @@ const Canvas = ({
                         {viewMode === '3d' ? '3D модель' : 'Видео'} для {selectedElement?.title || 'танцора'}
                     </Typography>
                     <Box sx={{ flexGrow: 1 }}>
-                        {viewMode === '3d' ? (
+                        {viewMode === '3d' && has3dModel ? (
                             <ModelViewer
                                 isVisible={true}
                                 onClose={() => setShowChoreoModal(false)}
-                                playerDuration={60} // Default duration of 60 seconds
+                                playerDuration={project?.duration || 60} // Use project duration if available
                                 currentTime={currentTime}
                                 isPlaying={isPlaying}
                                 elementKeyframes={selectedElement?.keyframes || []}
                                 elementId={selectedElement?.id}
+                                glbAnimationUrl={selectedElement?.modelPath}
                             />
-                        ) : (
+                        ) : viewMode === 'video' ? (
                             <VideoViewer
                                 isVisible={true}
                                 videoUrl={videoSource}
                                 onClose={() => setShowChoreoModal(false)}
                             />
+                        ) : (
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                <Typography variant="body1">
+                                    {!selectedElement ? 'Выберите элемент для просмотра.' : 'У этого элемента нет 3D модели. Пожалуйста, добавьте модель в настройках элемента.'}
+                                </Typography>
+                            </Box>
                         )}
                     </Box>
                 </Box>
@@ -1685,9 +1777,18 @@ const Canvas = ({
         return [];
     };
 
-    // Функция для получения модели элемента
+    // Обновленная функция для получения модели элемента с подробным логированием
     const getElementModel = useCallback((element) => {
-        if (!element) return null;
+        if (!element) {
+            console.log('Canvas: getElementModel called without element');
+            return null;
+        }
+
+        console.log('Canvas: getElementModel checking element:', {
+            id: element.id,
+            hasModelPath: !!element.modelPath,
+            modelPath: element.modelPath || 'none'
+        });
 
         // Проверяем наличие пути к модели
         if (element.modelPath) {
@@ -1695,7 +1796,7 @@ const Canvas = ({
 
             // Если это локальный файл (blob URL), мы не можем его восстановить напрямую
             // Поэтому возвращаем информацию о модели для отображения
-            if (element.isLocalModelFile) {
+            if (element.isLocalModelFile || element.modelPath.startsWith('blob:')) {
                 console.log('Canvas: Element has local model file');
                 return {
                     isLocalFile: true,
@@ -1704,14 +1805,80 @@ const Canvas = ({
                 };
             }
 
+            // Process the URL to ensure it's correctly formatted
+            let modelUrl = element.modelPath;
+
+            // If the URL doesn't start with http or blob, ensure it has the correct prefix
+            if (!modelUrl.startsWith('http') && !modelUrl.startsWith('blob:')) {
+                // Convert /uploads/models/ to /models/ if needed
+                if (modelUrl.startsWith('/uploads/models/')) {
+                    const filename = modelUrl.split('/').pop();
+                    modelUrl = `/models/${filename}`;
+                } else if (modelUrl.startsWith('uploads/models/')) {
+                    const filename = modelUrl.split('/').pop();
+                    modelUrl = `/models/${filename}`;
+                }
+
+                // If it doesn't start with /, add it
+                if (!modelUrl.startsWith('/')) {
+                    modelUrl = `/models/${modelUrl.split('/').pop()}`;
+                }
+
+                // If it's not a full URL, add the origin
+                if (!modelUrl.includes('://')) {
+                    modelUrl = `${window.location.origin}${modelUrl}`;
+                }
+            }
+
+            console.log('Canvas: Processed model URL:', modelUrl);
+
             return {
-                url: element.modelPath,
+                url: modelUrl,
                 name: element.modelName || element.modelPath.split('/').pop() || 'Модель'
             };
         }
 
+        console.log('Canvas: Element does not have a model path');
         return null;
     }, []);
+
+    // Добавляем обработчик двойного клика для элементов с 3D моделями
+    useEffect(() => {
+        if (!fabricInstances.has(canvasId.current)) return;
+
+        const fabricCanvas = fabricInstances.get(canvasId.current);
+
+        // Добавляем обработчик двойного клика
+        fabricCanvas.on('mouse:dblclick', (e) => {
+            console.log('Canvas: Double click detected');
+
+            if (e.target && e.target.data && e.target.data.elementId) {
+                const elementId = e.target.data.elementId;
+                const element = effectiveElements.find(el => el.id === elementId);
+
+                if (element) {
+                    console.log('Canvas: Double clicked on element:', {
+                        id: element.id,
+                        type: element.type,
+                        hasModelPath: !!element.modelPath,
+                        modelPath: element.modelPath || 'none'
+                    });
+
+                    // Если у элемента есть 3D модель, открываем модальное окно
+                    if (element.modelPath) {
+                        console.log('Canvas: Opening 3D model viewer for element:', element.id);
+                        setViewMode('3d');
+                        setShowChoreoModal(true);
+                    }
+                }
+            }
+        });
+
+        return () => {
+            // Удаляем обработчик при размонтировании
+            fabricCanvas.off('mouse:dblclick');
+        };
+    }, [effectiveElements, setViewMode, setShowChoreoModal]);
 
     // Эффект для загрузки моделей при монтировании компонента
     useEffect(() => {
@@ -1769,7 +1936,7 @@ const Canvas = ({
                 isVisible={showCombinedViewer}
                 onClose={handleCloseCombinedViewer}
                 videoUrl={getVideoUrl()}
-                playerDuration={60} // Используйте актуальную длительность проекта
+                playerDuration={project?.duration || 60} // Use project duration if available
                 currentTime={currentTime}
                 isPlaying={isPlaying}
                 onTimeUpdate={() => { }} // Добавьте обработчик обновления времени при необходимости
