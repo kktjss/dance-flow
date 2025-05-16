@@ -55,14 +55,29 @@ const CombinedViewer = ({
             console.log('CombinedViewer: Looking for element with ID:', elementId, {
                 found: !!element,
                 hasModelPath: !!element?.modelPath,
-                modelPath: element?.modelPath || 'none'
+                modelPath: element?.modelPath || 'none',
+                has3DModel: !!element?.has3DModel
             });
 
-            if (element && element.modelPath) {
-                console.log('CombinedViewer: Found modelPath in element:', element.modelPath);
+            if (element && (element.modelPath || element.has3DModel)) {
+                console.log('CombinedViewer: Found model data in element:', {
+                    modelPath: element.modelPath || 'none',
+                    has3DModel: !!element.has3DModel
+                });
 
                 // Process the model URL to ensure it's correctly formatted
                 let modelUrl = element.modelPath;
+
+                // If no modelPath but has3DModel is set, check if we have model info in keyframes
+                if (!modelUrl && element.has3DModel && element.keyframes && element.keyframes.length > 0) {
+                    console.log('CombinedViewer: Element has has3DModel flag but no modelPath, checking keyframes');
+                    // Find first keyframe with modelPath
+                    const keyframeWithModel = element.keyframes.find(kf => kf.modelPath);
+                    if (keyframeWithModel && keyframeWithModel.modelPath) {
+                        console.log('CombinedViewer: Found model path in keyframe:', keyframeWithModel.modelPath);
+                        modelUrl = keyframeWithModel.modelPath;
+                    }
+                }
 
                 // If the URL doesn't start with http or blob, ensure it has the correct prefix
                 if (!modelUrl.startsWith('http') && !modelUrl.startsWith('blob:')) {

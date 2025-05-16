@@ -471,7 +471,7 @@ const Canvas = ({
                 top: fabricObject.top + 5,
                 fontSize: 16,
                 fill: '#FFFFFF',
-                backgroundColor: 'rgba(0, 0, 255, 0.7)',
+                backgroundColor: 'rgba(148, 148, 225, 0.7)',
                 padding: 5,
                 selectable: false,
                 evented: false,
@@ -1777,12 +1777,13 @@ const Canvas = ({
         const videoSource = getVideoUrl();
 
         // Проверяем, есть ли у выбранного элемента 3D модель
-        const has3dModel = selectedElement && selectedElement.modelPath;
+        const has3dModel = selectedElement && (selectedElement.modelPath || selectedElement.has3DModel);
         console.log('Canvas: renderChoreoModal - checking for 3D model:', {
             hasSelectedElement: !!selectedElement,
             elementId: selectedElement?.id,
             has3dModel: has3dModel,
             modelPath: selectedElement?.modelPath || 'none',
+            has3DModel: selectedElement?.has3DModel || false,
             viewMode: viewMode
         });
 
@@ -1837,6 +1838,7 @@ const Canvas = ({
                                 elementKeyframes={selectedElement?.keyframes || []}
                                 elementId={selectedElement?.id}
                                 glbAnimationUrl={selectedElement?.modelPath}
+                                onSaveAnimations={handleSaveAnimations}
                             />
                         ) : viewMode === 'video' ? (
                             <VideoViewer
@@ -1956,7 +1958,7 @@ const Canvas = ({
                     });
 
                     // Если у элемента есть 3D модель, открываем модальное окно
-                    if (element.modelPath) {
+                    if (element.modelPath || element.has3DModel) {
                         console.log('Canvas: Opening 3D model viewer for element:', element.id);
                         setViewMode('3d');
                         setShowChoreoModal(true);

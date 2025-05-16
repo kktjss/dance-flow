@@ -1257,9 +1257,9 @@ See console for complete details.`);
 
             // CRITICAL FIX: Ensure 3D model paths are properly loaded and consistent
             validatedProject.elements = validatedProject.elements.map(element => {
-                // Only process 3D elements
-                if (element.type === '3d') {
-                    console.log(`Processing 3D element ${element.id} model data:`, {
+                // Process any element with model properties
+                if (element.type === '3d' || element.hasModelPath || element.modelPath || element.modelUrl || element.has3DModel) {
+                    console.log(`Processing element ${element.id} (type ${element.type}) model data:`, {
                         modelPath: element.modelPath || 'none',
                         modelUrl: element.modelUrl || 'none'
                     });
@@ -1271,6 +1271,12 @@ See console for complete details.`);
                     } else if (element.modelUrl && !element.modelPath) {
                         element.modelPath = element.modelUrl;
                         console.log(`Set missing modelPath to modelUrl for element ${element.id}`);
+                    }
+
+                    // Make sure has3DModel flag is set if a model path exists
+                    if ((element.modelPath || element.modelUrl) && !element.has3DModel) {
+                        element.has3DModel = true;
+                        console.log(`Set has3DModel flag for element ${element.id}`);
                     }
 
                     // If element has keyframes, ensure they have model information

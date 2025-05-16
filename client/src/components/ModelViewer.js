@@ -536,93 +536,52 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     }, [currentTime, isPlaying, playerDuration, animationMarkers, getCurrentAnimationSegment, getActiveAnimationAtTime]);
 
     // Animation loop with precise timing
-    const animate = useCallback((timestamp) => {
-        if (!lastTimeRef.current) {
-            lastTimeRef.current = timestamp;
+    const animate = useCallback(() => {
+        if (!mixer.current || !isPlaying) return;
+
+        // Используем фиксированный шаг для обновления миксера
+        const MODEL_TIME_STEP = 0.016; // ~60fps
+
+        // Обновляем миксер с фиксированным шагом для плавной анимации модели
+        mixer.current.update(MODEL_TIME_STEP);
+
+        // Коэффициент масштабирования для синхронизации плеера с анимацией
+        // Увеличиваем его, если анимация идёт быстрее плеера
+        const PLAYER_SPEED_MULTIPLIER = 5.0; // Подбираем этот коэффициент эмпирически
+
+        // Ускоряем время плеера, чтобы оно соответствовало реальной скорости анимации
+        let newTime = currentTime + (MODEL_TIME_STEP * PLAYER_SPEED_MULTIPLIER);
+
+        // Проверка на окончание анимации
+        if (newTime >= playerDuration) {
+            newTime = 0;
+            if (mixer.current) mixer.current.setTime(0);
         }
 
-        const elapsed = timestamp - lastTimeRef.current;
+        // Обновляем время плеера
+        onTimeUpdate(newTime);
 
-        if (mixer.current && isPlaying) {
-            // Calculate delta time for animation update
-            const delta = clock.current.getDelta();
-
-            // Fix: Invert the scale factor to make animation play faster when playerDuration is shorter
-            // If model duration is 10s and player duration is 5s, we need to play at 2x speed
-            const scaleFactor = playerDuration && modelDuration.current ? playerDuration / modelDuration.current : 1;
-            const scaledDelta = delta * scaleFactor;
-
-            // Update the mixer with the scaled delta time
-            mixer.current.update(scaledDelta);
-
-            // Update time approximately 30 times per second
-            if (elapsed > 33) { // ~30fps
-                // Get active animations at current time
-                const activeAnimsAtTime = getActiveAnimationAtTime();
-
-                // Update player time based on animation progress but respect the scaling
-                let playerTime = currentTime + (delta * scaleFactor);
-
-                // If we have active animations at this time, check if we need to adjust the player time
-                if (activeAnimsAtTime.length > 0) {
-                    // Check if we've reached the end of any animation segment
-                    const endingAnims = activeAnimsAtTime.filter(anim => playerTime >= anim.end);
-                    if (endingAnims.length > 0) {
-                        // If we've reached the end of all active animations, loop back or stop
-                        if (endingAnims.length === activeAnimsAtTime.length) {
-                            // If we've reached the end of the player duration, loop back to start
-                            if (playerTime >= playerDuration) {
-                                playerTime = 0;
-                                mixer.current.time = 0;
-                            }
-                        }
-                    }
-                } else {
-                    // Default behavior when no animations are active at this time
-                    if (animationMarkers && animationMarkers.length > 0) {
-                        // Use markers for precise animation segment mapping
-                        const segment = getCurrentAnimationSegment();
-                        const modelTime = mixer.current.time;
-                        const segmentProgress = (modelTime - segment.modelStart) / (segment.modelEnd - segment.modelStart);
-                        playerTime = segment.start + segmentProgress * (segment.end - segment.start);
-
-                        // Check if we've reached the end of the segment
-                        if (playerTime >= segment.end) {
-                            playerTime = segment.end;
-                        }
-                    } else {
-                        // Default scaling when no markers are present
-                        const modelTime = mixer.current.time;
-                        playerTime = playerDuration
-                            ? (modelTime / modelDuration.current) * playerDuration
-                            : modelTime;
-                    }
-
-                    // Check if we've reached the end of the player duration
-                    if (playerTime >= playerDuration) {
-                        playerTime = 0;
-                        mixer.current.time = 0;
-                    }
-                }
-
-                onTimeUpdate(playerTime);
-                lastTimeRef.current = timestamp;
-            }
-        }
-
+        // Запрашиваем следующий кадр анимации
         if (isPlaying) {
             animationRef.current = requestAnimationFrame(animate);
         }
-    }, [isPlaying, onTimeUpdate, playerDuration, animationMarkers, getCurrentAnimationSegment, currentTime, getActiveAnimationAtTime]);
+    }, [isPlaying, currentTime, playerDuration, onTimeUpdate]);
 
     // Setup and cleanup animation frame
     useEffect(() => {
         if (isPlaying) {
-            clock.current.start();
-            lastTimeRef.current = null;
+            // Запускаем анимацию
             animationRef.current = requestAnimationFrame(animate);
-        } else {
-            clock.current.stop();
+
+            // Устанавливаем нормальную скорость для анимаций модели
+            if (mixer.current) {
+                Object.values(activeActionsRef.current).forEach(action => {
+                    if (action) {
+                        // Скорость анимации модели оставляем нормальной
+                        action.timeScale = 1.0;
+                    }
+                });
+            }
         }
 
         return () => {
