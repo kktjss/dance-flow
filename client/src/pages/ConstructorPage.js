@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment, Menu, MenuItem, Snackbar, Alert, List, ListItem, ListItemIcon, ListItemText, ButtonGroup, useTheme } from '@mui/material';
-import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy, VideoLibrary, Delete as DeleteIcon, MusicNote as MusicNoteIcon, CloudUpload } from '@mui/icons-material';
+import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy, VideoLibrary, Delete as DeleteIcon, MusicNote as MusicNoteIcon, CloudUpload, Close, Edit } from '@mui/icons-material';
 import ThreeDRotation from '@mui/icons-material/ThreeDRotation';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { styled } from '@mui/material/styles';
-import { COLORS } from '../App';
+import { COLORS } from '../constants/colors';
 
 // Import components
 import Player from '../components/Player';
@@ -17,6 +17,8 @@ import PropertyPanel from '../components/PropertyPanel';
 import ProjectsList from '../components/ProjectsList';
 import ModelViewer from '../components/ModelViewer';
 import CombinedViewer from '../components/CombinedViewer';
+import VideoViewer from '../components/VideoViewer';
+import ProjectDialog from '../components/ProjectDialog';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -24,35 +26,35 @@ const API_URL = 'http://localhost:5000/api';
 const PALETTE = {
     // Основные цвета
     primary: {
-        light: '#9C6AFF',
-        main: '#6A3AFF', // Основной фиолетовый
-        dark: '#4316DB'
+        light: COLORS.primaryLight,
+        main: COLORS.primary, // Blue-violet
+        dark: '#5449A6'
     },
     secondary: {
-        light: '#FF8F73',
-        main: '#FF6B52', // Ярко-оранжевый
-        dark: '#E54B30'
+        light: COLORS.secondaryLight,
+        main: COLORS.secondary, // Light blue
+        dark: '#0071CE'
     },
     tertiary: {
-        light: '#FF7EB3',
-        main: '#FF5C93', // Розовый
-        dark: '#DB3671'
+        light: COLORS.tertiaryLight,
+        main: COLORS.tertiary, // Turquoise
+        dark: '#2CB5B5'
     },
     // Дополнительные цвета
     teal: {
         light: '#7DEEFF',
-        main: '#33D2FF', // Голубой
-        dark: '#00A0CC'
+        main: COLORS.teal, // Teal
+        dark: '#008B9A'
     },
-    green: {
-        light: '#7CFFCB',
-        main: '#33E2A0', // Нежно-зеленый
-        dark: '#00B371'
+    accent: {
+        light: '#FFE066',
+        main: COLORS.accent, // Yellow
+        dark: '#E6C300'
     },
     // Нейтральные цвета
     purpleGrey: {
-        light: '#B7A6FF',
-        main: '#8678B2', // Серо-фиолетовый
+        light: '#9D94D3',
+        main: '#8678B2', // Grey-purple
         dark: '#5D5080'
     }
 };
@@ -62,14 +64,14 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(2),
     borderRadius: '12px',
     backgroundColor: theme.palette.mode === 'dark'
-        ? 'rgba(17, 21, 54, 0.9)'  // Lighter, grayer purple color
-        : 'rgba(240, 240, 250, 0.9)', // Very light gray-purple in light mode
+        ? 'rgba(32, 38, 52, 0.85)'  // Lighter, more neutral dark blue
+        : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
     boxShadow: theme.palette.mode === 'dark'
-        ? '0 8px 24px 0 rgba(0, 0, 0, 0.3)'
+        ? '0 8px 24px 0 rgba(0, 0, 0, 0.2)'
         : '0 8px 24px 0 rgba(0, 0, 0, 0.1)',
     border: `1px solid ${theme.palette.mode === 'dark'
         ? 'rgba(255, 255, 255, 0.05)'
-        : 'rgba(106, 58, 255, 0.05)'}`,
+        : 'rgba(30, 144, 255, 0.15)'}`,
     position: 'relative',
     overflow: 'hidden',
     backdropFilter: 'blur(8px)',
@@ -82,13 +84,17 @@ const StyledButton = styled(Button)(({ theme }) => ({
     textTransform: 'none',
     transition: 'all 0.2s',
     boxShadow: theme.palette.mode === 'dark'
-        ? '0 4px 12px 0 rgba(0, 0, 0, 0.2)'
+        ? '0 4px 12px rgba(30, 144, 255, 0.2)'
         : 'none',
+    '&.MuiButton-contained': {
+        background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+        color: '#fff',
+    },
     '&:hover': {
         transform: 'translateY(-2px)',
         boxShadow: theme.palette.mode === 'dark'
-            ? '0 6px 16px 0 rgba(0, 0, 0, 0.3)'
-            : '0 6px 16px 0 rgba(0, 0, 0, 0.1)',
+            ? '0 6px 16px rgba(30, 144, 255, 0.3)'
+            : '0 6px 16px rgba(30, 144, 255, 0.2)',
     }
 }));
 
@@ -100,7 +106,7 @@ const StyledTab = styled(Tab)(({ theme }) => ({
         ? theme.palette.grey[400]
         : theme.palette.text.secondary,
     '&.Mui-selected': {
-        color: theme.palette.primary.main,
+        color: COLORS.secondary,
     },
     transition: 'all 0.2s',
 }));
@@ -141,6 +147,8 @@ const ConstructorPage = () => {
         video: false,
         glb: false
     });
+    const [showProjectDialog, setShowProjectDialog] = useState(false);
+    const [isEditingProjectInfo, setIsEditingProjectInfo] = useState(false);
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -185,17 +193,8 @@ const ConstructorPage = () => {
             console.log('ConstructorPage: Found project ID in URL:', projectId);
             handleSelectProject(projectId);
         } else {
-            console.log('ConstructorPage: Creating new project');
-            setProject({
-                id: null,
-                name: 'Новый проект',
-                description: '',
-                duration: 60,
-                audioUrl: '',
-                videoUrl: '',
-                elements: [],
-                glbAnimations: []
-            });
+            console.log('ConstructorPage: No project ID in URL, showing project dialog');
+            setShowProjectDialog(true);
         }
     }, [id]);
 
@@ -1224,213 +1223,180 @@ See console for complete details.`);
 
     // Handle project selection
     const handleSelectProject = async (projectId) => {
+        if (!projectId) return;
+
         try {
-            // Validate project ID first
-            if (!projectId || projectId === 'undefined' || projectId === 'null') {
-                console.error('Invalid project ID:', projectId);
-                showNotification('Недопустимый ID проекта', 'error');
-                return;
-            }
+            console.log('Fetching project data for ID:', projectId);
 
-            setError(null); // Clear errors before loading
-            console.log('Loading project with ID:', projectId);
-
-            // Показываем, что идет загрузка и обновляем URL
-            console.log('Setting temporary loading state...');
-            setProject(prev => ({ ...prev, id: projectId, elements: [], loading: true }));
-
-            console.log('Sending request to server...');
+            // Получаем токен авторизации
             const token = localStorage.getItem('token');
             if (!token) {
-                throw new Error('No authentication token found. Please log in.');
+                throw new Error('Не найден токен авторизации. Пожалуйста, войдите в систему снова.');
             }
+
+            // Добавляем токен в заголовки запроса
             const response = await axios.get(`${API_URL}/projects/${projectId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
-            console.log('Got response from server:', response.status);
 
-            if (!response || !response.data) {
-                console.error('Response or response.data is null or undefined');
-                throw new Error('No project data returned');
+            const fetchedProject = response.data;
+
+            console.log('Fetched project:', fetchedProject);
+
+            // Initialize elements array if it doesn't exist
+            if (!fetchedProject.elements) {
+                fetchedProject.elements = [];
             }
 
-            console.log('Raw server response data:', JSON.stringify(response.data).substring(0, 200) + '...');
-
-            // Check if the server response has proper elements
-            const hasValidElements = Array.isArray(response.data.elements) &&
-                response.data.elements.length > 0 &&
-                response.data.elements[0] &&
-                response.data.elements[0].id &&
-                response.data.elements[0].type;
-
-            if (!hasValidElements && window.localStorage) {
-                console.warn('Server response is missing proper elements, checking client-side cache');
-                // Try to restore elements from local storage if available
-                const cachedProject = window.localStorage.getItem(`project-data-${projectId}`);
-                if (cachedProject) {
-                    try {
-                        const parsedCache = JSON.parse(cachedProject);
-                        if (Array.isArray(parsedCache.elements) && parsedCache.elements.length > 0) {
-                            console.log(`Found cached elements: ${parsedCache.elements.length}`);
-                            response.data.elements = parsedCache.elements;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing cached project data', e);
-                    }
+            // Ensure all elements have correct structure
+            fetchedProject.elements = fetchedProject.elements.map(element => {
+                // Set default values for animation if they don't exist
+                if (!element.animation) {
+                    element.animation = {
+                        keyframes: []
+                    };
                 }
-            }
 
-            const loadedProject = response.data;
+                // Обработка 3D моделей
+                if (element.type === '3d' || element.modelUrl || element.modelPath) {
+                    console.log(`Processing 3D model for element ${element.id}`);
 
-            // Проверяем наличие резервной копии ключевых кадров
-            try {
-                const backupKey = `project-keyframes-${projectId}`;
-                const backupData = localStorage.getItem(backupKey);
+                    // Убедимся, что у нас есть правильные пути к моделям
+                    if (element.modelUrl) {
+                        // Убедимся, что URL правильный
+                        element.modelUrl = formatModelUrl(element.modelUrl);
 
-                if (backupData) {
-                    const backupKeyframes = JSON.parse(backupData);
-                    let restoredCount = 0;
+                        // Убедимся, что modelPath и modelUrl синхронизированы
+                        if (!element.modelPath) {
+                            element.modelPath = element.modelUrl;
+                        }
+                    } else if (element.modelPath) {
+                        // Если есть только modelPath, создаем modelUrl
+                        element.modelPath = formatModelUrl(element.modelPath);
+                        element.modelUrl = element.modelPath;
+                    }
 
-                    // Если у нас мало или нет ключевых кадров с сервера, восстанавливаем из резервной копии
-                    if (response.data.elements && response.data.elements.length > 0 && response.data.elements.length < 10) {
-                        response.data.elements.forEach(element => {
-                            if (backupKeyframes[element.id] && backupKeyframes[element.id].length > 0) {
-                                // Если элемент не имеет ключевых кадров или имеет меньше, чем в резервной копии
-                                if (!element.keyframes || element.keyframes.length < backupKeyframes[element.id].length) {
-                                    element.keyframes = backupKeyframes[element.id];
-                                    console.log(`Restored ${element.keyframes.length} keyframes for element ${element.id} from local backup`);
-                                    restoredCount += element.keyframes.length;
-                                }
+                    // Обработаем ключевые кадры, чтобы убедиться, что они тоже содержат ссылки на модели
+                    if (element.keyframes && element.keyframes.length > 0) {
+                        element.keyframes.forEach(keyframe => {
+                            if (!keyframe.modelUrl && (element.modelUrl || element.modelPath)) {
+                                keyframe.modelUrl = element.modelUrl || element.modelPath;
+                                keyframe.modelPath = element.modelUrl || element.modelPath;
+                            } else if (keyframe.modelUrl) {
+                                keyframe.modelUrl = formatModelUrl(keyframe.modelUrl);
+                                keyframe.modelPath = keyframe.modelUrl;
                             }
                         });
-
-                        if (restoredCount > 0) {
-                            console.log(`Restored total of ${restoredCount} keyframes from local storage backup`);
-                            showNotification(`Внимание: ${restoredCount} ключевых кадров восстановлено из локального хранилища`);
-                        }
                     }
                 }
-            } catch (backupError) {
-                console.warn('Failed to check/restore keyframes backup:', backupError);
-            }
 
-            // Обновляем данные приложения
-            console.log('Updating project state with processed data...');
-
-            // Ensure loaded project has valid structure
-            const validatedProject = {
-                ...loadedProject,
-                // Ensure elements is an array
-                elements: Array.isArray(loadedProject.elements) ? loadedProject.elements : []
-            };
-
-            // Make sure each element has the required properties
-            validatedProject.elements = validatedProject.elements.map(element => ({
-                ...element,
-                // Ensure ID is preserved
-                id: element.id,
-                // Ensure type is preserved exactly as is
-                type: element.type,
-                // Ensure position exists
-                position: element.position || { x: 0, y: 0 },
-                // Ensure size exists
-                size: element.size || { width: 100, height: 100 },
-                // Ensure style exists
-                style: element.style || {
-                    color: '#000000',
-                    backgroundColor: 'transparent',
-                    borderColor: '#000000',
-                    borderWidth: 1,
-                    opacity: 1,
-                    zIndex: 0
-                },
-                // Ensure content is preserved
-                content: element.content,
-                // Ensure keyframes is an array
-                keyframes: Array.isArray(element.keyframes) ? element.keyframes : []
-            }));
-
-            // CRITICAL FIX: Ensure 3D model paths are properly loaded and consistent
-            validatedProject.elements = validatedProject.elements.map(element => {
-                // Process any element with model properties
-                if (element.type === '3d' || element.hasModelPath || element.modelPath || element.modelUrl || element.has3DModel) {
-                    console.log(`Processing element ${element.id} (type ${element.type}) model data:`, {
-                        modelPath: element.modelPath || 'none',
-                        modelUrl: element.modelUrl || 'none'
-                    });
-
-                    // Make sure modelPath and modelUrl are consistent
-                    if (element.modelPath && !element.modelUrl) {
-                        element.modelUrl = element.modelPath;
-                        console.log(`Set missing modelUrl to modelPath for element ${element.id}`);
-                    } else if (element.modelUrl && !element.modelPath) {
-                        element.modelPath = element.modelUrl;
-                        console.log(`Set missing modelPath to modelUrl for element ${element.id}`);
-                    }
-
-                    // Make sure has3DModel flag is set if a model path exists
-                    if ((element.modelPath || element.modelUrl) && !element.has3DModel) {
-                        element.has3DModel = true;
-                        console.log(`Set has3DModel flag for element ${element.id}`);
-                    }
-
-                    // If element has keyframes, ensure they have model information
-                    const modelPath = element.modelPath || element.modelUrl;
-                    if (modelPath && element.keyframes && element.keyframes.length > 0) {
-                        element.keyframes = element.keyframes.map(keyframe => ({
-                            ...keyframe,
-                            modelPath: modelPath,
-                            modelUrl: modelPath
-                        }));
-                        console.log(`Added model path to ${element.keyframes.length} keyframes for element ${element.id}`);
-                    }
+                // For shapes, ensure they have all required properties
+                if (element.type === 'shape') {
+                    return {
+                        ...element,
+                        fill: element.fill || '#6A3AFF',
+                        stroke: element.stroke || '#FFFFFF',
+                        strokeWidth: element.strokeWidth || 0,
+                        opacity: element.opacity !== undefined ? element.opacity : 1
+                    };
                 }
+
                 return element;
             });
 
-            setProject(validatedProject);
+            // Обработка glbAnimations
+            if (fetchedProject.glbAnimations && fetchedProject.glbAnimations.length > 0) {
+                console.log('Processing glbAnimations:', fetchedProject.glbAnimations);
+                fetchedProject.glbAnimations = fetchedProject.glbAnimations.map(animation => {
+                    if (animation.url) {
+                        animation.url = formatModelUrl(animation.url);
+                    }
+                    return animation;
+                });
+            }
 
-            // Очищаем выбранный элемент
+            // Initialize duration if it doesn't exist
+            if (!fetchedProject.duration) {
+                fetchedProject.duration = 60; // Default 60 seconds
+            }
+
+            // Convert old style animations to new format if needed
+            if (fetchedProject.elements.some(el => el.animation && Array.isArray(el.animation))) {
+                console.log('Converting old animation format to new format');
+
+                fetchedProject.elements = fetchedProject.elements.map(element => {
+                    if (element.animation && Array.isArray(element.animation)) {
+                        // Convert old format [{ time, properties }] to new format { keyframes: [{ time, properties }] }
+                        return {
+                            ...element,
+                            animation: {
+                                keyframes: element.animation
+                            }
+                        };
+                    }
+                    return element;
+                });
+            }
+
+            // Ensure project has a glbAnimations array
+            if (!fetchedProject.glbAnimations) {
+                fetchedProject.glbAnimations = [];
+            }
+
+            // Set the loaded project to state
+            setProject(fetchedProject);
+
+            // Reset current state
+            setCurrentTime(0);
             setSelectedElement(null);
 
-            // Обновляем URL
-            try {
-                console.log('Navigating to constructor route...');
-                navigate(`/constructor/${projectId}`);
-                console.log('Navigation completed');
-            } catch (navError) {
-                console.error('Navigation error:', navError);
-                // Продолжаем выполнение даже при ошибке навигации
-            }
-
-            // Make project ID available for backup purposes
-            window.currentProjectId = projectId;
-            console.log(`Set window.currentProjectId to ${window.currentProjectId}`);
-
-            console.log('Project loading successfully completed');
-        } catch (err) {
-            console.error('Error loading project:', err);
-            if (err.response) {
-                console.error('Server error response:', err.response.status, err.response.data);
-            }
-            // Возвращаем пустой проект в случае ошибки
-            setProject({
-                id: null,
-                name: 'Новый проект',
-                description: '',
-                duration: 60,
-                audioUrl: '',
-                videoUrl: '',
-                elements: [],
-                glbAnimations: []
+            // Show notification
+            setNotification({
+                open: true,
+                message: `Проект "${fetchedProject.name}" успешно загружен`,
+                severity: 'success'
             });
-            showNotification(`Не удалось загрузить проект. ${err.message}`);
-            // Reset project ID if there was an error
-            window.currentProjectId = null;
+
+            setShowProjectDialog(false);
+
+        } catch (err) {
+            console.error('Error fetching project:', err);
+
+            let errorMessage = 'Ошибка при загрузке проекта';
+
+            if (err.response && err.response.status === 401) {
+                errorMessage = 'Ошибка авторизации. Пожалуйста, войдите в систему снова.';
+            } else if (err.message) {
+                errorMessage += `: ${err.message}`;
+            }
+
+            setError('Failed to load project');
+
+            setNotification({
+                open: true,
+                message: errorMessage,
+                severity: 'error'
+            });
         }
+    };
+
+    // Функция для правильного форматирования URL модели
+    const formatModelUrl = (url) => {
+        if (!url) return url;
+
+        // Если URL начинается с http или https, оставляем как есть
+        if (url.startsWith('http')) {
+            return url;
+        }
+
+        // Если URL не начинается со слеша, добавляем его
+        const formattedUrl = url.startsWith('/') ? url : `/${url}`;
+
+        // Добавляем базовый API URL, если URL относительный
+        return `${API_URL}${formattedUrl}`;
     };
 
     // Auto-update project duration based on audio
@@ -1665,472 +1631,617 @@ See console for complete details.`);
         }
     };
 
+    // Handle when animations are saved from the ModelViewer
+    const handleSaveAnimations = (animations, modelUrl) => {
+        if (!selectedElement) return;
+
+        console.log('Saving animations from ModelViewer:', animations);
+        console.log('Model URL:', modelUrl);
+
+        const updatedElement = {
+            ...selectedElement,
+            modelUrl: modelUrl,
+            modelPath: modelUrl,
+            animations: animations
+        };
+
+        handleElementUpdate(updatedElement);
+    };
+
+    // Обработчик создания нового проекта
+    const handleCreateNewProject = (projectDetails = null) => {
+        console.log('Creating new project with details:', projectDetails);
+
+        setProject({
+            id: null,
+            name: projectDetails?.name || 'Новый проект',
+            description: projectDetails?.description || '',
+            duration: 60,
+            audioUrl: '',
+            videoUrl: '',
+            elements: [],
+            glbAnimations: []
+        });
+
+        setShowProjectDialog(false);
+    };
+
+    // Обработчик обновления информации о проекте
+    const handleUpdateProjectInfo = () => {
+        setIsEditingProjectInfo(false);
+
+        // Если проект уже сохранен на сервере, обновляем его
+        if (project.id) {
+            handleSaveProject();
+        }
+    };
+
+    // Добавлю новые функции для удаления аудио и видео
+
+    // Handle removing audio
+    const handleRemoveAudio = () => {
+        setProject(prev => ({
+            ...prev,
+            audioUrl: ''
+        }));
+        showNotification('Аудио удалено', 'success');
+    };
+
+    // Handle removing video
+    const handleRemoveVideo = () => {
+        setProject(prev => ({
+            ...prev,
+            videoUrl: ''
+        }));
+        showNotification('Видео удалено', 'success');
+    };
+
+    // В существующем коде переделаю область отображения аудио/видео, добавив кнопки удаления
+
+    // Ищем Box отображения аудио и видео и изменяем его, добавляя кнопки удаления
+
+    // Изменим отображение в компоненте Player, добавив кнопку удаления аудио 
+    // (находим Player в JSX и модифицируем эту область)
+
     return (
-        <Box sx={{
-            backgroundColor: theme.palette.background.default,
-            minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column'
-        }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: 'background.default' }}>
             <Navbar />
-            <Box component="main" sx={{ flexGrow: 1, py: 3 }}>
-                <Container maxWidth="xl">
-                    {/* Project header */}
-                    <Box sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        mb: 3,
-                        flexWrap: 'wrap',
-                        gap: 2
-                    }}>
-                        <Box>
-                            <Typography variant="h5" component="h1" sx={{
-                                fontWeight: 700,
-                                color: theme.palette.primary.main,
-                                mb: 0.5,
-                                position: 'relative',
-                                display: 'inline-block',
-                                '&::after': {
-                                    content: '""',
-                                    position: 'absolute',
-                                    bottom: -4,
-                                    left: 0,
-                                    width: '40%',
-                                    height: 2,
-                                    backgroundColor: theme.palette.primary.main,
-                                    borderRadius: 2
-                                }
-                            }}>
-                                {project.name}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Конструктор хореографии
-                            </Typography>
-                        </Box>
 
-                        <Box sx={{
-                            display: 'flex',
-                            gap: 1
-                        }}>
-                            <StyledButton
-                                variant="contained"
-                                color="primary"
-                                startIcon={<Save />}
-                                onClick={handleSaveProject}
-                                sx={{
-                                    px: 2,
-                                    py: 1,
-                                    fontWeight: 600,
-                                    background: theme.palette.mode === 'dark'
-                                        ? 'linear-gradient(135deg, #4839E5 0%, #6354FF 100%)'
-                                        : undefined
-                                }}
-                            >
-                                Сохранить
-                            </StyledButton>
-                            <StyledButton
-                                variant={showProjects ? "contained" : "outlined"}
-                                color={showProjects ? "secondary" : "primary"}
-                                startIcon={<FolderOpen />}
-                                onClick={() => setShowProjects(prev => !prev)}
-                                sx={{
-                                    px: 2,
-                                    py: 1
-                                }}
-                            >
-                                {showProjects ? 'Скрыть проекты' : 'Открыть проект'}
-                            </StyledButton>
-                        </Box>
-                    </Box>
+            {/* Project Dialog */}
+            <ProjectDialog
+                open={showProjectDialog}
+                onClose={() => setShowProjectDialog(false)}
+                onCreateNew={handleCreateNewProject}
+                onSelectProject={handleSelectProject}
+                createNewWithDetails={true}
+            />
 
-                    {/* Main content */}
-                    <Grid container spacing={2}>
-                        {/* Project list (conditionally shown) */}
-                        {showProjects && (
-                            <Grid item xs={12}>
-                                <StyledPaper sx={{ mb: 2 }}>
-                                    <ProjectsList
-                                        onSelectProject={handleSelectProject}
-                                        setShowProjects={setShowProjects}
-                                    />
-                                </StyledPaper>
-                            </Grid>
-                        )}
-
-                        {/* Audio player */}
-                        <Grid item xs={12}>
-                            <StyledPaper sx={{ mb: 2 }}>
-                                <Box sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    mb: 2,
-                                    flexWrap: 'wrap',
-                                    gap: 2
-                                }}>
-                                    {!project.audioUrl && (
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <AccessTime color="action" sx={{ mr: 1 }} />
-                                            {isEditingDuration ? (
-                                                <TextField
-                                                    label="Длительность"
-                                                    type="number"
-                                                    size="small"
-                                                    value={project.duration}
-                                                    onChange={handleDurationChange}
-                                                    onBlur={() => setIsEditingDuration(false)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            setIsEditingDuration(false);
-                                                        }
-                                                    }}
-                                                    autoFocus
-                                                    InputProps={{
-                                                        endAdornment: <InputAdornment position="end">сек</InputAdornment>,
-                                                    }}
-                                                    sx={{ width: 150 }}
-                                                />
-                                            ) : (
-                                                <Typography
-                                                    variant="body2"
-                                                    color="text.secondary"
-                                                    onClick={() => setIsEditingDuration(true)}
-                                                    sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                                                >
-                                                    Длительность: {project.duration} сек
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    )}
-
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        {/* View mode toggle buttons */}
-                                        <ButtonGroup variant="outlined" size="small">
-                                            <Button
-                                                onClick={() => setViewMode('2d')}
-                                                variant={viewMode === '2d' ? 'contained' : 'outlined'}
-                                                sx={{
-                                                    borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : undefined,
-                                                    '&.Mui-selected': {
-                                                        backgroundColor: theme.palette.primary.main
-                                                    }
-                                                }}
-                                            >
-                                                2D
-                                            </Button>
-                                            <Button
-                                                onClick={() => setViewMode('video')}
-                                                variant={viewMode === 'video' ? 'contained' : 'outlined'}
-                                                sx={{
-                                                    borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : undefined,
-                                                    '&.Mui-selected': {
-                                                        backgroundColor: theme.palette.primary.main
-                                                    }
-                                                }}
-                                            >
-                                                Видео
-                                            </Button>
-                                        </ButtonGroup>
-
-                                        {!project.audioUrl && (
-                                            <StyledButton
-                                                variant="outlined"
-                                                component="label"
-                                                startIcon={<UploadIcon />}
-                                                size="small"
-                                                sx={{
-                                                    borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : undefined,
-                                                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.85)' : undefined
-                                                }}
-                                            >
-                                                Загрузить аудио
-                                                <input
-                                                    type="file"
-                                                    accept="audio/*"
-                                                    hidden
-                                                    onChange={handleAudioUpload}
-                                                />
-                                            </StyledButton>
-                                        )}
-
-                                        <StyledButton
-                                            variant="outlined"
-                                            component="label"
-                                            startIcon={<CloudUpload />}
-                                            size="small"
-                                            sx={{
-                                                borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : undefined,
-                                                color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.85)' : undefined
-                                            }}
-                                        >
-                                            Загрузить видео
-                                            <input
-                                                type="file"
-                                                accept="video/*"
-                                                hidden
-                                                onChange={handleVideoUpload}
-                                            />
-                                        </StyledButton>
-                                    </Box>
-                                </Box>
-
-                                <Player
-                                    audioUrl={project.audioUrl}
-                                    duration={project.duration}
-                                    currentTime={currentTime}
-                                    onTimeUpdate={handleTimeUpdate}
-                                    isPlaying={isPlaying}
-                                    onPlayPause={handlePlayPause}
-                                    keyframeRecording={isRecordingKeyframes}
-                                    toggleKeyframeRecording={toggleKeyframeRecording}
+            {/* Main Content */}
+            <Container maxWidth="xl" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', py: 2 }}>
+                {/* Project Info and Controls */}
+                <StyledPaper sx={{
+                    mb: 2,
+                    p: 2,
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 2
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1 }}>
+                        {isEditingProjectInfo ? (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexGrow: 1 }}>
+                                <TextField
+                                    fullWidth
+                                    label="Название проекта"
+                                    value={project.name}
+                                    onChange={(e) => setProject({ ...project, name: e.target.value })}
+                                    variant="outlined"
+                                    size="small"
                                 />
-                            </StyledPaper>
-                        </Grid>
-
-                        {/* Canvas and tools */}
-                        <Grid item xs={12} md={9}>
-                            {/* Canvas controls */}
-                            <Box sx={{
-                                mb: 1,
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                alignItems: 'center'
-                            }}>
+                                <TextField
+                                    fullWidth
+                                    label="Описание"
+                                    value={project.description}
+                                    onChange={(e) => setProject({ ...project, description: e.target.value })}
+                                    variant="outlined"
+                                    size="small"
+                                    multiline
+                                    rows={2}
+                                />
+                                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        onClick={() => setIsEditingProjectInfo(false)}
+                                    >
+                                        Отмена
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={handleUpdateProjectInfo}
+                                    >
+                                        Сохранить
+                                    </Button>
+                                </Box>
+                            </Box>
+                        ) : (
+                            <>
                                 <Box sx={{ flexGrow: 1 }}>
-                                    {selectedElement && (
+                                    <Typography variant="h5" component="h1" fontWeight="bold" sx={{ mb: 0.5 }}>
+                                        {project.name || 'Новый проект'}
+                                    </Typography>
+                                    {project.description && (
                                         <Typography variant="body2" color="text.secondary">
-                                            Выбран: {selectedElement.type}
+                                            {project.description}
                                         </Typography>
                                     )}
                                 </Box>
+                                <IconButton
+                                    onClick={() => setIsEditingProjectInfo(true)}
+                                    size="small"
+                                    sx={{ color: 'primary.main' }}
+                                >
+                                    <Edit />
+                                </IconButton>
+                            </>
+                        )}
+                    </Box>
 
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-end' } }}>
+                        <StyledButton
+                            variant="outlined"
+                            startIcon={<FolderOpen />}
+                            onClick={() => setShowProjects(true)}
+                        >
+                            Открыть
+                        </StyledButton>
+                        <StyledButton
+                            variant="contained"
+                            startIcon={<Save />}
+                            onClick={handleSaveProject}
+                        >
+                            Сохранить
+                        </StyledButton>
+                    </Box>
+                </StyledPaper>
+
+                {/* Project list (conditionally shown) */}
+                {showProjects && (
+                    <ProjectsList
+                        onSelectProject={handleSelectProject}
+                        setShowProjects={setShowProjects}
+                    />
+                )}
+
+                {/* Audio player */}
+                <Grid item xs={12}>
+                    <StyledPaper sx={{ mb: 2 }}>
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            mb: 2,
+                            flexWrap: 'wrap',
+                            gap: 2
+                        }}>
+                            {!project.audioUrl && (
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <AccessTime color="action" sx={{ mr: 1 }} />
+                                    {isEditingDuration ? (
+                                        <TextField
+                                            label="Длительность"
+                                            type="number"
+                                            size="small"
+                                            value={project.duration}
+                                            onChange={handleDurationChange}
+                                            onBlur={() => setIsEditingDuration(false)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    setIsEditingDuration(false);
+                                                }
+                                            }}
+                                            autoFocus
+                                            InputProps={{
+                                                endAdornment: <InputAdornment position="end">сек</InputAdornment>,
+                                            }}
+                                            sx={{ width: 150 }}
+                                        />
+                                    ) : (
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            onClick={() => setIsEditingDuration(true)}
+                                            sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                                        >
+                                            Длительность: {project.duration} сек
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {/* View mode toggle buttons */}
+                                <ButtonGroup variant="outlined" size="small">
+                                    <Button
+                                        onClick={() => setViewMode('2d')}
+                                        variant={viewMode === '2d' ? 'contained' : 'outlined'}
+                                        sx={{
+                                            borderColor: theme.palette.mode === 'dark' ? 'rgba(30, 144, 255, 0.3)' : undefined,
+                                            backgroundColor: viewMode === '2d' ? (theme.palette.mode === 'dark' ? 'rgba(30, 144, 255, 0.2)' : undefined) : undefined,
+                                            '&.Mui-selected': {
+                                                backgroundColor: COLORS.secondary
+                                            }
+                                        }}
+                                    >
+                                        2D
+                                    </Button>
+                                    <Button
+                                        onClick={() => setViewMode('video')}
+                                        variant={viewMode === 'video' ? 'contained' : 'outlined'}
+                                        sx={{
+                                            borderColor: theme.palette.mode === 'dark' ? 'rgba(30, 144, 255, 0.3)' : undefined,
+                                            backgroundColor: viewMode === 'video' ? (theme.palette.mode === 'dark' ? 'rgba(30, 144, 255, 0.2)' : undefined) : undefined,
+                                            '&.Mui-selected': {
+                                                backgroundColor: COLORS.secondary
+                                            }
+                                        }}
+                                    >
+                                        Видео
+                                    </Button>
+                                </ButtonGroup>
+
+                                {!project.audioUrl && (
+                                    <StyledButton
+                                        variant="outlined"
+                                        component="label"
+                                        startIcon={<UploadIcon />}
+                                        size="small"
+                                        sx={{
+                                            borderColor: theme.palette.mode === 'dark' ? 'rgba(30, 144, 255, 0.3)' : undefined,
+                                            color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.85)' : undefined
+                                        }}
+                                    >
+                                        Загрузить аудио
+                                        <input
+                                            type="file"
+                                            accept="audio/*"
+                                            hidden
+                                            onChange={handleAudioUpload}
+                                        />
+                                    </StyledButton>
+                                )}
+
+                                <StyledButton
+                                    variant="outlined"
+                                    component="label"
+                                    startIcon={<CloudUpload />}
+                                    size="small"
+                                    sx={{
+                                        borderColor: theme.palette.mode === 'dark' ? 'rgba(30, 144, 255, 0.3)' : undefined,
+                                        color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.85)' : undefined
+                                    }}
+                                >
+                                    Загрузить видео
+                                    <input
+                                        type="file"
+                                        accept="video/*"
+                                        hidden
+                                        onChange={handleVideoUpload}
+                                    />
+                                </StyledButton>
+                            </Box>
+                        </Box>
+
+                        <Player
+                            audioUrl={project.audioUrl}
+                            videoUrl={project.videoUrl}
+                            duration={project.duration}
+                            currentTime={currentTime}
+                            onTimeUpdate={handleTimeUpdate}
+                            isPlaying={isPlaying}
+                            onPlayPause={handlePlayPause}
+                            keyframeRecording={isRecordingKeyframes}
+                            toggleKeyframeRecording={toggleKeyframeRecording}
+                            onRemoveAudio={handleRemoveAudio}
+                            onRemoveVideo={handleRemoveVideo}
+                        />
+                    </StyledPaper>
+                </Grid>
+
+                {/* Wrap Canvas and Side panels in Grid container */}
+                <Grid container spacing={2}>
+                    {/* Canvas and tools */}
+                    <Grid item xs={12} md={9}>
+                        {/* Canvas controls */}
+                        <Box sx={{
+                            mb: 1,
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            alignItems: 'center'
+                        }}>
+                            <Box sx={{ flexGrow: 1 }}>
                                 {selectedElement && (
-                                    <>
-                                        <IconButton
-                                            color="primary"
-                                            aria-label="copy"
-                                            onClick={handleOpenCopyMenu}
-                                            title="Копировать свойства"
-                                        >
-                                            <ContentCopy />
-                                        </IconButton>
-
-                                        <Menu
-                                            anchorEl={copyMenuAnchorEl}
-                                            open={Boolean(copyMenuAnchorEl)}
-                                            onClose={handleCloseCopyMenu}
-                                        >
-                                            <MenuItem onClick={handleCopyElementProperties}>
-                                                Копировать стиль и размер
-                                            </MenuItem>
-                                            {selectedElement && selectedElement.keyframes && selectedElement.keyframes.length > 0 && (
-                                                <MenuItem onClick={handleCopyElementAnimations}>
-                                                    Копировать анимацию
-                                                </MenuItem>
-                                            )}
-                                        </Menu>
-
-                                        {canPasteProperties && (
-                                            <Button
-                                                size="small"
-                                                onClick={handlePasteElementProperties}
-                                                sx={{ mr: 1 }}
-                                            >
-                                                Вставить стиль
-                                            </Button>
-                                        )}
-
-                                        {canPasteAnimations && (
-                                            <Button
-                                                size="small"
-                                                onClick={handlePasteElementAnimations}
-                                            >
-                                                Вставить анимацию
-                                            </Button>
-                                        )}
-                                    </>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Выбран: {selectedElement.type}
+                                    </Typography>
                                 )}
                             </Box>
 
-                            {/* Canvas */}
-                            <StyledPaper sx={{
-                                position: 'relative',
-                                overflow: 'hidden',
-                                height: 'calc(100vh - 300px)',
-                                minHeight: '600px',
-                                p: 0,
-                                '&:hover': {
-                                    boxShadow: theme.palette.mode === 'dark'
-                                        ? '0 12px 28px 0 rgba(0, 0, 0, 0.4)'
-                                        : '0 12px 28px 0 rgba(0, 0, 0, 0.15)',
-                                }
-                            }}>
-                                <Box
-                                    sx={{
-                                        position: 'relative',
+                            {selectedElement && (
+                                <>
+                                    <IconButton
+                                        sx={{ color: COLORS.secondary }}
+                                        aria-label="copy"
+                                        onClick={handleOpenCopyMenu}
+                                        title="Копировать свойства"
+                                    >
+                                        <ContentCopy />
+                                    </IconButton>
+
+                                    <Menu
+                                        anchorEl={copyMenuAnchorEl}
+                                        open={Boolean(copyMenuAnchorEl)}
+                                        onClose={handleCloseCopyMenu}
+                                    >
+                                        <MenuItem onClick={handleCopyElementProperties}>
+                                            Копировать стиль и размер
+                                        </MenuItem>
+                                        {selectedElement && selectedElement.keyframes && selectedElement.keyframes.length > 0 && (
+                                            <MenuItem onClick={handleCopyElementAnimations}>
+                                                Копировать анимацию
+                                            </MenuItem>
+                                        )}
+                                    </Menu>
+
+                                    {canPasteProperties && (
+                                        <Button
+                                            size="small"
+                                            onClick={handlePasteElementProperties}
+                                            sx={{
+                                                mr: 1,
+                                                color: COLORS.secondary,
+                                                borderColor: 'rgba(30, 144, 255, 0.3)'
+                                            }}
+                                            variant="outlined"
+                                        >
+                                            Вставить стиль
+                                        </Button>
+                                    )}
+
+                                    {canPasteAnimations && (
+                                        <Button
+                                            size="small"
+                                            onClick={handlePasteElementAnimations}
+                                            sx={{
+                                                color: COLORS.tertiary,
+                                                borderColor: 'rgba(64, 224, 208, 0.3)'
+                                            }}
+                                            variant="outlined"
+                                        >
+                                            Вставить анимацию
+                                        </Button>
+                                    )}
+                                </>
+                            )}
+                        </Box>
+
+                        {/* Canvas */}
+                        <StyledPaper sx={{
+                            position: 'relative',
+                            overflow: 'visible', // Allow content to overflow
+                            height: 'calc(100vh - 300px)',
+                            minHeight: '600px',
+                            p: 0,
+                            '&:hover': {
+                                boxShadow: theme.palette.mode === 'dark'
+                                    ? '0 12px 28px 0 rgba(0, 0, 0, 0.4)'
+                                    : '0 12px 28px 0 rgba(0, 0, 0, 0.15)',
+                            }
+                        }}>
+                            <Box
+                                sx={{
+                                    position: 'relative',
+                                    width: '100%',
+                                    height: '100%',
+                                    backgroundColor: theme.palette.mode === 'dark'
+                                        ? 'rgba(32, 38, 52, 0.85)'  // Lighter, more neutral dark blue
+                                        : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
+                                    backgroundImage: `
+                                        linear-gradient(to right, ${theme.palette.mode === 'dark'
+                                            ? 'rgba(160, 140, 255, 0.07)'
+                                            : 'rgba(106, 58, 255, 0.05)'} 1px, rgba(0, 0, 0, 0) 1px),
+                                        linear-gradient(to bottom, ${theme.palette.mode === 'dark'
+                                            ? 'rgba(160, 140, 255, 0.07)'
+                                            : 'rgba(106, 58, 255, 0.05)'} 1px, rgba(0, 0, 0, 0) 1px)
+                                    `,
+                                    backgroundSize: '20px 20px',
+                                    borderRadius: 1,
+                                    overflow: 'visible' // Allow content to overflow
+                                }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={handleDrop}
+                            >
+                                {/* Show different content based on view mode */}
+                                {viewMode === '2d' && (
+                                    <Canvas
+                                        elements={project.elements}
+                                        onElementsChange={handleElementsUpdate}
+                                        onElementSelect={handleElementSelect}
+                                        selectedElement={selectedElement}
+                                        currentTime={currentTime}
+                                        isPlaying={isPlaying}
+                                        isRecordingKeyframes={isRecordingKeyframes}
+                                        project={project}
+                                        onToggleRecording={toggleKeyframeRecording}
+                                    />
+                                )}
+
+                                {viewMode === 'video' && (
+                                    <Box sx={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
                                         width: '100%',
                                         height: '100%',
-                                        backgroundColor: theme.palette.mode === 'dark'
-                                            ? 'rgba(17, 21, 54, 0.95)'  // Lighter, grayer purple color
-                                            : 'rgba(240, 240, 250, 0.9)', // Very light gray-purple in light mode
-                                        backgroundImage: `
-                                            linear-gradient(to right, ${theme.palette.mode === 'dark'
-                                                ? 'rgba(160, 140, 255, 0.07)'
-                                                : 'rgba(106, 58, 255, 0.05)'} 1px, rgba(0, 0, 0, 0) 1px),
-                                            linear-gradient(to bottom, ${theme.palette.mode === 'dark'
-                                                ? 'rgba(160, 140, 255, 0.07)'
-                                                : 'rgba(106, 58, 255, 0.05)'} 1px, rgba(0, 0, 0, 0) 1px)
-                                        `,
-                                        backgroundSize: '20px 20px',
-                                        borderRadius: 1,
-                                        overflow: 'hidden'
-                                    }}
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={handleDrop}
-                                >
-                                    {/* Show different content based on view mode */}
-                                    {viewMode === '2d' && (
-                                        <Canvas
-                                            elements={project.elements}
-                                            onElementsChange={handleElementsUpdate}
-                                            onElementSelect={handleElementSelect}
-                                            selectedElement={selectedElement}
-                                            currentTime={currentTime}
-                                            isPlaying={isPlaying}
-                                            isRecordingKeyframes={isRecordingKeyframes}
-                                            project={project}
-                                            onToggleRecording={toggleKeyframeRecording}
-                                        />
-                                    )}
-
-                                    {viewMode === 'video' && (
+                                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(32, 38, 52, 0.95)' : 'rgba(240, 245, 255, 0.98)',
+                                        borderRadius: '12px',
+                                        overflow: 'hidden',
+                                        zIndex: 100,
+                                        boxShadow: '0 8px 40px rgba(0, 0, 0, 0.4)'
+                                    }}>
+                                        {/* Video header with close button */}
                                         <Box sx={{
-                                            height: '100%',
                                             display: 'flex',
-                                            flexDirection: 'column',
-                                            backgroundColor: '#000'
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            p: 2,
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                                            backgroundColor: 'rgba(26, 32, 46, 0.95)'
                                         }}>
-                                            {/* Video Section */}
-                                            <Box sx={{
-                                                flex: '1',
+                                            <Typography variant="h6" sx={{
+                                                color: 'white',
                                                 display: 'flex',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                p: 2
+                                                alignItems: 'center'
                                             }}>
-                                                {project.videoUrl ? (
-                                                    <>
-                                                        <video
-                                                            src={project.videoUrl}
-                                                            controls
-                                                            style={{
-                                                                width: '100%',
-                                                                maxHeight: '100%'
-                                                            }}
-                                                        />
-                                                        <Box sx={{ mt: 2, width: '100%', display: 'flex', justifyContent: 'center' }}>
-                                                            <Button
-                                                                variant="contained"
-                                                                color="error"
-                                                                size="small"
-                                                                onClick={() => {
-                                                                    setProject(prev => ({ ...prev, videoUrl: '' }));
-                                                                    showNotification('Видео удалено', 'info');
-                                                                }}
-                                                            >
-                                                                Удалить видео
-                                                            </Button>
-                                                        </Box>
-                                                    </>
-                                                ) : (
-                                                    <Box sx={{
-                                                        textAlign: 'center',
-                                                        p: 4,
-                                                        color: '#fff'
-                                                    }}>
-                                                        <VideoLibrary sx={{ fontSize: 60, mb: 2 }} />
-                                                        <Typography variant="h5" gutterBottom>
-                                                            Видео
-                                                        </Typography>
-                                                        <Typography>
-                                                            Нажмите на кнопку "Загрузить видео" чтобы добавить видео к проекту
-                                                        </Typography>
-                                                    </Box>
-                                                )}
-                                            </Box>
+                                                <VideoLibrary sx={{ mr: 1, color: COLORS.secondary }} />
+                                                Видео
+                                            </Typography>
                                         </Box>
-                                    )}
-                                </Box>
-                            </StyledPaper>
-                        </Grid>
 
-                        {/* Side panels */}
-                        <Grid item xs={12} md={3}>
-                            <StyledPaper sx={{ height: '100%', p: 0, overflow: 'hidden' }}>
-                                <Tabs
-                                    value={tabIndex}
-                                    onChange={(_, newValue) => setTabIndex(newValue)}
-                                    variant="fullWidth"
-                                    sx={{
-                                        borderBottom: 1,
-                                        borderColor: theme.palette.mode === 'dark'
-                                            ? 'rgba(106, 58, 255, 0.15)'
-                                            : 'rgba(106, 58, 255, 0.1)',
-                                        backgroundColor: theme.palette.mode === 'dark'
-                                            ? 'rgba(15, 19, 50, 0.95)' // Slightly darker than parent for contrast
-                                            : 'rgba(235, 235, 245, 0.95)'
-                                    }}
-                                    TabIndicatorProps={{
-                                        style: {
-                                            backgroundColor: theme.palette.mode === 'dark'
-                                                ? PALETTE.primary.main
-                                                : PALETTE.primary.main,
-                                            height: 3,
-                                            borderRadius: '3px 3px 0 0'
-                                        }
-                                    }}
-                                >
-                                    <StyledTab label="Инструменты" />
-                                    <StyledTab label="Свойства" />
-                                </Tabs>
+                                        {/* Video content */}
+                                        <Box sx={{ height: 'calc(100% - 60px)' }}>
+                                            <VideoViewer
+                                                isVisible={true}
+                                                embedded={true}
+                                                videoUrl={project.videoUrl}
+                                                onClose={() => setProject(prev => ({ ...prev, videoUrl: '' }))}
+                                            />
+                                        </Box>
+                                    </Box>
+                                )}
 
-                                <Box sx={{ p: 0, height: 'calc(600px - 48px)', overflow: 'auto' }}>
-                                    {tabIndex === 0 && (
-                                        <ToolPanel onAddElement={handleAddElement} />
-                                    )}
+                                {viewMode === '3d' && (
+                                    <Box sx={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        width: '100%',
+                                        height: '100%',
+                                        backgroundColor: theme.palette.mode === 'dark' ? 'rgba(32, 38, 52, 0.95)' : 'rgba(240, 245, 255, 0.98)',
+                                        borderRadius: '12px',
+                                        overflow: 'hidden',
+                                        zIndex: 100,
+                                        boxShadow: '0 8px 40px rgba(0, 0, 0, 0.4)'
+                                    }}>
+                                        {/* 3D header with close button */}
+                                        <Box sx={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            p: 2,
+                                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                                            backgroundColor: 'rgba(26, 32, 46, 0.95)'
+                                        }}>
+                                            <Typography variant="h6" sx={{
+                                                color: 'white',
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }}>
+                                                <ThreeDRotation sx={{ mr: 1, color: COLORS.tertiary }} />
+                                                3D Модель
+                                            </Typography>
+                                        </Box>
 
-                                    {tabIndex === 1 && (
-                                        <PropertyPanel
-                                            selectedElement={selectedElement}
-                                            onElementUpdate={handleElementUpdate}
-                                            currentTime={currentTime}
-                                        />
-                                    )}
-                                </Box>
-                            </StyledPaper>
-                        </Grid>
+                                        {/* 3D content */}
+                                        <Box sx={{ height: 'calc(100% - 60px)' }}>
+                                            <ModelViewer
+                                                isVisible={true}
+                                                embedded={true}
+                                                onClose={() => setViewMode('2d')}
+                                                playerDuration={project.duration}
+                                                currentTime={currentTime}
+                                                isPlaying={isPlaying}
+                                                onTimeUpdate={time => setCurrentTime(time)}
+                                                elementKeyframes={selectedElement?.keyframes}
+                                                elementId={selectedElement?.id}
+                                                onSaveAnimations={handleSaveAnimations}
+                                                glbAnimationUrl={selectedElement?.modelUrl}
+                                            />
+                                        </Box>
+                                    </Box>
+                                )}
+                            </Box>
+                        </StyledPaper>
                     </Grid>
 
-                    {/* Custom notification */}
-                    <Snackbar
-                        open={notification.open}
-                        autoHideDuration={6000}
+                    {/* Side panels */}
+                    <Grid item xs={12} md={3}>
+                        <StyledPaper sx={{ height: '100%', p: 0, overflow: 'hidden' }}>
+                            <Tabs
+                                value={tabIndex}
+                                onChange={(_, newValue) => setTabIndex(newValue)}
+                                variant="fullWidth"
+                                sx={{
+                                    borderBottom: 1,
+                                    borderColor: theme.palette.mode === 'dark'
+                                        ? 'rgba(30, 144, 255, 0.15)'
+                                        : 'rgba(30, 144, 255, 0.1)',
+                                    backgroundColor: theme.palette.mode === 'dark'
+                                        ? 'rgba(26, 32, 46, 0.95)' // Darker blue for contrast
+                                        : 'rgba(240, 245, 255, 0.95)'
+                                }}
+                                TabIndicatorProps={{
+                                    style: {
+                                        backgroundColor: theme.palette.mode === 'dark'
+                                            ? COLORS.secondary
+                                            : COLORS.secondary,
+                                        height: 3,
+                                        borderRadius: '3px 3px 0 0'
+                                    }
+                                }}
+                            >
+                                <StyledTab label="Инструменты" />
+                                <StyledTab label="Свойства" />
+                            </Tabs>
+
+                            <Box sx={{ p: 0, height: 'calc(600px - 48px)', overflow: 'auto' }}>
+                                {tabIndex === 0 && (
+                                    <ToolPanel onAddElement={handleAddElement} />
+                                )}
+
+                                {tabIndex === 1 && (
+                                    <PropertyPanel
+                                        selectedElement={selectedElement}
+                                        onElementUpdate={handleElementUpdate}
+                                        currentTime={currentTime}
+                                    />
+                                )}
+                            </Box>
+                        </StyledPaper>
+                    </Grid>
+                </Grid>
+
+                {/* Custom notification */}
+                <Snackbar
+                    open={notification.open}
+                    autoHideDuration={6000}
+                    onClose={handleCloseNotification}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                    <Alert
                         onClose={handleCloseNotification}
-                        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        severity={notification.severity}
+                        variant="filled"
+                        sx={{ width: '100%' }}
                     >
-                        <Alert
-                            onClose={handleCloseNotification}
-                            severity={notification.severity}
-                            variant="filled"
-                            sx={{ width: '100%' }}
-                        >
-                            {notification.message}
-                        </Alert>
-                    </Snackbar>
-                </Container>
-            </Box>
+                        {notification.message}
+                    </Alert>
+                </Snackbar>
+            </Container>
         </Box>
     );
 };

@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, Suspense, useCallback, useMemo } fr
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, useGLTF, Grid, Html } from '@react-three/drei';
 import { Box as MuiBox, CircularProgress, Button, IconButton, Slider, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, Menu, MenuItem, Select, FormControl, InputLabel, Tabs, Tab, Box } from '@mui/material';
-import { PlayArrow, Pause, AddCircleOutline, Delete, Edit, DragIndicator, Save, FolderOpen, Upload, Close as CloseIcon } from '@mui/icons-material';
+import { PlayArrow, Pause, AddCircleOutline, Delete, Edit, DragIndicator, Save, FolderOpen, Upload, Close as CloseIcon, ThreeDRotation } from '@mui/icons-material';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import ModelUploader from './ModelUploader';
@@ -1250,6 +1250,39 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
     const fileInputRef = useRef(null);
     const [glbUrl, setGlbUrl] = useState('');
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
+    // Additional states for the missing variables
+    const [isLoadingModel, setIsLoadingModel] = useState(false);
+    const [tabIndex, setTabIndex] = useState(0);
+    const [animations, setAnimations] = useState([]);
+    const [glbInputUrl, setGlbInputUrl] = useState('');
+
+    // Add these missing handler functions
+    const handleCloseViewerConfirm = () => {
+        // Check if there are unsaved changes
+        if (hasUnsavedChanges) {
+            setConfirmDialogOpen(true);
+        } else {
+            closeViewerWithoutSaving();
+        }
+    };
+
+    const handleTabChange = (event, newValue) => {
+        setTabIndex(newValue);
+    };
+
+    const handleSaveModelWithAnimation = () => {
+        // Save both model and animation settings
+        handleSaveModel();
+        if (onSaveAnimations) {
+            onSaveAnimations(activeAnimations);
+        }
+        onClose();
+    };
+
+    // ... existing code ...
 
     // Load saved animations from localStorage on component mount
     useEffect(() => {
@@ -2571,407 +2604,445 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
     if (!isVisible) return null;
 
     return (
-        <MuiBox
-            sx={{
-                position: embedded ? 'relative' : 'fixed',
-                top: embedded ? 'auto' : 0,
-                left: embedded ? 'auto' : 0,
-                width: '100%',
-                height: '100%',
-                zIndex: embedded ? 'auto' : 1000,
-                backgroundColor: embedded ? 'transparent' : 'rgba(0, 0, 0, 0.85)',
+        <div style={{
+            position: embedded ? 'relative' : 'fixed',
+            top: embedded ? 'auto' : 0,
+            left: embedded ? 'auto' : 0,
+            width: '100%',
+            height: embedded ? '100%' : '100vh',
+            zIndex: embedded ? 'auto' : 1000,
+            backgroundColor: embedded ? 'transparent' : 'rgba(13, 17, 40, 0.97)',
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: embedded ? '12px' : 0,
+            overflow: 'hidden',
+            boxShadow: embedded ? '0 8px 32px rgba(0, 0, 0, 0.25)' : 'none',
+        }}>
+            {/* Header area with title and controls */}
+            <Box sx={{
                 display: 'flex',
-                flexDirection: 'column',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: embedded ? 2 : 0,
-                overflow: 'hidden',
-                overscrollBehavior: 'contain',
-                touchAction: 'pan-y',
-            }}
-        >
-            {isLoading ? (
-                <MuiBox sx={{ color: 'white', textAlign: 'center' }}>
-                    <CircularProgress color="primary" size={60} />
-                    <MuiBox mt={2}>Загрузка 3D движка...</MuiBox>
-                </MuiBox>
-            ) : (
-                <>
-                    <MuiBox sx={{ width: '100%', height: embedded ? '100%' : '70%', position: 'relative' }}>
-                        {/* Canvas container */}
-                        <MuiBox
+                p: 2,
+                backgroundColor: 'rgba(15, 19, 50, 0.9)',
+                backdropFilter: 'blur(8px)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+                <Typography variant="h6" sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontWeight: 600
+                }}>
+                    <ThreeDRotation sx={{ mr: 1, color: '#FF5C93' }} />
+                    3D Анимация
+                </Typography>
+
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    {/* GLB Upload Button */}
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Upload />}
+                        onClick={handleOpenUploadDialog}
+                        sx={{
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            '&:hover': {
+                                borderColor: 'rgba(255, 255, 255, 0.5)',
+                                backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                            }
+                        }}
+                    >
+                        Загрузить модель
+                    </Button>
+
+                    {/* Close button for fullscreen mode */}
+                    {!embedded && (
+                        <IconButton
+                            onClick={handleCloseViewerConfirm}
                             sx={{
-                                width: '100%',
-                                height: '100%',
-                                backgroundColor: '#1a1a1a', // Темный фон для 3D сцены
-                                borderRadius: embedded ? 2 : 0,
-                                overflow: 'hidden',
-                                position: 'relative',
-                                border: embedded ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
-                                boxShadow: embedded ? 'inset 0 0 20px rgba(0, 0, 0, 0.5)' : 'none',
-                                '& > div': {
-                                    touchAction: 'none',
-                                    overscrollBehavior: 'contain',
-                                    '&:focus-visible': {
-                                        outline: 'none'
-                                    }
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                '&:hover': {
+                                    color: 'rgba(255, 255, 255, 0.9)',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
                                 }
                             }}
                         >
-                            {renderModel()}
-                        </MuiBox>
-                    </MuiBox>
+                            <CloseIcon />
+                        </IconButton>
+                    )}
+                </Box>
+            </Box>
 
-                    {/* Controls */}
-                    <MuiBox
-                        sx={{
-                            width: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            mt: 2,
-                            px: 2,
-                            backgroundColor: embedded ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
-                            borderRadius: embedded ? 1 : 0,
-                            py: embedded ? 1 : 0
-                        }}
-                    >
-                        {/* Animation controls */}
-                        <MuiBox sx={{ width: '100%', display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <IconButton
-                                onClick={handlePlayPause}
+            <Box sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                height: embedded ? 'calc(100% - 60px)' : 'calc(100vh - 60px)' // Adjust for header height
+            }}>
+                {/* Main viewer area */}
+                <Box sx={{
+                    flex: embedded ? '1' : '3', // Larger proportion in full-screen mode
+                    position: 'relative',
+                    bgcolor: '#050714',
+                    borderRight: { xs: 'none', md: '1px solid rgba(255, 255, 255, 0.05)' },
+                    minHeight: embedded ? 'auto' : '70vh', // Minimum height when in full screen
+                }}>
+                    {/* 3D model canvas */}
+                    <Box sx={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                        overflow: 'hidden'
+                    }}>
+                        {/* Loading indicator */}
+                        {(isLoadingModel || !shouldDisplayModel()) && (
+                            <Box
                                 sx={{
-                                    color: 'white',
-                                    mr: 1,
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    backgroundColor: 'rgba(5, 7, 20, 0.9)',
+                                    zIndex: 10,
                                 }}
                             >
-                                {isPlaying ? <Pause /> : <PlayArrow />}
-                            </IconButton>
+                                {isLoadingModel ? (
+                                    <>
+                                        <CircularProgress size={60} sx={{ mb: 3, color: '#6A3AFF' }} />
+                                        <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
+                                            Загрузка 3D модели...
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                            Пожалуйста, подождите
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Box sx={{ textAlign: 'center', p: 3, maxWidth: '500px' }}>
+                                        <ThreeDRotation sx={{ fontSize: 80, color: 'rgba(255, 255, 255, 0.2)', mb: 3 }} />
+                                        <Typography variant="h5" sx={{ color: 'white', mb: 2 }}>
+                                            3D модель не выбрана
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 3 }}>
+                                            Загрузите новую 3D модель или выберите существующую из списка доступных моделей
+                                        </Typography>
+                                        <Button
+                                            variant="contained"
+                                            startIcon={<Upload />}
+                                            onClick={handleOpenUploadDialog}
+                                            sx={{
+                                                backgroundColor: '#6A3AFF',
+                                                '&:hover': {
+                                                    backgroundColor: '#4316DB'
+                                                },
+                                                mb: 2
+                                            }}
+                                        >
+                                            Загрузить новую модель
+                                        </Button>
+                                    </Box>
+                                )}
+                            </Box>
+                        )}
 
-                            <Typography variant="body2" sx={{ color: 'white', mr: 1, minWidth: '60px' }}>
-                                {formatTime(currentTime)}
-                            </Typography>
+                        {/* Render the actual 3D model canvas */}
+                        {renderModel()}
 
-                            <MarkedSlider
-                                value={currentTime}
-                                min={0}
-                                max={duration}
-                                onChange={handleTimeChange}
-                                markers={animationMarkers}
-                                disabled={false}
-                                onMarkerAdd={handleAddMarker}
-                                onMarkerEdit={handleEditMarker}
-                                onMarkerDelete={handleDeleteMarker}
-                            />
-
-                            <Typography variant="body2" sx={{ color: 'white', ml: 1 }}>
-                                {formatTime(duration)}
-                            </Typography>
-                        </MuiBox>
-
-                        {/* Upload GLB button and animation controls */}
-                        <MuiBox sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={handleOpenUploadDialog}
-                                startIcon={<Upload />}
-                            >
-                                Загрузить GLB
-                            </Button>
-
-                            {selectedModel && (
-                                <Typography variant="body2" color="text.secondary">
-                                    Загружено: {selectedModel.name}
-                                </Typography>
-                            )}
-
-                            <Button
-                                variant="contained"
-                                color="secondary"
-                                onClick={handleSaveModel}
-                                startIcon={<Save />}
-                                sx={{ ml: 2 }}
-                            >
-                                Сохранить модель
-                            </Button>
-                        </MuiBox>
-
-                        <AnimationManager
-                            animations={availableAnimations}
-                            activeAnimations={activeAnimations}
-                            onAnimationsChange={handleAnimationsChange}
-                        />
-
-                        <AnimationTimeline
-                            animations={availableAnimations}
-                            activeAnimations={activeAnimations}
-                            duration={duration}
-                            currentTime={currentTime}
-                            onAnimationsChange={handleAnimationsChange}
-                        />
-
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
-                            {elementId ?
-                                `Маркеры синхронизированы с ключевыми кадрами элемента. ${elementKeyframes.length} ключевых кадров.` :
-                                'Маркеры не синхронизированы с элементами.'}
-                        </Typography>
-                    </MuiBox>
-
-                    {!embedded && (
-                        <MuiBox sx={{ position: 'absolute', top: 20, right: 20, zIndex: 100, display: 'flex', gap: 1 }}>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                startIcon={<Save />}
-                                onClick={() => {
-                                    if (onSaveAnimations) {
-                                        // Определяем URL модели
-                                        const modelUrl = selectedModel ? selectedModel.url : glbAnimationUrl;
-
-                                        // Создаем объект с анимациями и URL модели
-                                        const dataToSave = {
-                                            animations: savedAnimations,
-                                            modelUrl: modelUrl
-                                        };
-
-                                        // Если URL модели начинается с blob:, это локальный файл, который нужно обработать особым образом
-                                        if (modelUrl && modelUrl.startsWith('blob:')) {
-                                            console.log('ModelViewer: Detected blob URL for model, will handle as local file');
-
-                                            // Сохраняем информацию о том, что это локальный файл
-                                            dataToSave.isLocalFile = true;
-
-                                            // Если это локальный файл, добавляем имя файла, если оно доступно
-                                            if (selectedModel && selectedModel.name) {
-                                                dataToSave.modelName = selectedModel.name;
-                                            }
+                        {/* Playback controls */}
+                        <Box sx={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            p: 2,
+                            backgroundColor: 'rgba(5, 7, 20, 0.85)',
+                            backdropFilter: 'blur(8px)',
+                            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                        }}>
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                mb: 1,
+                                gap: 2
+                            }}>
+                                <IconButton
+                                    onClick={handlePlayPause}
+                                    sx={{
+                                        color: isPlaying ? '#33E2A0' : 'white',
+                                        backgroundColor: isPlaying ? 'rgba(51, 226, 160, 0.15)' : 'rgba(255, 255, 255, 0.1)',
+                                        '&:hover': {
+                                            backgroundColor: isPlaying ? 'rgba(51, 226, 160, 0.25)' : 'rgba(255, 255, 255, 0.2)'
                                         }
-
-                                        console.log('ModelViewer: Saving model data on button click:', {
-                                            hasModel: !!selectedModel,
-                                            modelName: selectedModel ? selectedModel.name : 'не выбрана',
-                                            modelUrl: dataToSave.modelUrl || 'не указан',
-                                            animationsCount: savedAnimations.length,
-                                            elementId: elementId || 'не указан'
-                                        });
-
-                                        // Вызываем callback с данными для сохранения
-                                        onSaveAnimations(dataToSave, elementId);
-
-                                        // Показываем уведомление с подробной информацией
-                                        const modelName = selectedModel ? selectedModel.name : 'Модель';
-                                        const animInfo = savedAnimations.length > 0
-                                            ? `и ${savedAnimations.length} анимаций`
-                                            : '';
-
-                                        alert(`${modelName} ${animInfo} успешно сохранена!`);
-                                    } else {
-                                        console.error('ModelViewer: Cannot save - no onSaveAnimations callback provided');
-                                        alert('Ошибка: Невозможно сохранить модель. Обратитесь к разработчику.');
-                                    }
-                                }}
-                                sx={{
-                                    backgroundColor: 'primary.main',
-                                    color: 'white',
-                                    '&:hover': {
-                                        backgroundColor: 'primary.dark',
-                                    }
-                                }}
-                            >
-                                Сохранить
-                            </Button>
-                            <IconButton
-                                onClick={handleClose}
-                                sx={{
-                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                    color: 'white',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                                    }
-                                }}
-                            >
-                                <CloseIcon />
-                            </IconButton>
-                        </MuiBox>
-                    )}
-                </>
-            )}
-
-            {/* Marker Dialog */}
-            <Dialog open={markerDialogOpen} onClose={() => setMarkerDialogOpen(false)}>
-                <DialogTitle>
-                    {currentMarker !== null ? 'Редактировать маркер' : 'Добавить маркер'}
-                </DialogTitle>
-                <DialogContent>
-                    <TextField
-                        margin="dense"
-                        label="Время (секунды)"
-                        type="number"
-                        fullWidth
-                        value={newMarkerTime}
-                        onChange={(e) => setNewMarkerTime(Number(e.target.value))}
-                        inputProps={{ step: 0.1, min: 0, max: duration }}
-                        sx={{ mb: 2 }}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Время модели (секунды)"
-                        type="number"
-                        fullWidth
-                        value={newMarkerModelTime}
-                        onChange={(e) => setNewMarkerModelTime(Number(e.target.value))}
-                        inputProps={{ step: 0.1, min: 0, max: modelDuration }}
-                        sx={{ mb: 2 }}
-                        helperText={`Время в анимации модели (от 0 до ${modelDuration.toFixed(2)} секунд)`}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Название"
-                        type="text"
-                        fullWidth
-                        value={newMarkerLabel}
-                        onChange={(e) => setNewMarkerLabel(e.target.value)}
-                        sx={{ mb: 2 }}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Цвет"
-                        type="color"
-                        fullWidth
-                        value={newMarkerColor}
-                        onChange={(e) => setNewMarkerColor(e.target.value)}
-                        sx={{ mb: 2 }}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setMarkerDialogOpen(false)}>Отмена</Button>
-                    <Button onClick={handleSaveMarker} color="primary">Сохранить</Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Save Animation Dialog */}
-            <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)}>
-                <DialogTitle>
-                    Сохранить анимацию
-                </DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Название анимации"
-                        type="text"
-                        fullWidth
-                        value={saveAnimationName}
-                        onChange={(e) => setSaveAnimationName(e.target.value)}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setSaveDialogOpen(false)}>Отмена</Button>
-                    <Button onClick={handleSaveAnimations} color="primary" disabled={!saveAnimationName.trim()}>
-                        Сохранить
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            {/* Load Animation Dialog */}
-            <Dialog open={loadDialogOpen} onClose={() => setLoadDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>
-                    Загрузить анимацию
-                </DialogTitle>
-                <DialogContent>
-                    {savedAnimations.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                            Нет сохраненных анимаций
-                        </Typography>
-                    ) : (
-                        <List>
-                            {savedAnimations.map((preset) => (
-                                <ListItem
-                                    key={preset.id}
-                                    button
-                                    onClick={() => handleLoadAnimationPreset(preset)}
-                                    secondaryAction={
-                                        <IconButton edge="end" onClick={() => handleDeleteAnimationPreset(preset.id)}>
-                                            <Delete />
-                                        </IconButton>
-                                    }
+                                    }}
                                 >
-                                    <ListItemText
-                                        primary={preset.name}
-                                        secondary={`Создано: ${new Date(preset.createdAt).toLocaleString()}`}
+                                    {isPlaying ? <Pause /> : <PlayArrow />}
+                                </IconButton>
+                                <Typography sx={{ color: 'white', minWidth: '70px' }}>
+                                    {formatTime(currentTime)} / {formatTime(playerDuration)}
+                                </Typography>
+                                <Box sx={{ flex: 1 }}>
+                                    <MarkedSlider
+                                        min={0}
+                                        max={playerDuration}
+                                        value={currentTime}
+                                        onChange={handleTimeChange}
+                                        markers={animationMarkers}
+                                        disabled={false}
+                                        onMarkerAdd={handleAddMarker}
+                                        onMarkerEdit={handleEditMarker}
+                                        onMarkerDelete={handleDeleteMarker}
                                     />
-                                </ListItem>
-                            ))}
-                        </List>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setLoadDialogOpen(false)}>Закрыть</Button>
-                </DialogActions>
-            </Dialog>
+                                </Box>
+                            </Box>
+                        </Box>
+                    </Box>
+                </Box>
 
-            {/* Upload GLB Dialog */}
-            <Dialog open={uploadDialogOpen} onClose={handleCloseUploadDialog}>
-                <DialogTitle>
-                    Загрузить GLB модель
-                </DialogTitle>
-                <DialogContent>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
-                        Выберите .glb файл с моделью и анимациями или введите URL
-                    </Typography>
-
-                    <input
-                        type="file"
-                        accept=".glb"
-                        style={{ display: 'none' }}
-                        ref={fileInputRef}
-                        onChange={handleFileInputChange}
-                    />
-
-                    <Button
-                        variant="contained"
-                        onClick={() => {
-                            console.log('ModelViewer: File input button clicked');
-                            if (fileInputRef.current) {
-                                fileInputRef.current.click();
-                            } else {
-                                console.error('ModelViewer: File input ref is null');
+                {/* Animation controls panel */}
+                <Box sx={{
+                    width: { xs: '100%', md: embedded ? '300px' : '350px' }, // Wider in fullscreen
+                    height: { xs: '300px', md: '100%' },
+                    backgroundColor: 'rgba(15, 19, 50, 0.95)',
+                    overflow: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <Tabs
+                        value={tabIndex}
+                        onChange={handleTabChange}
+                        variant="fullWidth"
+                        sx={{
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                            '& .MuiTab-root': {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                fontWeight: 600,
+                                textTransform: 'none'
+                            },
+                            '& .Mui-selected': {
+                                color: '#FF5C93'
+                            },
+                            '& .MuiTabs-indicator': {
+                                backgroundColor: '#FF5C93'
                             }
                         }}
-                        sx={{ mb: 2 }}
-                        fullWidth
                     >
-                        Выбрать файл
-                    </Button>
+                        <Tab label="Анимации" />
+                        <Tab label="Настройки" />
+                    </Tabs>
 
-                    <Typography variant="body2" sx={{ mt: 2, mb: 1 }}>
-                        Или введите URL:
-                    </Typography>
+                    <Box sx={{ p: 2, flex: 1, overflow: 'auto' }}>
+                        {tabIndex === 0 && (
+                            <AnimationManager
+                                animations={animations}
+                                activeAnimations={activeAnimations}
+                                onAnimationsChange={handleAnimationsChange}
+                            />
+                        )}
 
-                    <TextField
-                        margin="dense"
-                        label="URL .glb файла"
-                        type="text"
-                        fullWidth
-                        value={glbUrl}
-                        onChange={(e) => setGlbUrl(e.target.value)}
-                        sx={{ mb: 2 }}
-                        placeholder="https://example.com/model.glb"
-                    />
+                        {tabIndex === 1 && (
+                            <Box>
+                                <Typography variant="subtitle1" sx={{ color: 'white', mb: 2 }}>
+                                    Управление моделью
+                                </Typography>
+
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<Save />}
+                                    fullWidth
+                                    onClick={handleSaveModel}
+                                    sx={{
+                                        mb: 2,
+                                        borderColor: '#6A3AFF',
+                                        color: '#6A3AFF',
+                                        '&:hover': {
+                                            borderColor: '#9C6AFF',
+                                            backgroundColor: 'rgba(106, 58, 255, 0.05)'
+                                        }
+                                    }}
+                                >
+                                    Сохранить настройки
+                                </Button>
+
+                                <Box sx={{
+                                    p: 2,
+                                    borderRadius: '8px',
+                                    backgroundColor: 'rgba(5, 7, 20, 0.5)',
+                                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                                    mb: 2
+                                }}>
+                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                                        Текущая модель:
+                                    </Typography>
+                                    <Typography variant="body2" sx={{
+                                        color: 'white',
+                                        wordBreak: 'break-all',
+                                        fontSize: '0.8rem',
+                                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                                        p: 1,
+                                        borderRadius: '4px',
+                                        fontFamily: 'monospace'
+                                    }}>
+                                        {glbUrl || 'Не выбрана'}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        )}
+                    </Box>
+
+                    {/* Bottom action buttons */}
+                    <Box sx={{
+                        p: 2,
+                        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                        display: 'flex',
+                        justifyContent: 'space-between'
+                    }}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSaveModelWithAnimation}
+                            disabled={!glbUrl}
+                            sx={{
+                                backgroundColor: '#6A3AFF',
+                                '&:hover': {
+                                    backgroundColor: '#4316DB'
+                                },
+                                flex: 1,
+                                mr: 1
+                            }}
+                        >
+                            Сохранить
+                        </Button>
+
+                        <Button
+                            variant="outlined"
+                            onClick={closeViewerWithoutSaving}
+                            sx={{
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                color: 'rgba(255, 255, 255, 0.9)',
+                                '&:hover': {
+                                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                                }
+                            }}
+                        >
+                            Отмена
+                        </Button>
+                    </Box>
+                </Box>
+            </Box>
+
+            {/* Upload GLB model dialog */}
+            <Dialog
+                open={uploadDialogOpen}
+                onClose={handleCloseUploadDialog}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        backgroundColor: 'rgba(15, 19, 50, 0.97)',
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+                        border: '1px solid rgba(255, 255, 255, 0.05)'
+                    }
+                }}
+            >
+                <DialogTitle sx={{ color: 'white', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    Загрузка 3D модели
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ p: 2 }}>
+                        <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.9)', mb: 3 }}>
+                            Выберите GLB файл или введите URL модели
+                        </Typography>
+
+                        {/* File upload area */}
+                        <Box sx={{
+                            border: '2px dashed rgba(255, 255, 255, 0.2)',
+                            borderRadius: '8px',
+                            p: 3,
+                            mb: 3,
+                            textAlign: 'center',
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                                borderColor: 'rgba(255, 255, 255, 0.3)'
+                            }
+                        }}
+                            component="label"
+                        >
+                            <Upload sx={{ fontSize: 40, color: 'rgba(255, 255, 255, 0.5)', mb: 2 }} />
+                            <Typography variant="body1" sx={{ color: 'white', mb: 1 }}>
+                                Перетащите GLB файл или нажмите для выбора
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                                Поддерживаемый формат: GLB
+                            </Typography>
+                            <input
+                                type="file"
+                                accept=".glb"
+                                hidden
+                                onChange={handleFileInputChange}
+                            />
+                        </Box>
+
+                        {/* URL input area */}
+                        <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+                            Или укажите URL модели:
+                        </Typography>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            placeholder="https://example.com/model.glb"
+                            value={glbInputUrl}
+                            onChange={(e) => setGlbInputUrl(e.target.value)}
+                            sx={{
+                                mb: 1,
+                                '& .MuiOutlinedInput-root': {
+                                    color: 'white',
+                                    '& fieldset': {
+                                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#6A3AFF',
+                                    },
+                                },
+                                '& .MuiInputLabel-root': {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                },
+                            }}
+                        />
+                        <Button
+                            variant="contained"
+                            onClick={handleGlbUrlSubmit}
+                            disabled={!glbInputUrl}
+                            fullWidth
+                            sx={{
+                                mt: 2,
+                                backgroundColor: '#6A3AFF',
+                                '&:hover': {
+                                    backgroundColor: '#4316DB'
+                                }
+                            }}
+                        >
+                            Загрузить по URL
+                        </Button>
+                    </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseUploadDialog}>Отмена</Button>
-                    <Button
-                        onClick={handleGlbUrlSubmit}
-                        color="primary"
-                        disabled={!glbUrl}
-                    >
-                        Загрузить
-                    </Button>
-                </DialogActions>
             </Dialog>
-        </MuiBox>
+
+            {/* Other existing dialogs */}
+            {/* ... existing code for dialogs ... */}
+        </div>
     );
 };
 

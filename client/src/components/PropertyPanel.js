@@ -51,39 +51,40 @@ import {
     Delete as DeleteIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/system';
+import { COLORS } from '../constants/colors';
 
 // Определение цветовой палитры
 const PALETTE = {
     // Основные цвета
     primary: {
-        light: '#9C6AFF',
-        main: '#6A3AFF', // Основной фиолетовый
-        dark: '#4316DB'
+        light: COLORS.primaryLight,
+        main: COLORS.primary, // Blue-violet
+        dark: '#5449A6'
     },
     secondary: {
-        light: '#FF8F73',
-        main: '#FF6B52', // Ярко-оранжевый
-        dark: '#E54B30'
+        light: COLORS.secondaryLight,
+        main: COLORS.secondary, // Light blue
+        dark: '#0071CE'
     },
     tertiary: {
-        light: '#FF7EB3',
-        main: '#FF5C93', // Розовый
-        dark: '#DB3671'
+        light: COLORS.tertiaryLight,
+        main: COLORS.tertiary, // Turquoise
+        dark: '#2CB5B5'
     },
     // Дополнительные цвета
     teal: {
         light: '#7DEEFF',
-        main: '#33D2FF', // Голубой
-        dark: '#00A0CC'
+        main: COLORS.teal, // Teal
+        dark: '#008B9A'
     },
-    green: {
-        light: '#7CFFCB',
-        main: '#33E2A0', // Нежно-зеленый
-        dark: '#00B371'
+    accent: {
+        light: '#FFE066',
+        main: COLORS.accent, // Yellow
+        dark: '#E6C300'
     },
     // Нейтральные цвета
     purpleGrey: {
-        light: '#B7A6FF',
+        light: '#9D94D3',
         main: '#8678B2', // Серо-фиолетовый
         dark: '#5D5080'
     }
@@ -95,8 +96,8 @@ const StyledSection = styled(Box)(({ theme }) => ({
     padding: theme.spacing(2),
     borderRadius: theme.spacing(1),
     backgroundColor: theme.palette.mode === 'dark'
-        ? alpha(theme.palette.background.paper, 0.4)
-        : alpha(theme.palette.background.paper, 0.7),
+        ? 'rgba(32, 38, 52, 0.7)'  // Lighter section background
+        : 'rgba(250, 252, 255, 0.8)', // Very light blue-gray
     border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
     transition: 'all 0.2s',
     '&:hover': {
@@ -110,7 +111,7 @@ const StyledSection = styled(Box)(({ theme }) => ({
 const SectionTitle = styled(Typography)(({ theme }) => ({
     fontWeight: 600,
     fontSize: '0.875rem',
-    color: theme.palette.mode === 'dark' ? PALETTE.primary.light : PALETTE.primary.main,
+    color: theme.palette.mode === 'dark' ? PALETTE.secondary.light : PALETTE.secondary.main,
     marginBottom: theme.spacing(1.5),
     display: 'flex',
     alignItems: 'center',
@@ -217,12 +218,12 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 backgroundColor: theme.palette.mode === 'dark'
-                    ? alpha(PALETTE.purpleGrey.dark, 0.7)
-                    : alpha(PALETTE.purpleGrey.light, 0.1),
+                    ? 'rgba(26, 32, 46, 0.85)'  // Lighter, more neutral dark blue
+                    : 'rgba(240, 245, 255, 0.9)', // Light blue-gray
                 backdropFilter: 'blur(10px)',
                 border: `1px solid ${theme.palette.mode === 'dark'
                     ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(106, 58, 255, 0.05)'}`,
+                    : 'rgba(30, 144, 255, 0.15)'}`,
             }}>
                 <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 2 }}>
                     Выберите элемент на доске для редактирования
@@ -231,13 +232,13 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    backgroundColor: alpha(PALETTE.primary.main, 0.1),
+                    backgroundColor: alpha(PALETTE.secondary.main, 0.1),
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
                     mb: 2
                 }}>
-                    <PanTool sx={{ fontSize: 32, color: alpha(PALETTE.primary.main, 0.6) }} />
+                    <PanTool sx={{ fontSize: 32, color: alpha(PALETTE.secondary.main, 0.6) }} />
                 </Box>
             </Paper>
         );
@@ -492,15 +493,15 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             overflow: 'auto',
             borderRadius: 2,
             backgroundColor: theme.palette.mode === 'dark'
-                ? alpha(PALETTE.purpleGrey.dark, 0.8)
-                : alpha(PALETTE.purpleGrey.light, 0.05),
+                ? 'rgba(26, 32, 46, 0.85)'  // Lighter, more neutral dark blue
+                : 'rgba(240, 245, 255, 0.9)', // Light blue-gray
             backdropFilter: 'blur(8px)',
             border: `1px solid ${theme.palette.mode === 'dark'
                 ? 'rgba(255, 255, 255, 0.05)'
-                : 'rgba(106, 58, 255, 0.05)'}`,
+                : 'rgba(30, 144, 255, 0.15)'}`,
         }}>
             <Typography variant="h6" gutterBottom sx={{
-                color: theme.palette.mode === 'dark' ? PALETTE.tertiary.light : PALETTE.tertiary.main,
+                color: theme.palette.mode === 'dark' ? PALETTE.secondary.light : PALETTE.secondary.main,
                 fontWeight: 700,
                 mb: 2,
                 position: 'relative',
@@ -512,7 +513,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                     left: 0,
                     width: 40,
                     height: 3,
-                    backgroundImage: `linear-gradient(to right, ${PALETTE.primary.main}, ${PALETTE.tertiary.main})`,
+                    backgroundImage: `linear-gradient(to right, ${PALETTE.secondary.main}, ${PALETTE.tertiary.main})`,
                     borderRadius: 1.5
                 }
             }}>

@@ -24,7 +24,7 @@ import ReactDOM from 'react-dom';
 import ModelViewer from './ModelViewer';
 import VideoViewer from './VideoViewer';
 import CombinedViewer from './CombinedViewer';
-import { COLORS } from '../App';
+import { COLORS } from '../constants/colors';
 
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
@@ -2153,20 +2153,23 @@ const Canvas = ({
             {showChoreoModal && renderChoreoModal()}
 
             {/* ВРЕМЕННО: Комбинированный просмотрщик 3D и видео - будет удален позже */}
-            <CombinedViewer
-                isVisible={showCombinedViewer}
-                onClose={handleCloseCombinedViewer}
-                videoUrl={getVideoUrl()}
-                playerDuration={project?.duration || 60} // Use project duration if available
-                currentTime={currentTime}
-                isPlaying={isPlaying}
-                onTimeUpdate={() => { }} // Добавьте обработчик обновления времени при необходимости
-                elementKeyframes={selectedElement?.keyframes || []}
-                elementId={selectedElement?.id}
-                onSaveAnimations={handleSaveAnimations}
-                glbAnimations={getGlbAnimations()}
-                glbAnimationUrl={selectedElement?.modelPath}
-            />
+            {ReactDOM.createPortal(
+                <CombinedViewer
+                    isVisible={showCombinedViewer}
+                    onClose={handleCloseCombinedViewer}
+                    videoUrl={getVideoUrl()}
+                    playerDuration={project?.duration || 60} // Use project duration if available
+                    currentTime={currentTime}
+                    isPlaying={isPlaying}
+                    onTimeUpdate={() => { }} // Добавьте обработчик обновления времени при необходимости
+                    elementKeyframes={selectedElement?.keyframes || []}
+                    elementId={selectedElement?.id}
+                    onSaveAnimations={handleSaveAnimations}
+                    glbAnimations={getGlbAnimations()}
+                    glbAnimationUrl={selectedElement?.modelPath}
+                />,
+                document.body
+            )}
         </Box>
     );
 };

@@ -24,13 +24,10 @@ import {
 } from '@mui/icons-material';
 import Navbar from '../components/Navbar';
 import { styled, keyframes } from '@mui/material/styles';
-import { COLORS } from '../App';
+import { COLORS } from '../constants/colors';
 
-// Add missing colors
-const EXTENDED_COLORS = {
-    ...COLORS,
-    teal: '#00BCD4'  // Adding teal color that wasn't in the original COLORS
-};
+// No need to add additional colors since we moved them to constants/colors.js
+const EXTENDED_COLORS = COLORS;
 
 // Animations
 const fadeIn = keyframes`
@@ -118,8 +115,8 @@ const StyledButton = styled(Button)(({ theme }) => ({
 
 const FeatureCard = styled(Card)(({ theme, index }) => ({
     borderRadius: '16px',
-    backgroundColor: 'rgba(30, 15, 50, 0.8)',
-    border: '1px solid rgba(138, 43, 226, 0.3)',
+    backgroundColor: 'rgba(32, 38, 52, 0.8)',
+    border: '1px solid rgba(30, 144, 255, 0.15)',
     position: 'relative',
     overflow: 'hidden',
     transition: 'all 0.3s ease',
@@ -127,9 +124,9 @@ const FeatureCard = styled(Card)(({ theme, index }) => ({
     height: '100%',
     '&:hover': {
         transform: 'translateY(-5px)',
-        boxShadow: '0 15px 30px rgba(0, 0, 0, 0.5)',
+        boxShadow: '0 15px 30px rgba(0, 0, 0, 0.4)',
         '& .MuiCardContent-root': {
-            background: `linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(255, 20, 147, 0.1) 100%)`,
+            background: `linear-gradient(135deg, rgba(30, 144, 255, 0.1) 0%, rgba(64, 224, 208, 0.1) 100%)`,
         }
     },
     '&::before': {
@@ -139,9 +136,9 @@ const FeatureCard = styled(Card)(({ theme, index }) => ({
         left: 0,
         width: '100%',
         height: '3px',
-        background: index % 3 === 0 ? `linear-gradient(90deg, ${EXTENDED_COLORS.primary}, ${EXTENDED_COLORS.tertiary})` :
+        background: index % 3 === 0 ? `linear-gradient(90deg, ${EXTENDED_COLORS.secondary}, ${EXTENDED_COLORS.tertiary})` :
             index % 3 === 1 ? `linear-gradient(90deg, ${EXTENDED_COLORS.tertiary}, ${EXTENDED_COLORS.teal})` :
-                `linear-gradient(90deg, ${EXTENDED_COLORS.teal}, ${EXTENDED_COLORS.primary})`,
+                `linear-gradient(90deg, ${EXTENDED_COLORS.teal}, ${EXTENDED_COLORS.secondary})`,
     }
 }));
 
@@ -166,15 +163,15 @@ const FeatureIcon = styled(Box)(({ theme }) => ({
 const UserInfoCard = styled(Box)(({ theme }) => ({
     padding: theme.spacing(4),
     borderRadius: '20px',
-    backgroundColor: 'rgba(30, 15, 50, 0.8)',
-    border: '1px solid rgba(138, 43, 226, 0.3)',
+    backgroundColor: 'rgba(32, 38, 52, 0.8)',
+    border: '1px solid rgba(30, 144, 255, 0.15)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
     marginBottom: theme.spacing(4),
-    boxShadow: `0 10px 20px rgba(0, 0, 0, 0.3)`,
+    boxShadow: `0 10px 20px rgba(0, 0, 0, 0.2)`,
     animation: `${fadeIn} 0.5s ease-out forwards`,
     '&::before': {
         content: '""',
@@ -183,7 +180,7 @@ const UserInfoCard = styled(Box)(({ theme }) => ({
         left: 0,
         width: '100%',
         height: '100%',
-        background: `linear-gradient(135deg, rgba(138, 43, 226, 0.05) 0%, rgba(255, 20, 147, 0.05) 100%)`,
+        background: `linear-gradient(135deg, rgba(30, 144, 255, 0.05) 0%, rgba(64, 224, 208, 0.05) 100%)`,
         zIndex: -1,
     }
 }));
@@ -279,7 +276,7 @@ function AuthHome() {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
-            background: `linear-gradient(135deg, #0a0e24 0%, #111536 100%)`,
+            background: `linear-gradient(135deg, #121620 0%, #1e2940 100%)`,
             position: 'relative',
         }}>
             {/* Decorative elements */}

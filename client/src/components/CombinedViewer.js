@@ -366,8 +366,8 @@ const CombinedViewer = ({
             <Paper
                 elevation={embedded ? 0 : 8}
                 sx={{
-                    width: embedded ? '100%' : '90%',
-                    height: embedded ? '100%' : '85%',
+                    width: embedded ? '100%' : '95%',
+                    height: embedded ? '100%' : '95%',
                     position: 'relative',
                     borderRadius: embedded ? 0 : 2,
                     overflow: 'hidden',
@@ -508,6 +508,8 @@ const CombinedViewer = ({
                         onClose={handleClose}
                         videoUrl={videoUrl}
                         embedded={true}
+                        isPlaying={isPlaying}
+                        currentTime={currentTime}
                     />
                 </MuiBox>
             </Paper>

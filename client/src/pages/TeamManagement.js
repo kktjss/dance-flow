@@ -22,7 +22,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '../constants';
 import { useNavigate } from 'react-router-dom';
 import { styled, keyframes } from '@mui/material/styles';
-import { COLORS } from '../App';
+import { COLORS } from '../constants/colors';
 
 // Animations
 const fadeIn = keyframes`

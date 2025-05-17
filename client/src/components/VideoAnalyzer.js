@@ -162,7 +162,7 @@ const createRequestQueue = () => {
     };
 };
 
-const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSelectedPerson, isDancerSelectionMode }) => {
+const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSelectedPerson, isDancerSelectionMode, onVideoLoaded, videoQuality = 'high', currentTime, isPlaying }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const offscreenCanvasRef = useRef(null);
@@ -187,6 +187,11 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
     const [showMessage, setShowMessage] = useState(false);
     const overlayCanvasRef = useRef(null);
     const pausedForSelectionRef = useRef(false);
+    const videoLoadAttempts = useRef(0); // Track load attempts
+    const [videoError, setVideoError] = useState(null);
+    const seekRequested = useRef(false);
+    const manualPlayRequest = useRef(false);
+    const playbackErrorCount = useRef(0);
 
     // Improved adaptive settings to match device capabilities
     const [settings, setSettings] = useState({
@@ -639,13 +644,13 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         const handlePlay = () => {
             console.log('Video started playing');
 
-            // При начале воспроизведения очищаем оверлей 
+            // Clean the overlay on playback start
             if (overlayCanvasRef.current) {
                 const ctx = overlayCanvasRef.current.getContext('2d');
                 ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
             }
 
-            // Отключаем автоматическую обработку кадров - обработка только по клику
+            // Disable automatic frame processing - only process on click
             isProcessingRef.current = false;
             setIsProcessing(false);
 
@@ -689,11 +694,23 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         video.addEventListener('pause', handlePause);
         video.addEventListener('ended', handleEnded);
 
+        // Add timeupdate listener to handle long videos
+        const handleTimeUpdate = () => {
+            // This event fires regularly during playback
+            // For long videos, this confirms the video is still playing
+            if (video.currentTime > 0 && !video.paused) {
+                // Video is playing successfully
+            }
+        };
+
+        video.addEventListener('timeupdate', handleTimeUpdate);
+
         return () => {
             console.log('Cleaning up video processing effect');
             video.removeEventListener('play', handlePlay);
             video.removeEventListener('pause', handlePause);
             video.removeEventListener('ended', handleEnded);
+            video.removeEventListener('timeupdate', handleTimeUpdate);
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
                 animationFrameRef.current = null;
@@ -954,37 +971,208 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }
     }, []);
 
-    // Handle video events
+    // Improved video loading with better error handling
     useEffect(() => {
         const video = videoRef.current;
 
-        if (!video) return;
+        if (!video || !videoUrl) return;
+
+        console.log('Setting up video with URL:', videoUrl);
+
+        // Reset state for new video
+        setIsVideoReady(false);
+        setVideoError(null);
+        videoLoadAttempts.current = 0;
+        playbackErrorCount.current = 0;
+        seekRequested.current = false;
+        manualPlayRequest.current = false;
 
         const handleVideoReady = () => {
-            console.log('Video is ready to play');
+            console.log('Video is ready to play, duration:', video.duration);
             setIsVideoReady(true);
             setupCanvases();
+
+            // Remove any previous error state
+            setVideoError(null);
+
+            // Optimize video playback for long videos
+            if (video.duration > 180) { // longer than 3 minutes
+                // Disable automatic quality switching
+                if (video.getVideoPlaybackQuality) {
+                    try {
+                        video.autoquality = false;
+                    } catch (e) {
+                        console.warn('Cannot disable autoquality:', e);
+                    }
+                }
+
+                // Set buffer size to handle longer playback
+                try {
+                    // Longer buffering for bigger videos
+                    if (typeof video.bufferSize !== "undefined") {
+                        video.bufferSize = Math.min(30, Math.floor(video.duration / 60) * 5); // 5s per minute, max 30s
+                    }
+                } catch (e) {
+                    console.warn('Cannot set buffer size:', e);
+                }
+            }
+
+            if (onVideoLoaded) {
+                onVideoLoaded(video);
+            }
         };
 
         const handleVideoError = (error) => {
             console.error('Error loading video:', error);
-            setIsVideoReady(false);
+            videoLoadAttempts.current += 1;
+            playbackErrorCount.current += 1;
+
+            if (videoLoadAttempts.current <= 3) {
+                console.log(`Retry loading video (attempt ${videoLoadAttempts.current})`);
+                // Use a different loading strategy for each attempt
+                setTimeout(() => {
+                    if (videoLoadAttempts.current === 1) {
+                        // First retry: Just reload
+                        video.load();
+                    } else if (videoLoadAttempts.current === 2) {
+                        // Second retry: Try with preload=none and then change to auto
+                        video.preload = 'none';
+                        video.load();
+                        setTimeout(() => {
+                            video.preload = 'auto';
+                        }, 1000);
+                    } else {
+                        // Third retry: Try metadata first, then upgrade
+                        video.preload = 'metadata';
+                        video.load();
+                        setTimeout(() => {
+                            video.preload = 'auto';
+                        }, 2000);
+                    }
+                }, 1000 * videoLoadAttempts.current); // Progressively longer delays
+            } else {
+                setVideoError('Не удалось загрузить видео после нескольких попыток');
+                setIsVideoReady(false);
+            }
         };
 
-        if (video.readyState >= 3) {
-            handleVideoReady();
-        }
+        // Handle stalled playback
+        const handleVideoStalled = () => {
+            console.warn('Video playback stalled');
+            if (playbackErrorCount.current < 5) {
+                playbackErrorCount.current++;
+                // If we were playing, try to resume after a short delay
+                if (!video.paused) {
+                    setTimeout(() => {
+                        if (videoRef.current && !videoRef.current.paused) {
+                            console.log('Attempting to resume stalled video');
+                            videoRef.current.play().catch(e => console.error('Failed to resume:', e));
+                        }
+                    }, 1000);
+                }
+            } else {
+                // Too many errors, show error to user
+                setVideoError('Проблемы с воспроизведением видео. Попробуйте изменить качество или перезагрузить.');
+            }
+        };
 
+        // Handle timeupdate events to reset error counter when playback is working
+        const handleTimeUpdate = () => {
+            // Reset error counter as playback is working
+            if (video.currentTime > 0 && !video.paused) {
+                playbackErrorCount.current = 0;
+            }
+
+            // Handle seek request if time is set externally
+            if (seekRequested.current && typeof currentTime === 'number') {
+                seekRequested.current = false;
+
+                try {
+                    // Only seek if difference is significant
+                    if (Math.abs(video.currentTime - currentTime) > 0.5) {
+                        video.currentTime = currentTime;
+                    }
+                } catch (err) {
+                    console.error('Error during seek:', err);
+                }
+            }
+
+            // Handle play request if set externally
+            if (manualPlayRequest.current) {
+                manualPlayRequest.current = false;
+                if (video.paused) {
+                    video.play().catch(e => console.error('Play request failed:', e));
+                }
+            }
+        };
+
+        // Clear any previous event listeners
+        video.removeEventListener('loadeddata', handleVideoReady);
+        video.removeEventListener('canplay', handleVideoReady);
+        video.removeEventListener('error', handleVideoError);
+        video.removeEventListener('stalled', handleVideoStalled);
+        video.removeEventListener('timeupdate', handleTimeUpdate);
+
+        // Set new event listeners
         video.addEventListener('loadeddata', handleVideoReady);
         video.addEventListener('canplay', handleVideoReady);
         video.addEventListener('error', handleVideoError);
+        video.addEventListener('stalled', handleVideoStalled);
+        video.addEventListener('timeupdate', handleTimeUpdate);
+
+        // Set optimal video attributes for long videos
+        video.preload = 'auto';  // Ensure video data is preloaded
+        video.crossOrigin = 'anonymous'; // Help with CORS issues
+
+        // Force video to reload
+        video.load();
 
         return () => {
             video.removeEventListener('loadeddata', handleVideoReady);
             video.removeEventListener('canplay', handleVideoReady);
             video.removeEventListener('error', handleVideoError);
+            video.removeEventListener('stalled', handleVideoStalled);
+            video.removeEventListener('timeupdate', handleTimeUpdate);
         };
-    }, [videoUrl, setupCanvases]);
+    }, [videoUrl, setupCanvases, onVideoLoaded, currentTime]);
+
+    // Respond to external playback controls
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video || !isVideoReady) return;
+
+        // Synchronize playback state if needed
+        if (typeof isPlaying === 'boolean') {
+            if (isPlaying && video.paused) {
+                console.log('VideoAnalyzer: External play command received');
+                manualPlayRequest.current = true;
+                video.play().catch(e => {
+                    console.error('Failed to play video:', e);
+                    manualPlayRequest.current = false;
+                });
+            } else if (!isPlaying && !video.paused) {
+                console.log('VideoAnalyzer: External pause command received');
+                video.pause();
+            }
+        }
+
+        // Synchronize time position if needed
+        if (typeof currentTime === 'number' && Math.abs(video.currentTime - currentTime) > 0.5) {
+            console.log(`VideoAnalyzer: External seek command received to ${currentTime}s`);
+            seekRequested.current = true;
+
+            // If the video is already loaded enough, seek immediately
+            if (video.readyState >= 3) {
+                try {
+                    video.currentTime = currentTime;
+                    seekRequested.current = false;
+                } catch (err) {
+                    console.error('Error during immediate seek:', err);
+                }
+            }
+            // Otherwise the timeupdate handler will handle it
+        }
+    }, [isPlaying, currentTime, isVideoReady]);
 
     // Update selected person from external props
     useEffect(() => {
@@ -993,9 +1181,72 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }
     }, [externalSelectedPerson]);
 
+    // Check if the component has a method to properly notify when video is loaded
+    useEffect(() => {
+        if (videoRef.current) {
+            // Add event listener for 'loadeddata' event to know when video is fully loaded
+            const videoElement = videoRef.current;
+
+            const handleVideoLoaded = () => {
+                console.log('VideoAnalyzer: Video loaded successfully');
+                if (onVideoLoaded) {
+                    onVideoLoaded(videoRef.current);
+                }
+            };
+
+            videoElement.addEventListener('loadeddata', handleVideoLoaded);
+
+            // Also add canplay event as a fallback
+            videoElement.addEventListener('canplay', handleVideoLoaded);
+
+            return () => {
+                videoElement.removeEventListener('loadeddata', handleVideoLoaded);
+                videoElement.removeEventListener('canplay', handleVideoLoaded);
+            };
+        }
+    }, [videoRef, onVideoLoaded]);
+
+    // Handle video quality changes
+    useEffect(() => {
+        if (videoRef.current) {
+            const videoElement = videoRef.current;
+
+            // Set video quality based on the prop
+            if (videoQuality === 'high') {
+                videoElement.setAttribute('controls', '');
+                videoElement.style.objectFit = 'contain';
+
+                // For high quality playback of long videos
+                if (videoElement.duration > 180) { // longer than 3 minutes
+                    // Lower buffer settings for high quality to avoid memory issues
+                    videoElement.preload = 'auto';
+                } else {
+                    // Regular settings for shorter videos
+                    videoElement.preload = 'auto';
+                }
+            } else {
+                // For low quality, reduce resolution and remove controls
+                videoElement.removeAttribute('controls');
+                videoElement.style.objectFit = 'cover';
+
+                // Set lower resolution for performance
+                if (videoElement.videoWidth > 640) {
+                    videoElement.style.width = '640px';
+                }
+
+                // Use different buffer strategy for long videos in low quality mode
+                if (videoElement.duration > 180) {
+                    videoElement.preload = 'auto';
+                }
+            }
+
+            console.log('VideoAnalyzer: Video quality set to', videoQuality);
+        }
+    }, [videoQuality, videoRef]);
+
     return (
         <div className="video-analyzer" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
-            {/* Main video element with optimized settings */}
+            {/* Video element with optimized settings for long videos */}
             <video
                 ref={videoRef}
                 src={videoUrl}
@@ -1009,12 +1260,57 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     height: 'auto',
                     maxWidth: '100%',
                     maxHeight: '100%',
+                    objectFit: 'contain',
                     pointerEvents: isDancerSelectionMode ? 'none' : 'auto'
                 }}
-                // Add performance optimization attributes
+                // Performance optimization attributes for long videos
                 playsInline
                 preload="auto"
+                controlsList="nodownload"
+                onContextMenu={(e) => e.preventDefault()}
+                // Add important attributes for optimized video playback
+                disablePictureInPicture
+                disableRemotePlayback
             />
+
+            {/* Show error message if video fails to load */}
+            {videoError && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    color: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    maxWidth: '80%',
+                    zIndex: 10
+                }}>
+                    <p>{videoError}</p>
+                    <button
+                        style={{
+                            padding: '8px 15px',
+                            backgroundColor: '#33D2FF',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            marginTop: '10px'
+                        }}
+                        onClick={() => {
+                            setVideoError(null);
+                            videoLoadAttempts.current = 0;
+                            playbackErrorCount.current = 0;
+                            if (videoRef.current) {
+                                videoRef.current.load();
+                            }
+                        }}
+                    >
+                        Повторить
+                    </button>
+                </div>
+            )}
 
             {/* Hidden canvas for processing frames */}
             <canvas

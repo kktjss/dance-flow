@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import { styled } from '@mui/system';
+import { COLORS } from '../constants/colors';
 
 // Styled components
 const ToolButton = styled(Button)(({ theme }) => ({
@@ -62,34 +63,34 @@ const ToolButton = styled(Button)(({ theme }) => ({
 const PALETTE = {
     // Primary colors
     primary: {
-        light: '#9C6AFF',
-        main: '#6A3AFF', // Main purple
-        dark: '#4316DB'
+        light: COLORS.primaryLight,
+        main: COLORS.primary, // Blue-violet
+        dark: '#5449A6'
     },
     secondary: {
-        light: '#FF8F73',
-        main: '#FF6B52', // Bright orange
-        dark: '#E54B30'
+        light: COLORS.secondaryLight,
+        main: COLORS.secondary, // Light blue
+        dark: '#0071CE'
     },
     tertiary: {
-        light: '#FF7EB3',
-        main: '#FF5C93', // Pink
-        dark: '#DB3671'
+        light: COLORS.tertiaryLight,
+        main: COLORS.tertiary, // Turquoise
+        dark: '#2CB5B5'
     },
     // Additional colors
     teal: {
         light: '#7DEEFF',
-        main: '#33D2FF', // Light blue
-        dark: '#00A0CC'
+        main: COLORS.teal, // Teal
+        dark: '#008B9A'
     },
-    green: {
-        light: '#7CFFCB',
-        main: '#33E2A0', // Soft green
-        dark: '#00B371'
+    accent: {
+        light: '#FFE066',
+        main: COLORS.accent, // Yellow
+        dark: '#E6C300'
     },
     // Neutral colors
     purpleGrey: {
-        light: '#B7A6FF',
+        light: '#9D94D3',
         main: '#8678B2', // Grey-purple
         dark: '#5D5080'
     }
@@ -129,7 +130,7 @@ const ToolPanel = ({ onAddElement }) => {
                 size: { width: 100, height: 100 },
                 style: {
                     color: '#FFFFFF',
-                    backgroundColor: PALETTE.primary.main,
+                    backgroundColor: PALETTE.secondary.main, // Light blue rectangle
                     borderColor: 'rgba(0, 0, 0, 0)',
                     borderWidth: 0,
                     opacity: 0.8,
@@ -147,7 +148,7 @@ const ToolPanel = ({ onAddElement }) => {
                 size: { width: 100, height: 100 },
                 style: {
                     color: '#FFFFFF',
-                    backgroundColor: PALETTE.secondary.main,
+                    backgroundColor: PALETTE.tertiary.main, // Turquoise circle
                     borderColor: 'rgba(0, 0, 0, 0)',
                     borderWidth: 0,
                     opacity: 0.8,
@@ -157,7 +158,7 @@ const ToolPanel = ({ onAddElement }) => {
         },
         {
             id: 'rectangle2',
-            name: 'Розовый блок',
+            name: 'Синий блок',
             icon: <Crop169 />,
             defaults: {
                 type: 'rectangle',
@@ -165,7 +166,7 @@ const ToolPanel = ({ onAddElement }) => {
                 size: { width: 120, height: 80 },
                 style: {
                     color: '#FFFFFF',
-                    backgroundColor: PALETTE.tertiary.main,
+                    backgroundColor: PALETTE.primary.main, // Blue-violet block
                     borderColor: 'rgba(0, 0, 0, 0)',
                     borderWidth: 0,
                     opacity: 0.8,
@@ -175,7 +176,7 @@ const ToolPanel = ({ onAddElement }) => {
         },
         {
             id: 'circle2',
-            name: 'Голубой круг',
+            name: 'Желтый круг',
             icon: <RadioButtonUnchecked />,
             defaults: {
                 type: 'circle',
@@ -183,7 +184,7 @@ const ToolPanel = ({ onAddElement }) => {
                 size: { width: 80, height: 80 },
                 style: {
                     color: '#FFFFFF',
-                    backgroundColor: PALETTE.teal.main,
+                    backgroundColor: PALETTE.accent.main, // Yellow circle
                     borderColor: 'rgba(0, 0, 0, 0)',
                     borderWidth: 0,
                     opacity: 0.8,
@@ -234,14 +235,14 @@ const ToolPanel = ({ onAddElement }) => {
             p: 3,
             borderRadius: 3,
             backgroundColor: theme.palette.mode === 'dark'
-                ? 'rgba(17, 21, 54, 0.9)'  // Lighter, grayer purple color
-                : 'rgba(240, 240, 250, 0.9)', // Very light gray-purple in light mode
+                ? 'rgba(26, 32, 46, 0.85)'  // Lighter, more neutral dark blue background
+                : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
             backdropFilter: 'blur(12px)',
             border: `1px solid ${theme.palette.mode === 'dark'
                 ? 'rgba(255, 255, 255, 0.08)'
-                : 'rgba(106, 58, 255, 0.05)'}`,
+                : 'rgba(30, 144, 255, 0.15)'}`,
             boxShadow: theme.palette.mode === 'dark'
-                ? '0 8px 32px rgba(0, 0, 0, 0.3)'
+                ? '0 8px 32px rgba(0, 0, 0, 0.2)'
                 : '0 8px 32px rgba(0, 0, 0, 0.06)',
             height: '100%',
             overflow: 'auto'
@@ -249,7 +250,7 @@ const ToolPanel = ({ onAddElement }) => {
             <Typography variant="h6" gutterBottom sx={{
                 fontWeight: 700,
                 mb: 3,
-                color: theme.palette.mode === 'dark' ? PALETTE.primary.light : PALETTE.primary.main,
+                color: theme.palette.mode === 'dark' ? PALETTE.secondary.light : PALETTE.secondary.main,
                 position: 'relative',
                 display: 'inline-block',
                 '&::after': {
@@ -259,7 +260,7 @@ const ToolPanel = ({ onAddElement }) => {
                     left: 0,
                     width: 40,
                     height: 3,
-                    backgroundImage: `linear-gradient(to right, ${PALETTE.primary.main}, ${PALETTE.tertiary.main})`,
+                    backgroundImage: `linear-gradient(to right, ${PALETTE.secondary.main}, ${PALETTE.tertiary.main})`,
                     borderRadius: 1.5
                 }
             }}>

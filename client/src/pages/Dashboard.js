@@ -38,11 +38,10 @@ import {
 import axios from 'axios';
 import { styled, keyframes } from '@mui/material/styles';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import ChoreographyList from '../components/ChoreographyList';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { COLORS } from '../App';  // Import COLORS from App.js
+import { COLORS } from '../constants/colors';  // Import COLORS from constants
 
 // Анимации
 const fadeIn = keyframes`
@@ -80,9 +79,9 @@ const DecorativeCircle = styled(Box)(({ size = 120, top, left, color = COLORS.pr
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
     borderRadius: '20px',
-    backgroundColor: 'rgba(21, 25, 50, 0.95)',
-    boxShadow: `0 10px 30px rgba(0, 0, 0, 0.4)`,
-    border: '1px solid rgba(138, 43, 226, 0.2)',
+    backgroundColor: 'rgba(32, 38, 52, 0.85)',  // Lighter, more neutral dark blue
+    boxShadow: `0 10px 30px rgba(0, 0, 0, 0.2)`,
+    border: '1px solid rgba(30, 144, 255, 0.15)',
     position: 'relative',
     overflow: 'hidden',
     animation: `${fadeIn} 0.5s ease-out forwards`,
@@ -92,8 +91,8 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
         top: 0,
         left: 0,
         width: '100%',
-        height: '4px',
-        background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+        height: '3px',
+        background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
     }
 }));
 
@@ -101,14 +100,14 @@ const StyledButton = styled(Button)(({ theme }) => ({
     borderRadius: '12px',
     fontWeight: 600,
     fontFamily: '"Inter", "Golos Text", sans-serif',
-    background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+    background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
     backgroundSize: '200% 200%',
     animation: `${gradientShift} 5s ease infinite`,
     color: COLORS.white,
     transition: 'all 0.3s ease',
-    boxShadow: `0 8px 20px rgba(138, 43, 226, 0.4)`,
+    boxShadow: `0 8px 20px rgba(30, 144, 255, 0.3)`,
     '&:hover': {
-        boxShadow: `0 10px 25px rgba(138, 43, 226, 0.6)`,
+        boxShadow: `0 10px 25px rgba(30, 144, 255, 0.5)`,
         transform: 'translateY(-2px)'
     }
 }));
@@ -124,11 +123,11 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
             borderColor: 'rgba(255, 255, 255, 0.2)',
         },
         '&:hover fieldset': {
-            borderColor: COLORS.primaryLight,
+            borderColor: COLORS.secondaryLight,
         },
         '&.Mui-focused fieldset': {
-            borderColor: COLORS.primary,
-            boxShadow: `0 0 10px rgba(138, 43, 226, 0.3)`,
+            borderColor: COLORS.secondary,
+            boxShadow: `0 0 10px rgba(30, 144, 255, 0.3)`,
         },
     },
     '& .MuiInputLabel-root': {
@@ -144,11 +143,11 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
-        backgroundColor: COLORS.darkLight,
+        backgroundColor: 'rgba(32, 38, 52, 0.95)',  // Lighter, more neutral dark blue
         color: COLORS.white,
         borderRadius: '20px',
-        boxShadow: `0 10px 30px rgba(0, 0, 0, 0.6)`,
-        border: `1px solid rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.3)`,
+        boxShadow: `0 10px 30px rgba(0, 0, 0, 0.4)`,
+        border: `1px solid rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.2)`,
         overflow: 'hidden',
         '&::before': {
             content: '""',
@@ -157,7 +156,7 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
             left: 0,
             width: '100%',
             height: '3px',
-            background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+            background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
         }
     },
     '& .MuiDialogTitle-root': {
@@ -173,15 +172,15 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 const UserInfoCard = styled(Box)(({ theme }) => ({
     padding: theme.spacing(3),
     borderRadius: '20px',
-    backgroundColor: 'rgba(30, 15, 50, 0.8)',
-    border: '1px solid rgba(138, 43, 226, 0.3)',
+    backgroundColor: 'rgba(32, 38, 52, 0.8)',  // Lighter, more neutral dark blue
+    border: '1px solid rgba(30, 144, 255, 0.15)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
     marginBottom: theme.spacing(4),
-    boxShadow: `0 10px 20px rgba(0, 0, 0, 0.3)`,
+    boxShadow: `0 10px 20px rgba(0, 0, 0, 0.2)`,
     animation: `${fadeIn} 0.5s ease-out forwards`,
     '&::before': {
         content: '""',
@@ -190,7 +189,7 @@ const UserInfoCard = styled(Box)(({ theme }) => ({
         left: 0,
         width: '100%',
         height: '100%',
-        background: `linear-gradient(135deg, rgba(138, 43, 226, 0.05) 0%, rgba(255, 20, 147, 0.05) 100%)`,
+        background: `linear-gradient(135deg, rgba(30, 144, 255, 0.05) 0%, rgba(64, 224, 208, 0.05) 100%)`,
         zIndex: -1,
     }
 }));
@@ -212,7 +211,7 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
         transform: 'translateY(-50%)',
         width: '4px',
         height: '70%',
-        background: `linear-gradient(180deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+        background: `linear-gradient(180deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
         borderRadius: '2px',
     }
 }));
@@ -418,13 +417,13 @@ function Dashboard() {
             case 'PROJECT_CREATED':
                 return 'tertiary';  // Using MUI palette color name
             case 'PROJECT_UPDATED':
-                return 'primary';
+                return 'secondary';
             case 'TEAM_MEMBER_ADDED':
                 return 'secondary';
             case 'TEAM_MEMBER_REMOVED':
-                return 'secondary';
-            case 'TEAM_PROJECT_UPDATED':
                 return 'primary';
+            case 'TEAM_PROJECT_UPDATED':
+                return 'secondary';
             default:
                 return 'default';  // Default MUI chip color
         }
@@ -439,13 +438,13 @@ function Dashboard() {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
-            background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper} 100%)`,
+            background: `linear-gradient(135deg, #121620 0%, #1e2940 100%)`,  // Lighter, more neutral blue gradient
             position: 'relative',
         }}>
             {/* Декоративные элементы */}
-            <DecorativeCircle top="20%" left="-5%" size={300} color={theme.palette.primary.main} delay={0.2} />
-            <DecorativeCircle top="60%" left="95%" size={200} color={theme.palette.tertiary.main} delay={0.4} />
-            <DecorativeCircle top="90%" left="10%" size={150} color={theme.palette.secondary.main} delay={0.6} />
+            <DecorativeCircle top="20%" left="-5%" size={300} color={COLORS.secondary} delay={0.2} />
+            <DecorativeCircle top="60%" left="95%" size={200} color={COLORS.tertiary} delay={0.4} />
+            <DecorativeCircle top="90%" left="10%" size={150} color={COLORS.secondary} delay={0.6} />
 
             <FloatingIcon sx={{ top: '15%', right: '10%' }}>
                 <TimelineIcon sx={{ fontSize: 100 }} />
@@ -491,12 +490,12 @@ function Dashboard() {
                         sx={{
                             width: 100,
                             height: 100,
-                            bgcolor: `${COLORS.tertiary}50`,
+                            bgcolor: `${COLORS.secondary}30`,
                             color: COLORS.white,
                             fontSize: '2.5rem',
                             fontWeight: 'bold',
                             mb: 2,
-                            border: `3px solid ${COLORS.tertiary}`,
+                            border: `3px solid ${COLORS.secondary}`,
                         }}
                     >
                         {user.username.substring(0, 1).toUpperCase()}
@@ -517,7 +516,7 @@ function Dashboard() {
                                 color: COLORS.white,
                                 borderRadius: '12px',
                                 '&:hover': {
-                                    borderColor: COLORS.primaryLight,
+                                    borderColor: COLORS.secondaryLight,
                                     backgroundColor: 'rgba(255, 255, 255, 0.05)'
                                 }
                             }}
@@ -559,7 +558,8 @@ function Dashboard() {
                                         textAlign: 'center',
                                         color: 'rgba(255, 255, 255, 0.7)',
                                         borderRadius: '12px',
-                                        border: '1px dashed rgba(255, 255, 255, 0.2)',
+                                        border: '1px dashed rgba(30, 144, 255, 0.3)',
+                                        backgroundColor: 'rgba(30, 144, 255, 0.05)',
                                         backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
                                         backgroundSize: '20px 20px',
                                     }}>
@@ -640,8 +640,11 @@ function Dashboard() {
                                             py: 4,
                                             textAlign: 'center',
                                             color: 'rgba(255, 255, 255, 0.7)',
+                                            borderRadius: '12px',
+                                            border: '1px dashed rgba(30, 144, 255, 0.2)',
+                                            backgroundColor: 'rgba(30, 144, 255, 0.03)',
                                         }}>
-                                            <HistoryIcon sx={{ fontSize: 50, opacity: 0.3, mb: 2 }} />
+                                            <HistoryIcon sx={{ fontSize: 50, opacity: 0.4, mb: 2, color: COLORS.secondary }} />
                                             <Typography>История пуста</Typography>
                                         </Box>
                                     )}
@@ -665,18 +668,18 @@ function Dashboard() {
                         Настройки профиля
                     </Box>
                 </DialogTitle>
-                <DialogContent dividers sx={{ bgcolor: COLORS.darkLight }}>
+                <DialogContent dividers sx={{ bgcolor: 'rgba(32, 38, 52, 0.95)' }}>
                     <Box sx={{ p: 1 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
                             <Avatar
                                 sx={{
                                     width: 80,
                                     height: 80,
-                                    bgcolor: `${COLORS.tertiary}50`,
+                                    bgcolor: `${COLORS.secondary}30`,
                                     color: COLORS.white,
                                     fontSize: '2rem',
                                     fontWeight: 'bold',
-                                    border: `2px solid ${COLORS.tertiary}`,
+                                    border: `2px solid ${COLORS.secondary}`,
                                 }}
                             >
                                 {settings.username.substring(0, 1).toUpperCase()}
@@ -769,12 +772,12 @@ function Dashboard() {
                         Удалить аккаунт?
                     </Box>
                 </DialogTitle>
-                <DialogContent dividers sx={{ bgcolor: COLORS.darkLight }}>
+                <DialogContent dividers sx={{ bgcolor: 'rgba(32, 38, 52, 0.95)' }}>
                     <Typography sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>
                         Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить. Все ваши проекты и данные будут удалены.
                     </Typography>
                 </DialogContent>
-                <DialogActions sx={{ bgcolor: COLORS.darkLight, px: 3, py: 2 }}>
+                <DialogActions sx={{ bgcolor: 'rgba(32, 38, 52, 0.95)', px: 3, py: 2 }}>
                     <Button
                         onClick={() => setOpenDeleteConfirm(false)}
                         sx={{
@@ -800,8 +803,6 @@ function Dashboard() {
                     </Button>
                 </DialogActions>
             </StyledDialog>
-
-            <Footer />
         </Box>
     );
 }

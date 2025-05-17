@@ -8,7 +8,8 @@ import {
     Paper,
     alpha,
     Stack,
-    Tooltip
+    Tooltip,
+    Chip
 } from '@mui/material';
 import {
     PlayArrow,
@@ -17,47 +18,69 @@ import {
     VolumeOff,
     SkipNext,
     SkipPrevious,
-    FiberManualRecord
+    FiberManualRecord,
+    Delete as DeleteIcon,
+    AudioFile,
+    Videocam,
+    ArrowDropDown,
+    ArrowDropUp,
+    KeyboardArrowLeft,
+    KeyboardArrowRight
 } from '@mui/icons-material';
+import { COLORS } from '../constants/colors';
 
-// Color palette - same as in ToolPanel for consistency
+// Color palette using the new color scheme
 const PALETTE = {
     primary: {
-        light: '#9C6AFF',
-        main: '#6A3AFF', // Main purple
-        dark: '#4316DB'
+        light: COLORS.primaryLight,
+        main: COLORS.primary, // Blue-violet
+        dark: '#5449A6'
     },
     secondary: {
-        light: '#FF8F73',
-        main: '#FF6B52', // Bright orange
-        dark: '#E54B30'
+        light: COLORS.secondaryLight,
+        main: COLORS.secondary, // Light blue
+        dark: '#0071CE'
     },
     tertiary: {
-        light: '#FF7EB3',
-        main: '#FF5C93', // Pink
-        dark: '#DB3671'
+        light: COLORS.tertiaryLight,
+        main: COLORS.tertiary, // Turquoise
+        dark: '#2CB5B5'
+    },
+    accent: {
+        light: '#FFE066',
+        main: COLORS.accent, // Yellow
+        dark: '#E6C300'
     },
     teal: {
-        light: '#7DEEFF',
-        main: '#33D2FF', // Light blue
-        dark: '#00A0CC'
-    },
-    green: {
-        light: '#7CFFCB',
-        main: '#33E2A0', // Soft green
-        dark: '#00B371'
+        light: COLORS.tertiaryLight,
+        main: COLORS.teal, // Teal
+        dark: '#008B9A'
     },
     purpleGrey: {
-        light: '#B7A6FF',
+        light: '#9D94D3',
         main: '#8678B2', // Grey-purple
         dark: '#5D5080'
     }
 };
 
-const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlaying, onPlayPause, readOnly = false, keyframeRecording = false, toggleKeyframeRecording = null }) => {
+const Player = ({
+    audioUrl,
+    videoUrl,
+    duration = 60,
+    currentTime = 0,
+    onTimeUpdate,
+    isPlaying,
+    onPlayPause,
+    readOnly = false,
+    keyframeRecording = false,
+    toggleKeyframeRecording = null,
+    onRemoveAudio = null,
+    onRemoveVideo = null
+}) => {
     const theme = useTheme();
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
+    const [displayTime, setDisplayTime] = useState(currentTime);
     const audioRef = useRef(null);
     const animationRef = useRef(null);
     const lastTimeRef = useRef(null);
@@ -70,13 +93,15 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
     // Update ref when prop changes
     useEffect(() => {
         currentTimeRef.current = safeCurrentTime;
+        setDisplayTime(safeCurrentTime);
     }, [safeCurrentTime]);
 
-    // Format time in MM:SS
+    // Format time in MM:SS.ms
     const formatTime = (timeInSeconds) => {
         const minutes = Math.floor(timeInSeconds / 60);
         const seconds = Math.floor(timeInSeconds % 60);
-        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        const milliseconds = Math.floor((timeInSeconds % 1) * 1000);
+        return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}.${milliseconds.toString().padStart(3, '0')}`;
     };
 
     // Handle time slider change
@@ -85,6 +110,32 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
             audioRef.current.currentTime = newValue;
         }
         onTimeUpdate(newValue);
+    };
+
+    // Handle direct time input with millisecond precision
+    const handleTimeInputChange = (newTimeString) => {
+        try {
+            // Parse time string in format MM:SS.mmm
+            const parts = newTimeString.split(':');
+            if (parts.length !== 2) return;
+
+            const minutes = parseInt(parts[0], 10);
+            const secondsParts = parts[1].split('.');
+            const seconds = parseInt(secondsParts[0], 10);
+            const milliseconds = secondsParts.length > 1 ? parseInt(secondsParts[1].slice(0, 3).padEnd(3, '0'), 10) : 0;
+
+            if (isNaN(minutes) || isNaN(seconds) || isNaN(milliseconds)) return;
+
+            const newTime = minutes * 60 + seconds + milliseconds / 1000;
+            if (newTime < 0 || newTime > safeDuration) return;
+
+            if (audioRef.current) {
+                audioRef.current.currentTime = newTime;
+            }
+            onTimeUpdate(newTime);
+        } catch (error) {
+            console.error("Invalid time format", error);
+        }
     };
 
     // Handle volume change
@@ -130,6 +181,25 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
         }
     };
 
+    // Millisecond precision controls
+    const handleMillisecondStep = (direction) => {
+        // Уменьшаем шаг для сверхточного контроля
+        const step = 0.001; // 1ms шаг для максимально точного позиционирования
+        const newTime = Math.max(0, Math.min(safeDuration, safeCurrentTime + (direction * step)));
+
+        // Обновляем как отображение, так и внутреннее состояние
+        setDisplayTime(newTime);
+        currentTimeRef.current = newTime;
+
+        // Обновляем внешнее состояние
+        onTimeUpdate(newTime);
+
+        // Синхронизируем с аудио если есть
+        if (audioRef.current) {
+            audioRef.current.currentTime = newTime;
+        }
+    };
+
     // Animation timer function - used when no audio is available
     const animateTime = useCallback((timestamp) => {
         if (!lastTimeRef.current) {
@@ -138,15 +208,25 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
 
         const elapsed = timestamp - lastTimeRef.current;
 
-        // Update time approximately 30 times per second
-        if (elapsed > 33) { // ~30fps
-            const newTime = Math.min(currentTimeRef.current + elapsed / 1000, safeDuration);
+        // Обновление времени с высокой частотой (~120fps) для сверхплавной анимации
+        if (elapsed > 8) { // примерно 120fps для максимальной плавности
+            // Рассчитываем точное приращение времени на основе фактического времени
+            const deltaTime = elapsed / 1000;
+            const newTime = Math.min(currentTimeRef.current + deltaTime, safeDuration);
+
+            // Сохраняем текущее время для следующего кадра
+            currentTimeRef.current = newTime;
+
+            // Обновляем время локально и передаем каждый кадр наверх для плавной анимации
+            setDisplayTime(newTime);
             onTimeUpdate(newTime);
 
             // Reset if we reach the end
             if (newTime >= safeDuration) {
                 onPlayPause(false);
                 onTimeUpdate(0);
+                setDisplayTime(0);
+                currentTimeRef.current = 0;
             }
 
             lastTimeRef.current = timestamp;
@@ -157,7 +237,45 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
         }
     }, [safeDuration, isPlaying, onPlayPause, onTimeUpdate]);
 
-    // Setup and cleanup animation frame
+    // Millsecond display update (separate from the main animation)
+    useEffect(() => {
+        let frameId;
+        let lastTimestamp = 0;
+
+        // Функция для высокочастотного обновления времени для плавной анимации
+        const updateHighPrecisionTime = (timestamp) => {
+            if (isPlaying && audioRef.current) {
+                // Ограничиваем частоту до ~120fps для максимальной плавности
+                if (timestamp - lastTimestamp > 8 || lastTimestamp === 0) {
+                    // Получаем точное время из аудио
+                    const preciseTime = audioRef.current.currentTime;
+
+                    // Обновляем локальное отображение
+                    setDisplayTime(preciseTime);
+
+                    // Важно: передаем каждое обновление времени наверх для плавной анимации объектов
+                    // Это обеспечит промежуточные кадры между ключевыми точками
+                    onTimeUpdate(preciseTime);
+
+                    lastTimestamp = timestamp;
+                }
+            }
+            frameId = requestAnimationFrame(updateHighPrecisionTime);
+        };
+
+        // Запускаем только если воспроизводится аудио
+        if (isPlaying && audioRef.current) {
+            frameId = requestAnimationFrame(updateHighPrecisionTime);
+        }
+
+        return () => {
+            if (frameId) {
+                cancelAnimationFrame(frameId);
+            }
+        };
+    }, [isPlaying, onTimeUpdate]);
+
+    // Setup and cleanup animation frame (only when no audio present)
     useEffect(() => {
         // Handle animation when no audio is present
         if (!audioUrl && isPlaying) {
@@ -195,22 +313,25 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
         }
     }, [safeCurrentTime, audioUrl]);
 
+    // Determine if we have any media to show buttons for
+    const hasMedia = true; // Always show media controls section, regardless of media presence
+
     return (
         <Paper elevation={0} sx={{
             width: '100%',
             p: 2.5,
             pt: 2,
             backgroundColor: theme.palette.mode === 'dark'
-                ? 'rgba(17, 21, 54, 0.9)'  // Lighter, grayer purple color
-                : 'rgba(240, 240, 250, 0.9)', // Very light gray-purple in light mode
+                ? 'rgba(26, 32, 46, 0.9)'  // Lighter, more neutral dark blue
+                : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
             borderRadius: 3,
             backdropFilter: 'blur(12px)',
             boxShadow: theme.palette.mode === 'dark'
-                ? '0 8px 32px rgba(0, 0, 0, 0.3)'
+                ? '0 8px 32px rgba(0, 0, 0, 0.2)'
                 : '0 8px 32px rgba(0, 0, 0, 0.06)',
             border: `1px solid ${theme.palette.mode === 'dark'
                 ? 'rgba(255, 255, 255, 0.08)'
-                : 'rgba(106, 58, 255, 0.05)'}`,
+                : 'rgba(30, 144, 255, 0.15)'}`,
             position: 'relative',
             overflow: 'hidden'
         }}>
@@ -219,7 +340,11 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
                 <audio
                     ref={audioRef}
                     src={audioUrl}
-                    onTimeUpdate={() => onTimeUpdate(audioRef.current?.currentTime || 0)}
+                    onTimeUpdate={(e) => {
+                        // Не отправляем обновления из аудио-события,
+                        // так как это уже делается через requestAnimationFrame
+                        // Это предотвращает конфликтующие обновления
+                    }}
                     onEnded={() => onPlayPause(false)}
                 />
             )}
@@ -229,10 +354,10 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
                 sx={{
                     position: 'absolute',
                     width: '100%',
-                    height: '4px',
+                    height: '3px',
                     top: 0,
                     left: 0,
-                    background: `linear-gradient(to right, ${PALETTE.primary.main}, ${PALETTE.tertiary.main})`,
+                    background: `linear-gradient(to right, ${PALETTE.secondary.main}, ${PALETTE.tertiary.main})`,
                     opacity: 0.8
                 }}
             />
@@ -240,10 +365,13 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
             {/* Time bar */}
             <Box sx={{ width: '100%', mb: 1 }}>
                 <Slider
-                    value={safeCurrentTime}
+                    value={displayTime}
                     min={0}
                     max={safeDuration}
                     onChange={handleTimeChange}
+                    step={0.0001}
+                    disableSwap
+                    disableTooltip={isPlaying}
                     sx={{
                         color: theme.palette.mode === 'dark'
                             ? PALETTE.primary.light
@@ -252,15 +380,22 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
                         '& .MuiSlider-thumb': {
                             width: 12,
                             height: 12,
-                            transition: '0.2s cubic-bezier(.47,1.64,.41,.8)',
+                            transition: isPlaying ? 'none' : '0.15s cubic-bezier(.47,1.64,.41,.8)',
                             '&:hover, &.Mui-focusVisible': {
                                 boxShadow: `0px 0px 0px 8px ${theme.palette.mode === 'dark'
                                     ? alpha(PALETTE.primary.main, 0.16)
                                     : alpha(PALETTE.primary.main, 0.16)}`
-                            }
+                            },
+                            willChange: 'transform',
+                            transform: 'translateZ(0)'
                         },
                         '& .MuiSlider-rail': {
                             opacity: 0.28
+                        },
+                        '& .MuiSlider-track': {
+                            transition: isPlaying ? 'none' : 'width 0.15s',
+                            willChange: 'width',
+                            transform: 'translateZ(0)'
                         }
                     }}
                 />
@@ -337,29 +472,82 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
                             ? alpha(PALETTE.purpleGrey.dark, 0.3)
                             : alpha(PALETTE.purpleGrey.light, 0.2),
                     }}>
-                        <Typography variant="body2" sx={{
-                            color: theme.palette.mode === 'dark'
-                                ? alpha(PALETTE.teal.light, 0.9)
-                                : PALETTE.teal.dark,
-                            fontWeight: 600,
-                            fontFamily: 'monospace'
-                        }}>
-                            {formatTime(safeCurrentTime)}
-                        </Typography>
-                        <Typography variant="body2" sx={{
-                            color: theme.palette.text.secondary,
-                            opacity: 0.6
-                        }}>
-                            /
-                        </Typography>
-                        <Typography variant="body2" sx={{
-                            color: theme.palette.text.secondary,
-                            fontWeight: 500,
-                            opacity: 0.7,
-                            fontFamily: 'monospace'
-                        }}>
-                            {formatTime(safeDuration)}
-                        </Typography>
+                        <Tooltip title="Нажмите, чтобы ввести точное время с миллисекундами">
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
+                                }}
+                                onClick={(e) => {
+                                    const currentTimeStr = formatTime(displayTime);
+                                    const newTime = prompt("Введите время в формате MM:SS.mmm", currentTimeStr);
+                                    if (newTime) {
+                                        handleTimeInputChange(newTime);
+                                    }
+                                }}
+                            >
+                                <Typography variant="body2" sx={{
+                                    color: theme.palette.mode === 'dark'
+                                        ? alpha(PALETTE.teal.light, 0.9)
+                                        : PALETTE.teal.dark,
+                                    fontWeight: 600,
+                                    fontFamily: 'monospace'
+                                }}>
+                                    {formatTime(displayTime)}
+                                </Typography>
+                                <Typography variant="body2" sx={{
+                                    color: theme.palette.text.secondary,
+                                    opacity: 0.6
+                                }}>
+                                    /
+                                </Typography>
+                                <Typography variant="body2" sx={{
+                                    color: theme.palette.text.secondary,
+                                    fontWeight: 500,
+                                    opacity: 0.7,
+                                    fontFamily: 'monospace'
+                                }}>
+                                    {formatTime(safeDuration)}
+                                </Typography>
+                            </Box>
+                        </Tooltip>
+                    </Box>
+
+                    {/* Millisecond step controls */}
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        ml: 1,
+                    }}>
+                        <Tooltip title="Назад на 10мс">
+                            <IconButton
+                                onClick={() => handleMillisecondStep(-1)}
+                                size="small"
+                                sx={{
+                                    color: theme.palette.mode === 'dark'
+                                        ? PALETTE.teal.light
+                                        : PALETTE.teal.dark,
+                                    padding: '2px',
+                                }}
+                            >
+                                <KeyboardArrowLeft fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Вперед на 10мс">
+                            <IconButton
+                                onClick={() => handleMillisecondStep(1)}
+                                size="small"
+                                sx={{
+                                    color: theme.palette.mode === 'dark'
+                                        ? PALETTE.teal.light
+                                        : PALETTE.teal.dark,
+                                    padding: '2px',
+                                }}
+                            >
+                                <KeyboardArrowRight fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
                     </Box>
                 </Stack>
 
@@ -427,6 +615,82 @@ const Player = ({ audioUrl, duration = 60, currentTime = 0, onTimeUpdate, isPlay
                     )}
                 </Stack>
             </Stack>
+
+            {/* Media file indicators with delete buttons - now positioned below controls instead of absolute */}
+            {hasMedia && (
+                <Box sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 2,
+                    mt: 2.5,
+                    pt: 1.5,
+                    borderTop: `1px solid ${theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.08)'
+                        : 'rgba(0, 0, 0, 0.06)'}`
+                }}>
+                    {/* Audio file indicator */}
+                    {onRemoveAudio && (
+                        <Chip
+                            icon={<AudioFile fontSize="small" />}
+                            label="Аудио"
+                            color="info"
+                            onDelete={audioUrl ? onRemoveAudio : undefined}
+                            deleteIcon={<DeleteIcon />}
+                            variant="outlined"
+                            disabled={!audioUrl}
+                            sx={{
+                                borderRadius: '16px',
+                                px: 0.5,
+                                opacity: audioUrl ? 1 : 0.6,
+                                '& .MuiChip-icon': {
+                                    color: audioUrl ? theme.palette.info.main : theme.palette.action.disabled
+                                },
+                                '& .MuiChip-deleteIcon': {
+                                    color: audioUrl ? theme.palette.error.main : theme.palette.action.disabled,
+                                    '&:hover': {
+                                        color: audioUrl ? theme.palette.error.dark : theme.palette.action.disabled
+                                    }
+                                },
+                                '& .MuiChip-label': {
+                                    fontWeight: 500,
+                                    color: audioUrl ? 'inherit' : theme.palette.text.disabled
+                                }
+                            }}
+                        />
+                    )}
+
+                    {/* Video file indicator */}
+                    {onRemoveVideo && (
+                        <Chip
+                            icon={<Videocam fontSize="small" />}
+                            label="Видео"
+                            color="success"
+                            onDelete={videoUrl ? onRemoveVideo : undefined}
+                            deleteIcon={<DeleteIcon />}
+                            variant="outlined"
+                            disabled={!videoUrl}
+                            sx={{
+                                borderRadius: '16px',
+                                px: 0.5,
+                                opacity: videoUrl ? 1 : 0.6,
+                                '& .MuiChip-icon': {
+                                    color: videoUrl ? theme.palette.success.main : theme.palette.action.disabled
+                                },
+                                '& .MuiChip-deleteIcon': {
+                                    color: videoUrl ? theme.palette.error.main : theme.palette.action.disabled,
+                                    '&:hover': {
+                                        color: videoUrl ? theme.palette.error.dark : theme.palette.action.disabled
+                                    }
+                                },
+                                '& .MuiChip-label': {
+                                    fontWeight: 500,
+                                    color: videoUrl ? 'inherit' : theme.palette.text.disabled
+                                }
+                            }}
+                        />
+                    )}
+                </Box>
+            )}
         </Paper>
     );
 };

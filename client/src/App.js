@@ -15,19 +15,7 @@ import ProjectViewer from './pages/ProjectViewer';
 import ProjectConstructor from './pages/ProjectConstructor';
 import DebugPage from './pages/DebugPage';
 import ModelDebugPage from './pages/ModelDebugPage';
-
-// Define app colors
-export const COLORS = {
-    primary: '#8A2BE2',        // Фиолетовый (основной)
-    primaryLight: '#9D4EDD',   // Светло-фиолетовый
-    secondary: '#FF5722',      // Оранжевый
-    secondaryLight: '#FF7043', // Светло-оранжевый
-    tertiary: '#FF1493',       // Розовый
-    tertiaryLight: '#FF69B4',  // Светло-розовый
-    dark: '#0a0e24',           // Темный фон
-    darkLight: '#111536',      // Светлее темного фона
-    white: '#FFFFFF',          // Белый
-};
+import { COLORS } from './constants/colors';
 
 // Add custom tertiary color to Material UI theme
 const theme = createTheme({
@@ -47,8 +35,8 @@ const theme = createTheme({
             contrastText: '#fff',
         },
         background: {
-            default: COLORS.dark,
-            paper: COLORS.darkLight,
+            default: '#121620', // Lighter, more neutral dark background
+            paper: '#1A202E',   // Less purple, more neutral dark paper
         },
         text: {
             primary: COLORS.white,

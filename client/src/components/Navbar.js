@@ -9,19 +9,7 @@ import {
     Container,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-
-// Добавляем цвета как в Home.js и Footer.js
-const COLORS = {
-    primary: '#8A2BE2',        // Фиолетовый (основной)
-    primaryLight: '#9D4EDD',   // Светло-фиолетовый
-    secondary: '#FF5722',      // Оранжевый
-    secondaryLight: '#FF7043', // Светло-оранжевый
-    tertiary: '#FF1493',       // Розовый
-    tertiaryLight: '#FF69B4',  // Светло-розовый
-    dark: '#0a0e24',           // Темный фон
-    darkLight: '#111536',      // Светлее темного фона
-    white: '#FFFFFF',          // Белый
-};
+import { COLORS } from '../constants/colors';
 
 // Добавляем стилизованный компонент для логотипа DanceFlow
 const LogoDanceFlow = ({ variant = "h6", component = "span", color = "primary", ...props }) => (
@@ -66,10 +54,10 @@ const LogoDanceFlow = ({ variant = "h6", component = "span", color = "primary", 
 );
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
-    backgroundColor: `rgba(10, 14, 36, 0.95)`, // Темный фон как на главной странице
+    backgroundColor: `rgba(26, 32, 46, 0.95)`, // Lighter, more neutral dark background
     backdropFilter: 'blur(8px)',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-    borderBottom: `1px solid rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.3)`,
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+    borderBottom: `1px solid rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.2)`,
     position: 'relative',
     '&::after': {
         content: '""',
@@ -78,7 +66,7 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
         left: 0,
         width: '100%',
         height: '1px',
-        background: `linear-gradient(90deg, rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0) 0%, rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 1) 50%, rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0) 100%)`,
+        background: `linear-gradient(90deg, rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0) 0%, rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 1) 50%, rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0) 100%)`,
     }
 }));
 

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './ProjectsList.css';
-import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, IconButton, Snackbar, Alert, TextField } from '@mui/material';
-import { Delete, Edit } from '@mui/icons-material';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, IconButton, Snackbar, Alert, TextField, Typography, Box, Tooltip, Chip, CircularProgress } from '@mui/material';
+import { Delete, Edit, AccessTime, FolderOpen, Description, ErrorOutline, ArrowBack } from '@mui/icons-material';
 import { projectService } from '../services/api';
 
-const ProjectsList = ({ onSelectProject, setShowProjects }) => {
+const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -149,19 +149,58 @@ const ProjectsList = ({ onSelectProject, setShowProjects }) => {
         setNotification({ ...notification, open: false });
     };
 
+    // Function to format date in a readable way
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('ru-RU', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        }).format(date);
+    };
+
     return (
-        <div className="projects-list-container">
+        <div className={`projects-list-container ${isDialog ? 'in-dialog' : ''}`}>
             <div className="projects-list-header">
-                <h2>Мои проекты</h2>
-                <button className="close-button" onClick={() => setShowProjects(false)}>×</button>
+                {isDialog && (
+                    <IconButton
+                        onClick={() => setShowProjects(false)}
+                        edge="start"
+                        sx={{ mr: 1 }}
+                        aria-label="back"
+                    >
+                        <ArrowBack />
+                    </IconButton>
+                )}
+                <Typography variant="h5" component="h2">
+                    <FolderOpen sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    Мои проекты
+                </Typography>
+                {!isDialog && (
+                    <button className="close-button" onClick={() => setShowProjects(false)}>×</button>
+                )}
             </div>
 
             {loading ? (
-                <div className="loading">Загрузка проектов...</div>
+                <div className="loading">
+                    <CircularProgress size={40} color="primary" sx={{ mb: 2 }} />
+                    <Typography>Загрузка проектов...</Typography>
+                </div>
             ) : error ? (
-                <div className="error">{error}</div>
+                <div className="error">
+                    <ErrorOutline sx={{ fontSize: 40, mb: 2, color: 'error.main' }} />
+                    <Typography color="error">{error}</Typography>
+                </div>
             ) : projects.length === 0 ? (
-                <div className="no-projects">Нет доступных проектов</div>
+                <div className="no-projects">
+                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <FolderOpen sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+                        <Typography variant="h6">Нет доступных проектов</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Создайте новый проект или импортируйте существующий
+                        </Typography>
+                    </Box>
+                </div>
             ) : (
                 <div className="projects-grid">
                     {projects.map(project => (
@@ -172,80 +211,107 @@ const ProjectsList = ({ onSelectProject, setShowProjects }) => {
                         >
                             <div className="project-title">{project.name || 'Без названия'}</div>
                             {project.description && (
-                                <div className="project-description">{project.description}</div>
+                                <div className="project-description">
+                                    <Description sx={{ fontSize: 14, mr: 0.5, opacity: 0.7, verticalAlign: 'middle' }} />
+                                    {project.description}
+                                </div>
                             )}
                             <div className="project-info">
-                                {project.elements ? `${project.elements.length} элементов` : 'Элементы не загружены'}
+                                <Chip
+                                    size="small"
+                                    label={project.elements ? `${project.elements.length} элементов` : '0 элементов'}
+                                    color="primary"
+                                    variant="outlined"
+                                    sx={{ mr: 1, fontSize: '0.75rem' }}
+                                />
+                                {project.videoUrl && (
+                                    <Chip
+                                        size="small"
+                                        label="Видео"
+                                        color="secondary"
+                                        variant="outlined"
+                                        sx={{ fontSize: '0.75rem' }}
+                                    />
+                                )}
                             </div>
                             <div className="project-date">
-                                {new Date(project.updatedAt || project.createdAt).toLocaleDateString()}
+                                <AccessTime sx={{ fontSize: 14, mr: 0.5, opacity: 0.7 }} />
+                                {formatDate(project.updatedAt || project.createdAt)}
                             </div>
                             <div className="project-actions">
-                                <IconButton
-                                    className="edit-button"
-                                    onClick={(e) => openEditDialog(e, project)}
-                                    size="small"
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 5,
-                                        right: 35,
-                                        opacity: 0.7,
-                                        '&:hover': { opacity: 1 }
-                                    }}
-                                >
-                                    <Edit />
-                                </IconButton>
-                                <IconButton
-                                    className="delete-button"
-                                    onClick={(e) => openDeleteConfirm(e, project)}
-                                    size="small"
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 5,
-                                        right: 5,
-                                        opacity: 0.7,
-                                        '&:hover': { opacity: 1 }
-                                    }}
-                                >
-                                    <Delete />
-                                </IconButton>
+                                <Tooltip title="Редактировать">
+                                    <IconButton
+                                        className="edit-button"
+                                        onClick={(e) => openEditDialog(e, project)}
+                                        size="small"
+                                        color="primary"
+                                        sx={{
+                                            opacity: 0.7,
+                                            '&:hover': { opacity: 1 }
+                                        }}
+                                    >
+                                        <Edit fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Удалить">
+                                    <IconButton
+                                        className="delete-button"
+                                        onClick={(e) => openDeleteConfirm(e, project)}
+                                        size="small"
+                                        color="error"
+                                        sx={{
+                                            opacity: 0.7,
+                                            '&:hover': { opacity: 1 }
+                                        }}
+                                    >
+                                        <Delete fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* Delete Confirmation Dialog */}
+            {/* Delete confirmation dialog */}
             <Dialog
                 open={deleteConfirmOpen}
                 onClose={closeDeleteConfirm}
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
             >
-                <DialogTitle>Подтверждение удаления</DialogTitle>
+                <DialogTitle id="delete-dialog-title">Удаление проекта</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        Вы уверены, что хотите удалить проект "{projectToDelete?.name}"? Это действие нельзя отменить.
+                    <DialogContentText id="delete-dialog-description">
+                        Вы уверены, что хотите удалить проект{' '}
+                        <strong>{projectToDelete?.name || 'Без названия'}</strong>?
+                        Это действие невозможно отменить.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={closeDeleteConfirm}>Отмена</Button>
-                    <Button onClick={handleDeleteProject} color="error" autoFocus>
+                    <Button onClick={closeDeleteConfirm} color="primary">
+                        Отмена
+                    </Button>
+                    <Button onClick={handleDeleteProject} color="error" variant="contained">
                         Удалить
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Edit Project Dialog */}
+            {/* Edit project dialog */}
             <Dialog
                 open={editDialogOpen}
                 onClose={closeEditDialog}
-                fullWidth
+                aria-labelledby="edit-dialog-title"
                 maxWidth="sm"
+                fullWidth
             >
-                <DialogTitle>Редактирование проекта</DialogTitle>
+                <DialogTitle id="edit-dialog-title">Редактирование проекта</DialogTitle>
                 <DialogContent>
                     <TextField
                         autoFocus
                         margin="dense"
+                        id="name"
                         name="name"
                         label="Название проекта"
                         type="text"
@@ -253,38 +319,42 @@ const ProjectsList = ({ onSelectProject, setShowProjects }) => {
                         variant="outlined"
                         value={editFormData.name}
                         onChange={handleEditInputChange}
+                        sx={{ mb: 2 }}
                     />
                     <TextField
                         margin="dense"
+                        id="description"
                         name="description"
-                        label="Описание проекта"
+                        label="Описание"
                         type="text"
                         fullWidth
-                        variant="outlined"
                         multiline
-                        rows={4}
+                        rows={3}
+                        variant="outlined"
                         value={editFormData.description}
                         onChange={handleEditInputChange}
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={closeEditDialog}>Отмена</Button>
-                    <Button onClick={handleSaveProject} color="primary">
+                    <Button onClick={closeEditDialog} color="primary">
+                        Отмена
+                    </Button>
+                    <Button onClick={handleSaveProject} color="primary" variant="contained">
                         Сохранить
                     </Button>
                 </DialogActions>
             </Dialog>
 
+            {/* Notification snackbar */}
             <Snackbar
                 open={notification.open}
                 autoHideDuration={6000}
                 onClose={handleCloseNotification}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
             >
                 <Alert
                     onClose={handleCloseNotification}
                     severity={notification.severity}
-                    variant="filled"
                     sx={{ width: '100%' }}
                 >
                     {notification.message}
