@@ -9,249 +9,358 @@ import {
     ListItemIcon,
     Paper,
     Tooltip,
-    Button
+    Button,
+    useTheme,
+    alpha
 } from '@mui/material';
 import {
     SquareOutlined,
     CircleOutlined,
     TextFields,
     Image as ImageIcon,
-    ViewInAr
+    ViewInAr,
+    DragIndicator,
+    Crop169,
+    RadioButtonUnchecked,
+    Add,
+    FormatColorFill,
+    Brush
 } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
-// ВРЕМЕННО: Импорт ModelViewer - будет удален позже
-import ModelViewer from './ModelViewer';
+import { styled } from '@mui/system';
+
+// Styled components
+const ToolButton = styled(Button)(({ theme }) => ({
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'flex-start',
+    textTransform: 'none',
+    borderRadius: 12,
+    padding: theme.spacing(1.8),
+    marginBottom: theme.spacing(1.2),
+    color: theme.palette.mode === 'dark' ? theme.palette.grey[300] : theme.palette.text.primary,
+    backgroundColor: theme.palette.mode === 'dark'
+        ? alpha(theme.palette.background.paper, 0.4)
+        : alpha(theme.palette.background.paper, 0.7),
+    border: `1px solid ${theme.palette.mode === 'dark'
+        ? 'rgba(255, 255, 255, 0.05)'
+        : 'rgba(0, 0, 0, 0.05)'}`,
+    '&:hover': {
+        backgroundColor: theme.palette.mode === 'dark'
+            ? alpha(theme.palette.primary.main, 0.15)
+            : alpha(theme.palette.primary.main, 0.08),
+        transform: 'translateY(-2px)',
+        boxShadow: theme.palette.mode === 'dark'
+            ? '0 8px 20px 0 rgba(0, 0, 0, 0.3)'
+            : '0 8px 20px 0 rgba(0, 0, 0, 0.1)',
+    },
+    transition: 'all 0.25s ease',
+    backdropFilter: 'blur(10px)',
+}));
+
+// Color palette
+const PALETTE = {
+    // Primary colors
+    primary: {
+        light: '#9C6AFF',
+        main: '#6A3AFF', // Main purple
+        dark: '#4316DB'
+    },
+    secondary: {
+        light: '#FF8F73',
+        main: '#FF6B52', // Bright orange
+        dark: '#E54B30'
+    },
+    tertiary: {
+        light: '#FF7EB3',
+        main: '#FF5C93', // Pink
+        dark: '#DB3671'
+    },
+    // Additional colors
+    teal: {
+        light: '#7DEEFF',
+        main: '#33D2FF', // Light blue
+        dark: '#00A0CC'
+    },
+    green: {
+        light: '#7CFFCB',
+        main: '#33E2A0', // Soft green
+        dark: '#00B371'
+    },
+    // Neutral colors
+    purpleGrey: {
+        light: '#B7A6FF',
+        main: '#8678B2', // Grey-purple
+        dark: '#5D5080'
+    }
+};
 
 const ToolPanel = ({ onAddElement }) => {
-    // ВРЕМЕННО: Состояние для показа 3D модели - будет удалено позже
-    const [showModelViewer, setShowModelViewer] = useState(false);
-    const dragImageRef = useRef(null);
+    const theme = useTheme();
 
-    // Create a container for drag images
-    useEffect(() => {
-        dragImageRef.current = document.createElement('div');
-        dragImageRef.current.style.position = 'absolute';
-        dragImageRef.current.style.pointerEvents = 'none';
-        dragImageRef.current.style.top = '-1000px';
-        dragImageRef.current.style.left = '-1000px';
-        document.body.appendChild(dragImageRef.current);
-
-        return () => {
-            if (dragImageRef.current && document.body.contains(dragImageRef.current)) {
-                document.body.removeChild(dragImageRef.current);
-            }
-        };
-    }, []);
-
-    // Define available tools
+    // Basic tools
     const tools = [
         {
-            id: 'rectangle',
-            label: 'Прямоугольник',
-            icon: <SquareOutlined />,
+            id: 'text',
+            name: 'Текст',
+            icon: <TextFields />,
             defaults: {
-                type: 'rectangle',
-                title: 'Танцор',
+                type: 'text',
+                content: 'Введите текст',
                 position: { x: 100, y: 100 },
-                size: { width: 150, height: 100 },
+                size: { width: 200, height: 24 },
                 style: {
-                    backgroundColor: '#4CAF50',
-                    borderColor: '#2E7D32',
-                    borderWidth: 2,
+                    color: theme.palette.mode === 'dark' ? '#FFFFFF' : '#111111',
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
+                    borderColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 0,
                     opacity: 1,
                     zIndex: 1
-                },
-                animation: {
-                    startTime: 0,
-                    endTime: null
-                },
-                keyframes: [],
-                videoUrl: null
+                }
+            }
+        },
+        {
+            id: 'rectangle',
+            name: 'Прямоугольник',
+            icon: <Crop169 />,
+            defaults: {
+                type: 'rectangle',
+                position: { x: 100, y: 100 },
+                size: { width: 100, height: 100 },
+                style: {
+                    color: '#FFFFFF',
+                    backgroundColor: PALETTE.primary.main,
+                    borderColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 0,
+                    opacity: 0.8,
+                    zIndex: 1
+                }
             }
         },
         {
             id: 'circle',
-            label: 'Круг',
-            icon: <CircleOutlined />,
+            name: 'Круг',
+            icon: <RadioButtonUnchecked />,
             defaults: {
                 type: 'circle',
-                title: 'Танцор',
                 position: { x: 100, y: 100 },
                 size: { width: 100, height: 100 },
                 style: {
-                    backgroundColor: '#2196F3',
-                    borderColor: '#0D47A1',
-                    borderWidth: 2,
-                    opacity: 1,
+                    color: '#FFFFFF',
+                    backgroundColor: PALETTE.secondary.main,
+                    borderColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 0,
+                    opacity: 0.8,
                     zIndex: 1
-                },
-                animation: {
-                    startTime: 0,
-                    endTime: null
-                },
-                keyframes: [],
-                videoUrl: null
+                }
             }
         },
         {
-            id: 'text',
-            label: 'Текст',
-            icon: <TextFields />,
+            id: 'rectangle2',
+            name: 'Розовый блок',
+            icon: <Crop169 />,
             defaults: {
-                type: 'text',
-                title: 'Текст',
+                type: 'rectangle',
                 position: { x: 100, y: 100 },
-                size: { width: 200, height: 50 },
-                content: 'Двойной клик для редактирования',
+                size: { width: 120, height: 80 },
                 style: {
-                    color: '#000000',
-                    backgroundColor: 'transparent',
-                    opacity: 1,
+                    color: '#FFFFFF',
+                    backgroundColor: PALETTE.tertiary.main,
+                    borderColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 0,
+                    opacity: 0.8,
                     zIndex: 1
-                },
-                animation: {
-                    startTime: 0,
-                    endTime: null
-                },
-                keyframes: [],
-                videoUrl: null
+                }
             }
         },
         {
-            id: 'image',
-            label: 'Изображение',
-            icon: <ImageIcon />,
+            id: 'circle2',
+            name: 'Голубой круг',
+            icon: <RadioButtonUnchecked />,
             defaults: {
-                type: 'image',
-                title: 'Изображение',
+                type: 'circle',
                 position: { x: 100, y: 100 },
-                size: { width: 200, height: 150 },
-                content: 'https://via.placeholder.com/200x150',
+                size: { width: 80, height: 80 },
                 style: {
-                    opacity: 1,
+                    color: '#FFFFFF',
+                    backgroundColor: PALETTE.teal.main,
+                    borderColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 0,
+                    opacity: 0.8,
                     zIndex: 1
-                },
-                animation: {
-                    startTime: 0,
-                    endTime: null
-                },
-                keyframes: [],
-                videoUrl: null
+                }
             }
         }
     ];
 
-    // Handle drag start
+    // Drag and Drop for elements
     const handleDragStart = (e, tool) => {
-        // Create a new element with default properties and a unique ID
+        // Create new element
         const newElement = {
             ...tool.defaults,
-            id: uuidv4(),
+            id: `${tool.id}-${uuidv4()}`,
+            createdAt: new Date().toISOString(),
+            // Position will be updated on drop
             keyframes: []
         };
 
-        // Store the element data as a string in the drag data
+        // Serialize element data for transfer
         e.dataTransfer.setData('application/json', JSON.stringify(newElement));
 
-        // Set drag image safely using the ref
-        if (dragImageRef.current) {
-            // Clear previous content
-            while (dragImageRef.current.firstChild) {
-                dragImageRef.current.removeChild(dragImageRef.current.firstChild);
-            }
+        // Create visual representation for drag and drop
+        const dragImage = document.createElement('div');
+        dragImage.style.width = '100px';
+        dragImage.style.height = '100px';
+        dragImage.style.borderRadius = tool.id.includes('circle') ? '50%' : '4px';
+        dragImage.style.backgroundColor = tool.defaults.style.backgroundColor || '#ccc';
+        dragImage.style.border = tool.defaults.style.borderWidth ?
+            `${tool.defaults.style.borderWidth}px solid ${tool.defaults.style.borderColor}` : 'none';
+        dragImage.style.opacity = '0.6';
+        dragImage.style.position = 'absolute';
+        dragImage.style.top = '-1000px';
+        document.body.appendChild(dragImage);
 
-            // Create drag image
-            const dragImage = document.createElement('div');
-            dragImage.style.width = `${tool.defaults.size.width}px`;
-            dragImage.style.height = `${tool.defaults.size.height}px`;
-            dragImage.style.backgroundColor = tool.defaults.style.backgroundColor || '#ccc';
-            dragImage.style.opacity = '0.5';
+        e.dataTransfer.setDragImage(dragImage, 50, 50);
 
-            // Append to our ref container instead of body
-            dragImageRef.current.appendChild(dragImage);
-
-            // Use the drag image
-            e.dataTransfer.setDragImage(dragImage, 0, 0);
-        }
+        // Remove element after a small delay
+        setTimeout(() => {
+            document.body.removeChild(dragImage);
+        }, 0);
     };
 
-    // Handle element creation via drag and drop
-    const handleToolClick = (tool) => {
-        // Create a new element with default properties and a unique ID
-        const newElement = {
-            ...tool.defaults,
-            id: uuidv4(),
-            keyframes: []
-        };
-
-        // Add to canvas
-        onAddElement(newElement);
-    };
-
+    // Display tool elements
     return (
-        <Paper
-            sx={{
-                width: '100%',
-                height: '100%',
-                p: 1,
-                display: 'flex',
-                flexDirection: 'column'
-            }}
-        >
-            <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
-                Инструменты
+        <Paper sx={{
+            p: 3,
+            borderRadius: 3,
+            backgroundColor: theme.palette.mode === 'dark'
+                ? 'rgba(17, 21, 54, 0.9)'  // Lighter, grayer purple color
+                : 'rgba(240, 240, 250, 0.9)', // Very light gray-purple in light mode
+            backdropFilter: 'blur(12px)',
+            border: `1px solid ${theme.palette.mode === 'dark'
+                ? 'rgba(255, 255, 255, 0.08)'
+                : 'rgba(106, 58, 255, 0.05)'}`,
+            boxShadow: theme.palette.mode === 'dark'
+                ? '0 8px 32px rgba(0, 0, 0, 0.3)'
+                : '0 8px 32px rgba(0, 0, 0, 0.06)',
+            height: '100%',
+            overflow: 'auto'
+        }}>
+            <Typography variant="h6" gutterBottom sx={{
+                fontWeight: 700,
+                mb: 3,
+                color: theme.palette.mode === 'dark' ? PALETTE.primary.light : PALETTE.primary.main,
+                position: 'relative',
+                display: 'inline-block',
+                '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: -8,
+                    left: 0,
+                    width: 40,
+                    height: 3,
+                    backgroundImage: `linear-gradient(to right, ${PALETTE.primary.main}, ${PALETTE.tertiary.main})`,
+                    borderRadius: 1.5
+                }
+            }}>
+                Элементы
             </Typography>
 
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={{ mb: 3, opacity: 0.6 }} />
 
-            <List sx={{ flexGrow: 1 }}>
-                {tools.map((tool) => (
-                    <Tooltip key={tool.id} title={`Добавить ${tool.label}`} placement="right">
-                        <ListItem
-                            button
+            <Box sx={{ mb: 3 }}>
+                {tools.map(tool => (
+                    <Tooltip title="Перетащите на сцену или нажмите для добавления" key={tool.id} arrow placement="right">
+                        <ToolButton
                             draggable
                             onDragStart={(e) => handleDragStart(e, tool)}
-                            onClick={() => handleToolClick(tool)}
+                            startIcon={
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: tool.id.includes('circle') ? '50%' : '8px',
+                                    backgroundColor: alpha(tool.defaults.style.backgroundColor, 0.2),
+                                    mr: 1
+                                }}>
+                                    {tool.icon}
+                                </Box>
+                            }
+                            onClick={() => {
+                                // Create new element
+                                const newElement = {
+                                    ...tool.defaults,
+                                    id: `${tool.id}-${uuidv4()}`,
+                                    createdAt: new Date().toISOString(),
+                                    keyframes: []
+                                };
+
+                                // Add element
+                                onAddElement(newElement);
+                            }}
                             sx={{
-                                cursor: 'grab',
+                                borderLeft: `4px solid ${tool.defaults.style.backgroundColor}`,
                                 '&:hover': {
-                                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                    borderLeft: `4px solid ${tool.defaults.style.backgroundColor}`,
+                                    backgroundColor: theme.palette.mode === 'dark'
+                                        ? alpha(tool.defaults.style.backgroundColor, 0.15)
+                                        : alpha(tool.defaults.style.backgroundColor, 0.08),
                                 }
                             }}
                         >
-                            <ListItemIcon>
-                                {tool.icon}
-                            </ListItemIcon>
-                            <ListItemText primary={tool.label} />
-                        </ListItem>
+                            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                <Box sx={{
+                                    flexGrow: 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    fontWeight: 500
+                                }}>
+                                    {tool.name}
+                                </Box>
+                                <DragIndicator sx={{
+                                    opacity: 0.5,
+                                    fontSize: 18,
+                                    color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)'
+                                }} />
+                            </Box>
+                        </ToolButton>
                     </Tooltip>
                 ))}
-            </List>
-
-            <Divider sx={{ my: 2 }} />
-
-            {/* ВРЕМЕННО: Кнопка для показа 3D модели - будет удалена позже */}
-            <Button
-                variant="outlined"
-                startIcon={<ViewInAr />}
-                onClick={() => setShowModelViewer(true)}
-                sx={{ mb: 2 }}
-            >
-                Показать 3D модель
-            </Button>
-
-            <Box sx={{ mt: 'auto' }}>
-                <Typography variant="caption" color="text.secondary">
-                    Перетащите элемент на доску или кликните для добавления
-                </Typography>
             </Box>
 
-            {/* ВРЕМЕННО: Компонент ModelViewer - будет удален позже */}
-            <ModelViewer
-                isVisible={showModelViewer}
-                onClose={() => setShowModelViewer(false)}
-                playerDuration={60}
-            />
+            <Button
+                variant="outlined"
+                fullWidth
+                startIcon={<Add />}
+                sx={{
+                    mt: 2,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    borderColor: alpha(PALETTE.primary.main, 0.3),
+                    color: theme.palette.mode === 'dark' ? PALETTE.primary.light : PALETTE.primary.main,
+                    padding: '10px 0',
+                    '&:hover': {
+                        borderColor: PALETTE.primary.main,
+                        backgroundColor: alpha(PALETTE.primary.main, 0.05),
+                    }
+                }}
+            >
+                Добавить элемент
+            </Button>
+
+            <Typography variant="caption" sx={{
+                mt: 4,
+                display: 'block',
+                textAlign: 'center',
+                color: theme.palette.mode === 'dark' ? PALETTE.purpleGrey.light : PALETTE.purpleGrey.main,
+                fontStyle: 'italic',
+                opacity: 0.7
+            }}>
+                Перетащите элемент на сцену или нажмите для добавления
+            </Typography>
         </Paper>
     );
 };

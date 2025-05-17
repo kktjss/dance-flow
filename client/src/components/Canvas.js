@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, createRef } from 'react';
 import { fabric } from 'fabric';
-import { Box, IconButton, Modal, Typography, Grid, Button, Tooltip, Paper } from '@mui/material';
+import { Box, IconButton, Modal, Typography, Grid, Button, Tooltip, Paper, useTheme } from '@mui/material';
 import {
     ContentCopy,
     Delete,
@@ -24,6 +24,7 @@ import ReactDOM from 'react-dom';
 import ModelViewer from './ModelViewer';
 import VideoViewer from './VideoViewer';
 import CombinedViewer from './CombinedViewer';
+import { COLORS } from '../App';
 
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
@@ -40,6 +41,7 @@ const Canvas = ({
     project = null,
     onToggleRecording = null
 }) => {
+    const theme = useTheme();
     // Use elements as provided without a default element
     const effectiveElements = elements;
 
@@ -48,11 +50,89 @@ const Canvas = ({
     const canvasId = useRef(`canvas-${uuidv4()}`);
     const [initialized, setInitialized] = useState(false);
     const buttonContainerRef = useRef(null);
+    // Сохраняем последние вычисленные позиции для каждого элемента
+    const lastAnimatedPositionsRef = useRef({});
 
     // ВРЕМЕННО: Состояния для модальных окон 3D и видео - будут удалены позже
     const [showChoreoModal, setShowChoreoModal] = useState(false);
     const [viewMode, setViewMode] = useState('3d'); // '3d' or 'video'
     const [showCombinedViewer, setShowCombinedViewer] = useState(false);
+
+    // Добавим специальную функцию для форсированного обновления позиций всех объектов
+    const forceUpdateObjectPositions = useCallback(() => {
+        if (!fabricInstances.has(canvasId.current)) return;
+
+        const fabricCanvas = fabricInstances.get(canvasId.current);
+
+        console.log('Force updating all object positions');
+
+        // Обновляем позиции всех объектов согласно их данным - только если они отличаются
+        fabricCanvas.getObjects().forEach(obj => {
+            if (obj.data && obj.data.element) {
+                const element = obj.data.element;
+
+                // Проверяем, есть ли у элемента ключевые кадры
+                const hasKeyframes = element.keyframes && element.keyframes.length > 0;
+
+                // Для элементов с ключевыми кадрами используем последние вычисленные позиции
+                if (hasKeyframes && lastAnimatedPositionsRef.current[element.id]) {
+                    const lastPos = lastAnimatedPositionsRef.current[element.id];
+
+                    // Используем последнюю анимационную позицию, если она была вычислена для текущего времени
+                    if (Math.abs(lastPos.time - currentTime) < 0.01) {
+                        console.log(`Using last animated position for ${element.id} at time ${currentTime}: (${lastPos.x.toFixed(0)},${lastPos.y.toFixed(0)})`);
+
+                        obj.set({
+                            left: lastPos.x,
+                            top: lastPos.y,
+                            opacity: lastPos.opacity || element.style?.opacity || 1,
+                            scaleX: lastPos.scale || 1,
+                            scaleY: lastPos.scale || 1
+                        });
+
+                        // Обновляем координаты и завершаем обработку этого объекта
+                        obj.setCoords();
+                        return;
+                    }
+                }
+
+                // Проверяем, есть ли у элемента позиция
+                if (element.position) {
+                    const currentX = element.position.x;
+                    const currentY = element.position.y;
+
+                    // Если элемент участвует в анимации и плеер активен, не обновляем его позицию принудительно
+                    if (hasKeyframes && isPlaying) {
+                        console.log(`Skipping force update for animated element ${element.id} - using keyframe animation`);
+                    }
+                    // Если перетаскивается активный элемент, не обновляем его позицию
+                    else if (element.id === selectedElement?.id && fabricCanvas.getActiveObject() === obj) {
+                        console.log(`Skipping force update for currently selected/manipulated element ${element.id}`);
+                    }
+                    // Если позиция объекта отличается от позиции в данных и не в анимации, обновляем
+                    else if (obj.left !== currentX || obj.top !== currentY) {
+                        console.log(`Updating position for element ${element.id}: (${obj.left},${obj.top}) -> (${currentX},${currentY})`);
+
+                        // Устанавливаем позицию объекта
+                        obj.set({
+                            left: currentX,
+                            top: currentY
+                        });
+                        obj.setCoords();
+                    }
+                }
+
+                // Ensure object is still clickable
+                obj.selectable = !readOnly;
+                obj.evented = !readOnly;
+                obj.hasControls = !readOnly;
+                obj.hasBorders = !readOnly;
+            }
+        });
+
+        // Отрисовываем холст только если были изменения
+        fabricCanvas.renderAll();
+    }, [canvasId, readOnly, isPlaying, currentTime, selectedElement]);
 
     // Инициализация canvas и контейнера
     useEffect(() => {
@@ -80,14 +160,24 @@ const Canvas = ({
             canvas.height = canvasContainer.clientHeight;
             canvasContainer.appendChild(canvas);
 
+            // Create grid pattern for canvas background
+            const gridSize = 20;
+            const gridColor = theme.palette.mode === 'dark'
+                ? 'rgba(255, 255, 255, 0.07)'
+                : 'rgba(0, 0, 0, 0.04)';
+
+            const backgroundColor = theme.palette.mode === 'dark'
+                ? 'rgba(17, 21, 54, 0.1)' // More transparent
+                : 'rgba(245, 245, 250, 0.1)'; // More transparent
+
             // Инициализируем Fabric
             const fabricCanvas = new fabric.Canvas(canvasId.current, {
                 width: canvasContainer.clientWidth,
                 height: canvasContainer.clientHeight,
-                backgroundColor: '#ffffff',
+                backgroundColor: 'rgba(0, 0, 0, 0)', // Make it transparent to show parent's grid
                 preserveObjectStacking: true,
-                selection: !readOnly, // Disable selection in readOnly mode
-                interactive: !readOnly // Disable interaction in readOnly mode
+                selection: !readOnly,
+                interactive: !readOnly
             });
 
             fabricInstances.set(canvasId.current, fabricCanvas);
@@ -102,10 +192,10 @@ const Canvas = ({
 
             // Set selection properties based on readOnly mode
             if (readOnly) {
+                // Disable selection for readOnly mode
                 fabricCanvas.selection = false;
-                fabricCanvas.skipTargetFind = true;
-                fabricCanvas.selectable = false;
                 fabricCanvas.hoverCursor = 'default';
+                fabricCanvas.defaultCursor = 'default';
             } else {
                 // Ensure selection is enabled for editable mode
                 fabricCanvas.selection = true;
@@ -134,7 +224,7 @@ const Canvas = ({
                     const height = canvasContainer.clientHeight;
 
                     // Сохраняем текущие объекты и их позиции
-                    const objects = fabricCanvas.getObjects();
+                    const objects = fabricCanvas.getObjects().filter(obj => !obj.data || !obj.data.isGridLine);
                     const oldWidth = fabricCanvas.width;
                     const oldHeight = fabricCanvas.height;
 
@@ -274,6 +364,47 @@ const Canvas = ({
                 updatedElements = effectiveElements.map(elem =>
                     elem.id === elementId ? updatedElement : elem
                 );
+
+                // При создании ключевого кадра, принудительно обновляем визуальное отображение объекта
+                setTimeout(() => {
+                    if (fabricInstances.has(canvasId.current)) {
+                        const fabricCanvas = fabricInstances.get(canvasId.current);
+                        if (fabricCanvas) {
+                            // Найдем объект на холсте
+                            const objToUpdate = fabricCanvas.getObjects().find(
+                                obj => obj.data && obj.data.elementId === elementId
+                            );
+
+                            if (objToUpdate) {
+                                // Обновим объект с новыми координатами
+                                objToUpdate.set({
+                                    left: modifiedObject.left,
+                                    top: modifiedObject.top,
+                                    opacity: modifiedObject.opacity || 1,
+                                    scaleX: modifiedObject.scaleX || 1,
+                                    scaleY: modifiedObject.scaleY || 1
+                                });
+                                objToUpdate.setCoords();
+
+                                // Обновляем кэш анимированных позиций для этого элемента
+                                if (!lastAnimatedPositionsRef.current[elementId]) {
+                                    lastAnimatedPositionsRef.current[elementId] = {};
+                                }
+
+                                lastAnimatedPositionsRef.current[elementId] = {
+                                    x: modifiedObject.left,
+                                    y: modifiedObject.top,
+                                    opacity: modifiedObject.opacity || 1,
+                                    scale: modifiedObject.scaleX || 1,
+                                    time: currentTime
+                                };
+
+                                fabricCanvas.renderAll();
+                                console.log('Forced visual update of object after keyframe creation');
+                            }
+                        }
+                    }
+                }, 10);
             } else {
                 console.log('Recording keyframe mode is NOT active, updating base properties');
 
@@ -314,9 +445,22 @@ const Canvas = ({
             if (e.selected && e.selected.length > 0) {
                 const selectedObject = e.selected[0];
                 console.log('Selected object:', selectedObject);
+
+                // Стандартная обработка выбора объекта
                 if (selectedObject.data && selectedObject.data.elementId) {
-                    const element = effectiveElements.find(el => el.id === selectedObject.data.elementId);
+                    let element = effectiveElements.find(el => el.id === selectedObject.data.elementId);
                     if (element) {
+                        // If the object has model info but the element doesn't, update the element
+                        if (selectedObject.has3DModel && selectedObject.modelPath &&
+                            (!element.has3DModel || !element.modelPath)) {
+                            console.log(`Updating element ${element.id} with model info from object`);
+                            element = {
+                                ...element,
+                                has3DModel: true,
+                                modelPath: selectedObject.modelPath
+                            };
+                        }
+
                         console.log('Found matching element in data:', element.id);
                         setTimeout(() => {
                             onElementSelect(element);
@@ -336,9 +480,22 @@ const Canvas = ({
             console.log('Selection updated event fired', e);
             if (e.selected && e.selected.length > 0) {
                 const selectedObject = e.selected[0];
+
+                // Стандартная обработка выбора объекта
                 if (selectedObject.data && selectedObject.data.elementId) {
-                    const element = effectiveElements.find(el => el.id === selectedObject.data.elementId);
+                    let element = effectiveElements.find(el => el.id === selectedObject.data.elementId);
                     if (element) {
+                        // If the object has model info but the element doesn't, update the element
+                        if (selectedObject.has3DModel && selectedObject.modelPath &&
+                            (!element.has3DModel || !element.modelPath)) {
+                            console.log(`Updating element ${element.id} with model info from object`);
+                            element = {
+                                ...element,
+                                has3DModel: true,
+                                modelPath: selectedObject.modelPath
+                            };
+                        }
+
                         console.log('Selection updated to element:', element.id);
                         setTimeout(() => {
                             onElementSelect(element);
@@ -367,70 +524,58 @@ const Canvas = ({
 
         // Handle object movement
         fabricCanvas.on('object:moving', (e) => {
-            console.log('Object moving:', e.target.data?.elementId);
+            const movingObject = e.target;
+            const elementId = movingObject.data?.elementId;
+            console.log('Object moving:', elementId);
 
-            // Update 3D model icon position if it exists
-            if (e.target.modelIcon) {
-                e.target.modelIcon.set({
-                    left: e.target.left + 5,
-                    top: e.target.top + 5
-                });
+            // Если объект имеет ключевые кадры и мы не в режиме записи, обновляем текущую позицию в кэше
+            if (elementId) {
+                const element = effectiveElements.find(el => el.id === elementId);
+                if (element && element.keyframes && element.keyframes.length > 0 && !isRecordingKeyframes) {
+                    // Обновляем кэш для улучшения отзывчивости при перетаскивании
+                    if (!lastAnimatedPositionsRef.current[elementId]) {
+                        lastAnimatedPositionsRef.current[elementId] = {};
+                    }
+
+                    lastAnimatedPositionsRef.current[elementId] = {
+                        ...lastAnimatedPositionsRef.current[elementId],
+                        x: movingObject.left,
+                        y: movingObject.top,
+                        time: currentTime
+                    };
+                }
             }
         });
 
         // Handle object scaling
         fabricCanvas.on('object:scaling', (e) => {
-            console.log('Object scaling:', e.target.data?.elementId);
+            const scalingObject = e.target;
+            const elementId = scalingObject.data?.elementId;
+            console.log('Object scaling:', elementId);
 
-            // Update 3D model icon position if it exists
-            if (e.target.modelIcon) {
-                e.target.modelIcon.set({
-                    left: e.target.left + 5,
-                    top: e.target.top + 5
-                });
+            // Если объект имеет ключевые кадры и мы не в режиме записи, обновляем текущий масштаб в кэше
+            if (elementId) {
+                const element = effectiveElements.find(el => el.id === elementId);
+                if (element && element.keyframes && element.keyframes.length > 0 && !isRecordingKeyframes) {
+                    // Обновляем кэш для улучшения отзывчивости при изменении размера
+                    if (!lastAnimatedPositionsRef.current[elementId]) {
+                        lastAnimatedPositionsRef.current[elementId] = {};
+                    }
+
+                    lastAnimatedPositionsRef.current[elementId] = {
+                        ...lastAnimatedPositionsRef.current[elementId],
+                        scale: scalingObject.scaleX || 1,
+                        time: currentTime
+                    };
+                }
             }
         });
 
         // Handle object modification complete
         fabricCanvas.on('object:modified', (e) => {
-            if (!e.target || !e.target.data) return;
-            console.log('Object modified:', e.target.data.elementId);
-
-            // Update 3D model icon position if it exists
-            if (e.target.modelIcon) {
-                e.target.modelIcon.set({
-                    left: e.target.left + 5,
-                    top: e.target.top + 5
-                });
-                fabricCanvas.renderAll();
-            }
-
-            // Skip the rest if in read-only mode
-            if (readOnly) return;
-
-            // Update element properties based on object position and size
-            const elementId = e.target.data.elementId;
-            const updatedElements = effectiveElements.map(element => {
-                if (element.id === elementId) {
-                    // Extract position from the fabricjs object
-                    return {
-                        ...element,
-                        position: {
-                            x: e.target.left,
-                            y: e.target.top
-                        },
-                        // Update other properties like size based on scaling
-                        size: {
-                            width: e.target.width * e.target.scaleX,
-                            height: e.target.height * e.target.scaleY
-                        }
-                    };
-                }
-                return element;
-            });
-
-            // Notify parent component about the changes
-            onElementsChange(updatedElements);
+            if (!e.target) return;
+            console.log('Object modified:', e.target.data?.elementId);
+            // No need to update 3D indicators - they've been removed
         });
     }, [effectiveElements, currentTime, isRecordingKeyframes, onElementsChange, onElementSelect, readOnly]);
 
@@ -442,6 +587,11 @@ const Canvas = ({
             return;
         }
 
+        // Если нет ключевых кадров, не выполняем дополнительных действий
+        if (!element.keyframes || element.keyframes.length === 0) {
+            return;
+        }
+
         console.log(`Applying animation to ${element.type} element ${element.id} at time ${currentTime}`, {
             elementVisible: element.visible,
             elementOpacity: element.style?.opacity,
@@ -449,159 +599,148 @@ const Canvas = ({
             objectOpacity: fabricObject.opacity,
             hasModelPath: !!element.modelPath,
             modelPath: element.modelPath || 'none',
-            has3DModel: !!element.has3DModel
+            has3DModel: !!element.has3DModel,
+            position: element.position
         });
 
-        // Always ensure the object is visible regardless of animation state
-        const oldVisible = fabricObject.visible;
-        const oldOpacity = fabricObject.opacity;
+        // Интерполируем свойства анимации
+        let currentX = element.position?.x || 0;
+        let currentY = element.position?.y || 0;
+        let currentOpacity = element.style?.opacity !== undefined ? element.style.opacity : 1;
+        let currentScale = 1;
 
-        fabricObject.set({
-            visible: true,
-            opacity: element.style?.opacity !== undefined ? element.style.opacity : 1
-        });
+        // Проверяем, есть ли сохраненная позиция для этого кадра при скраббинге
+        const lastPos = lastAnimatedPositionsRef.current[element.id];
+        if (lastPos && Math.abs(lastPos.time - currentTime) < 0.01 && !isPlaying) {
+            console.log(`Using cached position for element ${element.id} at time ${currentTime}: (${lastPos.x.toFixed(0)},${lastPos.y.toFixed(0)})`);
 
-        // Check if element has a 3D model but no model icon
-        if ((element.modelPath || element.has3DModel) && !fabricObject.modelIcon) {
-            console.log(`Element ${element.id} has 3D model path: ${element.modelPath}, adding 3D icon`);
+            // Используем кэшированную позицию
+            currentX = lastPos.x;
+            currentY = lastPos.y;
+            currentOpacity = lastPos.opacity;
+            currentScale = lastPos.scale;
+        } else {
+            // Find the keyframes before and after the current time
+            const sortedKeyframes = [...element.keyframes].sort((a, b) => a.time - b.time);
 
-            // Create 3D model icon
-            const modelIcon = new fabric.Text('3D', {
-                left: fabricObject.left + 5,
-                top: fabricObject.top + 5,
-                fontSize: 16,
-                fill: '#FFFFFF',
-                backgroundColor: 'rgba(148, 148, 225, 0.7)',
-                padding: 5,
-                selectable: false,
-                evented: false,
-                visible: true
-            });
+            let prevKeyframe = null;
+            let nextKeyframe = null;
 
-            // Add icon to canvas
-            if (fabricInstances.has(canvasId.current)) {
-                const fabricCanvas = fabricInstances.get(canvasId.current);
-                fabricCanvas.add(modelIcon);
+            for (let i = 0; i < sortedKeyframes.length; i++) {
+                if (sortedKeyframes[i].time <= currentTime) {
+                    prevKeyframe = sortedKeyframes[i];
+                } else {
+                    nextKeyframe = sortedKeyframes[i];
+                    break;
+                }
+            }
 
-                // Link icon to object
-                fabricObject.modelIcon = modelIcon;
+            // If we're before the first keyframe, use the first keyframe
+            if (!prevKeyframe && sortedKeyframes.length > 0) {
+                prevKeyframe = sortedKeyframes[0];
+            }
 
-                console.log(`Added 3D model icon for element ${element.id}`);
+            // If we're after the last keyframe, use the last keyframe
+            if (!nextKeyframe && sortedKeyframes.length > 0) {
+                nextKeyframe = sortedKeyframes[sortedKeyframes.length - 1];
+
+                // If we're exactly at or after the last keyframe, use its exact position
+                if (prevKeyframe === nextKeyframe) {
+                    currentX = nextKeyframe.position.x;
+                    currentY = nextKeyframe.position.y;
+                    currentOpacity = nextKeyframe.opacity !== undefined ? nextKeyframe.opacity : 1;
+                    currentScale = nextKeyframe.scale || 1;
+
+                    console.log(`At final keyframe position at time ${nextKeyframe.time}: (${currentX},${currentY})`);
+                }
+            }
+
+            // Если есть keyframes для интерполяции
+            if (prevKeyframe && nextKeyframe && prevKeyframe !== nextKeyframe) {
+                // Calculate progress between keyframes
+                const keyframeDuration = nextKeyframe.time - prevKeyframe.time;
+                const progress = keyframeDuration > 0 ? (currentTime - prevKeyframe.time) / keyframeDuration : 0;
+
+                // Интерполируем позицию
+                if (prevKeyframe.position && nextKeyframe.position) {
+                    const prevX = prevKeyframe.position.x;
+                    const prevY = prevKeyframe.position.y;
+                    const nextX = nextKeyframe.position.x;
+                    const nextY = nextKeyframe.position.y;
+                    currentX = prevX + (nextX - prevX) * progress;
+                    currentY = prevY + (nextY - prevY) * progress;
+                    console.log(`Interpolating position: progress=${progress.toFixed(2)}, (${prevX},${prevY}) to (${nextX},${nextY}) = (${currentX.toFixed(0)},${currentY.toFixed(0)})`);
+                }
+
+                // Интерполируем прозрачность
+                const prevOpacity = prevKeyframe.opacity !== undefined ? prevKeyframe.opacity : 1;
+                const nextOpacity = nextKeyframe.opacity !== undefined ? nextKeyframe.opacity : 1;
+                currentOpacity = prevOpacity + (nextOpacity - prevOpacity) * progress;
+
+                // Интерполируем масштаб
+                const prevScale = prevKeyframe.scale || 1;
+                const nextScale = nextKeyframe.scale || 1;
+                currentScale = prevScale + (nextScale - prevScale) * progress;
+            } else if (prevKeyframe) {
+                // Используем значения текущего keyframe если нет следующего
+                if (prevKeyframe.position) {
+                    currentX = prevKeyframe.position.x;
+                    currentY = prevKeyframe.position.y;
+                    console.log(`Using keyframe position at time ${prevKeyframe.time}: (${currentX},${currentY})`);
+                }
+                if (prevKeyframe.opacity !== undefined) {
+                    currentOpacity = prevKeyframe.opacity;
+                }
+                if (prevKeyframe.scale) {
+                    currentScale = prevKeyframe.scale;
+                }
             }
         }
-        // Ensure existing model icon is visible and positioned correctly
-        else if ((element.modelPath || element.has3DModel) && fabricObject.modelIcon) {
-            const oldIconVisible = fabricObject.modelIcon.visible;
 
-            fabricObject.modelIcon.set({
-                left: fabricObject.left + 5,
-                top: fabricObject.top + 5,
-                visible: true,
-                opacity: fabricObject.opacity
-            });
-
-            console.log(`Updated 3D model icon for element ${element.id}:`, {
-                iconVisibilityBefore: oldIconVisible,
-                iconVisibilityAfter: fabricObject.modelIcon.visible
-            });
-
-            // Если это элемент с 3D моделью и прямоугольник, обновляем стиль
-            if ((element.type === 'rectangle' || element.originalType === 'rectangle') && (element.modelPath || element.has3DModel)) {
-                fabricObject.set({
-                    fill: 'rgba(0, 0, 255, 0.2)',
-                    stroke: 'rgba(0, 0, 255, 0.7)',
-                    strokeWidth: 2,
-                    rx: 10, // Rounded corners
-                    ry: 10  // Rounded corners
-                });
-            }
+        // Сохраняем текущую вычисленную анимационную позицию для этого элемента
+        if (!lastAnimatedPositionsRef.current[element.id]) {
+            lastAnimatedPositionsRef.current[element.id] = {};
         }
 
-        console.log(`Set basic visibility for element ${element.id}:`, {
-            visibilityBefore: oldVisible,
-            visibilityAfter: fabricObject.visible,
-            opacityBefore: oldOpacity,
-            opacityAfter: fabricObject.opacity,
-            hasModelIcon: !!fabricObject.modelIcon,
-            modelIconVisible: fabricObject.modelIcon ? fabricObject.modelIcon.visible : 'N/A'
-        });
-
-        // If there are no keyframes, just return with the basic visibility
-        if (!element.keyframes || element.keyframes.length === 0) {
-            return;
-        }
-
-        // Find the keyframes before and after the current time
-        const sortedKeyframes = [...element.keyframes].sort((a, b) => a.time - b.time);
-
-        let prevKeyframe = null;
-        let nextKeyframe = null;
-
-        for (let i = 0; i < sortedKeyframes.length; i++) {
-            if (sortedKeyframes[i].time <= currentTime) {
-                prevKeyframe = sortedKeyframes[i];
-            }
-            if (sortedKeyframes[i].time > currentTime && !nextKeyframe) {
-                nextKeyframe = sortedKeyframes[i];
-            }
-        }
-
-        // If we're before the first keyframe or after the last keyframe, use the closest one
-        if (!prevKeyframe && nextKeyframe) {
-            prevKeyframe = nextKeyframe;
-        } else if (prevKeyframe && !nextKeyframe) {
-            nextKeyframe = prevKeyframe;
-        }
-
-        // If we still don't have keyframes, just return
-        if (!prevKeyframe || !nextKeyframe) {
-            return;
-        }
-
-        // Calculate progress between keyframes
-        const keyframeDuration = nextKeyframe.time - prevKeyframe.time;
-        const progress = keyframeDuration > 0 ? (currentTime - prevKeyframe.time) / keyframeDuration : 0;
-
-        // Интерполируем позицию
-        const prevX = prevKeyframe.position.x;
-        const prevY = prevKeyframe.position.y;
-        const nextX = nextKeyframe.position.x;
-        const nextY = nextKeyframe.position.y;
-        const currentX = prevX + (nextX - prevX) * progress;
-        const currentY = prevY + (nextY - prevY) * progress;
-
-        // Интерполируем прозрачность
-        const prevOpacity = prevKeyframe.opacity !== undefined ? prevKeyframe.opacity : 1;
-        const nextOpacity = nextKeyframe.opacity !== undefined ? nextKeyframe.opacity : 1;
-        const currentOpacity = prevOpacity + (nextOpacity - prevOpacity) * progress;
-
-        // Интерполируем масштаб
-        const prevScale = prevKeyframe.scale || 1;
-        const nextScale = nextKeyframe.scale || 1;
-        const currentScale = prevScale + (nextScale - prevScale) * progress;
-
-        // Применяем свойства
-        fabricObject.set({
-            left: currentX,
-            top: currentY,
+        lastAnimatedPositionsRef.current[element.id] = {
+            x: currentX,
+            y: currentY,
             opacity: currentOpacity,
-            scaleX: currentScale,
-            scaleY: currentScale,
-            visible: true // Explicitly ensure visibility
-        });
+            scale: currentScale,
+            time: currentTime
+        };
 
-        // Обновляем позицию значка 3D модели, если он есть
-        if (fabricObject.modelIcon) {
-            fabricObject.modelIcon.set({
-                left: currentX + 5,
-                top: currentY + 5,
+        // Проверяем, изменились ли свойства объекта
+        const positionChanged = Math.abs(fabricObject.left - currentX) > 0.1 || Math.abs(fabricObject.top - currentY) > 0.1;
+        const opacityChanged = Math.abs(fabricObject.opacity - currentOpacity) > 0.01;
+        const scaleChanged = Math.abs(fabricObject.scaleX - currentScale) > 0.01 || Math.abs(fabricObject.scaleY - currentScale) > 0.01;
+
+        // Применяем свойства только если они изменились
+        if (positionChanged || opacityChanged || scaleChanged) {
+            const props = {
+                left: currentX,
+                top: currentY,
                 opacity: currentOpacity,
+                scaleX: currentScale,
+                scaleY: currentScale,
                 visible: true // Explicitly ensure visibility
-            });
+            };
+
+            fabricObject.set(props);
+            fabricObject.setCoords(); // Update the corner coordinates
+
+            // Выводим отладочную информацию при изменении свойств
+            console.log(`Properties changed for ${element.id}: position=(${currentX},${currentY}), opacity=${currentOpacity}, scale=${currentScale}`);
         }
 
-        console.log(`Applied interpolated properties: x=${currentX}, y=${currentY}, opacity=${currentOpacity}, scale=${currentScale}`);
-    }, [currentTime, canvasId]);
+        // Ensure the object is clickable
+        fabricObject.selectable = !readOnly;
+        fabricObject.evented = !readOnly;
+        fabricObject.hasControls = !readOnly;
+        fabricObject.hasBorders = !readOnly;
+
+        console.log(`Applied properties: x=${currentX}, y=${currentY}, opacity=${currentOpacity}, scale=${currentScale}, selectable=${fabricObject.selectable}`);
+    }, [currentTime, readOnly, isPlaying, lastAnimatedPositionsRef]);
 
     // Функция добавления или обновления keyframe
     const addOrUpdateKeyframe = (element, time, properties = {}) => {
@@ -656,6 +795,21 @@ const Canvas = ({
             ...element,
             keyframes: updatedKeyframes
         };
+
+        // Когда добавляется первый ключевой кадр, обновляем также базовую позицию элемента
+        // для корректного отображения на холсте
+        if (updatedKeyframes.length === 1) {
+            console.log('First keyframe added, updating base position of element');
+            updatedElement.position = {
+                x: validProperties.position.x,
+                y: validProperties.position.y
+            };
+
+            // Очищаем кэш анимированных позиций для этого элемента
+            if (lastAnimatedPositionsRef.current[element.id]) {
+                delete lastAnimatedPositionsRef.current[element.id];
+            }
+        }
 
         console.log('Updated element keyframes count:', updatedKeyframes.length);
         return updatedElement;
@@ -737,7 +891,7 @@ const Canvas = ({
                 if (!effectiveElements) {
                     console.warn('Elements array is undefined');
                     fabricCanvas.clear();
-                    fabricCanvas.backgroundColor = '#ffffff';
+                    fabricCanvas.backgroundColor = 'rgba(0, 0, 0, 0)';
                     fabricCanvas.renderAll();
                     return;
                 }
@@ -745,7 +899,7 @@ const Canvas = ({
                 if (!Array.isArray(effectiveElements)) {
                     console.error('Elements is not an array:', effectiveElements);
                     fabricCanvas.clear();
-                    fabricCanvas.backgroundColor = '#ffffff';
+                    fabricCanvas.backgroundColor = 'rgba(0, 0, 0, 0)';
                     fabricCanvas.renderAll();
                     return;
                 }
@@ -762,7 +916,7 @@ const Canvas = ({
 
                     // Clear the canvas
                     fabricCanvas.clear();
-                    fabricCanvas.backgroundColor = '#ffffff';
+                    fabricCanvas.backgroundColor = 'rgba(0, 0, 0, 0)';
                     fabricCanvas.renderAll();
                     return;
                 }
@@ -781,6 +935,12 @@ const Canvas = ({
                 existingObjects.forEach(obj => {
                     if (obj.data && obj.data.elementId) {
                         existingObjectsMap.set(obj.data.elementId, obj);
+                    }
+
+                    // Remove any modelIcon if exists
+                    if (obj.modelIcon) {
+                        fabricCanvas.remove(obj.modelIcon);
+                        delete obj.modelIcon;
                     }
                 });
 
@@ -849,6 +1009,11 @@ const Canvas = ({
                             const has3DModel = element.modelPath || element.has3DModel;
                             if (has3DModel) {
                                 console.log(`Element ${element.id} is a 3D element or has a 3D model path: ${element.modelPath || 'none'}`);
+
+                                // Store the model path information even if we don't display visual indicators
+                                if (element.modelPath) {
+                                    console.log(`Element ${element.id} has model path: ${element.modelPath}`);
+                                }
                             }
 
                             // Создаем fabric объект на основе типа элемента
@@ -881,28 +1046,13 @@ const Canvas = ({
                                     // Add to list of objects to add to canvas
                                     objectsToAdd.push(fabricObject);
 
-                                    // Если у элемента есть 3D модель, добавляем иконку
+                                    // Log if element has 3D model but don't add any visual indicators
                                     if (has3DModel) {
-                                        // Create 3D label
-                                        const modelLabel = new fabric.Text('3D', {
-                                            left: element.position.x + 5,
-                                            top: element.position.y + 5,
-                                            fontSize: 16,
-                                            fill: '#FFFFFF',
-                                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
-                                            padding: 5,
-                                            selectable: false,
-                                            evented: false,
-                                            visible: true
-                                        });
+                                        console.log(`Element ${element.id} has a 3D model (no visual indicator added)`);
 
-                                        // Link label to object
-                                        fabricObject.modelIcon = modelLabel;
-
-                                        // Add label to canvas
-                                        fabricCanvas.add(modelLabel);
-
-                                        console.log(`Added 3D model icon for rectangle element ${element.id}`);
+                                        // Even though we don't show visual indicators, we need to store model info
+                                        fabricObject.has3DModel = true;
+                                        fabricObject.modelPath = element.modelPath;
                                     }
                                     break;
 
@@ -933,28 +1083,13 @@ const Canvas = ({
                                     // Add to list of objects to add to canvas
                                     objectsToAdd.push(fabricObject);
 
-                                    // Если у элемента есть 3D модель, добавляем иконку
+                                    // Log if element has 3D model but don't add any visual indicators
                                     if (has3DModel) {
-                                        // Create 3D label
-                                        const modelLabel = new fabric.Text('3D', {
-                                            left: element.position.x + 5,
-                                            top: element.position.y + 5,
-                                            fontSize: 16,
-                                            fill: '#FFFFFF',
-                                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
-                                            padding: 5,
-                                            selectable: false,
-                                            evented: false,
-                                            visible: true
-                                        });
+                                        console.log(`Element ${element.id} has a 3D model (no visual indicator added)`);
 
-                                        // Link label to object
-                                        fabricObject.modelIcon = modelLabel;
-
-                                        // Add label to canvas
-                                        fabricCanvas.add(modelLabel);
-
-                                        console.log(`Added 3D model icon for circle element ${element.id}`);
+                                        // Even though we don't show visual indicators, we need to store model info
+                                        fabricObject.has3DModel = true;
+                                        fabricObject.modelPath = element.modelPath;
                                     }
                                     break;
 
@@ -983,28 +1118,13 @@ const Canvas = ({
                                     // Add to list of objects to add to canvas
                                     objectsToAdd.push(fabricObject);
 
-                                    // Если у элемента есть 3D модель, добавляем иконку
+                                    // Log if element has 3D model but don't add any visual indicators
                                     if (has3DModel) {
-                                        // Create 3D label
-                                        const modelLabel = new fabric.Text('3D', {
-                                            left: element.position.x + 5,
-                                            top: element.position.y + 5,
-                                            fontSize: 16,
-                                            fill: '#FFFFFF',
-                                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
-                                            padding: 5,
-                                            selectable: false,
-                                            evented: false,
-                                            visible: true
-                                        });
+                                        console.log(`Element ${element.id} has a 3D model (no visual indicator added)`);
 
-                                        // Link label to object
-                                        fabricObject.modelIcon = modelLabel;
-
-                                        // Add label to canvas
-                                        fabricCanvas.add(modelLabel);
-
-                                        console.log(`Added 3D model icon for text element ${element.id}`);
+                                        // Store the model metadata on the object for retrieval later
+                                        fabricObject.has3DModel = true;
+                                        fabricObject.modelPath = element.modelPath;
                                     }
                                     break;
 
@@ -1018,15 +1138,13 @@ const Canvas = ({
                                         top: element.position.y,
                                         width: element.size?.width || 100,
                                         height: element.size?.height || 100,
-                                        fill: 'rgba(0, 0, 255, 0.2)',
-                                        stroke: 'rgba(0, 0, 255, 0.7)',
-                                        strokeWidth: 2,
+                                        fill: element.style?.backgroundColor || '#cccccc',
+                                        stroke: element.style?.borderColor || '#000000',
+                                        strokeWidth: element.style?.borderWidth || 1,
                                         opacity: typeof element.style?.opacity === 'number' ? element.style.opacity : 1,
                                         selectable: !readOnly,
                                         hasControls: !readOnly,
-                                        hasBorders: !readOnly,
-                                        rx: 10, // Rounded corners
-                                        ry: 10  // Rounded corners
+                                        hasBorders: !readOnly
                                     });
 
                                     // Save element data
@@ -1041,24 +1159,7 @@ const Canvas = ({
                                     // Add to list of objects to add to canvas
                                     objectsToAdd.push(fabricObject);
 
-                                    // Create 3D label
-                                    const modelLabel = new fabric.Text('3D', {
-                                        left: element.position.x + 5,
-                                        top: element.position.y + 5,
-                                        fontSize: 16,
-                                        fill: '#FFFFFF',
-                                        backgroundColor: 'rgba(0, 0, 255, 0.7)',
-                                        padding: 5,
-                                        selectable: false,
-                                        evented: false,
-                                        visible: true
-                                    });
-
-                                    // Add label to canvas
-                                    fabricCanvas.add(modelLabel);
-
-                                    // Link label to object
-                                    fabricObject.modelIcon = modelLabel;
+                                    console.log(`Added legacy 3D model element ${element.id} (converted to rectangle) at position (${element.position.x}, ${element.position.y})`);
 
                                     break;
 
@@ -1100,33 +1201,12 @@ const Canvas = ({
                                                     has3DModel: element.has3DModel
                                                 });
 
-                                                // Создаем значок 3D модели поверх изображения
-                                                const modelIcon = new fabric.Text('3D', {
-                                                    left: img.left + 5,
-                                                    top: img.top + 5,
-                                                    fontSize: 16,
-                                                    fill: '#FFFFFF',
-                                                    backgroundColor: 'rgba(0, 0, 255, 0.7)',
-                                                    padding: 5,
-                                                    selectable: false,
-                                                    evented: false,
-                                                    visible: true // Ensure icon is visible
-                                                });
+                                                // Log but don't add visual indicators
+                                                console.log(`Image element ${element.id} has a 3D model (no visual indicator added)`);
 
-                                                // Добавляем значок на холст
-                                                fabricCanvas.add(modelIcon);
-
-                                                // Связываем значок с изображением
-                                                img.modelIcon = modelIcon;
-
-                                                // Ensure the image is visible
-                                                img.set({ visible: true, opacity: element.style?.opacity || 1 });
-
-                                                console.log(`Added 3D model icon for element ${element.id}, image visibility after:`, {
-                                                    imgVisible: img.visible,
-                                                    imgOpacity: img.opacity,
-                                                    iconVisible: modelIcon.visible
-                                                });
+                                                // Store the model metadata on the image object for retrieval later
+                                                img.has3DModel = true;
+                                                img.modelPath = element.modelPath;
                                             }
 
                                             // Применяем эффекты анимации на основе keyframes
@@ -1153,7 +1233,7 @@ const Canvas = ({
                 existingObjectsMap.forEach(obj => {
                     console.log(`Removing object with ID ${obj.data.elementId} from canvas`);
 
-                    // Если у объекта есть связанный значок 3D модели, удаляем и его
+                    // Remove any associated model icon if it exists
                     if (obj.modelIcon) {
                         console.log(`Removing 3D model icon for element ${obj.data.elementId}`);
                         fabricCanvas.remove(obj.modelIcon);
@@ -1172,39 +1252,14 @@ const Canvas = ({
                     fabricCanvas.add(obj);
                     console.log(`Added ${obj.type} element ${obj.data.elementId} to canvas with selectable=${obj.selectable}`);
 
-                    // Если это элемент с 3D моделью, добавляем значок
+                    // Log if element has 3D model but don't add any visual indicators
                     const element = obj.data.element;
                     if (element && (element.modelPath || element.has3DModel) && !obj.modelIcon) {
-                        console.log(`Adding 3D model icon for element ${element.id}`);
+                        console.log(`Element ${element.id} has a 3D model (no visual indicator added)`);
 
-                        // Создаем значок 3D модели
-                        const modelIcon = new fabric.Text('3D', {
-                            left: obj.left + 5,
-                            top: obj.top + 5,
-                            fontSize: 16,
-                            fill: '#FFFFFF',
-                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
-                            padding: 5,
-                            selectable: false,
-                            evented: false,
-                            visible: true // Ensure icon is visible
-                        });
-
-                        // Добавляем значок на холст
-                        fabricCanvas.add(modelIcon);
-
-                        // Связываем значок с объектом
-                        obj.modelIcon = modelIcon;
-
-                        // Ensure the object is visible
-                        obj.set({ visible: true, opacity: element.style?.opacity || 1 });
-
-                        console.log(`Added 3D model icon for element ${element.id}, object visibility:`, {
-                            objVisible: obj.visible,
-                            objOpacity: obj.opacity,
-                            iconVisible: modelIcon.visible,
-                            has3DModel: element.has3DModel
-                        });
+                        // Store the model metadata on the object for retrieval later
+                        obj.has3DModel = true;
+                        obj.modelPath = element.modelPath;
                     }
                 });
 
@@ -1253,11 +1308,35 @@ const Canvas = ({
         // Выполняем обновление canvas с небольшой задержкой
         const timeoutId = setTimeout(updateCanvas, 0);
 
+        // После обновления canvas, принудительно обновляем позиции объектов,
+        // но только если они действительно изменились
+        const positionUpdateId = setTimeout(() => {
+            // Не обновляем принудительно позиции объектов, если анимация активна
+            if (!isPlaying) {
+                forceUpdateObjectPositions();
+            }
+        }, 100); // Increase delay to reduce jittering
+
         // Анимация для плеера
         let animationFrame;
+        let lastAnimationTime = 0;
+        let prevTime = currentTime;
 
-        const animateCanvas = () => {
-            if (isPlaying) {
+        const animateCanvas = (timestamp) => {
+            // Всегда проверяем, изменилось ли время
+            const timeChanged = Math.abs(prevTime - currentTime) > 0.01;
+            prevTime = currentTime;
+
+            // We always apply animation effects when time changes, whether playing or not
+            // Limit animation updates to reduce jittering
+            const timeSinceLastUpdate = timestamp - lastAnimationTime;
+
+            // При скраббинге обновляем с большей частотой
+            const updateIntervalMs = isPlaying ? 16 : 8; // ~60fps для плеера, ~120fps для скраббинга
+
+            if ((timeChanged || isPlaying) && timeSinceLastUpdate > updateIntervalMs) {
+                lastAnimationTime = timestamp;
+
                 // Update all objects based on current time
                 const objects = fabricCanvas.getObjects();
                 objects.forEach(obj => {
@@ -1267,21 +1346,28 @@ const Canvas = ({
                 });
 
                 fabricCanvas.renderAll();
+            }
+
+            // Only continue animation loop if playing or time changed
+            if (isPlaying) {
+                animationFrame = requestAnimationFrame(animateCanvas);
+            } else if (timeChanged) {
+                // Если время изменилось, но плеер не активен (скраббинг), еще один кадр для обновления позиций
                 animationFrame = requestAnimationFrame(animateCanvas);
             }
         };
 
-        if (isPlaying) {
-            animationFrame = requestAnimationFrame(animateCanvas);
-        }
+        // Start animation frame even when not playing to handle scrubbing
+        animationFrame = requestAnimationFrame(animateCanvas);
 
         return () => {
             clearTimeout(timeoutId);
+            clearTimeout(positionUpdateId);
             if (animationFrame) {
                 cancelAnimationFrame(animationFrame);
             }
         };
-    }, [initialized, effectiveElements, currentTime, selectedElement, isPlaying, setupEventHandlers, applyAnimationEffects, readOnly]);
+    }, [initialized, effectiveElements, currentTime, selectedElement, isPlaying, setupEventHandlers, applyAnimationEffects, readOnly, forceUpdateObjectPositions]);
 
     // Переключение записи keyframe
     const toggleKeyframeRecording = useCallback(() => {
@@ -1383,12 +1469,17 @@ const Canvas = ({
             type: element.type,
             currentModelPath: element.modelPath || 'none',
             hasKeyframes: !!element.keyframes && element.keyframes.length > 0,
-            keyframesCount: element.keyframes ? element.keyframes.length : 0
+            keyframesCount: element.keyframes ? element.keyframes.length : 0,
+            position: element.position
         });
 
         // Update the elements array with the new animations and model path
         const updatedElements = elements.map(element => {
             if (element.id === elementId) {
+                // Preserve current position, scale, and opacity values
+                const currentPosition = element.position;
+                const currentStyle = element.style || {};
+
                 // Create updated element with animations and model info
                 const updatedElement = {
                     ...element,
@@ -1397,11 +1488,13 @@ const Canvas = ({
                     modelPath: modelUrl || element.modelPath,
                     // Также сохраняем modelUrl для совместимости
                     modelUrl: modelUrl || element.modelUrl,
-                    // Ensure visibility is explicitly set
+                    // Preserve existing style with opacity
                     style: {
-                        ...element.style,
-                        opacity: opacity
+                        ...currentStyle,
+                        opacity: currentStyle.opacity !== undefined ? currentStyle.opacity : opacity
                     },
+                    // Preserve existing position
+                    position: currentPosition,
                     // Ensure the element is visible in the current state
                     visible: visible,
                     // Вместо изменения типа, добавляем флаг has3DModel
@@ -1422,7 +1515,7 @@ const Canvas = ({
                     });
                 }
 
-                // Если у элемента есть ключевые кадры, добавляем modelPath и modelUrl в каждый кадр
+                // Preserve existing keyframes and only add model information if needed
                 if (updatedElement.keyframes && updatedElement.keyframes.length > 0) {
                     updatedElement.keyframes = updatedElement.keyframes.map(keyframe => ({
                         ...keyframe,
@@ -1430,21 +1523,43 @@ const Canvas = ({
                         modelUrl: modelUrl || keyframe.modelUrl || element.modelUrl
                     }));
 
-                    console.log(`Canvas: Updated modelPath in ${updatedElement.keyframes.length} keyframes`);
+                    console.log(`Canvas: Updated modelPath in ${updatedElement.keyframes.length} keyframes while preserving positions and other properties`);
                 } else if (modelUrl) {
-                    // Если у элемента нет ключевых кадров, но есть modelUrl, создаем ключевой кадр
+                    // If there are no keyframes, create a single keyframe with current properties
+                    const currentFabricObject = fabricInstances.get(canvasId.current)?.getObjects()
+                        .find(obj => obj.data?.elementId === elementId);
+
+                    // Use current object properties for the initial keyframe
+                    const initialPosition = currentFabricObject
+                        ? { x: currentFabricObject.left, y: currentFabricObject.top }
+                        : element.position;
+
+                    const initialOpacity = currentFabricObject
+                        ? currentFabricObject.opacity
+                        : (element.style?.opacity || opacity);
+
+                    const initialScale = currentFabricObject
+                        ? currentFabricObject.scaleX
+                        : 1;
+
+                    console.log(`Canvas: Creating initial keyframe with actual object properties:`, {
+                        position: initialPosition,
+                        opacity: initialOpacity,
+                        scale: initialScale
+                    });
+
                     updatedElement.keyframes = [
                         {
                             time: 0,
-                            position: element.position,
-                            opacity: opacity,
-                            scale: 1,
+                            position: initialPosition,
+                            opacity: initialOpacity,
+                            scale: initialScale,
                             modelPath: modelUrl,
                             modelUrl: modelUrl
                         }
                     ];
 
-                    console.log('Canvas: Created new keyframe with modelPath');
+                    console.log('Canvas: Created new keyframe with modelPath and current object properties');
                 }
 
                 // If this is a local file (blob URL), save additional information
@@ -1471,7 +1586,8 @@ const Canvas = ({
                     opacity: updatedElement.style?.opacity,
                     hasType: !!updatedElement.type,
                     type: updatedElement.type || 'none',
-                    keyframesCount: updatedElement.keyframes ? updatedElement.keyframes.length : 0
+                    keyframesCount: updatedElement.keyframes ? updatedElement.keyframes.length : 0,
+                    position: updatedElement.position || 'unchanged'
                 });
 
                 return updatedElement;
@@ -1481,240 +1597,12 @@ const Canvas = ({
 
         // Update the elements array
         onElementsChange(updatedElements);
-    }, [elements, onElementsChange]);
 
-    // ВРЕМЕННО: Функция для скрытия комбинированного просмотрщика - будет удалена позже
-    const handleCloseCombinedViewer = useCallback(() => {
-        // ModelViewer сам вызовет onSaveAnimations при закрытии
-        // Просто скрываем просмотрщик
-        setShowCombinedViewer(false);
-
-        console.log('Canvas: Closing combined viewer, refreshing canvas objects');
-
-        // Force refresh the canvas to ensure all objects are visible
-        if (fabricInstances.has(canvasId.current)) {
-            const fabricCanvas = fabricInstances.get(canvasId.current);
-
-            console.log('Canvas: Objects before refresh:', fabricCanvas.getObjects().map(obj => ({
-                id: obj.data?.elementId || 'unknown',
-                type: obj.type,
-                visible: obj.visible,
-                opacity: obj.opacity,
-                hasModelIcon: !!obj.modelIcon,
-                modelIconVisible: obj.modelIcon ? obj.modelIcon.visible : 'N/A'
-            })));
-
-            // Ensure all objects are visible
-            fabricCanvas.getObjects().forEach(obj => {
-                if (obj.data && obj.data.element) {
-                    const oldVisible = obj.visible;
-                    const oldOpacity = obj.opacity;
-
-                    // Force visibility - explicitly set visible to true
-                    obj.set({
-                        visible: true,
-                        opacity: obj.data.element.style?.opacity || 1
-                    });
-
-                    // Also ensure 3D model icons are visible
-                    if (obj.modelIcon) {
-                        const oldIconVisible = obj.modelIcon.visible;
-
-                        // Force model icon visibility
-                        obj.modelIcon.set({
-                            visible: true,
-                            opacity: obj.opacity
-                        });
-
-                        console.log(`Canvas: Updated 3D model icon for element ${obj.data.elementId}:`, {
-                            iconVisibilityBefore: oldIconVisible,
-                            iconVisibilityAfter: obj.modelIcon.visible,
-                            iconOpacity: obj.modelIcon.opacity
-                        });
-                    }
-                    // If the element has a model path but no icon, create one
-                    else if (obj.data.element.modelPath && !obj.modelIcon) {
-                        console.log(`Canvas: Element ${obj.data.elementId} has modelPath but no icon, creating one`);
-
-                        // Create a new 3D model icon
-                        const modelIcon = new fabric.Text('3D', {
-                            left: obj.left + 5,
-                            top: obj.top + 5,
-                            fontSize: 16,
-                            fill: '#FFFFFF',
-                            backgroundColor: 'rgba(0, 0, 255, 0.7)',
-                            padding: 5,
-                            selectable: false,
-                            evented: false,
-                            visible: true
-                        });
-
-                        // Add the icon to the canvas
-                        fabricCanvas.add(modelIcon);
-
-                        // Link the icon to the object
-                        obj.modelIcon = modelIcon;
-
-                        console.log(`Canvas: Created new 3D model icon for element ${obj.data.elementId}`);
-                    }
-
-                    console.log(`Canvas: Updated object visibility for element ${obj.data.elementId}:`, {
-                        visibilityBefore: oldVisible,
-                        visibilityAfter: obj.visible,
-                        opacityBefore: oldOpacity,
-                        opacityAfter: obj.opacity,
-                        hasModelPath: !!obj.data.element.modelPath,
-                        modelPath: obj.data.element.modelPath || 'none'
-                    });
-                }
-            });
-
-            // Force canvas re-rendering
-            fabricCanvas.renderAll();
-
-            // Double-check after refresh to make sure everything is visible
-            console.log('Canvas: Objects after refresh:', fabricCanvas.getObjects().map(obj => ({
-                id: obj.data?.elementId || 'unknown',
-                type: obj.type,
-                visible: obj.visible,
-                opacity: obj.opacity,
-                hasModelIcon: !!obj.modelIcon,
-                modelIconVisible: obj.modelIcon ? obj.modelIcon.visible : 'N/A'
-            })));
-
-            console.log('Canvas: Refreshed after closing 3D model viewer');
-        }
-    }, []);
-
-    // Используем ReactDOM.createPortal для рендеринга кнопок в отдельном контейнере
-    const renderButtons = () => {
-        // Только если инициализирован canvas и есть контейнер для кнопок
-        if (!initialized || !buttonContainerRef.current) return null;
-
-        return ReactDOM.createPortal(
-            <>
-                {/* Кнопки управления выбранным элементом - в левом верхнем углу */}
-                {selectedElement && (
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: '20px',
-                            left: '20px',
-                            display: 'flex',
-                            gap: 1,
-                            pointerEvents: 'auto',
-                            zIndex: 100
-                        }}
-                    >
-                        {/* Кнопка копирования элемента */}
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => {
-                                // Создаем копию выбранного элемента
-                                const elementCopy = {
-                                    ...selectedElement,
-                                    id: `${selectedElement.type}-${Date.now()}`, // Новый ID
-                                    position: {
-                                        x: selectedElement.position.x + 20,
-                                        y: selectedElement.position.y + 20
-                                    }
-                                };
-
-                                // Добавляем копию в список элементов
-                                onElementsChange([...effectiveElements, elementCopy]);
-
-                                // Выбираем новый элемент
-                                onElementSelect(elementCopy);
-                            }}
-                            sx={{
-                                backgroundColor: 'rgba(33, 150, 243, 0.7)',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(33, 150, 243, 0.9)',
-                                },
-                                minWidth: '40px',
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%'
-                            }}
-                        >
-                            <ContentCopy />
-                        </Button>
-
-                        {/* Кнопка удаления элемента */}
-                        <Button
-                            variant="contained"
-                            color="error"
-                            onClick={handleDeleteElement}
-                            sx={{
-                                backgroundColor: 'rgba(255, 87, 87, 0.7)',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(255, 87, 87, 0.9)',
-                                },
-                                minWidth: '40px',
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%'
-                            }}
-                        >
-                            <Delete />
-                        </Button>
-                    </Box>
-                )}
-
-                {/* Отладочная кнопка в правом верхнем углу */}
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        top: '20px',
-                        right: '20px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 1,
-                        pointerEvents: 'auto',
-                        zIndex: 100
-                    }}
-                >
-                    {/* Отладочная кнопка для проверки 3D моделей */}
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => {
-                            console.log('Canvas: Debug - Checking all elements for 3D models');
-
-                            // Проверяем все элементы на наличие 3D моделей
-                            const elementsWithModels = effectiveElements.filter(el => el.modelPath);
-
-                            console.log('Canvas: Elements with 3D models:', {
-                                count: elementsWithModels.length,
-                                elements: elementsWithModels.map(el => ({
-                                    id: el.id,
-                                    type: el.type,
-                                    modelPath: el.modelPath
-                                }))
-                            });
-
-                            // Если есть элементы с моделями, выбираем первый и открываем просмотрщик
-                            if (elementsWithModels.length > 0) {
-                                const element = elementsWithModels[0];
-                                console.log('Canvas: Selecting element with 3D model:', element.id);
-                                onElementSelect(element);
-                                setViewMode('3d');
-                                setShowChoreoModal(true);
-                            } else {
-                                console.log('Canvas: No elements with 3D models found');
-                                alert('Нет элементов с 3D моделями');
-                            }
-                        }}
-                        sx={{ textTransform: 'none' }}
-                    >
-                        Проверить 3D модели
-                    </Button>
-                </Box>
-            </>,
-            buttonContainerRef.current
-        );
-    };
+        // Позиционируем 3D метки в соответствии с текущими позициями объектов
+        setTimeout(() => {
+            forceUpdateObjectPositions();
+        }, 50);
+    }, [elements, onElementsChange, canvasId, forceUpdateObjectPositions]);
 
     // ВРЕМЕННО: Рендер кнопки просмотра 3D/видео - будет удалено позже
     const renderViewerButton = () => {
@@ -1945,6 +1833,7 @@ const Canvas = ({
         fabricCanvas.on('mouse:dblclick', (e) => {
             console.log('Canvas: Double click detected');
 
+            // Случай двойного клика на объекте
             if (e.target && e.target.data && e.target.data.elementId) {
                 const elementId = e.target.data.elementId;
                 const element = effectiveElements.find(el => el.id === elementId);
@@ -2005,6 +1894,245 @@ const Canvas = ({
         }
     }, [selectedElement, getElementModel]);
 
+    // ВРЕМЕННО: Функция для скрытия комбинированного просмотрщика - будет удалена позже
+    const handleCloseCombinedViewer = useCallback(() => {
+        // ModelViewer сам вызовет onSaveAnimations при закрытии
+        // Просто скрываем просмотрщик
+        setShowCombinedViewer(false);
+
+        console.log('Canvas: Closing combined viewer, refreshing canvas objects');
+
+        // Force refresh the canvas to ensure all objects are visible
+        if (fabricInstances.has(canvasId.current)) {
+            const fabricCanvas = fabricInstances.get(canvasId.current);
+
+            console.log('Canvas: Objects before refresh:', fabricCanvas.getObjects().map(obj => ({
+                id: obj.data?.elementId || 'unknown',
+                type: obj.type,
+                visible: obj.visible,
+                opacity: obj.opacity,
+                position: obj.data?.element?.position || 'unknown'
+            })));
+
+            // Ensure all objects are visible and correctly positioned
+            fabricCanvas.getObjects().forEach(obj => {
+                if (obj.data && obj.data.element) {
+                    const element = obj.data.element;
+                    const currentPosition = element.position;
+
+                    // Only update if position is different to avoid jitter
+                    if (obj.left !== currentPosition.x || obj.top !== currentPosition.y) {
+                        obj.set({
+                            left: currentPosition.x,
+                            top: currentPosition.y
+                        });
+                    }
+
+                    // Always ensure visibility and proper opacity
+                    obj.set({
+                        visible: true,
+                        opacity: element.style?.opacity || 1
+                    });
+
+                    // Make sure object is clickable
+                    obj.selectable = !readOnly;
+                    obj.evented = !readOnly;
+                    obj.hasControls = !readOnly;
+                    obj.hasBorders = !readOnly;
+                }
+            });
+
+            // Force canvas re-rendering
+            fabricCanvas.renderAll();
+
+            console.log('Canvas: Refreshed after closing 3D model viewer');
+        }
+    }, [readOnly]);
+
+    // Используем ReactDOM.createPortal для рендеринга кнопок в отдельном контейнере
+    const renderButtons = () => {
+        // Только если инициализирован canvas и есть контейнер для кнопок
+        if (!initialized || !buttonContainerRef.current) return null;
+
+        return ReactDOM.createPortal(
+            <>
+                {/* Кнопки управления выбранным элементом - в левом верхнем углу */}
+                {selectedElement && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: '20px',
+                            left: '20px',
+                            display: 'flex',
+                            gap: 1,
+                            pointerEvents: 'auto',
+                            zIndex: 100
+                        }}
+                    >
+                        {/* Кнопка копирования элемента */}
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => {
+                                // Создаем копию выбранного элемента
+                                const elementCopy = {
+                                    ...selectedElement,
+                                    id: `${selectedElement.type}-${Date.now()}`, // Новый ID
+                                    position: {
+                                        x: selectedElement.position.x + 20,
+                                        y: selectedElement.position.y + 20
+                                    }
+                                };
+
+                                // Добавляем копию в список элементов
+                                onElementsChange([...effectiveElements, elementCopy]);
+
+                                // Выбираем новый элемент
+                                onElementSelect(elementCopy);
+                            }}
+                            sx={{
+                                backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(33, 150, 243, 0.9)',
+                                },
+                                minWidth: '40px',
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%'
+                            }}
+                        >
+                            <ContentCopy />
+                        </Button>
+
+                        {/* Кнопка удаления элемента */}
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={handleDeleteElement}
+                            sx={{
+                                backgroundColor: 'rgba(255, 87, 87, 0.7)',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 87, 87, 0.9)',
+                                },
+                                minWidth: '40px',
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%'
+                            }}
+                        >
+                            <Delete />
+                        </Button>
+                    </Box>
+                )}
+
+                {/* Отладочная кнопка в правом верхнем углу */}
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '20px',
+                        right: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1,
+                        pointerEvents: 'auto',
+                        zIndex: 100
+                    }}
+                >
+                    {/* Отладочная кнопка для проверки 3D моделей */}
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={() => {
+                            console.log('Canvas: Debug - Checking all elements for 3D models');
+
+                            // Проверяем все элементы на наличие 3D моделей
+                            const elementsWithModels = effectiveElements.filter(el => el.modelPath);
+
+                            console.log('Canvas: Elements with 3D models:', {
+                                count: elementsWithModels.length,
+                                elements: elementsWithModels.map(el => ({
+                                    id: el.id,
+                                    type: el.type,
+                                    modelPath: el.modelPath
+                                }))
+                            });
+
+                            // Если есть элементы с моделями, выбираем первый и открываем просмотрщик
+                            if (elementsWithModels.length > 0) {
+                                const element = elementsWithModels[0];
+                                console.log('Canvas: Selecting element with 3D model:', element.id);
+                                onElementSelect(element);
+                                setViewMode('3d');
+                                setShowChoreoModal(true);
+                            } else {
+                                console.log('Canvas: No elements with 3D models found');
+                                alert('Нет элементов с 3D моделями');
+                            }
+                        }}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        Проверить 3D модели
+                    </Button>
+                </Box>
+            </>,
+            buttonContainerRef.current
+        );
+    };
+
+    // Cleanup function to remove all 3D icons
+    const removeAll3DLabels = useCallback(() => {
+        if (!fabricInstances.has(canvasId.current)) return;
+
+        const fabricCanvas = fabricInstances.get(canvasId.current);
+
+        // Find and remove all 3D model labels
+        fabricCanvas.getObjects().forEach(obj => {
+            if (obj.modelIcon) {
+                fabricCanvas.remove(obj.modelIcon);
+                delete obj.modelIcon;
+            }
+        });
+
+        fabricCanvas.renderAll();
+        console.log('Removed all 3D model labels from canvas');
+    }, [canvasId]);
+
+    // Call removeAll3DLabels on component mount
+    useEffect(() => {
+        if (initialized) {
+            removeAll3DLabels();
+        }
+    }, [initialized, removeAll3DLabels]);
+
+    // Сохраняем последнюю позицию при остановке анимации
+    useEffect(() => {
+        // Когда воспроизведение останавливается, сохраняем текущие позиции
+        if (!isPlaying) {
+            console.log('Animation stopped, saving current positions at time', currentTime);
+
+            // Если у нас есть canvas и он инициализирован
+            if (initialized && fabricInstances.has(canvasId.current)) {
+                const fabricCanvas = fabricInstances.get(canvasId.current);
+
+                // Принудительно применяем анимацию один раз для всех объектов для текущего времени
+                fabricCanvas.getObjects().forEach(obj => {
+                    if (obj.data && obj.data.element) {
+                        const element = obj.data.element;
+
+                        // Если у элемента есть ключевые кадры, применяем анимацию
+                        if (element.keyframes && element.keyframes.length > 0) {
+                            // Вызываем функцию применения анимации в последний раз
+                            applyAnimationEffects(obj, element);
+                        }
+                    }
+                });
+
+                // Отрисовываем холст с окончательными позициями
+                fabricCanvas.renderAll();
+            }
+        }
+    }, [isPlaying, currentTime, initialized, canvasId, applyAnimationEffects]);
+
     return (
         <Box
             ref={containerRef}
@@ -2037,6 +2165,7 @@ const Canvas = ({
                 elementId={selectedElement?.id}
                 onSaveAnimations={handleSaveAnimations}
                 glbAnimations={getGlbAnimations()}
+                glbAnimationUrl={selectedElement?.modelPath}
             />
         </Box>
     );

@@ -23,10 +23,176 @@ import {
     Chip,
     LinearProgress,
     Alert,
+    Tooltip,
+    Switch,
+    FormControlLabel,
+    Collapse,
+    useTheme,
+    alpha
 } from '@mui/material';
-import { ExpandMore, Delete, AccessTime, ThreeDRotation } from '@mui/icons-material';
+import {
+    ExpandMore,
+    Delete,
+    AccessTime,
+    ThreeDRotation,
+    FileCopy,
+    Timeline,
+    PanTool,
+    KeyboardArrowUp,
+    KeyboardArrowDown,
+    AddCircleOutline,
+    Image as ImageIcon,
+    Title as TitleIcon,
+    FormatSize,
+    Palette,
+    BorderAll,
+    Opacity,
+    Update as UpdateIcon,
+    Delete as DeleteIcon
+} from '@mui/icons-material';
+import { styled } from '@mui/system';
+
+// Определение цветовой палитры
+const PALETTE = {
+    // Основные цвета
+    primary: {
+        light: '#9C6AFF',
+        main: '#6A3AFF', // Основной фиолетовый
+        dark: '#4316DB'
+    },
+    secondary: {
+        light: '#FF8F73',
+        main: '#FF6B52', // Ярко-оранжевый
+        dark: '#E54B30'
+    },
+    tertiary: {
+        light: '#FF7EB3',
+        main: '#FF5C93', // Розовый
+        dark: '#DB3671'
+    },
+    // Дополнительные цвета
+    teal: {
+        light: '#7DEEFF',
+        main: '#33D2FF', // Голубой
+        dark: '#00A0CC'
+    },
+    green: {
+        light: '#7CFFCB',
+        main: '#33E2A0', // Нежно-зеленый
+        dark: '#00B371'
+    },
+    // Нейтральные цвета
+    purpleGrey: {
+        light: '#B7A6FF',
+        main: '#8678B2', // Серо-фиолетовый
+        dark: '#5D5080'
+    }
+};
+
+// Styled components for the PropertyPanel
+const StyledSection = styled(Box)(({ theme }) => ({
+    marginBottom: theme.spacing(3),
+    padding: theme.spacing(2),
+    borderRadius: theme.spacing(1),
+    backgroundColor: theme.palette.mode === 'dark'
+        ? alpha(theme.palette.background.paper, 0.4)
+        : alpha(theme.palette.background.paper, 0.7),
+    border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
+    transition: 'all 0.2s',
+    '&:hover': {
+        boxShadow: theme.palette.mode === 'dark'
+            ? '0 4px 20px 0 rgba(0, 0, 0, 0.2)'
+            : '0 4px 20px 0 rgba(0, 0, 0, 0.1)',
+    },
+    backdropFilter: 'blur(8px)',
+}));
+
+const SectionTitle = styled(Typography)(({ theme }) => ({
+    fontWeight: 600,
+    fontSize: '0.875rem',
+    color: theme.palette.mode === 'dark' ? PALETTE.primary.light : PALETTE.primary.main,
+    marginBottom: theme.spacing(1.5),
+    display: 'flex',
+    alignItems: 'center',
+    '& svg': {
+        marginRight: theme.spacing(1),
+        fontSize: '1.1rem',
+        opacity: 0.8
+    }
+}));
+
+const StyledAccordion = styled(Accordion)(({ theme }) => ({
+    backgroundColor: 'transparent',
+    borderRadius: theme.spacing(1),
+    boxShadow: 'none',
+    '&:before': {
+        display: 'none',
+    },
+    '&.Mui-expanded': {
+        margin: 0,
+        '&:first-of-type': {
+            marginTop: 0,
+        },
+    },
+}));
+
+const StyledAccordionSummary = styled(AccordionSummary)(({ theme }) => ({
+    padding: theme.spacing(0, 1),
+    minHeight: 48,
+    borderRadius: theme.spacing(1),
+    '&.Mui-expanded': {
+        minHeight: 48,
+        backgroundColor: theme.palette.mode === 'dark'
+            ? alpha(PALETTE.primary.main, 0.1)
+            : alpha(PALETTE.primary.light, 0.1)
+    },
+    '& .MuiAccordionSummary-content': {
+        margin: theme.spacing(1, 0),
+        '&.Mui-expanded': {
+            margin: theme.spacing(1, 0),
+        },
+    },
+    '& .MuiTypography-root': {
+        fontWeight: 600,
+        color: theme.palette.mode === 'dark'
+            ? PALETTE.teal.light
+            : PALETTE.teal.dark,
+    },
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+    borderRadius: 8,
+    textTransform: 'none',
+    fontWeight: 600,
+    boxShadow: 'none',
+    background: theme.palette.mode === 'dark'
+        ? `linear-gradient(45deg, ${PALETTE.primary.dark}, ${PALETTE.primary.main})`
+        : undefined,
+    '&:hover': {
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        transform: 'translateY(-2px)'
+    },
+    transition: 'all 0.2s'
+}));
+
+const KeyframeListItem = styled(ListItem)(({ theme, isactive }) => ({
+    borderRadius: 8,
+    backgroundColor: isactive === 'true'
+        ? theme.palette.mode === 'dark'
+            ? alpha(PALETTE.primary.main, 0.2)
+            : alpha(PALETTE.primary.light, 0.1)
+        : 'transparent',
+    transition: 'all 0.2s',
+    '&:hover': {
+        backgroundColor: theme.palette.mode === 'dark'
+            ? alpha(PALETTE.primary.main, 0.15)
+            : alpha(PALETTE.primary.main, 0.05)
+    },
+    marginBottom: 4
+}));
 
 const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
+    const theme = useTheme();
     const [properties, setProperties] = useState(null);
 
     // Update the local state when the selected element changes
@@ -41,20 +207,53 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
     // If no element is selected, show a message
     if (!properties) {
         return (
-            <Paper sx={{ width: '100%', p: 2, height: '100%' }}>
-                <Typography variant="body1" color="text.secondary" align="center">
-                    Выберите элемент на доске для редактирования его свойств
+            <Paper sx={{
+                width: '100%',
+                p: 3,
+                height: '100%',
+                borderRadius: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: theme.palette.mode === 'dark'
+                    ? alpha(PALETTE.purpleGrey.dark, 0.7)
+                    : alpha(PALETTE.purpleGrey.light, 0.1),
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${theme.palette.mode === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(106, 58, 255, 0.05)'}`,
+            }}>
+                <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 2 }}>
+                    Выберите элемент на доске для редактирования
                 </Typography>
+                <Box sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    backgroundColor: alpha(PALETTE.primary.main, 0.1),
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    mb: 2
+                }}>
+                    <PanTool sx={{ fontSize: 32, color: alpha(PALETTE.primary.main, 0.6) }} />
+                </Box>
             </Paper>
         );
     }
 
     // Handle changes to properties
     const handlePropertyChange = (name, value) => {
-        // Create a deep copy of the properties to avoid direct state mutation
+        // Для безопасности заменяем 'transparent' на rgba(0,0,0,0)
+        if (value === 'transparent') {
+            value = 'rgba(0,0,0,0)';
+        }
+
+        // Создаем глубокую копию свойств
         const updatedProperties = JSON.parse(JSON.stringify(properties));
 
-        // Update the nested property using path notation (e.g., 'position.x')
+        // Обновляем вложенное свойство, используя нотацию пути (например, 'position.x')
         const path = name.split('.');
         let current = updatedProperties;
 
@@ -64,7 +263,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
 
         current[path[path.length - 1]] = value;
 
-        // Add debug logging for position changes
+        // Добавляем отладочное логирование для изменений позиции
         if (name.startsWith('position.')) {
             console.log(`PropertyPanel: Changed ${name} to ${value}`, {
                 elementId: updatedProperties.id,
@@ -74,10 +273,10 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             });
         }
 
-        // Update local state
+        // Обновляем локальное состояние
         setProperties(updatedProperties);
 
-        // Notify parent component
+        // Уведомляем родительский компонент
         onElementUpdate(updatedProperties);
     };
 
@@ -286,80 +485,112 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
     };
 
     return (
-        <Paper sx={{ width: '100%', p: 2, height: '100%', overflow: 'auto' }}>
-            <Typography variant="h6" gutterBottom>
+        <Paper sx={{
+            width: '100%',
+            p: 2,
+            height: '100%',
+            overflow: 'auto',
+            borderRadius: 2,
+            backgroundColor: theme.palette.mode === 'dark'
+                ? alpha(PALETTE.purpleGrey.dark, 0.8)
+                : alpha(PALETTE.purpleGrey.light, 0.05),
+            backdropFilter: 'blur(8px)',
+            border: `1px solid ${theme.palette.mode === 'dark'
+                ? 'rgba(255, 255, 255, 0.05)'
+                : 'rgba(106, 58, 255, 0.05)'}`,
+        }}>
+            <Typography variant="h6" gutterBottom sx={{
+                color: theme.palette.mode === 'dark' ? PALETTE.tertiary.light : PALETTE.tertiary.main,
+                fontWeight: 700,
+                mb: 2,
+                position: 'relative',
+                display: 'inline-block',
+                '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: -4,
+                    left: 0,
+                    width: 40,
+                    height: 3,
+                    backgroundImage: `linear-gradient(to right, ${PALETTE.primary.main}, ${PALETTE.tertiary.main})`,
+                    borderRadius: 1.5
+                }
+            }}>
                 Свойства
             </Typography>
 
             <Divider sx={{ mb: 2 }} />
 
             {/* Basic properties */}
-            <Typography variant="subtitle1" gutterBottom>
-                Основные свойства
-            </Typography>
+            <StyledSection>
+                <SectionTitle>
+                    <TitleIcon />
+                    Основные свойства
+                </SectionTitle>
 
-            <TextField
-                label="Название танцора"
-                value={properties.title || ''}
-                onChange={(e) => handlePropertyChange('title', e.target.value)}
-                fullWidth
-                margin="dense"
-                size="small"
-                sx={{ mb: 2 }}
-            />
+                <TextField
+                    label="Название танцора"
+                    value={properties.title || ''}
+                    onChange={(e) => handlePropertyChange('title', e.target.value)}
+                    fullWidth
+                    margin="dense"
+                    size="small"
+                    sx={{ mb: 2 }}
+                />
 
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6}>
-                    <TextField
-                        label="X"
-                        type="number"
-                        value={properties.position.x}
-                        onChange={(e) => handlePropertyChange('position.x', Number(e.target.value))}
-                        fullWidth
-                        margin="dense"
-                        size="small"
-                    />
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid item xs={6}>
+                        <TextField
+                            label="X"
+                            type="number"
+                            value={properties.position.x}
+                            onChange={(e) => handlePropertyChange('position.x', Number(e.target.value))}
+                            fullWidth
+                            margin="dense"
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={6}>
+                        <TextField
+                            label="Y"
+                            type="number"
+                            value={properties.position.y}
+                            onChange={(e) => handlePropertyChange('position.y', Number(e.target.value))}
+                            fullWidth
+                            margin="dense"
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={6}>
+                        <TextField
+                            label="Ширина"
+                            type="number"
+                            value={properties.size.width}
+                            onChange={(e) => handlePropertyChange('size.width', Number(e.target.value))}
+                            fullWidth
+                            margin="dense"
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={6}>
+                        <TextField
+                            label="Высота"
+                            type="number"
+                            value={properties.size.height}
+                            onChange={(e) => handlePropertyChange('size.height', Number(e.target.value))}
+                            fullWidth
+                            margin="dense"
+                            size="small"
+                        />
+                    </Grid>
                 </Grid>
-                <Grid item xs={6}>
-                    <TextField
-                        label="Y"
-                        type="number"
-                        value={properties.position.y}
-                        onChange={(e) => handlePropertyChange('position.y', Number(e.target.value))}
-                        fullWidth
-                        margin="dense"
-                        size="small"
-                    />
-                </Grid>
-                <Grid item xs={6}>
-                    <TextField
-                        label="Ширина"
-                        type="number"
-                        value={properties.size.width}
-                        onChange={(e) => handlePropertyChange('size.width', Number(e.target.value))}
-                        fullWidth
-                        margin="dense"
-                        size="small"
-                    />
-                </Grid>
-                <Grid item xs={6}>
-                    <TextField
-                        label="Высота"
-                        type="number"
-                        value={properties.size.height}
-                        onChange={(e) => handlePropertyChange('size.height', Number(e.target.value))}
-                        fullWidth
-                        margin="dense"
-                        size="small"
-                    />
-                </Grid>
-            </Grid>
+            </StyledSection>
 
             {/* Style properties */}
-            <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
+            <StyledAccordion>
+                <StyledAccordionSummary expandIcon={<ExpandMore />}>
                     <Typography>Стиль</Typography>
-                </AccordionSummary>
+                </StyledAccordionSummary>
                 <AccordionDetails>
                     <Grid container spacing={2}>
                         {properties.type !== 'image' && (
@@ -411,6 +642,12 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                                 valueLabelDisplay="auto"
                                 min={0}
                                 max={100}
+                                sx={{
+                                    color: PALETTE.teal.main,
+                                    '& .MuiSlider-thumb': {
+                                        backgroundColor: PALETTE.teal.main,
+                                    },
+                                }}
                             />
                         </Grid>
 
@@ -443,65 +680,99 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                         )}
                     </Grid>
                 </AccordionDetails>
-            </Accordion>
+            </StyledAccordion>
 
             {/* Animation keyframes */}
-            <Accordion defaultExpanded>
-                <AccordionSummary expandIcon={<ExpandMore />}>
+            <StyledAccordion defaultExpanded>
+                <StyledAccordionSummary expandIcon={<ExpandMore />}>
                     <Typography>Анимация (Ключевые кадры)</Typography>
-                </AccordionSummary>
+                </StyledAccordionSummary>
                 <AccordionDetails>
                     <Box sx={{ mb: 2 }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                        <Typography variant="body2" color="text.secondary" gutterBottom sx={{
+                            display: 'inline-block',
+                            backgroundColor: theme.palette.mode === 'dark'
+                                ? alpha(PALETTE.primary.main, 0.15)
+                                : alpha(PALETTE.primary.light, 0.15),
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: 1,
+                        }}>
                             Текущее время: {formatTime(currentTime)}
                         </Typography>
 
-                        <Button
+                        <StyledButton
                             variant="contained"
                             color="primary"
-                            size="small"
+                            size="medium"
                             onClick={createKeyframeAtCurrentTime}
                             startIcon={<AccessTime />}
                             fullWidth
-                            sx={{ mt: 1 }}
+                            sx={{ mt: 2 }}
                         >
                             Создать ключевой кадр
-                        </Button>
+                        </StyledButton>
 
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 1 }}>
                             Для создания анимации:
                         </Typography>
-                        <ol>
-                            <li>Переместите плеер на начальное время</li>
-                            <li>Установите элемент в начальное положение</li>
-                            <li>Нажмите "Создать ключевой кадр"</li>
-                            <li>Переместите плеер на другое время</li>
-                            <li>Измените положение элемента</li>
-                            <li>Снова нажмите "Создать ключевой кадр"</li>
-                        </ol>
+                        <Box sx={{
+                            py: 1,
+                            px: 2,
+                            borderRadius: 1,
+                            backgroundColor: alpha(PALETTE.purpleGrey.main, 0.1),
+                            border: `1px solid ${alpha(PALETTE.purpleGrey.main, 0.1)}`,
+                        }}>
+                            <ol style={{
+                                paddingLeft: '1.2rem',
+                                margin: '0.5rem 0',
+                                color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'
+                            }}>
+                                <li>Переместите плеер на начальное время</li>
+                                <li>Установите элемент в начальное положение</li>
+                                <li>Нажмите "Создать ключевой кадр"</li>
+                                <li>Переместите плеер на другое время</li>
+                                <li>Измените положение элемента</li>
+                                <li>Снова нажмите "Создать ключевой кадр"</li>
+                            </ol>
+                        </Box>
                     </Box>
 
-                    <Divider />
+                    <Divider sx={{ mt: 3, mb: 2 }} />
 
-                    <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+                    <Typography variant="subtitle2" sx={{
+                        mb: 1,
+                        color: PALETTE.tertiary.main,
+                        fontWeight: 600
+                    }}>
                         Список ключевых кадров:
                     </Typography>
 
                     {properties.keyframes && properties.keyframes.length > 0 ? (
-                        <List dense>
+                        <List dense sx={{ mt: 1 }}>
                             {properties.keyframes
                                 .sort((a, b) => a.time - b.time)
                                 .map((keyframe, index) => (
-                                    <ListItem
+                                    <KeyframeListItem
                                         key={index}
-                                        sx={{
-                                            bgcolor: Math.abs(keyframe.time - currentTime) < 0.01 ? 'rgba(25, 118, 210, 0.1)' : 'transparent',
-                                            borderRadius: 1
-                                        }}
+                                        isactive={Math.abs(keyframe.time - currentTime) < 0.01 ? 'true' : 'false'}
                                     >
                                         <ListItemText
-                                            primary={`${formatTime(keyframe.time)}`}
-                                            secondary={`X: ${Math.round(keyframe.position.x)}, Y: ${Math.round(keyframe.position.y)}, Прозрачность: ${Math.round(keyframe.opacity * 100)}%`}
+                                            primary={
+                                                <Typography variant="body2" fontWeight={500} color={
+                                                    Math.abs(keyframe.time - currentTime) < 0.01
+                                                        ? PALETTE.primary.main
+                                                        : 'text.primary'
+                                                }>
+                                                    {formatTime(keyframe.time)}
+                                                </Typography>
+                                            }
+                                            secondary={
+                                                <Typography variant="caption" color="text.secondary">
+                                                    X: {Math.round(keyframe.position.x)}, Y: {Math.round(keyframe.position.y)},
+                                                    Прозрачность: {Math.round(keyframe.opacity * 100)}%
+                                                </Typography>
+                                            }
                                             sx={{ cursor: 'pointer' }}
                                             onClick={() => jumpToKeyframeTime(keyframe.time)}
                                         />
@@ -510,26 +781,38 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                                                 edge="end"
                                                 size="small"
                                                 onClick={() => deleteKeyframe(index)}
+                                                sx={{
+                                                    color: theme.palette.mode === 'dark'
+                                                        ? PALETTE.tertiary.light
+                                                        : PALETTE.tertiary.main,
+                                                }}
                                             >
                                                 <Delete fontSize="small" />
                                             </IconButton>
                                         </ListItemSecondaryAction>
-                                    </ListItem>
+                                    </KeyframeListItem>
                                 ))}
                         </List>
                     ) : (
-                        <Typography variant="body2" color="text.secondary">
-                            Нет ключевых кадров. Создайте первый ключевой кадр.
-                        </Typography>
+                        <Box sx={{
+                            textAlign: 'center',
+                            py: 2,
+                            backgroundColor: alpha(PALETTE.purpleGrey.main, 0.05),
+                            borderRadius: 1
+                        }}>
+                            <Typography variant="body2" color="text.secondary">
+                                Нет ключевых кадров. Создайте первый ключевой кадр.
+                            </Typography>
+                        </Box>
                     )}
                 </AccordionDetails>
-            </Accordion>
+            </StyledAccordion>
 
             {/* Element visibility timing */}
-            <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
+            <StyledAccordion>
+                <StyledAccordionSummary expandIcon={<ExpandMore />}>
                     <Typography>Время появления на сцене</Typography>
-                </AccordionSummary>
+                </StyledAccordionSummary>
                 <AccordionDetails>
                     <Grid container spacing={2}>
                         <Grid item xs={12}>
@@ -582,160 +865,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                         </Grid>
                     </Grid>
                 </AccordionDetails>
-            </Accordion>
-
-            {/* 3D Model accordion */}
-            <Accordion
-                sx={{ mt: 2 }}
-                defaultExpanded={false}
-            >
-                <AccordionSummary
-                    expandIcon={<ExpandMore />}
-                >
-                    <Typography variant="subtitle1">3D модель</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            {properties.modelPath ? (
-                                <>
-                                    <Typography variant="body2" gutterBottom>
-                                        Загружена 3D модель
-                                    </Typography>
-                                    <Box sx={{ mb: 2, width: '100%', height: '120px', display: 'flex', justifyContent: 'center', alignItems: 'center', bgcolor: '#f0f0f0', borderRadius: 1 }}>
-                                        <ThreeDRotation sx={{ fontSize: 60, color: 'rgba(0,0,0,0.4)' }} />
-                                    </Box>
-                                    <Typography variant="body2" color="text.secondary" gutterBottom noWrap>
-                                        {properties.modelPath.split('/').pop()}
-                                    </Typography>
-                                    <Button
-                                        variant="outlined"
-                                        color="error"
-                                        fullWidth
-                                        onClick={() => handlePropertyChange('modelPath', null)}
-                                    >
-                                        Удалить 3D модель
-                                    </Button>
-                                </>
-                            ) : (
-                                <>
-                                    <Typography variant="body2" gutterBottom>
-                                        Загрузите 3D модель (.glb, .gltf):
-                                    </Typography>
-                                    {properties.modelUploading ? (
-                                        <Box sx={{ width: '100%', mt: 2, mb: 2 }}>
-                                            <Typography variant="body2" gutterBottom>
-                                                Загрузка 3D модели...
-                                            </Typography>
-                                            <LinearProgress />
-                                        </Box>
-                                    ) : (
-                                        <>
-                                            <input
-                                                type="file"
-                                                accept=".glb,.gltf"
-                                                style={{ display: 'none' }}
-                                                id="model-upload"
-                                                onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file) {
-                                                        // Check file size
-                                                        const fileSizeMB = file.size / (1024 * 1024);
-                                                        if (fileSizeMB > 10) {
-                                                            alert(`Внимание: Файл размером ${fileSizeMB.toFixed(2)}MB может замедлить работу приложения.`);
-                                                        }
-
-                                                        // Show uploading state
-                                                        setProperties(prev => ({
-                                                            ...prev,
-                                                            modelUploading: true
-                                                        }));
-
-                                                        // Create form data for upload
-                                                        const formData = new FormData();
-                                                        formData.append('model', file);
-
-                                                        // Get API URL from environment or use default
-                                                        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
-                                                        // Upload file to server - using the correct endpoint
-                                                        fetch(`${API_URL}/models/upload`, {
-                                                            method: 'POST',
-                                                            body: formData,
-                                                            headers: {
-                                                                'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                                            }
-                                                        })
-                                                            .then(response => {
-                                                                if (!response.ok) {
-                                                                    throw new Error(`Ошибка загрузки: ${response.status}`);
-                                                                }
-                                                                return response.json();
-                                                            })
-                                                            .then(data => {
-                                                                console.log("Model upload response:", data);
-
-                                                                if (data.url || data.id) {
-                                                                    // Ensure we have a properly formatted URL
-                                                                    let modelPath = data.url;
-
-                                                                    // If the URL doesn't start with http or /, add /models/ prefix
-                                                                    if (!modelPath.startsWith('http') && !modelPath.startsWith('/')) {
-                                                                        modelPath = `/models/${modelPath}`;
-                                                                    } else if (modelPath.startsWith('/uploads/models/')) {
-                                                                        // Convert /uploads/models/ to /models/ format
-                                                                        const filename = modelPath.split('/').pop();
-                                                                        modelPath = `/models/${filename}`;
-                                                                    }
-
-                                                                    // Add cache-busting parameter
-                                                                    const modelPathWithCache = `${modelPath}?t=${Date.now()}`;
-                                                                    console.log("Setting model path to:", modelPathWithCache);
-
-                                                                    // Update the element with the model path
-                                                                    handlePropertyChange('modelPath', modelPathWithCache);
-
-                                                                    // Log success to help user track completion
-                                                                    console.log("3D model loaded and ready to use!");
-                                                                } else {
-                                                                    console.error("Server returned invalid response:", data);
-                                                                    alert('Ошибка загрузки модели: Неверный ответ сервера');
-                                                                }
-                                                            })
-                                                            .catch(error => {
-                                                                console.error('Error uploading model:', error);
-                                                                alert(`Ошибка при загрузке модели: ${error.message}`);
-                                                            })
-                                                            .finally(() => {
-                                                                // Clear uploading state
-                                                                setProperties(prev => ({
-                                                                    ...prev,
-                                                                    modelUploading: false
-                                                                }));
-                                                            });
-                                                    }
-                                                }}
-                                            />
-                                            <label htmlFor="model-upload">
-                                                <Button
-                                                    variant="contained"
-                                                    component="span"
-                                                    fullWidth
-                                                >
-                                                    Выбрать 3D модель
-                                                </Button>
-                                            </label>
-                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                                                Поддерживаются модели любого размера, включая тяжелые (более 10MB).
-                                            </Typography>
-                                        </>
-                                    )}
-                                </>
-                            )}
-                        </Grid>
-                    </Grid>
-                </AccordionDetails>
-            </Accordion>
+            </StyledAccordion>
         </Paper>
     );
 };

@@ -16,13 +16,60 @@ import ProjectConstructor from './pages/ProjectConstructor';
 import DebugPage from './pages/DebugPage';
 import ModelDebugPage from './pages/ModelDebugPage';
 
+// Define app colors
+export const COLORS = {
+    primary: '#8A2BE2',        // Фиолетовый (основной)
+    primaryLight: '#9D4EDD',   // Светло-фиолетовый
+    secondary: '#FF5722',      // Оранжевый
+    secondaryLight: '#FF7043', // Светло-оранжевый
+    tertiary: '#FF1493',       // Розовый
+    tertiaryLight: '#FF69B4',  // Светло-розовый
+    dark: '#0a0e24',           // Темный фон
+    darkLight: '#111536',      // Светлее темного фона
+    white: '#FFFFFF',          // Белый
+};
+
+// Add custom tertiary color to Material UI theme
 const theme = createTheme({
     palette: {
+        mode: 'dark',
         primary: {
-            main: '#1976d2',
+            main: COLORS.primary,
+            light: COLORS.primaryLight,
         },
         secondary: {
-            main: '#dc004e',
+            main: COLORS.secondary,
+            light: COLORS.secondaryLight,
+        },
+        tertiary: {
+            main: COLORS.tertiary,
+            light: COLORS.tertiaryLight,
+            contrastText: '#fff',
+        },
+        background: {
+            default: COLORS.dark,
+            paper: COLORS.darkLight,
+        },
+        text: {
+            primary: COLORS.white,
+            secondary: 'rgba(255, 255, 255, 0.7)',
+        },
+    },
+    typography: {
+        fontFamily: '"Inter", "Golos Text", sans-serif',
+    },
+    components: {
+        MuiChip: {
+            styleOverrides: {
+                root: {
+                    borderRadius: '8px',
+                },
+                // Add support for tertiary color in Chip component
+                colorTertiary: {
+                    backgroundColor: COLORS.tertiary,
+                    color: '#fff',
+                },
+            },
         },
     },
 });
