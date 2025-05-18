@@ -1,115 +1,44 @@
 # Dance Flow Platform
 
-A modern web application for choreographers and dancers to create, share, and perfect dance routines.
+Dance Flow — проект, разработанный для участия в конкурсе по разработке современных веб-платформ для хореографов и танцоров. Платформа позволяет создавать, анализировать и совершенствовать танцевальные номера с помощью 3D-анимации, видеоаналитики и командной работы.
 
-## Video Analyzer - Dancer Detection
+## Технологический стек
 
-The platform includes a video analyzer component that can detect dancers in video. The current implementation focuses on dancer detection in pause mode:
+- **Frontend:**
+  - React.js (18+)
+  - Material-UI (MUI)
+  - Three.js (3D-визуализация)
+  - @react-three/fiber, @react-three/drei
+  - Cypress (e2e тесты)
+  - Jest, React Testing Library (юнит- и интеграционные тесты)
+- **Сервер авторизации и API:**
+  - Go (микросервисы, REST API)
+  - MongoDB (база данных)
+  - Тесты: Go testing, Postman/Newman (API)
 
-1. Enter "Find Dancer" mode
-2. The video will automatically pause
-3. Click on the area where a dancer is located
-4. The system will outline the detected dancer
+## Работа тестов
 
-## Features
+В проекте реализовано комплексное тестирование всех ключевых компонентов:
 
-- Choreography Builder with 3D animation support
-- Team Management for collaboration
-- Video upload and processing
-- 3D model visualization
-- Access control and permissions
-- Dancer detection in videos
+- **Frontend (client):**
+  - Модульные и интеграционные тесты компонентов на Jest и React Testing Library (`client/`, `tests/jest/unit/`).
+  - End-to-end тесты пользовательских сценариев на Cypress (`tests/jest/e2e/`).
+  - Запуск: `cd client && npm test` (юнит/интеграция), Cypress — через отдельный runner.
 
-## Tech Stack
+- **Go-сервисы:**
+  - Модульные, интеграционные и e2e тесты с использованием стандартного пакета `testing` (`tests/go/`).
+  - Запуск: `cd tests/go && go test ./...`
 
-- Frontend: React.js with Material-UI
-- Backend: Python FastAPI with MediaPipe for pose detection
-- Database: MongoDB
-- 3D Visualization: Three.js
+- **API тесты:**
+  - Коллекции Postman для проверки REST API (`tests/postman/collections/`).
+  - Автоматизация через Newman: `cd tests/postman && newman run collections/api-tests.json`
 
-## Setup Instructions
+Подробнее о структуре и стандартах тестирования — в [tests/README.md](tests/README.md).
 
-### Prerequisites
+## Основные возможности
 
-- Node.js (v14 or higher)
-- Python 3.8+ with pip
-- MongoDB
-- npm or yarn
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone [repository-url]
-cd dance-flow
-```
-
-2. Install client dependencies:
-```bash
-cd client
-npm install
-cd ..
-```
-
-3. Install server dependencies:
-```bash
-cd server
-npm install
-cd ..
-```
-
-4. Install backend dependencies:
-```bash
-cd backend
-pip install -r requirements.txt
-cd ..
-```
-
-### Running the Application
-
-1. Start the backend (pose detection server):
-```bash
-cd backend
-python run_server.py
-```
-
-2. Start the server:
-```bash
-cd server
-npm run dev
-```
-
-3. Start the client:
-```bash
-cd client
-npm start
-```
-
-The application will be available at:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-
-## Project Structure
-
-```
-dance-flow/
-├── client/             # React frontend
-│   ├── src/
-│   │   ├── components/ # React components
-│   │   │   └── VideoAnalyzer.js  # Dancer detection UI
-│   │   └── ...
-├── server/             # Node.js server
-│   └── ...
-├── backend/            # Python backend for video analysis
-│   ├── video_analyzer/ # Pose detection module
-│   │   ├── __init__.py
-│   │   └── detector.py # Pose detection implementation
-│   ├── requirements.txt
-│   └── run_server.py   # Backend server launcher
-└── README.md
-```
-
-## Development
-
-- Frontend code is located in the `client` directory
-- Backend code is located in the `server`
+- Конструктор хореографий с поддержкой 3D-анимации
+- Совместная работа и управление командами
+- Загрузка и анализ видео
+- Визуализация 3D-моделей
+- Гибкая система прав доступа
