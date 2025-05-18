@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
     Container,
     Typography,
-    Button,
     CircularProgress,
     Alert,
     Box
 } from '@mui/material';
-import ProjectList from '../components/ProjectList';
 import Navbar from '../components/Navbar';
+import CanvasViewer from '../components/CanvasViewer';
 
 const ProjectsPage = () => {
     const [user, setUser] = useState(null);
@@ -71,15 +70,42 @@ const ProjectsPage = () => {
         );
     }
 
+    // Пример данных для CanvasViewer (замените на реальные)
+    const exampleElements = [
+        {
+            id: '1',
+            type: 'rectangle',
+            position: { x: 100, y: 100 },
+            size: { width: 120, height: 80 },
+            style: { backgroundColor: '#90caf9', borderColor: '#1976d2', borderWidth: 2, opacity: 1 },
+            keyframes: []
+        },
+        {
+            id: '2',
+            type: 'circle',
+            position: { x: 300, y: 200 },
+            size: { width: 80, height: 80 },
+            style: { backgroundColor: '#a5d6a7', borderColor: '#388e3c', borderWidth: 2, opacity: 1 },
+            keyframes: []
+        }
+    ];
+
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Navbar />
             <Box sx={{ flexGrow: 1, pt: 8 }}>
                 <Container maxWidth="lg">
                     <Typography variant="h4" sx={{ mb: 4 }}>
-                        My Projects
+                        My Projects (Viewer)
                     </Typography>
-                    <ProjectList />
+                    <Box sx={{ width: '100%', height: '70vh', border: '1px solid #eee', borderRadius: 2, overflow: 'hidden' }}>
+                        <CanvasViewer
+                            elements={exampleElements}
+                            currentTime={0}
+                            isPlaying={false}
+                            project={{}}
+                        />
+                    </Box>
                 </Container>
             </Box>
         </Box>

@@ -19,7 +19,7 @@ import {
 const ChoreographyList = ({ choreographies, onDelete }) => {
     const navigate = useNavigate();
 
-    // Helper to validate project IDs
+    // Валидация ID проекта
     const navigateToProject = (projectId, route) => {
         if (!projectId || projectId === 'undefined' || projectId === 'null') {
             console.error('Attempted to navigate with invalid project ID:', projectId);
@@ -41,7 +41,6 @@ const ChoreographyList = ({ choreographies, onDelete }) => {
     return (
         <List>
             {choreographies.map((choreography, index) => {
-                // Use _id for MongoDB documents, fall back to id, or use index as last resort
                 const uniqueKey = choreography._id || choreography.id || `choreography-${index}`;
 
                 return (

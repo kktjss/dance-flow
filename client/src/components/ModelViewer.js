@@ -20,6 +20,10 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         error: null
     });
 
+    // DIRECT OVERRIDE - Force a known working URL
+    const FORCE_MODEL_URL = `${window.location.origin}/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
+    console.log('XbotModel: FORCING DIRECT MODEL URL:', FORCE_MODEL_URL);
+
     const mixer = useRef(null);
     const lastTimeRef = useRef(null);
     const animationRef = useRef(null);
@@ -81,76 +85,40 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             isNull: glbAnimationUrl === null,
             isUndefined: glbAnimationUrl === undefined,
             isFalsy: !glbAnimationUrl,
-            stringValue: String(glbAnimationUrl)
+            stringValue: String(glbAnimationUrl),
+            forcedUrl: FORCE_MODEL_URL
         });
 
-        if (glbAnimationUrl) {
-            console.log('XbotModel: Loading custom GLB model from URL:', glbAnimationUrl);
-            console.log('XbotModel: Element details:', {
-                elementId: elementId || 'not provided',
-                hasKeyframes: elementKeyframes && elementKeyframes.length > 0,
-                keyframesCount: elementKeyframes ? elementKeyframes.length : 0
+        // DIRECTLY LOAD THE FORCED URL REGARDLESS OF INPUT
+        console.log('XbotModel: BYPASSING normal URL and loading forced URL:', FORCE_MODEL_URL);
+        setIsLoading(true);
+        setLoadingError(null);
+
+        // Send direct fetch request to check if the URL is accessible
+        fetch(FORCE_MODEL_URL, { method: 'HEAD' })
+            .then(response => {
+                console.log('XbotModel: HEAD request result for forced URL:', {
+                    status: response.status,
+                    ok: response.ok,
+                    statusText: response.statusText,
+                    url: FORCE_MODEL_URL
+                });
+
+                if (response.ok) {
+                    console.log('XbotModel: Forced URL is accessible, loading model');
+                    loadModelFromUrl(FORCE_MODEL_URL);
+                } else {
+                    console.error('XbotModel: Forced URL is not accessible, status:', response.status);
+                    // Try direct loading anyway
+                    loadModelFromUrl(FORCE_MODEL_URL);
+                }
+            })
+            .catch(error => {
+                console.error('XbotModel: Error checking forced URL accessibility:', error);
+                // Try direct loading anyway
+                loadModelFromUrl(FORCE_MODEL_URL);
             });
 
-            setIsLoading(true);
-            setLoadingError(null);
-            setDebugInfo(prev => ({
-                ...prev,
-                modelUrl: glbAnimationUrl,
-                modelLoaded: false,
-                error: null
-            }));
-
-            // Improved URL processing logic
-            let processedUrl = glbAnimationUrl;
-
-            // Handle relative URLs
-            if (processedUrl && !processedUrl.startsWith('blob:') && !processedUrl.startsWith('http')) {
-                // Ensure URL starts with /
-                if (!processedUrl.startsWith('/')) {
-                    processedUrl = '/' + processedUrl;
-                }
-
-                // Convert to absolute URL if it's a relative path
-                if (!processedUrl.includes('://')) {
-                    processedUrl = `${window.location.origin}${processedUrl}`;
-                }
-            }
-
-            console.log('XbotModel: Processed URL for loading:', processedUrl);
-            console.log('XbotModel: Current origin:', window.location.origin);
-
-            // First check if the URL is accessible
-            fetch(processedUrl, { method: 'HEAD' })
-                .then(response => {
-                    if (response.ok) {
-                        console.log('XbotModel: URL is accessible:', processedUrl);
-                        loadModelFromUrl(processedUrl);
-                    } else {
-                        console.error('XbotModel: URL is not accessible:', processedUrl, 'Status:', response.status);
-
-                        // Try alternative URL formats
-                        if (processedUrl.includes('/uploads/models/')) {
-                            const filename = processedUrl.split('/').pop();
-                            const alternativeUrl = `${window.location.origin}/models/${filename}`;
-                            console.log('XbotModel: Trying alternative URL:', alternativeUrl);
-                            loadModelFromUrl(alternativeUrl);
-                        } else {
-                            // Try direct loading anyway
-                            loadModelFromUrl(processedUrl);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('XbotModel: Error checking URL accessibility:', error);
-                    // Try direct loading anyway
-                    loadModelFromUrl(processedUrl);
-                });
-        } else {
-            console.log('XbotModel: No GLB URL provided');
-            setIsLoading(false);
-            setLoadingError('No 3D model URL provided');
-        }
     }, [glbAnimationUrl, onModelLoad, elementId, elementKeyframes]);
 
     // Helper function to load model from URL
@@ -159,6 +127,33 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
         // Track load start time
         const loadStartTime = Date.now();
+
+        // Log network request directly
+        console.log(`XbotModel: Sending direct fetch GET request to ${url}`);
+
+        // Make a direct fetch GET request to explicitly check if the model is accessible
+        fetch(url)
+            .then(response => {
+                console.log('XbotModel: Fetch response:', {
+                    status: response.status,
+                    ok: response.ok,
+                    type: response.type,
+                    url: response.url
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Model fetch failed with status ${response.status}`);
+                }
+
+                return response.blob();
+            })
+            .then(blob => {
+                console.log('XbotModel: Model fetched successfully, blob size:', blob.size);
+                // If we got the blob, we know the URL is accessible
+            })
+            .catch(error => {
+                console.error('XbotModel: Direct fetch test failed:', error);
+            });
 
         new GLTFLoader()
             .load(
@@ -177,7 +172,9 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         ...prev,
                         modelLoaded: true,
                         animationsCount: gltf.animations ? gltf.animations.length : 0,
-                        modelScene: !!gltf.scene
+                        modelScene: !!gltf.scene,
+                        loadUrl: url,
+                        loadSuccess: true
                     }));
 
                     // Pass animations to parent if available
@@ -192,56 +189,64 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     // Progress callback
                     const percentComplete = progress.loaded / progress.total * 100;
                     console.log(`XbotModel: Loading progress: ${percentComplete.toFixed(2)}%`);
+
+                    // Update debug info with progress
+                    setDebugInfo(prev => ({
+                        ...prev,
+                        loadProgress: percentComplete,
+                        loadUrl: url
+                    }));
                 },
                 (error) => {
                     // Error callback
                     console.error('XbotModel: Error loading GLB model:', error);
                     console.error('XbotModel: Failed URL was:', url);
 
-                    // Try with a fallback URL if the error is a 404
-                    if (error.message.includes('404') || error.message.includes('load')) {
-                        console.log('XbotModel: Trying fallback URL: /uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb');
-                        const fallbackUrl = `${window.location.origin}/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
+                    // Update debug info with error
+                    setDebugInfo(prev => ({
+                        ...prev,
+                        error: error.message,
+                        loadUrl: url,
+                        loadSuccess: false
+                    }));
 
-                        new GLTFLoader().load(
-                            fallbackUrl,
-                            (gltf) => {
-                                console.log('XbotModel: Fallback model loaded successfully');
-                                setCustomModel({ scene: gltf.scene, animations: gltf.animations });
-                                setDebugInfo(prev => ({
-                                    ...prev,
-                                    modelLoaded: true,
-                                    animationsCount: gltf.animations ? gltf.animations.length : 0,
-                                    modelScene: !!gltf.scene,
-                                    fallbackUsed: true
-                                }));
-                                if (onModelLoad && gltf.animations) {
-                                    onModelLoad(gltf.animations);
-                                }
-                                setIsLoading(false);
-                            },
-                            null,
-                            (fallbackError) => {
-                                console.error('XbotModel: Error loading fallback GLB model:', fallbackError);
-                                setLoadingError(`Ошибка загрузки модели: ${error.message}. Также не удалось загрузить запасную модель.`);
-                                setDebugInfo(prev => ({
-                                    ...prev,
-                                    error: error.message + ' + fallback failed',
-                                    modelLoaded: false
-                                }));
-                                setIsLoading(false);
+                    // Use a simpler fallback URL as a last resort
+                    const simpleUrl = `/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
+                    console.log(`XbotModel: Trying one last fallback URL: ${simpleUrl}`);
+
+                    new GLTFLoader().load(
+                        simpleUrl,
+                        (gltf) => {
+                            console.log('XbotModel: Fallback model loaded successfully');
+                            setCustomModel({ scene: gltf.scene, animations: gltf.animations });
+                            setDebugInfo(prev => ({
+                                ...prev,
+                                modelLoaded: true,
+                                animationsCount: gltf.animations ? gltf.animations.length : 0,
+                                modelScene: !!gltf.scene,
+                                fallbackUsed: true,
+                                loadUrl: simpleUrl,
+                                loadSuccess: true
+                            }));
+                            if (onModelLoad && gltf.animations) {
+                                onModelLoad(gltf.animations);
                             }
-                        );
-                    } else {
-                        // Set error message for non-404 errors
-                        setLoadingError(`Ошибка загрузки модели: ${error.message}`);
-                        setDebugInfo(prev => ({
-                            ...prev,
-                            error: error.message,
-                            modelLoaded: false
-                        }));
-                        setIsLoading(false);
-                    }
+                            setIsLoading(false);
+                        },
+                        null,
+                        (fallbackError) => {
+                            console.error('XbotModel: Error loading fallback GLB model:', fallbackError);
+                            setLoadingError(`Ошибка загрузки модели: ${error.message}. Также не удалось загрузить запасную модель.`);
+                            setDebugInfo(prev => ({
+                                ...prev,
+                                error: error.message + ' + fallback failed',
+                                modelLoaded: false,
+                                fallbackUrl: simpleUrl,
+                                loadSuccess: false
+                            }));
+                            setIsLoading(false);
+                        }
+                    );
                 }
             );
     }, [onModelLoad]);
@@ -627,12 +632,44 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
             {/* Debug information overlay */}
             <Html position={[0, -2.5, 0]}>
-                <div style={{ color: 'white', backgroundColor: 'rgba(0,0,0,0.7)', padding: '5px', borderRadius: '4px', fontSize: '10px' }}>
-                    <div>Model URL: {debugInfo.modelUrl ? (debugInfo.modelUrl.length > 30 ? `...${debugInfo.modelUrl.slice(-30)}` : debugInfo.modelUrl) : 'None'}</div>
-                    <div>Loaded: {debugInfo.modelLoaded ? 'Yes' : 'No'}</div>
+                <div style={{
+                    color: 'white',
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: '10px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    width: '300px',
+                    maxHeight: '200px',
+                    overflow: 'auto'
+                }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Model Debug Info:</div>
+                    <div>URL: {debugInfo.loadUrl || debugInfo.modelUrl || 'None'}</div>
+                    <div>Loaded: {debugInfo.modelLoaded ? '✓ Yes' : '✗ No'}</div>
                     <div>Animations: {debugInfo.animationsCount}</div>
-                    <div>Scene: {debugInfo.modelScene ? 'Yes' : 'No'}</div>
+                    <div>Scene: {debugInfo.modelScene ? '✓ Yes' : '✗ No'}</div>
+                    <div>Fallback: {debugInfo.fallbackUsed ? '✓ Yes' : '✗ No'}</div>
+                    <div>Origin: {window.location.origin}</div>
+                    {debugInfo.loadProgress && <div>Load Progress: {debugInfo.loadProgress.toFixed(0)}%</div>}
                     {debugInfo.error && <div style={{ color: 'red' }}>Error: {debugInfo.error}</div>}
+                    <button
+                        style={{
+                            marginTop: '10px',
+                            background: '#4CAF50',
+                            color: 'white',
+                            border: 'none',
+                            padding: '5px 10px',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}
+                        onClick={() => {
+                            // Reload with the fallback URL
+                            const fallbackUrl = `/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
+                            console.log('Manual reload with fallback URL:', fallbackUrl);
+                            loadModelFromUrl(fallbackUrl);
+                        }}
+                    >
+                        Reload with Fallback
+                    </button>
                 </div>
             </Html>
 
@@ -2324,57 +2361,40 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
 
     // Make sure we're using the correct URL by checking multiple sources
     const findModelUrlInElement = () => {
-        // First, check if the element itself is passed with modelPath
-        if (elementId && elementKeyframes) {
-            console.log('ModelViewer: findModelUrlInElement - elementId:', elementId);
-            console.log('ModelViewer: findModelUrlInElement - elementKeyframes:',
-                elementKeyframes.map(kf => ({
-                    id: kf.id || 'none',
-                    elementId: kf.elementId || 'none',
-                    modelPath: kf.modelPath || 'none'
-                }))
-            );
+        if (!elementId || !elementKeyframes || elementKeyframes.length === 0) {
+            console.log('ModelViewer: findModelUrlInElement - No element data available');
+            return null;
+        }
 
-            // Check direct keyframes match
-            const directMatch = elementKeyframes.find(kf =>
-                (kf.id === elementId || kf.elementId === elementId)
-            );
+        // Try to find the element in keyframes
+        const element = elementKeyframes.find(el => el.id === elementId || el.elementId === elementId);
 
-            if (directMatch) {
-                console.log('ModelViewer: Direct element match found:', directMatch);
-                // Check if this element has a modelPath
-                if (directMatch.modelPath) {
-                    console.log('ModelViewer: Using modelPath from direct element match:', directMatch.modelPath);
-                    return directMatch.modelPath;
-                }
+        if (!element) {
+            console.log('ModelViewer: findModelUrlInElement - Element not found in keyframes:', elementId);
+            return null;
+        }
 
-                // Check for modelUrl property
-                if (directMatch.modelUrl) {
-                    console.log('ModelViewer: Using modelUrl from direct element match:', directMatch.modelUrl);
-                    return directMatch.modelUrl;
-                }
-            } else {
-                // If no direct match, check if the element itself is in the keyframes array
-                console.log('ModelViewer: No direct match found, checking if element itself is in keyframes array');
+        console.log('ModelViewer: findModelUrlInElement - Element found:', element);
 
-                // Check if the first keyframe has a modelPath (might be the element itself)
-                if (elementKeyframes.length > 0) {
-                    const firstKeyframe = elementKeyframes[0];
-                    console.log('ModelViewer: Checking first keyframe:', firstKeyframe);
+        // Check the various possible properties for model URL
+        const modelUrl = element.modelUrl || element.modelPath || element.glbUrl || element.model3dUrl;
 
-                    if (firstKeyframe.modelPath) {
-                        console.log('ModelViewer: Using modelPath from first keyframe:', firstKeyframe.modelPath);
-                        return firstKeyframe.modelPath;
-                    }
+        if (modelUrl) {
+            console.log('ModelViewer: findModelUrlInElement - Found model URL:', modelUrl);
+            return modelUrl;
+        }
 
-                    if (firstKeyframe.modelUrl) {
-                        console.log('ModelViewer: Using modelUrl from first keyframe:', firstKeyframe.modelUrl);
-                        return firstKeyframe.modelUrl;
-                    }
-                }
+        // If no direct URL, check in keyframes
+        if (element.keyframes && element.keyframes.length > 0) {
+            const keyframeWithModel = element.keyframes.find(kf => kf.modelPath || kf.modelUrl || kf.glbUrl || kf.model3dUrl);
+            if (keyframeWithModel) {
+                const kfModelUrl = keyframeWithModel.modelPath || keyframeWithModel.modelUrl || keyframeWithModel.glbUrl || keyframeWithModel.model3dUrl;
+                console.log('ModelViewer: findModelUrlInElement - Found model URL in keyframe:', kfModelUrl);
+                return kfModelUrl;
             }
         }
 
+        console.log('ModelViewer: findModelUrlInElement - No model URL found for element:', elementId);
         return null;
     };
 
@@ -2483,14 +2503,24 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             effectiveModelUrl: effectiveModelUrl || 'none'
         });
 
+        // OVERRIDE: For standalone 3D model viewing, if we have a model URL (effectiveModelUrl), 
+        // always display the model regardless of other conditions
+        if (effectiveModelUrl) {
+            console.log('ModelViewer: Forcing model display because effectiveModelUrl exists:', effectiveModelUrl);
+            return true;
+        }
+
         // Если есть elementId, ищем модель в ключевых кадрах
         if (elementId && elementKeyframes && elementKeyframes.length > 0) {
             console.log(`ModelViewer: Looking for model in keyframes for element ${elementId}`);
 
-            // Ищем первый ключевой кадр с modelPath
-            const keyframeWithModel = elementKeyframes.find(kf => kf.modelPath);
+            // Ищем первый ключевой кадр с modelPath или любой URL
+            const keyframeWithModel = elementKeyframes.find(kf =>
+                kf.modelPath || kf.modelUrl || kf.glbUrl || kf.model3dUrl
+            );
+
             if (keyframeWithModel) {
-                console.log(`ModelViewer: Found keyframe with modelPath: ${keyframeWithModel.modelPath}`);
+                console.log(`ModelViewer: Found keyframe with model URL:`, keyframeWithModel);
                 return true;
             }
 
@@ -2499,17 +2529,25 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             if (element) {
                 console.log(`ModelViewer: Found element in keyframes with ID: ${elementId}`, {
                     hasModelPath: !!element.modelPath,
-                    modelPath: element.modelPath || 'none'
+                    modelPath: element.modelPath || 'none',
+                    hasModelUrl: !!element.modelUrl,
+                    modelUrl: element.modelUrl || 'none'
                 });
             }
 
-            // Показываем модель, только если у элемента есть modelPath
-            if (element && element.modelPath) {
-                console.log(`ModelViewer: Element ${elementId} has modelPath: ${element.modelPath}`);
+            // Показываем модель, если у элемента есть modelPath или modelUrl
+            if (element && (element.modelPath || element.modelUrl || element.glbUrl || element.model3dUrl)) {
+                console.log(`ModelViewer: Element ${elementId} has a model URL`);
                 return true;
             }
 
-            console.log(`ModelViewer: Element ${elementId} does not have modelPath`);
+            console.log(`ModelViewer: Element ${elementId} does not have any model URL`);
+            // Return true anyway if we have glbAnimationUrl
+            if (glbAnimationUrl) {
+                console.log(`ModelViewer: But we have glbAnimationUrl, so showing model anyway:`, glbAnimationUrl);
+                return true;
+            }
+
             return false;
         }
 
@@ -2639,7 +2677,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    {/* GLB Upload Button */}
+                    {/* Commented out GLB Upload Button 
                     <Button
                         variant="outlined"
                         size="small"
@@ -2656,6 +2694,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     >
                         Загрузить модель
                     </Button>
+                    */}
 
                     {/* Close button for fullscreen mode */}
                     {!embedded && (
@@ -2680,12 +2719,11 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 flexDirection: { xs: 'column', md: 'row' },
                 height: embedded ? 'calc(100% - 60px)' : 'calc(100vh - 60px)' // Adjust for header height
             }}>
-                {/* Main viewer area */}
+                {/* Main viewer area - now takes full width */}
                 <Box sx={{
-                    flex: embedded ? '1' : '3', // Larger proportion in full-screen mode
+                    flex: '1', // Take full available space
                     position: 'relative',
                     bgcolor: '#050714',
-                    borderRight: { xs: 'none', md: '1px solid rgba(255, 255, 255, 0.05)' },
                     minHeight: embedded ? 'auto' : '70vh', // Minimum height when in full screen
                 }}>
                     {/* 3D model canvas */}
@@ -2731,6 +2769,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                                         <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 3 }}>
                                             Загрузите новую 3D модель или выберите существующую из списка доступных моделей
                                         </Typography>
+                                        {/* Commented out upload model button
                                         <Button
                                             variant="contained"
                                             startIcon={<Upload />}
@@ -2745,6 +2784,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                                         >
                                             Загрузить новую модель
                                         </Button>
+                                        */}
                                     </Box>
                                 )}
                             </Box>
@@ -2803,7 +2843,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     </Box>
                 </Box>
 
-                {/* Animation controls panel */}
+                {/* Commented out animation controls panel - removing to give full space to model viewer
                 <Box sx={{
                     width: { xs: '100%', md: embedded ? '300px' : '350px' }, // Wider in fullscreen
                     height: { xs: '300px', md: '100%' },
@@ -2831,109 +2871,17 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                             }
                         }}
                     >
-                        <Tab label="Анимации" />
-                        <Tab label="Настройки" />
                     </Tabs>
 
                     <Box sx={{ p: 2, flex: 1, overflow: 'auto' }}>
-                        {tabIndex === 0 && (
-                            <AnimationManager
-                                animations={animations}
-                                activeAnimations={activeAnimations}
-                                onAnimationsChange={handleAnimationsChange}
-                            />
-                        )}
-
-                        {tabIndex === 1 && (
-                            <Box>
-                                <Typography variant="subtitle1" sx={{ color: 'white', mb: 2 }}>
-                                    Управление моделью
-                                </Typography>
-
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<Save />}
-                                    fullWidth
-                                    onClick={handleSaveModel}
-                                    sx={{
-                                        mb: 2,
-                                        borderColor: '#6A3AFF',
-                                        color: '#6A3AFF',
-                                        '&:hover': {
-                                            borderColor: '#9C6AFF',
-                                            backgroundColor: 'rgba(106, 58, 255, 0.05)'
-                                        }
-                                    }}
-                                >
-                                    Сохранить настройки
-                                </Button>
-
-                                <Box sx={{
-                                    p: 2,
-                                    borderRadius: '8px',
-                                    backgroundColor: 'rgba(5, 7, 20, 0.5)',
-                                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                                    mb: 2
-                                }}>
-                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
-                                        Текущая модель:
-                                    </Typography>
-                                    <Typography variant="body2" sx={{
-                                        color: 'white',
-                                        wordBreak: 'break-all',
-                                        fontSize: '0.8rem',
-                                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                                        p: 1,
-                                        borderRadius: '4px',
-                                        fontFamily: 'monospace'
-                                    }}>
-                                        {glbUrl || 'Не выбрана'}
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        )}
                     </Box>
-
-                    {/* Bottom action buttons */}
-                    <Box sx={{
-                        p: 2,
-                        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                        display: 'flex',
-                        justifyContent: 'space-between'
-                    }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={handleSaveModelWithAnimation}
-                            disabled={!glbUrl}
-                            sx={{
-                                backgroundColor: '#6A3AFF',
-                                '&:hover': {
-                                    backgroundColor: '#4316DB'
-                                },
-                                flex: 1,
-                                mr: 1
-                            }}
-                        >
-                            Сохранить
-                        </Button>
-
-                        <Button
-                            variant="outlined"
-                            onClick={closeViewerWithoutSaving}
-                            sx={{
-                                borderColor: 'rgba(255, 255, 255, 0.3)',
-                                color: 'rgba(255, 255, 255, 0.9)',
-                                '&:hover': {
-                                    borderColor: 'rgba(255, 255, 255, 0.5)',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.05)'
-                                }
-                            }}
-                        >
-                            Отмена
-                        </Button>
+                    <Box sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
+                        <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                            Просмотр 3D модели
+                        </Typography>
                     </Box>
                 </Box>
+                */}
             </Box>
 
             {/* Upload GLB model dialog */}

@@ -80,7 +80,7 @@ const FloatingIcon = styled(Box)(({ theme, delay = 0 }) => ({
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
     borderRadius: '20px',
-    backgroundColor: 'rgba(21, 25, 50, 0.95)',
+    backgroundColor: 'rgba(17, 21, 54, 0.9)',
     boxShadow: `0 10px 30px rgba(0, 0, 0, 0.4)`,
     border: '1px solid rgba(138, 43, 226, 0.2)',
     position: 'relative',
@@ -115,7 +115,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
 
 const FeatureCard = styled(Card)(({ theme, index }) => ({
     borderRadius: '16px',
-    backgroundColor: 'rgba(32, 38, 52, 0.8)',
+    backgroundColor: 'rgba(17, 21, 54, 0.9)',
     border: '1px solid rgba(30, 144, 255, 0.15)',
     position: 'relative',
     overflow: 'hidden',
@@ -163,7 +163,7 @@ const FeatureIcon = styled(Box)(({ theme }) => ({
 const UserInfoCard = styled(Box)(({ theme }) => ({
     padding: theme.spacing(4),
     borderRadius: '20px',
-    backgroundColor: 'rgba(32, 38, 52, 0.8)',
+    backgroundColor: 'rgba(17, 21, 54, 0.9)',
     border: '1px solid rgba(30, 144, 255, 0.15)',
     display: 'flex',
     flexDirection: 'column',
@@ -276,7 +276,7 @@ function AuthHome() {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
-            background: `linear-gradient(135deg, #121620 0%, #1e2940 100%)`,
+            background: `linear-gradient(135deg, #0a0e24 0%, #111536 100%)`,
             position: 'relative',
         }}>
             {/* Decorative elements */}

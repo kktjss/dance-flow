@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Container, Typography, CircularProgress, Alert, Paper, Button, ButtonGroup, IconButton } from '@mui/material';
+import { Box, Container, Typography, CircularProgress, Alert, Paper, Button, ButtonGroup, IconButton, useTheme, Dialog } from '@mui/material';
 import { ThreeDRotation, Videocam, Close } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -9,6 +9,7 @@ import Player from '../components/Player';
 import Canvas from '../components/Canvas';
 import Navbar from '../components/Navbar';
 import CombinedViewer from '../components/CombinedViewer';
+import VideoViewer from '../components/VideoViewer';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -28,7 +29,11 @@ const normalizeElements = (elements) => {
             zIndex: 0
         },
         content: '',
-        keyframes: []
+        keyframes: [],
+        modelUrl: null,
+        modelPath: null,
+        glbUrl: null,
+        model3dUrl: null
     };
 
     if (!elements || !Array.isArray(elements)) {
@@ -68,7 +73,11 @@ const normalizeElements = (elements) => {
                 size: { width: 100, height: 100 },
                 style: { opacity: 1, backgroundColor: '#cccccc' },
                 content: '',
-                keyframes: []
+                keyframes: [],
+                modelUrl: null,
+                modelPath: null,
+                glbUrl: null,
+                model3dUrl: null
             };
         }
 
@@ -106,7 +115,12 @@ const normalizeElements = (elements) => {
             size: el.size || { width: 100, height: 100 },
             style: el.style || { opacity: 1, backgroundColor: '#cccccc' },
             content: el.content || '',
-            keyframes: el.keyframes || []
+            keyframes: el.keyframes || [],
+            // Preserve 3D model properties
+            modelUrl: el.modelUrl || null,
+            modelPath: el.modelPath || null,
+            glbUrl: el.glbUrl || null,
+            model3dUrl: el.model3dUrl || null
         };
 
         // Проверяем и исправляем позицию
@@ -145,6 +159,118 @@ const normalizeElements = (elements) => {
     return validElements;
 };
 
+// Define a standalone model viewer modal component
+const ModelViewerModal = ({ isOpen, onClose, elementId, modelUrl, elementKeyframes, videoUrl }) => {
+    console.log('ModelViewerModal render:', { isOpen, elementId, modelUrl });
+
+    // Create enhanced keyframes with modelPath
+    const enhancedKeyframes = React.useMemo(() => {
+        // Start with existing keyframes or empty array
+        const baseKeyframes = elementKeyframes || [];
+
+        // Extract filename from modelUrl
+        let filename = null;
+        if (modelUrl) {
+            const parts = modelUrl.split('/');
+            filename = parts[parts.length - 1];
+        }
+
+        // Create a direct element with modelPath to ensure it renders
+        const directElement = {
+            id: elementId,
+            elementId: elementId,
+            modelPath: modelUrl, // Use the full original path
+            // Also include common alternate properties used by different components
+            modelUrl: modelUrl,
+            glbUrl: modelUrl,
+            model3dUrl: modelUrl,
+            // Include basic required properties
+            type: '3d',
+            position: { x: 0, y: 0 },
+            size: { width: 100, height: 100 },
+            style: { opacity: 1 },
+            // Add a keyframe to make it visible
+            keyframes: [
+                {
+                    time: 0,
+                    position: { x: 0, y: 0 },
+                    opacity: 1,
+                    scale: 1,
+                    modelPath: modelUrl
+                }
+            ]
+        };
+
+        // Add our element to the keyframes array
+        const newKeyframes = [directElement, ...baseKeyframes];
+
+        console.log('Enhanced keyframes for 3D model:', newKeyframes);
+        return newKeyframes;
+    }, [elementId, modelUrl, elementKeyframes]);
+
+    // Ensure we always have a default model URL
+    const effectiveModelUrl = modelUrl || '/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
+
+    // Log additional debug info
+    console.log('ModelViewerModal detailed props:', {
+        isOpen,
+        elementId,
+        modelUrl,
+        effectiveModelUrl,
+        hasKeyframes: elementKeyframes && elementKeyframes.length > 0,
+        keyframesCount: elementKeyframes ? elementKeyframes.length : 0,
+        enhancedKeyframesCount: enhancedKeyframes.length
+    });
+
+    if (!isOpen) return null;
+
+    return (
+        <Box
+            sx={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 2000,
+                backgroundColor: 'rgba(0, 0, 0, 0.85)'
+            }}
+        >
+            {/* Close button in top-right corner */}
+            <IconButton
+                onClick={onClose}
+                sx={{
+                    position: 'absolute',
+                    top: 20,
+                    right: 20,
+                    zIndex: 2100,
+                    color: 'white',
+                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                    '&:hover': {
+                        backgroundColor: 'rgba(106, 58, 255, 0.4)'
+                    }
+                }}
+            >
+                <Close />
+            </IconButton>
+
+            <CombinedViewer
+                isVisible={true}
+                onClose={onClose}
+                videoUrl={videoUrl}
+                elementKeyframes={enhancedKeyframes}
+                elementId={elementId || "default-element"}
+                modelUrl={effectiveModelUrl}
+                selectedModelUrl={effectiveModelUrl}
+                glbAnimationUrl={effectiveModelUrl}
+                embedded={false}
+                debug={true}
+                forceDisplayModel={true}
+            />
+        </Box>
+    );
+};
+
 const ProjectViewPage = () => {
     // State for project data
     const [project, setProject] = useState({
@@ -166,8 +292,14 @@ const ProjectViewPage = () => {
     const [showCombinedViewer, setShowCombinedViewer] = useState(false);
     const animationRef = useRef(null);
     const lastTimeRef = useRef(null);
+    const [view3DMode, setView3DMode] = useState(false); // New state for 3D viewer
+    const [model3dUrl, setModel3dUrl] = useState('/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb'); // New state for model URL
+    const [modelDialogOpen, setModelDialogOpen] = useState(false);
+    const [selectedModelUrl, setSelectedModelUrl] = useState(null);
 
     const { projectId } = useParams();
+
+    const theme = useTheme();
 
     // Load project on mount
     useEffect(() => {
@@ -299,6 +431,15 @@ const ProjectViewPage = () => {
         setIsPlaying(playing);
     };
 
+    // Handle duration change from Player
+    const handleDurationChange = (newDuration) => {
+        console.log('ProjectViewPage: Duration changed to:', newDuration);
+        setProject(prev => ({
+            ...prev,
+            duration: newDuration
+        }));
+    };
+
     // Show Combined Viewer
     const handleShowCombinedViewer = () => {
         setShowCombinedViewer(true);
@@ -316,10 +457,14 @@ const ProjectViewPage = () => {
 
     // Switch viewer mode
     const handleModeChange = (mode) => {
+        console.log('Changing viewer mode to:', mode);
         setViewerMode(mode);
 
-        if (mode === '3d' || mode === 'video') {
-            handleShowCombinedViewer();
+        // Don't show CombinedViewer for video mode
+        // Instead, we'll render VideoViewer directly in the content area
+        if (mode === 'video') {
+            console.log('Video URL:', videoUrl);
+            // Don't call handleShowCombinedViewer() here anymore
         }
     };
 
@@ -347,7 +492,164 @@ const ProjectViewPage = () => {
     // Handle element selection
     const handleElementSelect = (element) => {
         console.log('Element selected:', element);
+
+        // Debug full element content to find any 3D model properties
+        if (element) {
+            console.log('Full element data:', JSON.stringify(element, null, 2));
+        }
+
         setSelectedElement(element);
+
+        // If element is selected, briefly display a message to inform user
+        if (element) {
+            // Using browser's native toast functionality for simplicity
+            const toast = document.createElement('div');
+            toast.textContent = `Выбран элемент: ${element.id}`;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = '#4caf50';
+            toast.style.color = 'white';
+            toast.style.padding = '10px 20px';
+            toast.style.borderRadius = '4px';
+            toast.style.zIndex = '1000';
+            toast.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            document.body.appendChild(toast);
+
+            // Remove the toast after 2 seconds
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 2000);
+        }
+    };
+
+    // Check if element has a 3D model
+    const has3DModel = (element) => {
+        if (!element) {
+            console.log('Element is null or undefined');
+            return false;
+        }
+
+        // Check if the element has any 3D model properties
+        if (element.modelUrl || element.modelPath || element.glbUrl || element.model3dUrl) {
+            console.log('Element has 3D model properties:', {
+                modelUrl: element.modelUrl,
+                modelPath: element.modelPath,
+                glbUrl: element.glbUrl,
+                model3dUrl: element.model3dUrl
+            });
+            return true;
+        }
+
+        // Check if the element type is '3d'
+        if (element.type === '3d' || element.is3d) {
+            console.log('Element has 3D type');
+            return true;
+        }
+
+        // Check the original project elements for this ID
+        if (project && project.elements) {
+            const originalElement = project.elements.find(el =>
+                el.id === element.id || el._id === element.id);
+
+            if (originalElement) {
+                if (originalElement.modelUrl || originalElement.modelPath ||
+                    originalElement.glbUrl || originalElement.model3dUrl ||
+                    originalElement.type === '3d' || originalElement.is3d) {
+                    console.log('Found 3D model in original project element');
+                    return true;
+                }
+            }
+        }
+
+        console.log('Element does not have a 3D model');
+        return false;
+    };
+
+    // NEW: Handle opening the 3D model dialog
+    const handleOpen3DDialog = () => {
+        console.log('Opening 3D dialog for element:', selectedElement);
+
+        if (!selectedElement) {
+            console.error('No element selected');
+            return;
+        }
+
+        try {
+            // Get raw model URLs directly from the element properties
+            const modelUrl = selectedElement.modelUrl || null;
+            const modelPath = selectedElement.modelPath || null;
+
+            console.log('Raw model URLs:', { modelUrl, modelPath });
+
+            // Choose the most appropriate URL with a clear priority order
+            // IMPORTANT: We want to PRESERVE the original URL format
+            let effectiveUrl = null;
+
+            // First prefer modelPath if it exists (keep original format)
+            if (modelPath) {
+                effectiveUrl = modelPath;
+                console.log('Using modelPath as is:', effectiveUrl);
+            }
+            // Then try modelUrl (keep original format) 
+            else if (modelUrl) {
+                effectiveUrl = modelUrl;  // Keep the FULL URL including server part
+                console.log('Using modelUrl as is:', effectiveUrl);
+            }
+            // Fallback to other properties or default
+            else {
+                effectiveUrl = selectedElement.glbUrl ||
+                    selectedElement.model3dUrl ||
+                    '/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
+                console.log('Using fallback URL:', effectiveUrl);
+            }
+
+            console.log('Final model URL for 3D view:', effectiveUrl);
+
+            // Set the model URL and open the dialog
+            setSelectedModelUrl(effectiveUrl);
+            setModelDialogOpen(true);
+
+            // Log the complete set of data for debugging
+            console.log('ModelViewerModal receiving:', {
+                isOpen: true,
+                elementId: selectedElement.id,
+                modelUrl: effectiveUrl,
+                hasKeyframes: selectedElement.keyframes && selectedElement.keyframes.length > 0,
+                keyframesCount: selectedElement.keyframes ? selectedElement.keyframes.length : 0,
+                elementKeyframes: selectedElement.keyframes || []
+            });
+
+        } catch (err) {
+            console.error('Error preparing 3D model:', err);
+
+            // Show an error notification
+            const toast = document.createElement('div');
+            toast.textContent = `Ошибка загрузки 3D модели: ${err.message}`;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = '#f44336';
+            toast.style.color = 'white';
+            toast.style.padding = '10px 20px';
+            toast.style.borderRadius = '4px';
+            toast.style.zIndex = '1000';
+            toast.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            document.body.appendChild(toast);
+
+            // Remove the toast after 3 seconds
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        }
+    };
+
+    // NEW: Handle closing the 3D model dialog
+    const handleClose3DDialog = () => {
+        console.log('Closing 3D dialog');
+        setModelDialogOpen(false);
     };
 
     return (
@@ -381,14 +683,20 @@ const ProjectViewPage = () => {
                             {/* Player */}
                             <Box sx={{ mb: 2 }}>
                                 <Player
-                                    duration={project.duration}
+                                    duration={project.duration || 60}
                                     audioUrl={project.audioUrl}
                                     currentTime={currentTime}
                                     onTimeUpdate={handleTimeUpdate}
                                     onPlayPause={handlePlayPause}
+                                    onDurationChange={handleDurationChange}
                                     isPlaying={isPlaying}
                                     readOnly={true}
                                 />
+                                {process.env.NODE_ENV !== 'production' && (
+                                    <div style={{ fontSize: '12px', color: 'gray', marginTop: '4px' }}>
+                                        Duration: {project.duration || 'Not set'}, Audio: {project.audioUrl ? 'Yes' : 'No'}
+                                    </div>
+                                )}
                             </Box>
 
                             {/* Canvas/3D/Video Container */}
@@ -396,13 +704,28 @@ const ProjectViewPage = () => {
                                 elevation={3}
                                 sx={{
                                     position: 'relative',
-                                    backgroundColor: '#f5f5f5',
-                                    borderRadius: 1,
+                                    backgroundColor: theme.palette.mode === 'dark'
+                                        ? 'rgba(32, 38, 52, 0.85)'  // Lighter, more neutral dark blue
+                                        : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
+                                    borderRadius: '12px',
                                     overflow: 'hidden',
                                     height: 'calc(100vh - 300px)',
                                     minHeight: '600px',
                                     display: 'flex',
-                                    flexDirection: 'column'
+                                    flexDirection: 'column',
+                                    boxShadow: theme.palette.mode === 'dark'
+                                        ? '0 8px 24px 0 rgba(0, 0, 0, 0.2)'
+                                        : '0 8px 24px 0 rgba(0, 0, 0, 0.1)',
+                                    border: `1px solid ${theme.palette.mode === 'dark'
+                                        ? 'rgba(255, 255, 255, 0.05)'
+                                        : 'rgba(30, 144, 255, 0.15)'}`,
+                                    backdropFilter: 'blur(8px)',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        boxShadow: theme.palette.mode === 'dark'
+                                            ? '0 12px 28px 0 rgba(0, 0, 0, 0.4)'
+                                            : '0 12px 28px 0 rgba(0, 0, 0, 0.15)',
+                                    }
                                 }}
                             >
                                 {/* Mode selection buttons */}
@@ -410,24 +733,33 @@ const ProjectViewPage = () => {
                                     p: 1,
                                     display: 'flex',
                                     justifyContent: 'center',
-                                    borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                                    backgroundColor: 'white'
+                                    borderBottom: `1px solid ${theme.palette.mode === 'dark'
+                                        ? 'rgba(255, 255, 255, 0.08)'
+                                        : 'rgba(0, 0, 0, 0.08)'}`,
+                                    backgroundColor: theme.palette.mode === 'dark'
+                                        ? 'rgba(26, 32, 46, 0.95)' // Darker blue for contrast
+                                        : 'rgba(240, 245, 255, 0.95)'
                                 }}>
                                     <ButtonGroup variant="contained">
                                         <Button
                                             onClick={() => handleModeChange('canvas')}
                                             variant={viewerMode === 'canvas' ? 'contained' : 'outlined'}
                                             color={viewerMode === 'canvas' ? 'primary' : 'inherit'}
+                                            sx={{
+                                                borderRadius: '8px',
+                                                textTransform: 'none',
+                                                fontWeight: 600,
+                                                borderColor: theme.palette.mode === 'dark'
+                                                    ? 'rgba(30, 144, 255, 0.3)'
+                                                    : undefined,
+                                                backgroundColor: viewerMode === 'canvas'
+                                                    ? theme.palette.mode === 'dark'
+                                                        ? 'rgba(30, 144, 255, 0.2)'
+                                                        : undefined
+                                                    : undefined
+                                            }}
                                         >
                                             Анимация
-                                        </Button>
-                                        <Button
-                                            startIcon={<ThreeDRotation />}
-                                            onClick={() => handleModeChange('3d')}
-                                            variant={viewerMode === '3d' ? 'contained' : 'outlined'}
-                                            color={viewerMode === '3d' ? 'primary' : 'inherit'}
-                                        >
-                                            3D Модель
                                         </Button>
                                         <Button
                                             startIcon={<Videocam />}
@@ -435,6 +767,19 @@ const ProjectViewPage = () => {
                                             variant={viewerMode === 'video' ? 'contained' : 'outlined'}
                                             color={viewerMode === 'video' ? 'primary' : 'inherit'}
                                             disabled={!videoUrl}
+                                            sx={{
+                                                borderRadius: '8px',
+                                                textTransform: 'none',
+                                                fontWeight: 600,
+                                                borderColor: theme.palette.mode === 'dark'
+                                                    ? 'rgba(30, 144, 255, 0.3)'
+                                                    : undefined,
+                                                backgroundColor: viewerMode === 'video'
+                                                    ? theme.palette.mode === 'dark'
+                                                        ? 'rgba(30, 144, 255, 0.2)'
+                                                        : undefined
+                                                    : undefined
+                                            }}
                                         >
                                             Видео
                                         </Button>
@@ -442,33 +787,120 @@ const ProjectViewPage = () => {
                                 </Box>
 
                                 {/* Content area */}
-                                <Box sx={{ flexGrow: 1, position: 'relative' }}>
+                                <Box sx={{
+                                    flexGrow: 1,
+                                    position: 'relative',
+                                    // Добавляем фоновую сетку как в ConstructorPage
+                                    backgroundColor: theme.palette.mode === 'dark'
+                                        ? 'rgba(32, 38, 52, 0.85)'  // Lighter, more neutral dark blue
+                                        : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
+                                    backgroundImage: `
+                                        linear-gradient(to right, ${theme.palette.mode === 'dark'
+                                            ? 'rgba(160, 140, 255, 0.07)'
+                                            : 'rgba(106, 58, 255, 0.05)'} 1px, rgba(0, 0, 0, 0) 1px),
+                                        linear-gradient(to bottom, ${theme.palette.mode === 'dark'
+                                            ? 'rgba(160, 140, 255, 0.07)'
+                                            : 'rgba(106, 58, 255, 0.05)'} 1px, rgba(0, 0, 0, 0) 1px)
+                                    `,
+                                    backgroundSize: '20px 20px'
+                                }}>
                                     {/* Canvas View - only render when it's the active view */}
                                     {viewerMode === 'canvas' && (
-                                        <Canvas
-                                            elements={normalizedElements}
-                                            currentTime={currentTime}
-                                            isPlaying={isPlaying}
-                                            readOnly={true}
-                                            selectedElement={selectedElement}
-                                            onElementSelect={handleElementSelect}
-                                        />
+                                        <>
+                                            <Canvas
+                                                elements={normalizedElements}
+                                                currentTime={currentTime}
+                                                isPlaying={isPlaying}
+                                                readOnly={true}
+                                                selectedElement={selectedElement}
+                                                onElementSelect={handleElementSelect}
+                                            />
+                                        </>
+                                    )}
+
+                                    {/* Video View - added directly to main content area */}
+                                    {viewerMode === 'video' && videoUrl && (
+                                        <Box sx={{
+                                            width: '100%',
+                                            height: '100%',
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            position: 'relative'
+                                        }}>
+                                            <VideoViewer
+                                                videoUrl={videoUrl}
+                                                isVisible={true}
+                                                embedded={true}
+                                                currentTime={currentTime}
+                                                isPlaying={isPlaying}
+                                            />
+                                        </Box>
+                                    )}
+
+                                    {/* No video message */}
+                                    {viewerMode === 'video' && !videoUrl && (
+                                        <Box sx={{
+                                            width: '100%',
+                                            height: '100%',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center'
+                                        }}>
+                                            <Typography variant="h5" sx={{ mb: 2 }}>
+                                                Видео не доступно
+                                            </Typography>
+                                            <Alert severity="info" sx={{ maxWidth: '600px' }}>
+                                                Для этого проекта не указано видео. Вы можете добавить видео в режиме редактирования.
+                                            </Alert>
+                                        </Box>
                                     )}
                                 </Box>
                             </Paper>
 
-                            {/* Combined Viewer (3D Model + Video) */}
-                            <CombinedViewer
-                                isVisible={showCombinedViewer}
-                                onClose={handleHideCombinedViewer}
-                                videoUrl={videoUrl}
-                                playerDuration={project.duration}
-                                currentTime={currentTime}
-                                isPlaying={isPlaying}
-                                onTimeUpdate={handleTimeUpdate}
+                            {/* NEW: Standalone 3D Model Dialog */}
+                            <ModelViewerModal
+                                isOpen={modelDialogOpen}
+                                onClose={handleClose3DDialog}
+                                elementId={selectedElement?.id || "default-element"}
+                                modelUrl={selectedModelUrl || '/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb'}
                                 elementKeyframes={selectedElement?.keyframes || []}
-                                elementId={selectedElement?.id}
+                                videoUrl={videoUrl}
                             />
+
+                            {/* Debug output for development - make it visible */}
+                            {process.env.NODE_ENV !== 'production' && (
+                                <div style={{
+                                    position: 'fixed',
+                                    bottom: '10px',
+                                    right: '10px',
+                                    background: 'rgba(0,0,0,0.7)',
+                                    color: 'white',
+                                    padding: '10px',
+                                    fontSize: '12px',
+                                    zIndex: 9999,
+                                    maxWidth: '400px',
+                                    maxHeight: '200px',
+                                    overflow: 'auto',
+                                    borderRadius: '4px'
+                                }}>
+                                    <pre>
+                                        {JSON.stringify({
+                                            modelDialogOpen,
+                                            selectedModelUrl,
+                                            selectedElementId: selectedElement?.id,
+                                            hasKeyframes: selectedElement?.keyframes?.length > 0,
+                                            modelProperties: selectedElement ? {
+                                                modelUrl: selectedElement.modelUrl,
+                                                modelPath: selectedElement.modelPath,
+                                                glbUrl: selectedElement.glbUrl,
+                                                model3dUrl: selectedElement.model3dUrl
+                                            } : null
+                                        }, null, 2)}
+                                    </pre>
+                                </div>
+                            )}
                         </>
                     )}
                 </Container>

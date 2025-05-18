@@ -457,18 +457,138 @@ function TeamManagement() {
     const fetchUsers = async (search = '') => {
         try {
             const token = localStorage.getItem('token');
-            console.log('Fetching users with params:', { search, teamId: selectedTeam?._id });
-            const response = await axios.get(`${API_BASE_URL}/api/users`, {
-                headers: { Authorization: `Bearer ${token}` },
-                params: {
-                    search,
-                    teamId: selectedTeam?._id
-                }
+            if (!token) {
+                console.error('No token found for user search');
+                setError('Необходима авторизация для поиска пользователей');
+                return;
+            }
+
+            // Получаем текущего пользователя
+            const user = userStr ? JSON.parse(userStr) : null;
+            const currentUserId = user ? (user._id || user.id) : null;
+            console.log('Current user ID:', currentUserId);
+
+            // Получаем ID всех участников команды
+            const currentTeamMembers = selectedTeam?.members || [];
+            const existingMemberIds = currentTeamMembers.map(member => {
+                return typeof member.userId === 'object' ?
+                    (member.userId._id || member.userId.id) : member.userId;
             });
-            console.log('Search results:', response.data);
-            setUsers(response.data);
+            console.log('Existing member IDs:', existingMemberIds);
+
+            // ID команды
+            const teamId = selectedTeam?._id || selectedTeam?.id;
+
+            console.log('Searching for users with query:', search);
+
+            try {
+                // Делаем запрос к API без дополнительных параметров фильтрации
+                const response = await axios.get(`${API_BASE_URL}/api/users`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    params: { search } // Только поисковый запрос
+                });
+
+                console.log('API response:', response.data);
+
+                if (Array.isArray(response.data)) {
+                    // Отфильтруем только участников, которые еще не в команде
+                    const usersNotInTeam = response.data.filter(user => {
+                        // Базовая проверка данных пользователя
+                        if (!user || (!user._id && !user.id)) {
+                            console.log('Invalid user data:', user);
+                            return false;
+                        }
+
+                        // Получаем ID пользователя
+                        const userId = user._id || user.id;
+
+                        // Проверяем, не находится ли пользователь уже в команде
+                        if (existingMemberIds.includes(userId)) {
+                            console.log('User already in team:', user.username || userId);
+                            return false;
+                        }
+
+                        return true;
+                    });
+
+                    console.log('Users not in team:', usersNotInTeam);
+                    setUsers(usersNotInTeam);
+
+                    if (usersNotInTeam.length === 0) {
+                        console.log('No users found matching search criteria or all users already in team');
+                    }
+                } else {
+                    console.error('API returned non-array result:', response.data);
+                    setUsers([]);
+                }
+            } catch (apiErr) {
+                console.error('API error:', apiErr);
+
+                // Попробуем альтернативный эндпоинт
+                try {
+                    console.log('Trying alternative API endpoint...');
+                    const altResponse = await axios.get(`${API_BASE_URL}/api/users/search`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                        params: { query: search } // Используем 'query' вместо 'search'
+                    });
+
+                    console.log('Alternative API response:', altResponse.data);
+
+                    if (Array.isArray(altResponse.data)) {
+                        const validUsers = altResponse.data.filter(user => {
+                            if (!user || (!user._id && !user.id)) return false;
+
+                            const userId = user._id || user.id;
+                            return !existingMemberIds.includes(userId);
+                        });
+
+                        console.log('Valid users from alt endpoint:', validUsers);
+                        setUsers(validUsers);
+                    } else {
+                        setUsers([]);
+                    }
+                } catch (altErr) {
+                    console.error('Alternative API also failed:', altErr);
+
+                    // Попробуем использовать тестовый эндпоинт
+                    try {
+                        console.log('Trying test endpoint...');
+                        const testResponse = await axios.get(`${API_BASE_URL}/api/users-test`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+
+                        console.log('Test endpoint response:', testResponse.data);
+
+                        if (Array.isArray(testResponse.data)) {
+                            const filteredTestUsers = testResponse.data.filter(user => {
+                                if (!user || (!user._id && !user.id)) return false;
+
+                                const userId = user._id || user.id;
+                                if (existingMemberIds.includes(userId)) return false;
+
+                                // Если есть поисковый запрос, фильтруем по нему
+                                if (search && user.username) {
+                                    return user.username.toLowerCase().includes(search.toLowerCase()) ||
+                                        (user.email && user.email.toLowerCase().includes(search.toLowerCase()));
+                                }
+
+                                return true;
+                            });
+
+                            console.log('Filtered test users:', filteredTestUsers);
+                            setUsers(filteredTestUsers);
+                        } else {
+                            setUsers([]);
+                        }
+                    } catch (testErr) {
+                        console.error('Test endpoint failed:', testErr);
+                        setUsers([]);
+                    }
+                }
+            }
         } catch (err) {
-            console.error('Error fetching users:', err);
+            console.error('Unexpected error:', err);
+            setUsers([]);
         }
     };
 
@@ -607,50 +727,95 @@ function TeamManagement() {
                 role: selectedUserRole
             });
 
-            const response = await axios.post(`${API_BASE_URL}/api/teams/${teamId}/members`, {
-                userId: selectedUserId,
-                role: selectedUserRole
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            console.log('Add member response:', response.data);
-
-            // Проверка данных команды перед установкой в state
-            const teamData = response.data;
-
-            // Убедимся, что members существует и является массивом
-            if (!teamData.members) {
-                teamData.members = [];
-            }
-
-            // Убедимся, что все члены команды имеют корректную структуру
-            if (Array.isArray(teamData.members)) {
-                console.log('Processing team members after add:', teamData.members);
-
-                // Фильтруем некорректные данные участников
-                teamData.members = teamData.members.filter(member => {
-                    return member && (
-                        (typeof member.userId === 'object' && member.userId) ||
-                        (typeof member.userId === 'string' && member.userId)
-                    );
+            try {
+                const response = await axios.post(`${API_BASE_URL}/api/teams/${teamId}/members`, {
+                    userId: selectedUserId,
+                    role: selectedUserRole
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
 
-                console.log('Filtered team members after add:', teamData.members);
+                console.log('Add member response:', response.data);
+
+                // Проверка данных команды перед установкой в state
+                const teamData = response.data;
+
+                // Убедимся, что members существует и является массивом
+                if (!teamData.members) {
+                    teamData.members = [];
+                }
+
+                // Убедимся, что все члены команды имеют корректную структуру
+                if (Array.isArray(teamData.members)) {
+                    console.log('Processing team members after add:', teamData.members);
+
+                    // Фильтруем некорректные данные участников
+                    teamData.members = teamData.members.filter(member => {
+                        return member && (
+                            (typeof member.userId === 'object' && member.userId) ||
+                            (typeof member.userId === 'string' && member.userId)
+                        );
+                    });
+
+                    console.log('Filtered team members after add:', teamData.members);
+                }
+
+                setSelectedTeam(teamData);
+
+                // Очищаем данные диалога и закрываем его
+                setAddMemberDialog(false);
+                setSearchQuery('');
+                setSelectedUserId('');
+                setSelectedUserRole('viewer');
+                setUsers([]);  // Очищаем результаты поиска
+                setError(null);
+
+                // Показываем сообщение об успехе
+                setError('Участник успешно добавлен в команду');
+
+                // Через 3 секунды убираем сообщение
+                setTimeout(() => {
+                    setError(null);
+                }, 3000);
+
+                // Update teams list
+                fetchTeams();
+
+                // Переключаемся на вкладку с участниками
+                setTabValue(0);
+            } catch (apiErr) {
+                console.error('API error when adding member:', apiErr);
+
+                if (apiErr.response) {
+                    const statusCode = apiErr.response.status;
+                    const errorData = apiErr.response.data;
+
+                    console.error('API error details:', {
+                        statusCode,
+                        errorData
+                    });
+
+                    // Показываем конкретную ошибку от сервера, если есть
+                    if (errorData && errorData.error) {
+                        setError(`Ошибка: ${errorData.error}`);
+                    } else if (statusCode === 401) {
+                        setError('Ошибка авторизации. Пожалуйста, войдите в систему заново.');
+                    } else if (statusCode === 403) {
+                        setError('У вас нет прав для добавления участников в эту команду.');
+                    } else if (statusCode === 404) {
+                        setError('Команда или пользователь не найдены.');
+                    } else if (statusCode === 409) {
+                        setError('Этот пользователь уже является участником команды.');
+                    } else {
+                        setError('Не удалось добавить участника. Пожалуйста, попробуйте позже.');
+                    }
+                } else {
+                    setError('Ошибка соединения с сервером. Проверьте подключение к интернету.');
+                }
             }
-
-            setSelectedTeam(teamData);
-            setAddMemberDialog(false);
-            setSelectedUserId('');
-            setSelectedUserRole('viewer');
-            setError(null);
-
-            // Update teams list
-            fetchTeams();
         } catch (err) {
-            console.error('Error adding member:', err);
-            const errorMessage = err.response?.data?.error || 'Не удалось добавить участника. Пожалуйста, попробуйте позже.';
-            setError(errorMessage);
+            console.error('Unexpected error in handleAddMember:', err);
+            setError('Произошла неожиданная ошибка при добавлении участника.');
         }
     };
 
@@ -1158,8 +1323,58 @@ function TeamManagement() {
 
     // Dialog handlers with safety checks
     const openAddMemberDialog = () => {
-        if (canOpenAddMemberDialog) {
-            setAddMemberDialog(true);
+        // Получаем текущего пользователя
+        try {
+            if (!selectedTeam) {
+                setError('Выберите команду, чтобы добавить участников');
+                return;
+            }
+
+            const user = userStr ? JSON.parse(userStr) : null;
+            if (!user) {
+                console.error('No user found in localStorage');
+                setError('Ошибка: данные пользователя не найдены');
+                return;
+            }
+
+            const userId = user._id || user.id;
+            console.log('Current user ID:', userId);
+
+            const teamOwnerId = typeof selectedTeam.owner === 'object' ?
+                (selectedTeam.owner._id || selectedTeam.owner.id) : selectedTeam.owner;
+            console.log('Team owner ID:', teamOwnerId);
+
+            // Проверяем, является ли текущий пользователь владельцем
+            const isOwner = teamOwnerId === userId;
+            console.log('Is user the owner:', isOwner);
+
+            // Находим пользователя в списке участников
+            const userMember = selectedTeam.members?.find(member => {
+                const memberId = typeof member.userId === 'object' ?
+                    (member.userId._id || member.userId.id) : member.userId;
+                return memberId === userId;
+            });
+
+            const userRole = userMember ? userMember.role : (isOwner ? 'owner' : null);
+            console.log('User role in team:', userRole);
+
+            if (isOwner || userRole === 'admin') {
+                console.log('User can add members');
+                // Очистим поле поиска и загрузим начальный список пользователей
+                setSearchQuery('');
+                // Обнуляем selectedUserId при открытии диалога
+                setSelectedUserId('');
+                // Загружаем список пользователей
+                fetchUsers('');
+                // Показываем диалог
+                setAddMemberDialog(true);
+            } else {
+                console.log('User cannot add members');
+                setError('У вас недостаточно прав для добавления участников. Только владельцы и администраторы команды могут добавлять новых участников.');
+            }
+        } catch (err) {
+            console.error('Error in openAddMemberDialog:', err);
+            setError('Произошла ошибка при проверке прав доступа');
         }
     };
 
@@ -1544,15 +1759,13 @@ function TeamManagement() {
                                                     Участники команды
                                                 </Typography>
 
-                                                {canOpenAddMemberDialog && (
-                                                    <StyledButton
-                                                        size="small"
-                                                        startIcon={<PersonAddIcon />}
-                                                        onClick={openAddMemberDialog}
-                                                    >
-                                                        Добавить участника
-                                                    </StyledButton>
-                                                )}
+                                                <StyledButton
+                                                    size="small"
+                                                    startIcon={<PersonAddIcon />}
+                                                    onClick={openAddMemberDialog}
+                                                >
+                                                    Добавить участника
+                                                </StyledButton>
                                             </Box>
 
                                             <Box sx={{
@@ -1561,7 +1774,166 @@ function TeamManagement() {
                                                 p: 2
                                             }}>
                                                 {/* List of members */}
-                                                {/* Rest of the existing members code */}
+                                                {selectedTeam ? (
+                                                    (selectedTeam.members?.length > 0 || selectedTeam.owner) ? (
+                                                        <List>
+                                                            {/* Отображение владельца команды */}
+                                                            {selectedTeam.owner && (
+                                                                (() => {
+                                                                    const ownerData = typeof selectedTeam.owner === 'object' ?
+                                                                        selectedTeam.owner :
+                                                                        selectedTeam.members?.find(m => {
+                                                                            const memberId = typeof m.userId === 'object' ?
+                                                                                (m.userId._id || m.userId.id) : m.userId;
+                                                                            const ownerId = typeof selectedTeam.owner === 'object' ?
+                                                                                (selectedTeam.owner._id || selectedTeam.owner.id) : selectedTeam.owner;
+                                                                            return memberId === ownerId;
+                                                                        })?.userId;
+
+                                                                    const ownerId = typeof ownerData === 'object' ?
+                                                                        (ownerData._id || ownerData.id) : selectedTeam.owner;
+
+                                                                    const ownerUsername = typeof ownerData === 'object' ?
+                                                                        ownerData.username : 'Владелец';
+
+                                                                    return (
+                                                                        <ListItem
+                                                                            key={`owner-${ownerId}`}
+                                                                            button
+                                                                            onClick={() => handleUserSelect({ _id: ownerId, username: ownerUsername })}
+                                                                            selected={selectedUserId === ownerId}
+                                                                            sx={{
+                                                                                borderRadius: 1,
+                                                                                m: 0.5,
+                                                                                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.07)' },
+                                                                                backgroundColor: selectedUserId === ownerId ? alpha(COLORS.primary, 0.2) : 'transparent',
+                                                                                transition: 'all 0.2s'
+                                                                            }}
+                                                                        >
+                                                                            <Avatar
+                                                                                sx={{
+                                                                                    mr: 1.5,
+                                                                                    bgcolor: `${COLORS.primary}50`,
+                                                                                    color: COLORS.primary
+                                                                                }}
+                                                                            >
+                                                                                {ownerUsername?.charAt(0).toUpperCase()}
+                                                                            </Avatar>
+                                                                            <ListItemText
+                                                                                primary={
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                        <Typography variant="body1" sx={{ color: '#FFFFFF' }}>
+                                                                                            {ownerUsername}
+                                                                                        </Typography>
+                                                                                        <Chip
+                                                                                            size="small"
+                                                                                            label="Владелец"
+                                                                                            sx={{
+                                                                                                ml: 1,
+                                                                                                backgroundColor: `${COLORS.primary}30`,
+                                                                                                color: COLORS.primary,
+                                                                                                fontSize: '0.7rem',
+                                                                                                height: 20
+                                                                                            }}
+                                                                                        />
+                                                                                    </Box>
+                                                                                }
+                                                                                secondary={
+                                                                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                                                                                        {ownerId}
+                                                                                    </Typography>
+                                                                                }
+                                                                            />
+                                                                        </ListItem>
+                                                                    );
+                                                                })()
+                                                            )}
+
+                                                            {/* Отображение остальных участников */}
+                                                            {selectedTeam.members && selectedTeam.members
+                                                                .filter(member => {
+                                                                    // Фильтруем, чтобы не дублировать владельца, если он уже есть в списке участников
+                                                                    const memberId = typeof member.userId === 'object' ?
+                                                                        (member.userId._id || member.userId.id) : member.userId;
+
+                                                                    const ownerId = typeof selectedTeam.owner === 'object' ?
+                                                                        (selectedTeam.owner._id || selectedTeam.owner.id) : selectedTeam.owner;
+
+                                                                    return memberId !== ownerId;
+                                                                })
+                                                                .map((member) => {
+                                                                    const userId = typeof member.userId === 'object' ?
+                                                                        (member.userId._id || member.userId.id) : member.userId;
+
+                                                                    const username = typeof member.userId === 'object' ?
+                                                                        (member.userId.username) : '';
+
+                                                                    const role = member.role;
+
+                                                                    return (
+                                                                        <ListItem
+                                                                            key={userId}
+                                                                            button
+                                                                            onClick={() => handleUserSelect({ _id: userId, username })}
+                                                                            selected={selectedUserId === userId}
+                                                                            sx={{
+                                                                                borderRadius: 1,
+                                                                                m: 0.5,
+                                                                                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.07)' },
+                                                                                backgroundColor: selectedUserId === userId ? alpha(COLORS.primary, 0.2) : 'transparent',
+                                                                                transition: 'all 0.2s'
+                                                                            }}
+                                                                        >
+                                                                            <Avatar
+                                                                                sx={{
+                                                                                    mr: 1.5,
+                                                                                    bgcolor: `${COLORS.tertiary}30`,
+                                                                                    color: COLORS.tertiary
+                                                                                }}
+                                                                            >
+                                                                                {username?.charAt(0).toUpperCase()}
+                                                                            </Avatar>
+                                                                            <ListItemText
+                                                                                primary={
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                        <Typography variant="body1" sx={{ color: '#FFFFFF' }}>
+                                                                                            {username}
+                                                                                        </Typography>
+                                                                                        {role === 'admin' && (
+                                                                                            <Chip
+                                                                                                size="small"
+                                                                                                label="Админ"
+                                                                                                sx={{
+                                                                                                    ml: 1,
+                                                                                                    backgroundColor: `${COLORS.tertiary}30`,
+                                                                                                    color: COLORS.tertiary,
+                                                                                                    fontSize: '0.7rem',
+                                                                                                    height: 20
+                                                                                                }}
+                                                                                            />
+                                                                                        )}
+                                                                                    </Box>
+                                                                                }
+                                                                                secondary={
+                                                                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                                                                                        {userId}
+                                                                                    </Typography>
+                                                                                }
+                                                                            />
+                                                                        </ListItem>
+                                                                    );
+                                                                })}
+                                                        </List>
+                                                    ) : (
+                                                        <Box sx={{ p: 2, textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)' }}>
+                                                            В команде пока нет участников
+                                                        </Box>
+                                                    )
+                                                ) : (
+                                                    <Box sx={{ p: 2, textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)' }}>
+                                                        Выберите команду
+                                                    </Box>
+                                                )}
                                             </Box>
                                         </Box>
                                     )}
@@ -1596,7 +1968,50 @@ function TeamManagement() {
                                                 p: 2
                                             }}>
                                                 {/* List of projects */}
-                                                {/* Rest of the existing projects code */}
+                                                {selectedTeam?.projects && selectedTeam.projects.length > 0 ? (
+                                                    <List>
+                                                        {selectedTeam.projects.map((project) => (
+                                                            <ListItem
+                                                                key={project._id}
+                                                                button
+                                                                onClick={() => handleProjectClick(project)}
+                                                                sx={{
+                                                                    borderRadius: 1,
+                                                                    m: 0.5,
+                                                                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.07)' },
+                                                                    backgroundColor: selectedTeam._id === project._id ? alpha(COLORS.primary, 0.2) : 'transparent',
+                                                                    transition: 'all 0.2s'
+                                                                }}
+                                                            >
+                                                                <Avatar
+                                                                    sx={{
+                                                                        mr: 1.5,
+                                                                        bgcolor: `${COLORS.tertiary}30`,
+                                                                        color: COLORS.tertiary
+                                                                    }}
+                                                                >
+                                                                    {project.name?.charAt(0).toUpperCase()}
+                                                                </Avatar>
+                                                                <ListItemText
+                                                                    primary={
+                                                                        <Typography variant="body1" sx={{ color: '#FFFFFF' }}>
+                                                                            {project.name}
+                                                                        </Typography>
+                                                                    }
+                                                                    secondary={
+                                                                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                                                                            {project._id}
+                                                                        </Typography>
+                                                                    }
+                                                                />
+                                                            </ListItem>
+                                                        ))}
+                                                    </List>
+                                                ) : (
+                                                    <Box sx={{ p: 2, textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)' }}>
+                                                        В команде пока нет проектов
+                                                    </Box>
+                                                )}
                                             </Box>
                                         </Box>
                                     )}

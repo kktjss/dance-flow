@@ -266,12 +266,20 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
 
         // Добавляем отладочное логирование для изменений позиции
         if (name.startsWith('position.')) {
+            const hasKeyframes = updatedProperties.keyframes && updatedProperties.keyframes.length > 0;
+
             console.log(`PropertyPanel: Changed ${name} to ${value}`, {
                 elementId: updatedProperties.id,
                 position: updatedProperties.position,
                 has3DModel: updatedProperties.has3DModel || false,
-                modelPath: updatedProperties.modelPath || 'none'
+                modelPath: updatedProperties.modelPath || 'none',
+                hasKeyframes: hasKeyframes
             });
+
+            // Если есть ключевые кадры, нужно создать или обновить ключевой кадр на текущем времени
+            if (hasKeyframes) {
+                console.log(`Element ${updatedProperties.id} has keyframes, this change will be visible in the current keyframe or need to create a new keyframe`);
+            }
         }
 
         // Обновляем локальное состояние
@@ -279,6 +287,23 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
 
         // Уведомляем родительский компонент
         onElementUpdate(updatedProperties);
+
+        // Используем setTimeout чтобы гарантировать обновление канваса после применения свойств
+        // Вызываем forceRenderCanvas только если нет ключевых кадров или мы не в режиме воспроизведения
+        if (name.startsWith('position.') && window.forceRenderCanvas) {
+            const hasKeyframes = updatedProperties.keyframes && updatedProperties.keyframes.length > 0;
+            const isPlaying = window.isPlaying || false; // Глобальное состояние воспроизведения
+
+            if (!hasKeyframes || !isPlaying) {
+                setTimeout(() => {
+                    console.log(`Forcing canvas render after position change: ${name}=${value} for element ${updatedProperties.id}`);
+                    // Передаем ID элемента, чтобы обновить только его
+                    window.forceRenderCanvas(updatedProperties.id);
+                }, 0);
+            } else {
+                console.log(`Skip forcing canvas render because element has keyframes and is playing`);
+            }
+        }
     };
 
     // Create a keyframe at the current time

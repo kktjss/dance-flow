@@ -79,7 +79,7 @@ const DecorativeCircle = styled(Box)(({ size = 120, top, left, color = COLORS.pr
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
     borderRadius: '20px',
-    backgroundColor: 'rgba(32, 38, 52, 0.85)',  // Lighter, more neutral dark blue
+    backgroundColor: 'rgba(17, 21, 54, 0.9)',  // Updated to match TeamManagement.js
     boxShadow: `0 10px 30px rgba(0, 0, 0, 0.2)`,
     border: '1px solid rgba(30, 144, 255, 0.15)',
     position: 'relative',
@@ -143,7 +143,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
-        backgroundColor: 'rgba(32, 38, 52, 0.95)',  // Lighter, more neutral dark blue
+        backgroundColor: 'rgba(17, 21, 54, 0.95)',  // Updated to match TeamManagement.js
         color: COLORS.white,
         borderRadius: '20px',
         boxShadow: `0 10px 30px rgba(0, 0, 0, 0.4)`,
@@ -172,7 +172,7 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 const UserInfoCard = styled(Box)(({ theme }) => ({
     padding: theme.spacing(3),
     borderRadius: '20px',
-    backgroundColor: 'rgba(32, 38, 52, 0.8)',  // Lighter, more neutral dark blue
+    backgroundColor: 'rgba(17, 21, 54, 0.9)',  // Updated to match TeamManagement.js
     border: '1px solid rgba(30, 144, 255, 0.15)',
     display: 'flex',
     flexDirection: 'column',
@@ -438,7 +438,7 @@ function Dashboard() {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
-            background: `linear-gradient(135deg, #121620 0%, #1e2940 100%)`,  // Lighter, more neutral blue gradient
+            background: `linear-gradient(135deg, #0a0e24 0%, #111536 100%)`,
             position: 'relative',
         }}>
             {/* Декоративные элементы */}

@@ -214,7 +214,7 @@ const ProjectViewer = () => {
         }
     }, [teamId, projectId]);
 
-    // Handle time update from player
+    // Handle time update
     const handleTimeUpdate = (time) => {
         setCurrentTime(time);
     };
@@ -222,6 +222,15 @@ const ProjectViewer = () => {
     // Handle play/pause
     const handlePlayPause = (playing) => {
         setIsPlaying(playing);
+    };
+
+    // Handle duration change from Player
+    const handleDurationChange = (newDuration) => {
+        console.log('ProjectViewer: Duration changed to:', newDuration);
+        setProject(prev => ({
+            ...prev,
+            duration: newDuration
+        }));
     };
 
     // Show 3D Model
@@ -342,14 +351,20 @@ const ProjectViewer = () => {
                             {/* Player */}
                             <Box sx={{ mb: 2 }}>
                                 <Player
-                                    duration={project.duration}
+                                    duration={project.duration || 60}
                                     audioUrl={project.audioUrl}
                                     currentTime={currentTime}
                                     onTimeUpdate={handleTimeUpdate}
                                     onPlayPause={handlePlayPause}
+                                    onDurationChange={handleDurationChange}
                                     isPlaying={isPlaying}
                                     readOnly={true}
                                 />
+                                {process.env.NODE_ENV !== 'production' && (
+                                    <div style={{ fontSize: '12px', color: 'gray', marginTop: '4px' }}>
+                                        Duration: {project.duration || 'Not set'}, Audio: {project.audioUrl ? 'Yes' : 'No'}
+                                    </div>
+                                )}
                             </Box>
 
                             {/* Canvas/3D/Video Container */}

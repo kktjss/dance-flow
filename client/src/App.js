@@ -199,7 +199,7 @@ function App() {
                         path="/teams/:teamId/projects/:projectId/viewer"
                         element={
                             <ProtectedRoute>
-                                <ProjectViewer />
+                                <ProjectViewPage />
                             </ProtectedRoute>
                         }
                     />

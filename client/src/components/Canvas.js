@@ -25,6 +25,7 @@ import ModelViewer from './ModelViewer';
 import VideoViewer from './VideoViewer';
 import CombinedViewer from './CombinedViewer';
 import { COLORS } from '../constants/colors';
+import useFabricCanvas from './useFabricCanvas';
 
 // Выносим canvas полностью за пределы React-дерева
 const fabricInstances = new Map();
@@ -146,7 +147,7 @@ const Canvas = ({
         canvasContainer.style.left = '0';
         canvasContainer.style.width = '100%';
         canvasContainer.style.height = '100%';
-        canvasContainer.style.pointerEvents = readOnly ? 'none' : 'auto';
+        canvasContainer.style.pointerEvents = 'auto'; // всегда разрешаем клики
         containerRef.current.appendChild(canvasContainer);
         canvasContainerRef.current = canvasContainer;
 
@@ -280,12 +281,12 @@ const Canvas = ({
         buttonContainerRef.current = btnContainer;
 
         return () => {
-            // Удаляем DOM элементы
-            if (canvasContainerRef.current && containerRef.current) {
+            // Удаляем DOM элементы только если они действительно являются дочерними
+            if (canvasContainerRef.current && containerRef.current && canvasContainerRef.current.parentNode === containerRef.current) {
                 containerRef.current.removeChild(canvasContainerRef.current);
             }
 
-            if (buttonContainerRef.current && containerRef.current) {
+            if (buttonContainerRef.current && containerRef.current && buttonContainerRef.current.parentNode === containerRef.current) {
                 containerRef.current.removeChild(buttonContainerRef.current);
             }
         };
@@ -1609,8 +1610,8 @@ const Canvas = ({
         // Только если инициализирован canvas и есть контейнер для кнопок
         if (!initialized || !buttonContainerRef.current) return null;
 
-        // Кнопка должна быть видна только при выборе элемента
-        if (!selectedElement) return null;
+        // Кнопка должна быть видна только при выборе элемента с 3D моделью
+        if (!selectedElement || !(selectedElement.modelPath || selectedElement.has3DModel)) return null;
 
         const videoUrl = getVideoUrl();
         console.log('Canvas: Video URL for combined viewer button:', videoUrl);
@@ -1838,7 +1839,8 @@ const Canvas = ({
                 const elementId = e.target.data.elementId;
                 const element = effectiveElements.find(el => el.id === elementId);
 
-                if (element) {
+                // Доступ к 3D только если есть валидная 3D модель
+                if (element && (element.modelPath || element.has3DModel)) {
                     console.log('Canvas: Double clicked on element:', {
                         id: element.id,
                         type: element.type,
@@ -1847,11 +1849,8 @@ const Canvas = ({
                     });
 
                     // Если у элемента есть 3D модель, открываем модальное окно
-                    if (element.modelPath || element.has3DModel) {
-                        console.log('Canvas: Opening 3D model viewer for element:', element.id);
-                        setViewMode('3d');
-                        setShowChoreoModal(true);
-                    }
+                    setViewMode('3d');
+                    setShowChoreoModal(true);
                 }
             }
         });
@@ -1954,127 +1953,64 @@ const Canvas = ({
         // Только если инициализирован canvas и есть контейнер для кнопок
         if (!initialized || !buttonContainerRef.current) return null;
 
+        // Используем только selectedElement
+        if (!selectedElement) return null;
+
         return ReactDOM.createPortal(
-            <>
-                {/* Кнопки управления выбранным элементом - в левом верхнем углу */}
-                {selectedElement && (
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            top: '20px',
-                            left: '20px',
-                            display: 'flex',
-                            gap: 1,
-                            pointerEvents: 'auto',
-                            zIndex: 100
-                        }}
-                    >
-                        {/* Кнопка копирования элемента */}
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => {
-                                // Создаем копию выбранного элемента
-                                const elementCopy = {
-                                    ...selectedElement,
-                                    id: `${selectedElement.type}-${Date.now()}`, // Новый ID
-                                    position: {
-                                        x: selectedElement.position.x + 20,
-                                        y: selectedElement.position.y + 20
-                                    }
-                                };
-
-                                // Добавляем копию в список элементов
-                                onElementsChange([...effectiveElements, elementCopy]);
-
-                                // Выбираем новый элемент
-                                onElementSelect(elementCopy);
-                            }}
-                            sx={{
-                                backgroundColor: 'rgba(33, 150, 243, 0.7)',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(33, 150, 243, 0.9)',
-                                },
-                                minWidth: '40px',
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%'
-                            }}
-                        >
-                            <ContentCopy />
-                        </Button>
-
-                        {/* Кнопка удаления элемента */}
-                        <Button
-                            variant="contained"
-                            color="error"
-                            onClick={handleDeleteElement}
-                            sx={{
-                                backgroundColor: 'rgba(255, 87, 87, 0.7)',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(255, 87, 87, 0.9)',
-                                },
-                                minWidth: '40px',
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%'
-                            }}
-                        >
-                            <Delete />
-                        </Button>
-                    </Box>
-                )}
-
-                {/* Отладочная кнопка в правом верхнем углу */}
-                <Box
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: '20px',
+                    left: '20px',
+                    display: 'flex',
+                    gap: 1,
+                    pointerEvents: 'auto',
+                    zIndex: 100
+                }}
+            >
+                {/* Кнопка копирования элемента */}
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => {
+                        if (!onElementsChange) return;
+                        const elementCopy = {
+                            ...selectedElement,
+                            id: `${selectedElement.type}-${Date.now()}`,
+                            position: {
+                                x: selectedElement.position.x + 20,
+                                y: selectedElement.position.y + 20
+                            }
+                        };
+                        onElementsChange([...elements, elementCopy]);
+                        if (onElementSelect) onElementSelect(elementCopy);
+                    }}
                     sx={{
-                        position: 'absolute',
-                        top: '20px',
-                        right: '20px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 1,
-                        pointerEvents: 'auto',
-                        zIndex: 100
+                        backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                        '&:hover': { backgroundColor: 'rgba(33, 150, 243, 0.9)' },
+                        minWidth: '40px', width: '40px', height: '40px', borderRadius: '50%'
                     }}
                 >
-                    {/* Отладочная кнопка для проверки 3D моделей */}
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => {
-                            console.log('Canvas: Debug - Checking all elements for 3D models');
-
-                            // Проверяем все элементы на наличие 3D моделей
-                            const elementsWithModels = effectiveElements.filter(el => el.modelPath);
-
-                            console.log('Canvas: Elements with 3D models:', {
-                                count: elementsWithModels.length,
-                                elements: elementsWithModels.map(el => ({
-                                    id: el.id,
-                                    type: el.type,
-                                    modelPath: el.modelPath
-                                }))
-                            });
-
-                            // Если есть элементы с моделями, выбираем первый и открываем просмотрщик
-                            if (elementsWithModels.length > 0) {
-                                const element = elementsWithModels[0];
-                                console.log('Canvas: Selecting element with 3D model:', element.id);
-                                onElementSelect(element);
-                                setViewMode('3d');
-                                setShowChoreoModal(true);
-                            } else {
-                                console.log('Canvas: No elements with 3D models found');
-                                alert('Нет элементов с 3D моделями');
-                            }
-                        }}
-                        sx={{ textTransform: 'none' }}
-                    >
-                        Проверить 3D модели
-                    </Button>
-                </Box>
-            </>,
+                    <ContentCopy />
+                </Button>
+                {/* Кнопка удаления элемента */}
+                <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() => {
+                        if (!onElementsChange) return;
+                        onElementsChange(elements.filter(elem => elem.id !== selectedElement.id));
+                        if (onElementSelect) onElementSelect(null);
+                    }}
+                    sx={{
+                        backgroundColor: 'rgba(255, 87, 87, 0.7)',
+                        '&:hover': { backgroundColor: 'rgba(255, 87, 87, 0.9)' },
+                        minWidth: '40px', width: '40px', height: '40px', borderRadius: '50%'
+                    }}
+                >
+                    <Delete />
+                </Button>
+            </Box>,
             buttonContainerRef.current
         );
     };

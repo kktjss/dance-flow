@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/dance-flow/static/css/main.838a0475.css",
+    "main.js": "/dance-flow/static/js/main.502c57eb.js",
+    "index.html": "/dance-flow/index.html",
+    "main.838a0475.css.map": "/dance-flow/static/css/main.838a0475.css.map",
+    "main.502c57eb.js.map": "/dance-flow/static/js/main.502c57eb.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.838a0475.css",
+    "static/js/main.502c57eb.js"
+  ]
+}

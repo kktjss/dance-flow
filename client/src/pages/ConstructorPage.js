@@ -1318,11 +1318,6 @@ See console for complete details.`);
                 });
             }
 
-            // Initialize duration if it doesn't exist
-            if (!fetchedProject.duration) {
-                fetchedProject.duration = 60; // Default 60 seconds
-            }
-
             // Convert old style animations to new format if needed
             if (fetchedProject.elements.some(el => el.animation && Array.isArray(el.animation))) {
                 console.log('Converting old animation format to new format');

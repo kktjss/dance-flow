@@ -75,12 +75,14 @@ const Player = ({
     keyframeRecording = false,
     toggleKeyframeRecording = null,
     onRemoveAudio = null,
-    onRemoveVideo = null
+    onRemoveVideo = null,
+    onDurationChange = null
 }) => {
     const theme = useTheme();
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
     const [displayTime, setDisplayTime] = useState(currentTime);
+    const [audioDuration, setAudioDuration] = useState(null);
     const audioRef = useRef(null);
     const animationRef = useRef(null);
     const lastTimeRef = useRef(null);
@@ -88,7 +90,90 @@ const Player = ({
 
     // Ensure valid numeric values
     const safeCurrentTime = typeof currentTime === 'number' && !isNaN(currentTime) ? currentTime : 0;
-    const safeDuration = typeof duration === 'number' && !isNaN(duration) ? duration : 60;
+    const safeDuration = audioDuration || (typeof duration === 'number' && !isNaN(duration) ? duration : 60);
+
+    // Load audio duration when audio URL changes
+    useEffect(() => {
+        if (!audioUrl) return;
+
+        console.log("Player: Loading audio duration for:", audioUrl);
+        const audio = new Audio();
+
+        const loadDuration = () => {
+            if (audio.duration && !isNaN(audio.duration) && audio.duration !== Infinity) {
+                console.log("Player: Loaded audio duration:", audio.duration);
+                const newDuration = Math.ceil(audio.duration);
+                setAudioDuration(newDuration);
+
+                // Notify parent component about the new duration
+                if (onDurationChange) {
+                    console.log("Player: Notifying parent about new duration:", newDuration);
+                    onDurationChange(newDuration);
+                }
+            } else {
+                console.warn("Player: Invalid audio duration:", audio.duration);
+            }
+        };
+
+        audio.onloadedmetadata = () => {
+            console.log("Player: Metadata loaded event fired");
+            loadDuration();
+        };
+
+        audio.onloadeddata = () => {
+            console.log("Player: Data loaded event fired");
+            loadDuration();
+        };
+
+        audio.ondurationchange = () => {
+            console.log("Player: Duration change event fired");
+            loadDuration();
+        };
+
+        audio.onerror = (e) => {
+            console.error("Player: Error loading audio:", e);
+        };
+
+        // Set the source
+        audio.src = audioUrl;
+        audio.load(); // Explicitly load the audio
+
+        // Force play a tiny bit then pause to get duration in some browsers
+        const tryPlay = () => {
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        // Audio started playing
+                        setTimeout(() => {
+                            audio.pause();
+                            // Check duration again after play
+                            loadDuration();
+                        }, 100);
+                    })
+                    .catch(error => {
+                        console.log("Player: Auto-play failed:", error);
+                    });
+            }
+        };
+
+        // Try playing after a short delay if we don't have duration
+        setTimeout(() => {
+            if (!audioDuration && audio.duration === Infinity) {
+                console.log("Player: Trying to play to get duration...");
+                tryPlay();
+            }
+        }, 500);
+
+        return () => {
+            audio.onloadedmetadata = null;
+            audio.onloadeddata = null;
+            audio.ondurationchange = null;
+            audio.onerror = null;
+            audio.pause();
+            audio.src = '';
+        };
+    }, [audioUrl, onDurationChange, audioDuration]);
 
     // Update ref when prop changes
     useEffect(() => {
@@ -303,8 +388,23 @@ const Player = ({
             } else {
                 audioRef.current.pause();
             }
+
+            // Get duration from audio element
+            if (audioRef.current.duration && !isNaN(audioRef.current.duration) &&
+                audioRef.current.duration !== Infinity && audioRef.current.duration > 0) {
+                const newDuration = Math.ceil(audioRef.current.duration);
+                if (newDuration !== audioDuration) {
+                    console.log('Player: Found duration from audioRef:', newDuration);
+                    setAudioDuration(newDuration);
+
+                    // Notify parent component
+                    if (onDurationChange) {
+                        onDurationChange(newDuration);
+                    }
+                }
+            }
         }
-    }, [isPlaying, audioUrl, onPlayPause]);
+    }, [isPlaying, audioUrl, onPlayPause, audioDuration, onDurationChange]);
 
     // Sync audio time with player time
     useEffect(() => {
@@ -346,6 +446,20 @@ const Player = ({
                         // Это предотвращает конфликтующие обновления
                     }}
                     onEnded={() => onPlayPause(false)}
+                    onDurationChange={(e) => {
+                        if (audioRef.current && audioRef.current.duration &&
+                            !isNaN(audioRef.current.duration) &&
+                            audioRef.current.duration !== Infinity) {
+                            const newDuration = Math.ceil(audioRef.current.duration);
+                            console.log('Player: Audio element duration changed:', newDuration);
+                            setAudioDuration(newDuration);
+
+                            // Notify parent component
+                            if (onDurationChange) {
+                                onDurationChange(newDuration);
+                            }
+                        }
+                    }}
                 />
             )}
 
@@ -689,6 +803,12 @@ const Player = ({
                             }}
                         />
                     )}
+                </Box>
+            )}
+
+            {process.env.NODE_ENV !== 'production' && (
+                <Box sx={{ fontSize: '10px', color: 'gray', textAlign: 'center', mt: 1 }}>
+                    Original Duration: {duration}s | Audio Duration: {audioDuration || 'Not loaded'}s | Effective Duration: {safeDuration}s
                 </Box>
             )}
         </Paper>
