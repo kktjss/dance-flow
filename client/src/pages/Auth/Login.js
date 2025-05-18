@@ -18,19 +18,7 @@ import { styled, keyframes } from '@mui/material/styles';
 import axios from 'axios';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-
-// Определяем цвета как в других компонентах
-const COLORS = {
-    primary: '#8A2BE2',        // Фиолетовый (основной)
-    primaryLight: '#9D4EDD',   // Светло-фиолетовый
-    secondary: '#FF5722',      // Оранжевый
-    secondaryLight: '#FF7043', // Светло-оранжевый
-    tertiary: '#FF1493',       // Розовый
-    tertiaryLight: '#FF69B4',  // Светло-розовый
-    dark: '#0a0e24',           // Темный фон
-    darkLight: '#111536',      // Светлее темного фона
-    white: '#FFFFFF',          // Белый
-};
+import { COLORS } from '../../constants/colors';
 
 // Анимации
 const glowingBorder = keyframes`
