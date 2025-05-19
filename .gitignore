@@ -3,7 +3,7 @@ node_modules/
 /.pnp
 .pnp.js
 
-# --- SERVER: sensitive & generated files ---
+# SERVER: sensitive & generated files
 /server/go/uploads/
 /server/go/logs/
 /server/go/.env*
@@ -14,6 +14,7 @@ node_modules/
 /server/go/config/*.crt
 /server/go/config/*.pfx
 
+/server/python
 /server/python/venv/
 /server/python/.models/
 /server/python/__pycache__/
@@ -26,18 +27,6 @@ node_modules/
 /server/python/config/*.pem
 /server/python/config/*.crt
 /server/python/config/*.pfx
-
-/server_backup/logs/
-/server_backup/node_modules/
-/server_backup/.env*
-/server_backup/config/*.env*
-/server_backup/config/*.secret*
-/server_backup/config/*.key*
-/server_backup/config/*.pem
-/server_backup/config/*.crt
-/server_backup/config/*.pfx
-
-# --- END SERVER ---
 
 # Production
 /client/build
@@ -67,61 +56,3 @@ yarn-error.log*
 **/*.pyc
 **/*.pyo
 **/*.pyd
-
-# --- SERVER: sensitive & generated files ---
-/server/go/uploads/
-/server/go/logs/
-/server/go/server/
-/server/go/*.log
-/server/go/*.exe
-/server/go/*.out
-/server/go/*.bin
-/server/go/*.task
-/server/go/*.db
-/server/go/*.sqlite
-/server/go/*.sock
-/server/go/*.pid
-/server/go/.env*
-/server/go/config/*.env*
-/server/go/config/*.secret*
-/server/go/config/*.key*
-/server/go/config/*.pem
-/server/go/config/*.crt
-/server/go/config/*.pfx
-/server/go/config/*.json
-
-/server/python/venv/
-/server/python/.models/
-/server/python/__pycache__/
-/server/python/.pytest_cache/
-/server/python/*.log
-/server/python/*.db
-/server/python/*.sqlite
-/server/python/*.sock
-/server/python/*.pid
-/server/python/.env*
-/server/python/config/*.env*
-/server/python/config/*.secret*
-/server/python/config/*.key*
-/server/python/config/*.pem
-/server/python/config/*.crt
-/server/python/config/*.pfx
-/server/python/config/*.json
-
-/server_backup/logs/
-/server_backup/node_modules/
-/server_backup/*.log
-/server_backup/*.db
-/server_backup/*.sqlite
-/server_backup/*.sock
-/server_backup/*.pid
-/server_backup/.env*
-/server_backup/config/*.env*
-/server_backup/config/*.secret*
-/server_backup/config/*.key*
-/server_backup/config/*.pem
-/server_backup/config/*.crt
-/server_backup/config/*.pfx
-/server_backup/config/*.json
-
-# --- END SERVER --- 
