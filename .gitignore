@@ -14,7 +14,6 @@ node_modules/
 /server/go/config/*.crt
 /server/go/config/*.pfx
 
-/server/python
 /server/python/venv/
 /server/python/.models/
 /server/python/__pycache__/
@@ -30,9 +29,14 @@ node_modules/
 
 # Production
 /client/build
+
 /server_backup
+/client_backup
 
 /client/public/models
+
+/server/start_servers.sh
+/server/run-server-debug.sh
 
 # Misc
 .env

@@ -21,7 +21,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     });
 
     // DIRECT OVERRIDE - Force a known working URL
-    const FORCE_MODEL_URL = `${window.location.origin}/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
+    const FORCE_MODEL_URL = `${window.location.origin}/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
     console.log('XbotModel: FORCING DIRECT MODEL URL:', FORCE_MODEL_URL);
 
     const mixer = useRef(null);
@@ -211,7 +211,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     }));
 
                     // Use a simpler fallback URL as a last resort
-                    const simpleUrl = `/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
+                    const simpleUrl = `/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
                     console.log(`XbotModel: Trying one last fallback URL: ${simpleUrl}`);
 
                     new GLTFLoader().load(
@@ -630,7 +630,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 </>
             )}
 
-            {/* Debug information overlay */}
+            {/* Debug information overlay - HIDDEN 
             <Html position={[0, -2.5, 0]}>
                 <div style={{
                     color: 'white',
@@ -663,7 +663,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         }}
                         onClick={() => {
                             // Reload with the fallback URL
-                            const fallbackUrl = `/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
+                            const fallbackUrl = `/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
                             console.log('Manual reload with fallback URL:', fallbackUrl);
                             loadModelFromUrl(fallbackUrl);
                         }}
@@ -672,9 +672,11 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     </button>
                 </div>
             </Html>
+            */}
 
-            {/* Add axis helper for orientation */}
+            {/* Add axis helper for orientation - HIDDEN 
             <axesHelper args={[5]} />
+            */}
 
             {!isLoading && !loadingError && customModel && (
                 <>
@@ -682,7 +684,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     <primitive
                         object={customModel.scene}
                         scale={[1.0, 1.0, 1.0]}
-                        position={[0, 0, 0]}
+                        position={[0, -1, 0]}
                         rotation={[0, 0, 0]}
                     />
                 </>

@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { styled, keyframes } from '@mui/material/styles';
 import { COLORS } from '../constants/colors';
 
-// Animations
+// Анимации
 const fadeIn = keyframes`
   0% { opacity: 0; transform: translateY(20px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -36,7 +36,7 @@ const pulseAnimation = keyframes`
   100% { transform: scale(1); opacity: 1; }
 `;
 
-// Decorative elements
+// Декоративные элементы
 const DecorativeCircle = styled(Box)(({ size = 120, top, left, color = COLORS.primary, delay = 0 }) => ({
     position: 'absolute',
     width: `${size}px`,
@@ -50,7 +50,7 @@ const DecorativeCircle = styled(Box)(({ size = 120, top, left, color = COLORS.pr
     animation: `${fadeIn} 1s ${delay}s ease-out forwards`,
 }));
 
-// Styled components
+// Стилизованные компоненты
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(3),
     borderRadius: '20px',

@@ -1,14 +1,14 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { processVideoFrame } from '../services/api';
 
-// Advanced frame differencing worker for better motion detection
-/* COMMENTED OUT - NOT NEEDED FOR PAUSE MODE DETECTION
+// Продвинутый алгоритм дифференцирования кадров для улучшенного обнаружения движения
+/* ОТКЛЮЧЕНО - НЕ ТРЕБУЕТСЯ ДЛЯ ОБНАРУЖЕНИЯ РЕЖИМА ПАУЗЫ
 const createImageProcessor = () => {
-    // Only create worker if browser supports it
+    // Создаем воркер только если браузер его поддерживает
     if (typeof Worker !== 'undefined') {
         try {
             const workerCode = `
-                // Precompute conversion tables for performance
+                // Предварительно вычисляем таблицы преобразования для повышения производительности
                 const YCbCrTable = {
                     r: new Float32Array(256),
                     g: new Float32Array(256),
@@ -16,7 +16,7 @@ const createImageProcessor = () => {
                 };
                 
                 for(let i = 0; i < 256; i++) {
-                    // Precalculated RGB to YCbCr conversion (just Y component)
+                    // Предварительно вычисленное преобразование RGB в YCbCr (только компонент Y)
                     YCbCrTable.r[i] = 0.299 * i;
                     YCbCrTable.g[i] = 0.587 * i;
                     YCbCrTable.b[i] = 0.114 * i;
@@ -25,15 +25,15 @@ const createImageProcessor = () => {
                 self.onmessage = function(e) {
                     const {videoData, width, height, lastFrameData, threshold} = e.data;
                     
-                    // Create canvas in worker
+                    // Создаем canvas в воркере
                     const canvas = new OffscreenCanvas(width, height);
                     const ctx = canvas.getContext('2d');
                     
-                    // Draw image data to canvas
+                    // Рисуем данные изображения на canvas
                     const imgData = new ImageData(new Uint8ClampedArray(videoData), width, height);
                     ctx.putImageData(imgData, 0, 0);
                     
-                    // Detect motion if lastFrameData exists
+                    // Обнаруживаем движение, если lastFrameData существует
                     let motionDetected = true;
                     let diffScore = 0;
                     let motionAreas = [];
@@ -42,27 +42,27 @@ const createImageProcessor = () => {
                         const currentData = ctx.getImageData(0, 0, width, height).data;
                         const lastData = new Uint8ClampedArray(lastFrameData);
                         
-                        // Optimized frame comparison - compare luminance only
-                        // and use block-based comparison for better performance
-                        const blockSize = 16; // 16x16 pixel blocks
+                        // Оптимизированное сравнение кадров - сравниваем только яркость
+                        // и используем блочное сравнение для повышения производительности
+                        const blockSize = 16; // блоки 16x16 пикселей
                         const blocksX = Math.ceil(width / blockSize);
                         const blocksY = Math.ceil(height / blockSize);
                         let diffBlocks = 0;
                         const totalBlocks = blocksX * blocksY;
                         
-                        // Process each block
+                        // Обрабатываем каждый блок
                         for (let by = 0; by < blocksY; by++) {
                             for (let bx = 0; bx < blocksX; bx++) {
                                 let blockDiff = 0;
                                 let pixelsChecked = 0;
                                 
-                                // Sample a few pixels in the block for efficiency
+                                // Для эффективности проверяем несколько пикселей в блоке
                                 const startX = bx * blockSize;
                                 const startY = by * blockSize;
                                 const endX = Math.min(startX + blockSize, width);
                                 const endY = Math.min(startY + blockSize, height);
                                 
-                                // Skip some pixels for performance
+                                // Пропускаем некоторые пиксели для повышения производительности
                                 const skipFactor = 2;
                                 
                                 for (let y = startY; y < endY; y += skipFactor) {
@@ -71,12 +71,12 @@ const createImageProcessor = () => {
                                     for (let x = startX; x < endX; x += skipFactor) {
                                         const idx = rowOffset + x * 4;
                                         
-                                        // Fast Y (luminance) calculation using precalculated tables
+                                        // Быстрый расчет Y (яркости) с использованием предварительно вычисленных таблиц
                                         const y1 = YCbCrTable.r[currentData[idx]] + YCbCrTable.g[currentData[idx+1]] + YCbCrTable.b[currentData[idx+2]];
                                         const y2 = YCbCrTable.r[lastData[idx]] + YCbCrTable.g[lastData[idx+1]] + YCbCrTable.b[lastData[idx+2]];
                                         
                                         const diff = Math.abs(y1 - y2);
-                                        if (diff > 15) { // Threshold for luminance difference
+                                        if (diff > 15) { // Порог для различия яркости
                                             blockDiff++;
                                         }
                                         
@@ -84,7 +84,7 @@ const createImageProcessor = () => {
                                     }
                                 }
                                 
-                                // If enough pixels changed, mark the block as different
+                                // Если изменилось достаточно пикселей, отмечаем блок как отличающийся
                                 if (pixelsChecked > 0 && blockDiff / pixelsChecked > 0.2) {
                                     diffBlocks++;
                                     motionAreas.push({x: bx, y: by});
@@ -96,10 +96,10 @@ const createImageProcessor = () => {
                         motionDetected = diffScore > threshold;
                     }
                     
-                    // Optimized JPEG compression
-                    const quality = motionDetected ? 0.7 : 0.6; // Lower quality if no motion
+                    // Оптимизированное сжатие JPEG
+                    const quality = motionDetected ? 0.7 : 0.6; // Более низкое качество, если нет движения
                     
-                    // Create blob with optimized settings
+                    // Создаем blob с оптимизированными настройками
                     canvas.convertToBlob({type: 'image/jpeg', quality}).then(blob => {
                         self.postMessage({
                             blob,
@@ -126,7 +126,7 @@ const createImageProcessor = () => {
 };
 */
 
-// Create request queue for better network request management
+// Создаем очередь запросов для лучшего управления сетевыми запросами
 const createRequestQueue = () => {
     const queue = [];
     let isProcessing = false;
@@ -144,7 +144,7 @@ const createRequestQueue = () => {
             reject(error);
         } finally {
             isProcessing = false;
-            processQueue(); // Process next request
+            processQueue(); // Обрабатываем следующий запрос
         }
     };
 
@@ -179,87 +179,87 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
     const requestQueue = useRef(null);
     const consecutiveErrorCount = useRef(0);
     const processingTimes = useRef([]);
-    const lastSelectedPose = useRef(null);  // Track the last selected pose
-    const poseSimilarityCache = useRef(new Map()); // Cache for pose similarity calculations
+    const lastSelectedPose = useRef(null);  // Отслеживаем последнюю выбранную позу
+    const poseSimilarityCache = useRef(new Map()); // Кэш для расчетов сходства поз
     const devicePixelRatio = useRef(window.devicePixelRatio || 1);
     const lastDetectedPoses = useRef([]);
     const framesToSkip = useRef(0);
     const [showMessage, setShowMessage] = useState(false);
     const overlayCanvasRef = useRef(null);
     const pausedForSelectionRef = useRef(false);
-    const videoLoadAttempts = useRef(0); // Track load attempts
+    const videoLoadAttempts = useRef(0); // Отслеживаем попытки загрузки
     const [videoError, setVideoError] = useState(null);
     const seekRequested = useRef(false);
     const manualPlayRequest = useRef(false);
     const playbackErrorCount = useRef(0);
 
-    // Improved adaptive settings to match device capabilities
+    // Улучшенные адаптивные настройки, соответствующие возможностям устройства
     const [settings, setSettings] = useState({
-        frameInterval: 1000 / 15, // Target 15 FPS 
-        maxProcessingTime: 100, // Skip frames if processing takes too long (ms)
-        quality: 0.8, // JPEG quality (0-1)
-        motionThreshold: 0.05, // Motion detection threshold (0-1)
-        motionDetectionEnabled: true, // Enable/disable motion detection
-        resizeEnabled: true, // Enable/disable backend frame resize
-        adaptiveQuality: true, // Enable/disable adaptive quality
+        frameInterval: 1000 / 15, // Целевые 15 FPS 
+        maxProcessingTime: 100, // Пропуск кадров, если обработка занимает слишком много времени (мс)
+        quality: 0.8, // Качество JPEG (0-1)
+        motionThreshold: 0.05, // Порог обнаружения движения (0-1)
+        motionDetectionEnabled: true, // Включение/выключение обнаружения движения
+        resizeEnabled: true, // Включение/выключение изменения размера кадра на бэкенде
+        adaptiveQuality: true, // Включение/выключение адаптивного качества
         userDevicePerformance: 'medium', // 'low', 'medium', 'high'
-        smartSkipping: true, // Enable smart frame skipping
+        smartSkipping: true, // Включение умного пропуска кадров
         trackingMode: 'hybrid', // 'simple', 'advanced', 'hybrid'
-        maxConcurrentRequests: 1, // Max concurrent requests to server
+        maxConcurrentRequests: 1, // Максимальное количество одновременных запросов к серверу
     });
 
-    // Computed settings based on performance - more dynamic response to device capabilities
+    // Расчетные настройки, основанные на производительности - более динамичный отклик на возможности устройства
     const computedSettings = useMemo(() => {
         let quality = settings.quality;
         let frameInterval = settings.frameInterval;
         let motionThreshold = settings.motionThreshold;
-        let skipThreshold = 0.02; // Default threshold for frame skipping
-        let sizeLimit = 640; // Default max size for video frames
+        let skipThreshold = 0.02; // Порог по умолчанию для пропуска кадров
+        let sizeLimit = 640; // Максимальный размер по умолчанию для видеокадров
 
-        // Adjust based on device performance
+        // Корректировка на основе производительности устройства
         if (settings.adaptiveQuality) {
             const avgProcessingTime = processingTimes.current.length > 0
                 ? processingTimes.current.reduce((a, b) => a + b, 0) / processingTimes.current.length
                 : 50;
 
-            // More detailed performance tiers
+            // Более детальные уровни производительности
             if (avgProcessingTime > 250) {
-                // Very slow device
+                // Очень медленное устройство
                 quality = 0.5;
                 frameInterval = 1000 / 6; // 6 FPS
                 motionThreshold = 0.15;
                 skipThreshold = 0.05;
                 sizeLimit = 320;
             } else if (avgProcessingTime > 200) {
-                // Slow device
+                // Медленное устройство
                 quality = 0.55;
                 frameInterval = 1000 / 8; // 8 FPS
                 motionThreshold = 0.12;
                 skipThreshold = 0.04;
                 sizeLimit = 480;
             } else if (avgProcessingTime > 150) {
-                // Below average device
+                // Устройство ниже среднего
                 quality = 0.6;
                 frameInterval = 1000 / 10; // 10 FPS
                 motionThreshold = 0.1;
                 skipThreshold = 0.03;
                 sizeLimit = 480;
             } else if (avgProcessingTime > 100) {
-                // Average device
+                // Среднее устройство
                 quality = 0.65;
                 frameInterval = 1000 / 12; // 12 FPS
                 motionThreshold = 0.08;
                 skipThreshold = 0.03;
                 sizeLimit = 640;
             } else if (avgProcessingTime > 50) {
-                // Good device
+                // Хорошее устройство
                 quality = 0.75;
                 frameInterval = 1000 / 15; // 15 FPS
                 motionThreshold = 0.05;
                 skipThreshold = 0.02;
                 sizeLimit = 720;
             } else if (avgProcessingTime < 30) {
-                // High-end device
+                // Высокопроизводительное устройство
                 quality = 0.85;
                 frameInterval = 1000 / 24; // 24 FPS
                 motionThreshold = 0.02;
@@ -281,37 +281,37 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
     const frameSkipCount = useRef(0);
     const lastProcessingDuration = useRef(0);
 
-    // Initialize worker and request queue when component mounts
+    // Инициализируем воркер и очередь запросов при монтировании компонента
     useEffect(() => {
-        // Create request queue for network request management
+        // Создаем очередь запросов для управления сетевыми запросами
         requestQueue.current = createRequestQueue();
 
-        // Detect device performance
+        // Определяем производительность устройства
         detectDevicePerformance();
 
-        // Memory cleanup
+        // Очистка памяти
         return () => {
-            // Clear request queue
+            // Очищаем очередь запросов
             if (requestQueue.current) {
                 requestQueue.current.clear();
             }
 
-            // Clear caches
+            // Очищаем кэши
             poseSimilarityCache.current.clear();
             lastSelectedPose.current = null;
         };
     }, []);
 
-    // Detect device performance
+    // Определяем производительность устройства
     const detectDevicePerformance = () => {
-        // More sophisticated device detection
+        // Более сложное определение устройства
         const hardwareConcurrency = navigator.hardwareConcurrency || 2;
-        const memory = navigator.deviceMemory || 4; // Default to 4GB if not available
+        const memory = navigator.deviceMemory || 4; // По умолчанию 4 ГБ, если недоступно
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
         let performanceLevel = 'medium';
 
-        // Check device capabilities
+        // Проверяем возможности устройства
         if (isMobile) {
             if (hardwareConcurrency <= 4 || memory <= 2) {
                 performanceLevel = 'low';
@@ -320,7 +320,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             } else {
                 performanceLevel = 'medium';
             }
-        } else { // Desktop
+        } else { // Настольный компьютер
             if (hardwareConcurrency <= 2 || memory <= 4) {
                 performanceLevel = 'low';
             } else if (hardwareConcurrency >= 8 && memory >= 8) {
@@ -333,32 +333,32 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         setSettings(prev => ({
             ...prev,
             userDevicePerformance: performanceLevel,
-            // Adjust settings based on detected performance
+            // Корректируем настройки на основе обнаруженной производительности
             quality: performanceLevel === 'low' ? 0.6 : performanceLevel === 'medium' ? 0.7 : 0.8,
             frameInterval: performanceLevel === 'low' ? 1000 / 10 : performanceLevel === 'medium' ? 1000 / 15 : 1000 / 24,
         }));
     };
 
-    // Capture video frame at original resolution
+    // Захватываем кадр видео в оригинальном разрешении
     const captureVideoFrame = useCallback((video) => {
         if (!video) return null;
 
-        // Always use the video's native dimensions
+        // Всегда используем исходные размеры видео
         const width = video.videoWidth;
         const height = video.videoHeight;
 
-        // Create canvas if needed
+        // Создаем canvas при необходимости
         if (!offscreenCanvasRef.current) {
             offscreenCanvasRef.current = document.createElement('canvas');
         }
 
         const canvas = offscreenCanvasRef.current;
 
-        // Set canvas to match video dimensions exactly
+        // Устанавливаем размеры canvas, чтобы точно соответствовали размерам видео
         canvas.width = width;
         canvas.height = height;
 
-        // Get context and draw the video frame
+        // Получаем контекст и рисуем кадр видео
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
@@ -366,23 +366,23 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         // Очищаем канвас перед рисованием
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Fill with black background first to ensure no transparency
+        // Сначала заполняем черным фоном, чтобы избежать прозрачности
         ctx.fillStyle = 'rgb(0,0,0)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Рисуем видео на канвас, гарантируя непрозрачность
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Return as blob with optimized quality settings
+        // Возвращаем как blob с оптимизированными настройками качества
         return new Promise(resolve => {
-            // Use lower quality when processing frames for performance
-            // Only use high quality for the actual dancer selection
+            // Используем более низкое качество при обработке кадров для производительности
+            // Высокое качество используем только для выбора танцора
             const quality = isDancerSelectionMode && video.paused ? 0.9 : 0.7;
             canvas.toBlob(resolve, 'image/jpeg', quality);
         });
     }, [isDancerSelectionMode]);
 
-    // Process video frame with optimized scheduling
+    // Обработка кадра видео с оптимизированным планированием
     const processFrame = useCallback(async (timestamp) => {
         if (!isProcessingRef.current || !isVideoReady || !videoRef.current) {
             return;
@@ -424,16 +424,16 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
         lastProcessTime.current = timestamp;
 
-        // Get video element
+        // Получаем элемент видео
         const video = videoRef.current;
 
-        // Only process if we need to (dancer selection mode or video paused)
+        // Обрабатываем только если нужно (режим выбора танцора или видео на паузе)
         if (isDancerSelectionMode || video.paused) {
             try {
-                // Capture frame
+                // Захватываем кадр
                 const blob = await captureVideoFrame(video);
 
-                // Process only if in selection mode or if paused
+                // Обрабатываем только если в режиме выбора или на паузе
                 if (blob && (isDancerSelectionMode || video.paused)) {
                     await processBlob(blob);
                 }
@@ -442,11 +442,11 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             }
         }
 
-        // Continue the animation loop
+        // Продолжаем цикл анимации
         animationFrameRef.current = requestAnimationFrame(processFrame);
     }, [isVideoReady, captureVideoFrame, computedSettings, settings, isDancerSelectionMode]);
 
-    // Optimized blob processing with better error handling and throttling
+    // Оптимизированная обработка blob с улучшенной обработкой ошибок и регулированием
     const processBlob = async (blob) => {
         if (processingInProgress.current) {
             return;
@@ -454,30 +454,30 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
         processingInProgress.current = true;
         try {
-            // Throttle API requests based on performance
+            // Регулируем API-запросы на основе производительности
             const now = performance.now();
             const timeSinceLastProcess = now - lastProcessingDuration.current;
 
-            // If we processed recently and video is playing, skip this processing
+            // Если мы недавно обработали и видео воспроизводится, пропускаем эту обработку
             if (timeSinceLastProcess < 100 && !videoRef.current.paused && !isDancerSelectionMode) {
                 processingInProgress.current = false;
                 return;
             }
 
-            // Create form data
+            // Создаем форму данных
             const formData = new FormData();
             formData.append('file', blob, 'frame.jpg');
 
-            // Add resize parameter based on settings
+            // Добавляем параметр изменения размера на основе настроек
             const resize = settings.resizeEnabled ? 1 : 0;
 
-            // Only request overlay when in dancer selection mode and paused
+            // Запрашиваем наложение только в режиме выбора танцора и когда видео на паузе
             const overlay = isDancerSelectionMode && videoRef.current.paused ? 1 : 0;
 
-            // Use request queue to manage concurrent requests with timeout
+            // Используем очередь запросов для управления параллельными запросами с тайм-аутом
             const makeRequest = async () => {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000); // Shorter timeout
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // Более короткий тайм-аут
 
                 try {
                     const response = await fetch(`http://127.0.0.1:8000/process-frame?resize=${resize}&overlay=${overlay}`, {
@@ -971,170 +971,65 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }
     }, []);
 
-    // Improved video loading with better error handling
+    // Initialize video element with proper error handling
     useEffect(() => {
+        if (!videoRef.current || !videoUrl) return;
+
         const video = videoRef.current;
-
-        if (!video || !videoUrl) return;
-
         console.log('Setting up video with URL:', videoUrl);
 
-        // Reset state for new video
-        setIsVideoReady(false);
+        // Reset error state
         setVideoError(null);
         videoLoadAttempts.current = 0;
-        playbackErrorCount.current = 0;
-        seekRequested.current = false;
-        manualPlayRequest.current = false;
 
-        const handleVideoReady = () => {
-            console.log('Video is ready to play, duration:', video.duration);
-            setIsVideoReady(true);
-            setupCanvases();
+        // Configure video element
+        video.crossOrigin = "anonymous"; // Enable CORS
+        video.preload = "auto";
+        video.playsInline = true;
+        video.muted = true; // Mute to allow autoplay
 
-            // Remove any previous error state
-            setVideoError(null);
+        // Set up error handling
+        const handleError = (error) => {
+            console.error('Video error:', error);
+            setVideoError(error);
 
-            // Optimize video playback for long videos
-            if (video.duration > 180) { // longer than 3 minutes
-                // Disable automatic quality switching
-                if (video.getVideoPlaybackQuality) {
-                    try {
-                        video.autoquality = false;
-                    } catch (e) {
-                        console.warn('Cannot disable autoquality:', e);
-                    }
-                }
-
-                // Set buffer size to handle longer playback
-                try {
-                    // Longer buffering for bigger videos
-                    if (typeof video.bufferSize !== "undefined") {
-                        video.bufferSize = Math.min(30, Math.floor(video.duration / 60) * 5); // 5s per minute, max 30s
-                    }
-                } catch (e) {
-                    console.warn('Cannot set buffer size:', e);
-                }
+            // Try to recover
+            if (videoLoadAttempts.current < 3) {
+                videoLoadAttempts.current++;
+                console.log(`Retrying video load (attempt ${videoLoadAttempts.current})`);
+                setTimeout(() => {
+                    video.load();
+                }, 1000 * videoLoadAttempts.current);
             }
+        };
 
+        // Set up load handling
+        const handleLoad = () => {
+            console.log('Video loaded successfully');
+            setIsVideoReady(true);
             if (onVideoLoaded) {
                 onVideoLoaded(video);
             }
         };
 
-        const handleVideoError = (error) => {
-            console.error('Error loading video:', error);
-            videoLoadAttempts.current += 1;
-            playbackErrorCount.current += 1;
+        // Add event listeners
+        video.addEventListener('error', handleError);
+        video.addEventListener('loadeddata', handleLoad);
+        video.addEventListener('canplay', handleLoad);
 
-            if (videoLoadAttempts.current <= 3) {
-                console.log(`Retry loading video (attempt ${videoLoadAttempts.current})`);
-                // Use a different loading strategy for each attempt
-                setTimeout(() => {
-                    if (videoLoadAttempts.current === 1) {
-                        // First retry: Just reload
-                        video.load();
-                    } else if (videoLoadAttempts.current === 2) {
-                        // Second retry: Try with preload=none and then change to auto
-                        video.preload = 'none';
-                        video.load();
-                        setTimeout(() => {
-                            video.preload = 'auto';
-                        }, 1000);
-                    } else {
-                        // Third retry: Try metadata first, then upgrade
-                        video.preload = 'metadata';
-                        video.load();
-                        setTimeout(() => {
-                            video.preload = 'auto';
-                        }, 2000);
-                    }
-                }, 1000 * videoLoadAttempts.current); // Progressively longer delays
-            } else {
-                setVideoError('Не удалось загрузить видео после нескольких попыток');
-                setIsVideoReady(false);
-            }
-        };
-
-        // Handle stalled playback
-        const handleVideoStalled = () => {
-            console.warn('Video playback stalled');
-            if (playbackErrorCount.current < 5) {
-                playbackErrorCount.current++;
-                // If we were playing, try to resume after a short delay
-                if (!video.paused) {
-                    setTimeout(() => {
-                        if (videoRef.current && !videoRef.current.paused) {
-                            console.log('Attempting to resume stalled video');
-                            videoRef.current.play().catch(e => console.error('Failed to resume:', e));
-                        }
-                    }, 1000);
-                }
-            } else {
-                // Too many errors, show error to user
-                setVideoError('Проблемы с воспроизведением видео. Попробуйте изменить качество или перезагрузить.');
-            }
-        };
-
-        // Handle timeupdate events to reset error counter when playback is working
-        const handleTimeUpdate = () => {
-            // Reset error counter as playback is working
-            if (video.currentTime > 0 && !video.paused) {
-                playbackErrorCount.current = 0;
-            }
-
-            // Handle seek request if time is set externally
-            if (seekRequested.current && typeof currentTime === 'number') {
-                seekRequested.current = false;
-
-                try {
-                    // Only seek if difference is significant
-                    if (Math.abs(video.currentTime - currentTime) > 0.5) {
-                        video.currentTime = currentTime;
-                    }
-                } catch (err) {
-                    console.error('Error during seek:', err);
-                }
-            }
-
-            // Handle play request if set externally
-            if (manualPlayRequest.current) {
-                manualPlayRequest.current = false;
-                if (video.paused) {
-                    video.play().catch(e => console.error('Play request failed:', e));
-                }
-            }
-        };
-
-        // Clear any previous event listeners
-        video.removeEventListener('loadeddata', handleVideoReady);
-        video.removeEventListener('canplay', handleVideoReady);
-        video.removeEventListener('error', handleVideoError);
-        video.removeEventListener('stalled', handleVideoStalled);
-        video.removeEventListener('timeupdate', handleTimeUpdate);
-
-        // Set new event listeners
-        video.addEventListener('loadeddata', handleVideoReady);
-        video.addEventListener('canplay', handleVideoReady);
-        video.addEventListener('error', handleVideoError);
-        video.addEventListener('stalled', handleVideoStalled);
-        video.addEventListener('timeupdate', handleTimeUpdate);
-
-        // Set optimal video attributes for long videos
-        video.preload = 'auto';  // Ensure video data is preloaded
-        video.crossOrigin = 'anonymous'; // Help with CORS issues
-
-        // Force video to reload
+        // Load video
+        video.src = videoUrl;
         video.load();
 
+        // Cleanup
         return () => {
-            video.removeEventListener('loadeddata', handleVideoReady);
-            video.removeEventListener('canplay', handleVideoReady);
-            video.removeEventListener('error', handleVideoError);
-            video.removeEventListener('stalled', handleVideoStalled);
-            video.removeEventListener('timeupdate', handleTimeUpdate);
+            video.removeEventListener('error', handleError);
+            video.removeEventListener('loadeddata', handleLoad);
+            video.removeEventListener('canplay', handleLoad);
+            video.src = '';
+            video.load();
         };
-    }, [videoUrl, setupCanvases, onVideoLoaded, currentTime]);
+    }, [videoUrl, onVideoLoaded]);
 
     // Respond to external playback controls
     useEffect(() => {
@@ -1261,7 +1156,8 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     maxWidth: '100%',
                     maxHeight: '100%',
                     objectFit: 'contain',
-                    pointerEvents: isDancerSelectionMode ? 'none' : 'auto'
+                    pointerEvents: isDancerSelectionMode ? 'none' : 'auto',
+                    display: videoError ? 'none' : 'block'
                 }}
                 // Performance optimization attributes for long videos
                 playsInline
@@ -1271,6 +1167,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 // Add important attributes for optimized video playback
                 disablePictureInPicture
                 disableRemotePlayback
+                muted
             />
 
             {/* Show error message if video fails to load */}

@@ -15,7 +15,7 @@ import {
     compareWithReference
 } from '../../../client/src/services/videoService';
 
-// Create axios mock
+// Создаем мок для axios
 const mock = new MockAdapter(axios);
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -29,12 +29,12 @@ describe('API Integration Tests', () => {
     const token = 'test.jwt.token';
 
     beforeAll(async () => {
-        // Start test server if using real backend for integration tests
+        // Запускаем тестовый сервер, если используется реальный бэкенд для интеграционных тестов
         // server = await setupTestServer();
     });
 
     afterAll(async () => {
-        // Close test server
+        // Закрываем тестовый сервер
         // await teardownTestServer(server);
         mock.restore();
     });
@@ -44,7 +44,7 @@ describe('API Integration Tests', () => {
         localStorage.clear();
         localStorage.setItem('token', token);
 
-        // Mock the API URL and add common headers
+        // Устанавливаем URL API и добавляем общие заголовки
         axios.defaults.baseURL = API_URL;
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     });

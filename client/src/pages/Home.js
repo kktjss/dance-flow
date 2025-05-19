@@ -17,7 +17,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { COLORS } from '../constants/colors';
 
-// Keyframes animations
+// Анимации keyframes
 const glowingBorder = keyframes`
   0% { border-image-source: linear-gradient(45deg, ${COLORS.primary}, ${COLORS.tertiary}, ${COLORS.primary}); }
   25% { border-image-source: linear-gradient(90deg, ${COLORS.tertiary}, ${COLORS.primary}, ${COLORS.tertiary}); }
@@ -65,7 +65,7 @@ const fadeIn = keyframes`
   100% { opacity: 1; }
 `;
 
-// Styled components with animations
+// Стилизованные компоненты с анимациями
 const StyledCard = styled(Card)(({ theme }) => ({
     height: '100%',
     display: 'flex',

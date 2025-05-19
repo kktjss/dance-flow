@@ -40,13 +40,13 @@ const ModelDebugPage = () => {
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <Typography variant="h4" gutterBottom>
-                3D Model Manager
+                Менеджер 3D-моделей
             </Typography>
 
             <Paper elevation={3} sx={{ p: 2, mb: 4 }}>
                 <Typography variant="body1" gutterBottom>
-                    This page allows you to upload, manage, and preview 3D models in GLB format.
-                    You can upload your own models and use them in your dance flow projects.
+                    Эта страница позволяет загружать, управлять и предпросматривать 3D-модели в формате GLB.
+                    Вы можете загрузить свои собственные модели и использовать их в проектах Dance Flow.
                 </Typography>
             </Paper>
 
@@ -56,8 +56,8 @@ const ModelDebugPage = () => {
                     onChange={handleTabChange}
                     aria-label="model tabs"
                 >
-                    <Tab label="Model Uploader" />
-                    <Tab label="Model Viewer" />
+                    <Tab label="Загрузка моделей" />
+                    <Tab label="Просмотр моделей" />
                 </Tabs>
             </Box>
 
@@ -79,7 +79,7 @@ const ModelDebugPage = () => {
 
                 {!selectedModel && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
-                        Please select a model from the Model Uploader tab to preview it here.
+                        Пожалуйста, выберите модель во вкладке "Загрузка моделей", чтобы просмотреть её здесь.
                     </Typography>
                 )}
             </TabPanel>

@@ -7,7 +7,7 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import Canvas from '../../../client/src/components/Canvas';
 
-// Mock dependencies
+// Мокаем зависимости
 jest.mock('three', () => {
     return {
         WebGLRenderer: jest.fn().mockImplementation(() => ({
@@ -71,7 +71,7 @@ jest.mock('three/examples/jsm/controls/OrbitControls', () => ({
     }))
 }));
 
-// Mock design element services
+// Мокаем сервисы элементов дизайна
 jest.mock('../../../client/src/services/designElementService', () => ({
     getElements: jest.fn().mockResolvedValue({
         data: [
@@ -90,7 +90,7 @@ jest.mock('../../../client/src/services/designElementService', () => ({
     })
 }));
 
-// Mock project service
+// Мокаем сервис проектов
 jest.mock('../../../client/src/services/projectService', () => ({
     getProject: jest.fn().mockResolvedValue({
         data: {
@@ -110,19 +110,19 @@ jest.mock('../../../client/src/services/projectService', () => ({
     })
 }));
 
-// Configure mock store
+// Настраиваем мок-стор
 const middlewares = [thunk];
 const mockStore = configureStore(middlewares);
 
 describe('Canvas Component', () => {
     let store;
 
-    // Mock window methods
+    // Мокаем методы window
     const originalRequestAnimationFrame = window.requestAnimationFrame;
     const originalCancelAnimationFrame = window.cancelAnimationFrame;
 
     beforeEach(() => {
-        // Create store with initial state
+        // Создаем стор с начальным состоянием
         store = mockStore({
             auth: {
                 isAuthenticated: true,
@@ -150,11 +150,11 @@ describe('Canvas Component', () => {
             }
         });
 
-        // Mock requestAnimationFrame and cancelAnimationFrame
+        // Мокаем requestAnimationFrame и cancelAnimationFrame
         window.requestAnimationFrame = jest.fn().mockReturnValue(1);
         window.cancelAnimationFrame = jest.fn();
 
-        // Mock Element.getBoundingClientRect
+        // Мокаем Element.getBoundingClientRect
         Element.prototype.getBoundingClientRect = jest.fn().mockReturnValue({
             width: 1000,
             height: 800,
@@ -164,7 +164,7 @@ describe('Canvas Component', () => {
             right: 1000
         });
 
-        // Mock ResizeObserver
+        // Мокаем ResizeObserver
         global.ResizeObserver = jest.fn().mockImplementation(() => ({
             observe: jest.fn(),
             unobserve: jest.fn(),
@@ -175,7 +175,7 @@ describe('Canvas Component', () => {
     });
 
     afterEach(() => {
-        // Restore original functions
+        // Восстанавливаем оригинальные функции
         window.requestAnimationFrame = originalRequestAnimationFrame;
         window.cancelAnimationFrame = originalCancelAnimationFrame;
     });
@@ -189,7 +189,7 @@ describe('Canvas Component', () => {
             </Provider>
         );
 
-        // Check for canvas container
+        // Проверяем наличие контейнера canvas
         await waitFor(() => {
             expect(screen.getByTestId('canvas-container')).toBeInTheDocument();
         });

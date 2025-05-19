@@ -1,0 +1,25 @@
+# Основные пакеты
+setuptools>=65.5.0
+wheel>=0.38.0
+pip>=23.0.0
+
+# Пакеты для API
+fastapi==0.100.0
+uvicorn==0.22.0
+python-multipart==0.0.6
+
+# Обработка изображений и ИИ
+opencv-python==4.8.0.76
+numpy>=1.26.0
+
+# MediaPipe - по возможности используйте предварительно собранный wheel
+--extra-index-url https://google-coral.github.io/py-repo/
+mediapipe>=0.10.13
+
+# Мониторинг системы
+psutil==5.9.5
+
+# Аутентификация - требуется только для функций аутентификации пользователей
+python-jose==3.3.0
+passlib==1.7.4
+bcrypt==4.0.1 

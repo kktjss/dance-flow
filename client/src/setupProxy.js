@@ -27,4 +27,28 @@ module.exports = function (app) {
             changeOrigin: true,
         })
     );
+
+    // Proxy for files in /files directly to /uploads/files
+    app.use(
+        '/files',
+        createProxyMiddleware({
+            target: 'http://localhost:5000',
+            changeOrigin: true,
+            pathRewrite: {
+                '^/files': '/uploads/files'
+            }
+        })
+    );
+
+    // Proxy for audio files in /audio directly to /uploads/audio
+    app.use(
+        '/audio',
+        createProxyMiddleware({
+            target: 'http://localhost:5000',
+            changeOrigin: true,
+            pathRewrite: {
+                '^/audio': '/uploads/audio'
+            }
+        })
+    );
 }; 

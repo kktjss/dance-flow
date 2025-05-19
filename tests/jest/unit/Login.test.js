@@ -7,28 +7,28 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import Login from '../../../client/src/pages/Auth/Login';
 
-// Mock navigate function
+// Мокаем функцию навигации
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useNavigate: () => mockNavigate
 }));
 
-// Mock auth service
+// Мокаем сервис аутентификации
 jest.mock('../../../client/src/services/authService', () => ({
     login: jest.fn()
 }));
 
-// Mock Redux actions
+// Мокаем Redux-экшены
 jest.mock('../../../client/src/actions/authActions', () => ({
     login: jest.fn().mockImplementation((credentials) => {
         return (dispatch) => {
-            // Simulate successful login with valid credentials
+            // Имитируем успешный вход с правильными учетными данными
             if (credentials.email === 'test@example.com' && credentials.password === 'password123') {
                 dispatch({ type: 'LOGIN_SUCCESS', payload: { token: 'test.token', user: { _id: 'user1', username: 'testuser' } } });
                 return Promise.resolve();
             }
-            // Simulate failed login
+            // Имитируем неудачный вход
             dispatch({ type: 'LOGIN_FAIL', payload: { error: 'Invalid credentials' } });
             return Promise.reject({ response: { data: { error: 'Invalid credentials' } } });
         };
@@ -36,7 +36,7 @@ jest.mock('../../../client/src/actions/authActions', () => ({
     logout: jest.fn()
 }));
 
-// Configure mock store
+// Настраиваем мок-стор
 const middlewares = [thunk];
 const mockStore = configureStore(middlewares);
 
@@ -44,10 +44,10 @@ describe('Login Component', () => {
     let store;
 
     beforeEach(() => {
-        // Reset mocks
+        // Сбрасываем моки
         jest.clearAllMocks();
 
-        // Create store with initial state
+        // Создаем стор с начальным состоянием
         store = mockStore({
             auth: {
                 isAuthenticated: false,
@@ -68,7 +68,7 @@ describe('Login Component', () => {
             </Provider>
         );
 
-        // Check for main elements
+        // Проверяем наличие основных элементов
         expect(screen.getByText(/Sign in to your account/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
@@ -85,22 +85,22 @@ describe('Login Component', () => {
             </Provider>
         );
 
-        // Try to submit without filling out form
+        // Пытаемся отправить форму, не заполняя её
         const submitButton = screen.getByRole('button', { name: /Sign In/i });
         fireEvent.click(submitButton);
 
-        // Check for validation errors
+        // Проверяем наличие ошибок валидации
         await waitFor(() => {
             expect(screen.getByText(/Email is required/i)).toBeInTheDocument();
             expect(screen.getByText(/Password is required/i)).toBeInTheDocument();
         });
 
-        // Fill in with invalid email
+        // Заполняем неправильным email
         const emailInput = screen.getByLabelText(/Email/i);
         fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
         fireEvent.click(submitButton);
 
-        // Check for email validation error
+        // Проверяем наличие ошибки валидации email
         await waitFor(() => {
             expect(screen.getByText(/Please enter a valid email/i)).toBeInTheDocument();
         });
@@ -117,31 +117,31 @@ describe('Login Component', () => {
             </Provider>
         );
 
-        // Fill out form with valid credentials
+        // Заполняем форму правильными учетными данными
         const emailInput = screen.getByLabelText(/Email/i);
         const passwordInput = screen.getByLabelText(/Password/i);
 
         fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
         fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-        // Submit form
+        // Отправляем форму
         const submitButton = screen.getByRole('button', { name: /Sign In/i });
         fireEvent.click(submitButton);
 
-        // Check login action was called with correct credentials
+        // Проверяем, что функция входа была вызвана с правильными учетными данными
         expect(login).toHaveBeenCalledWith({
             email: 'test@example.com',
             password: 'password123'
         });
 
-        // Wait for navigation to occur after successful login
+        // Ждем, когда произойдет навигация после успешного входа
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/auth-home');
         });
     });
 
     test('handles failed login', async () => {
-        // Setup store with error state
+        // Настраиваем стор с состоянием ошибки
         store = mockStore({
             auth: {
                 isAuthenticated: false,
@@ -160,23 +160,23 @@ describe('Login Component', () => {
             </Provider>
         );
 
-        // Fill out form with invalid credentials
+        // Заполняем форму неправильными учетными данными
         const emailInput = screen.getByLabelText(/Email/i);
         const passwordInput = screen.getByLabelText(/Password/i);
 
         fireEvent.change(emailInput, { target: { value: 'wrong@example.com' } });
         fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
 
-        // Submit form
+        // Отправляем форму
         const submitButton = screen.getByRole('button', { name: /Sign In/i });
         fireEvent.click(submitButton);
 
-        // Check for error message
+        // Проверяем наличие сообщения об ошибке
         await waitFor(() => {
             expect(screen.getByText(/Invalid credentials/i)).toBeInTheDocument();
         });
 
-        // Verify we did not navigate
+        // Проверяем, что навигация не произошла
         expect(mockNavigate).not.toHaveBeenCalled();
     });
 
@@ -189,11 +189,11 @@ describe('Login Component', () => {
             </Provider>
         );
 
-        // Click on register link
+        // Нажимаем на ссылку регистрации
         const registerLink = screen.getByText(/Sign up/i);
         fireEvent.click(registerLink);
 
-        // Check navigation
+        // Проверяем навигацию
         expect(mockNavigate).toHaveBeenCalledWith('/register');
     });
 

@@ -16,9 +16,9 @@ type Config struct {
 	AllowedOrigins []string
 }
 
-// Load returns the configuration
+// Load возвращает конфигурацию
 func Load() *Config {
-	// Load env file if it exists
+	// Загружаем файл .env, если он существует
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Warning: .env file not found, using environment variables")
@@ -26,7 +26,7 @@ func Load() *Config {
 		log.Println("Loaded environment variables from .env file")
 	}
 
-	// Set default port if not provided
+	// Устанавливаем порт по умолчанию, если не указан
 	port := 5000
 	if os.Getenv("PORT") != "" {
 		portValue, err := strconv.Atoi(os.Getenv("PORT"))
@@ -36,7 +36,7 @@ func Load() *Config {
 	}
 	log.Printf("Server port: %d", port)
 
-	// Set MongoDB URI
+	// Устанавливаем URI MongoDB
 	mongoURI := os.Getenv("MONGODB_URI")
 	if mongoURI == "" {
 		mongoURI = "mongodb://localhost:27017/dance-platform"
@@ -45,7 +45,7 @@ func Load() *Config {
 		log.Printf("Using MongoDB URI: %s", mongoURI)
 	}
 
-	// Set JWT secret
+	// Устанавливаем секретный ключ JWT
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "default-secret-key-change-in-production"
@@ -54,7 +54,7 @@ func Load() *Config {
 		log.Println("JWT_SECRET loaded from environment")
 	}
 
-	// Set JWT expiration
+	// Устанавливаем срок действия JWT
 	jwtExpiration := os.Getenv("JWT_EXPIRATION")
 	if jwtExpiration == "" {
 		jwtExpiration = "24h"
@@ -63,7 +63,7 @@ func Load() *Config {
 		log.Printf("JWT expiration: %s", jwtExpiration)
 	}
 
-	// Set allowed origins for CORS
+	// Устанавливаем разрешенные источники для CORS
 	allowedOrigins := []string{"http://localhost:3000", "http://127.0.0.1:3000"}
 	log.Printf("Allowed CORS origins: %v", allowedOrigins)
 

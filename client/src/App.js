@@ -11,8 +11,6 @@ import AuthHome from './pages/AuthHome';
 import ConstructorPage from './pages/ConstructorPage';
 import ProjectViewPage from './pages/ProjectViewPage';
 import ProjectsPage from './pages/ProjectsPage';
-import ProjectViewer from './pages/ProjectViewer';
-import ProjectConstructor from './pages/ProjectConstructor';
 import DebugPage from './pages/DebugPage';
 import ModelDebugPage from './pages/ModelDebugPage';
 import { COLORS } from './constants/colors';
@@ -90,20 +88,13 @@ function App() {
             <CssBaseline />
             <Router>
                 <Routes>
+                    {/* Общедоступные маршруты */}
                     <Route
                         path="/"
                         element={
                             <PublicRoute>
                                 <Home />
                             </PublicRoute>
-                        }
-                    />
-                    <Route
-                        path="/auth-home"
-                        element={
-                            <ProtectedRoute>
-                                <AuthHome />
-                            </ProtectedRoute>
                         }
                     />
                     <Route
@@ -122,6 +113,16 @@ function App() {
                             </PublicRoute>
                         }
                     />
+
+                    {/* Защищенные маршруты */}
+                    <Route
+                        path="/auth-home"
+                        element={
+                            <ProtectedRoute>
+                                <AuthHome />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route
                         path="/dashboard"
                         element={
@@ -138,6 +139,8 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
+
+                    {/* Проекты */}
                     <Route
                         path="/constructor"
                         element={
@@ -146,8 +149,6 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-
-                    {/* Маршрут для открытия определенного проекта */}
                     <Route
                         path="/constructor/:projectId"
                         element={
@@ -156,8 +157,6 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-
-                    {/* Маршрут для просмотра проекта (read-only) */}
                     <Route
                         path="/projects/:projectId"
                         element={
@@ -166,8 +165,6 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-
-                    {/* Маршрут для просмотра списка всех проектов */}
                     <Route
                         path="/projects"
                         element={
@@ -176,25 +173,6 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-
-                    {/* Для демонстрации конструктора без авторизации */}
-                    <Route
-                        path="/dance-flow"
-                        element={<ConstructorPage />}
-                    />
-
-                    {/* Для отладки 3D модели */}
-                    <Route
-                        path="/debug-model"
-                        element={<DebugPage />}
-                    />
-
-                    {/* Для управления 3D моделями */}
-                    <Route
-                        path="/models"
-                        element={<ModelDebugPage />}
-                    />
-
                     <Route
                         path="/teams/:teamId/projects/:projectId/viewer"
                         element={
@@ -203,15 +181,20 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-                    <Route
-                        path="/teams/:teamId/projects/:projectId/constructor"
-                        element={
-                            <ProtectedRoute>
-                                <ProjectConstructor />
-                            </ProtectedRoute>
-                        }
-                    />
 
+                    {/* Отладочные маршруты */}
+                    <Route
+                        path="/dance-flow"
+                        element={<ConstructorPage />}
+                    />
+                    <Route
+                        path="/debug-model"
+                        element={<DebugPage />}
+                    />
+                    <Route
+                        path="/models"
+                        element={<ModelDebugPage />}
+                    />
                     <Route
                         path="/debug"
                         element={

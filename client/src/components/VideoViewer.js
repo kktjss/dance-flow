@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, IconButton, Tooltip, Paper, Alert, Fade, CircularProgress, Menu, MenuItem, FormControlLabel, Switch } from '@mui/material';
-import { PersonSearch, Close, VideoLibrary, Videocam, HighQuality, SettingsInputSvideo, Refresh, Settings } from '@mui/icons-material';
+import { PersonSearch, Close, VideoLibrary, Videocam, HighQuality, SettingsInputSvideo, Refresh, Settings, FindInPage } from '@mui/icons-material';
 import VideoAnalyzer from './VideoAnalyzer.js';
 
 const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTime = 0, isPlaying = false }) => {
@@ -13,6 +13,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
     const [videoFormat, setVideoFormat] = useState(null);
     const [playbackMode, setPlaybackMode] = useState('normal'); // 'normal', 'lowLatency', 'progressive'
     const [useFallbackPlayer, setUseFallbackPlayer] = useState(false);
+    const [isDetectingDancer, setIsDetectingDancer] = useState(false);
     const videoRef = useRef(null);
     const fallbackVideoRef = useRef(null);
     const loadTimeoutRef = useRef(null);
@@ -184,6 +185,48 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
         }
     };
 
+    const findDancerAutomatically = async () => {
+        if (isDetectingDancer || !videoElement) return;
+
+        try {
+            setIsDetectingDancer(true);
+
+            // Pause the video during detection
+            if (!videoElement.paused) {
+                videoElement.pause();
+            }
+
+            // Request to the backend for dancer detection
+            const response = await fetch('http://127.0.0.1:8000/detect-dancer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    timestamp: videoElement.currentTime,
+                    videoId: videoUrl.split('/').pop() // Extract video ID from URL
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка запроса: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.dancer_id !== undefined) {
+                setSelectedDancer(result.dancer_id);
+                console.log('Dancer automatically detected:', result.dancer_id);
+            } else {
+                console.log('No dancer was detected automatically');
+            }
+        } catch (error) {
+            console.error('Error finding dancer automatically:', error);
+        } finally {
+            setIsDetectingDancer(false);
+        }
+    };
+
     const toggleVideoQuality = () => {
         setVideoQuality(prevQuality => prevQuality === 'high' ? 'low' : 'high');
     };
@@ -313,6 +356,29 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                         label={<Typography variant="caption" sx={{ color: 'white' }}>Запасной проигрыватель</Typography>}
                         sx={{ mr: 2 }}
                     />
+
+                    {/* Auto dancer detection button */}
+                    {videoUrl && !useFallbackPlayer && (
+                        <Tooltip title="Найти танцора автоматически">
+                            <IconButton
+                                onClick={findDancerAutomatically}
+                                disabled={isDetectingDancer}
+                                size="small"
+                                sx={{
+                                    color: isDetectingDancer ? 'rgba(51, 210, 255, 0.5)' : 'rgba(51, 210, 255, 0.9)',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                    }
+                                }}
+                            >
+                                {isDetectingDancer ?
+                                    <CircularProgress size={20} sx={{ color: 'rgba(51, 210, 255, 0.7)' }} /> :
+                                    <FindInPage />
+                                }
+                            </IconButton>
+                        </Tooltip>
+                    )}
 
                     {/* Advanced settings for video playback */}
                     <Tooltip title="Настройки воспроизведения">

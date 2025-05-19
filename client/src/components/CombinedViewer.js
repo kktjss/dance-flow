@@ -390,7 +390,6 @@ const CombinedViewer = ({
                     }
                 }}
             >
-                {/* Commented out buttons in top corners 
                 <MuiBox
                     sx={{
                         position: 'absolute',
@@ -438,7 +437,6 @@ const CombinedViewer = ({
                         {isVideoAvailable ? 'Посмотреть видео' : 'Видео не загружено'}
                     </Button>
                 </MuiBox>
-                */}
 
                 {/* Выбор GLB анимации, если они доступны */}
                 {/* Commented out animation selection UI
@@ -521,7 +519,7 @@ const CombinedViewer = ({
                             }
 
                             // Fallback to known working model
-                            return `/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
+                            return `/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
                         })();
 
                         console.log('CombinedViewer: Using direct override URL:', directUrl);
@@ -556,14 +554,13 @@ const CombinedViewer = ({
                                 return selectedGlbAnimation.url;
                             }
 
-                            // Fallback to default model
-                            console.log('CombinedViewer: Using fallback model URL');
-                            return '/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
+                            // Fallback to default model with correct path for Go server
+                            console.log('CombinedViewer: Using fallback model URL with correct server path');
+                            return '/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
                         })()}
                     />
                 </MuiBox>
 
-                {/* Commented out video container
                 <MuiBox
                     sx={{
                         width: '100%',
@@ -584,7 +581,6 @@ const CombinedViewer = ({
                         currentTime={currentTime}
                     />
                 </MuiBox>
-                */}
             </Paper>
 
             {/* Кнопка закрытия - только если не в режиме embedded */}

@@ -27,34 +27,34 @@ const PALETTE = {
     // Основные цвета
     primary: {
         light: COLORS.primaryLight,
-        main: COLORS.primary, // Blue-violet
+        main: COLORS.primary, // Сине-фиолетовый
         dark: '#5449A6'
     },
     secondary: {
         light: COLORS.secondaryLight,
-        main: COLORS.secondary, // Light blue
+        main: COLORS.secondary, // Светло-синий
         dark: '#0071CE'
     },
     tertiary: {
         light: COLORS.tertiaryLight,
-        main: COLORS.tertiary, // Turquoise
+        main: COLORS.tertiary, // Бирюзовый
         dark: '#2CB5B5'
     },
     // Дополнительные цвета
     teal: {
         light: '#7DEEFF',
-        main: COLORS.teal, // Teal
+        main: COLORS.teal, // Сине-зеленый
         dark: '#008B9A'
     },
     accent: {
         light: '#FFE066',
-        main: COLORS.accent, // Yellow
+        main: COLORS.accent, // Желтый
         dark: '#E6C300'
     },
     // Нейтральные цвета
     purpleGrey: {
         light: '#9D94D3',
-        main: '#8678B2', // Grey-purple
+        main: '#8678B2', // Серо-фиолетовый
         dark: '#5D5080'
     }
 };
@@ -64,8 +64,8 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(2),
     borderRadius: '12px',
     backgroundColor: theme.palette.mode === 'dark'
-        ? 'rgba(32, 38, 52, 0.85)'  // Lighter, more neutral dark blue
-        : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
+        ? 'rgba(32, 38, 52, 0.85)'  // Более светлый, нейтральный темно-синий
+        : 'rgba(240, 245, 255, 0.9)', // Очень светлый сине-серый в светлом режиме
     boxShadow: theme.palette.mode === 'dark'
         ? '0 8px 24px 0 rgba(0, 0, 0, 0.2)'
         : '0 8px 24px 0 rgba(0, 0, 0, 0.1)',
@@ -151,6 +151,7 @@ const ConstructorPage = () => {
     const [isEditingProjectInfo, setIsEditingProjectInfo] = useState(false);
     const { id } = useParams();
     const navigate = useNavigate();
+    const [showCombinedViewer, setShowCombinedViewer] = useState(false);
 
     // Экспортируем функцию сохранения проекта в глобальную область видимости
     // для доступа из других компонентов
@@ -2205,9 +2206,19 @@ See console for complete details.`);
 
                             <Box sx={{ p: 0, height: 'calc(600px - 48px)', overflow: 'auto' }}>
                                 {tabIndex === 0 && (
-                                    <ToolPanel onAddElement={handleAddElement} />
+                                    <>
+                                        <ToolPanel onAddElement={handleAddElement} />
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            fullWidth
+                                            sx={{ mt: 2, mb: 1 }}
+                                            onClick={() => setShowCombinedViewer(true)}
+                                        >
+                                            Показать 3D
+                                        </Button>
+                                    </>
                                 )}
-
                                 {tabIndex === 1 && (
                                     <PropertyPanel
                                         selectedElement={selectedElement}
@@ -2237,6 +2248,19 @@ See console for complete details.`);
                     </Alert>
                 </Snackbar>
             </Container>
+
+            {showCombinedViewer && (
+                <CombinedViewer
+                    isVisible={showCombinedViewer}
+                    onClose={() => setShowCombinedViewer(false)}
+                    project={project}
+                    selectedElement={selectedElement}
+                    glbAnimations={project.glbAnimations || []}
+                    elementKeyframes={selectedElement?.keyframes || []}
+                    elementId={selectedElement?.id}
+                    modelUrl={selectedElement?.modelUrl || selectedElement?.modelPath || null}
+                />
+            )}
         </Box>
     );
 };

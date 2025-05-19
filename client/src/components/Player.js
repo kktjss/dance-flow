@@ -29,36 +29,36 @@ import {
 } from '@mui/icons-material';
 import { COLORS } from '../constants/colors';
 
-// Color palette using the new color scheme
+// Цветовая палитра с использованием новой цветовой схемы
 const PALETTE = {
     primary: {
         light: COLORS.primaryLight,
-        main: COLORS.primary, // Blue-violet
+        main: COLORS.primary, // Сине-фиолетовый
         dark: '#5449A6'
     },
     secondary: {
         light: COLORS.secondaryLight,
-        main: COLORS.secondary, // Light blue
+        main: COLORS.secondary, // Светло-синий
         dark: '#0071CE'
     },
     tertiary: {
         light: COLORS.tertiaryLight,
-        main: COLORS.tertiary, // Turquoise
+        main: COLORS.tertiary, // Бирюзовый
         dark: '#2CB5B5'
     },
     accent: {
         light: '#FFE066',
-        main: COLORS.accent, // Yellow
+        main: COLORS.accent, // Желтый
         dark: '#E6C300'
     },
     teal: {
         light: COLORS.tertiaryLight,
-        main: COLORS.teal, // Teal
+        main: COLORS.teal, // Сине-зеленый
         dark: '#008B9A'
     },
     purpleGrey: {
         light: '#9D94D3',
-        main: '#8678B2', // Grey-purple
+        main: '#8678B2', // Серо-фиолетовый
         dark: '#5D5080'
     }
 };
@@ -88,11 +88,11 @@ const Player = ({
     const lastTimeRef = useRef(null);
     const currentTimeRef = useRef(currentTime);
 
-    // Ensure valid numeric values
+    // Обеспечиваем корректные числовые значения
     const safeCurrentTime = typeof currentTime === 'number' && !isNaN(currentTime) ? currentTime : 0;
     const safeDuration = audioDuration || (typeof duration === 'number' && !isNaN(duration) ? duration : 60);
 
-    // Load audio duration when audio URL changes
+    // Загружаем длительность аудио при изменении URL аудио
     useEffect(() => {
         if (!audioUrl) return;
 
@@ -105,7 +105,7 @@ const Player = ({
                 const newDuration = Math.ceil(audio.duration);
                 setAudioDuration(newDuration);
 
-                // Notify parent component about the new duration
+                // Уведомляем родительский компонент о новой длительности
                 if (onDurationChange) {
                     console.log("Player: Notifying parent about new duration:", newDuration);
                     onDurationChange(newDuration);
@@ -134,20 +134,20 @@ const Player = ({
             console.error("Player: Error loading audio:", e);
         };
 
-        // Set the source
+        // Устанавливаем источник
         audio.src = audioUrl;
-        audio.load(); // Explicitly load the audio
+        audio.load(); // Явно загружаем аудио
 
-        // Force play a tiny bit then pause to get duration in some browsers
+        // Принудительно воспроизводим немного, затем ставим на паузу, чтобы получить длительность в некоторых браузерах
         const tryPlay = () => {
             const playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise
                     .then(() => {
-                        // Audio started playing
+                        // Аудио начало воспроизводиться
                         setTimeout(() => {
                             audio.pause();
-                            // Check duration again after play
+                            // Проверяем длительность еще раз после воспроизведения
                             loadDuration();
                         }, 100);
                     })
@@ -157,7 +157,7 @@ const Player = ({
             }
         };
 
-        // Try playing after a short delay if we don't have duration
+        // Пробуем воспроизвести после короткой задержки, если у нас нет длительности
         setTimeout(() => {
             if (!audioDuration && audio.duration === Infinity) {
                 console.log("Player: Trying to play to get duration...");
@@ -175,13 +175,13 @@ const Player = ({
         };
     }, [audioUrl, onDurationChange, audioDuration]);
 
-    // Update ref when prop changes
+    // Обновляем ссылку при изменении параметра
     useEffect(() => {
         currentTimeRef.current = safeCurrentTime;
         setDisplayTime(safeCurrentTime);
     }, [safeCurrentTime]);
 
-    // Format time in MM:SS.ms
+    // Форматируем время в MM:SS.ms
     const formatTime = (timeInSeconds) => {
         const minutes = Math.floor(timeInSeconds / 60);
         const seconds = Math.floor(timeInSeconds % 60);
@@ -189,7 +189,7 @@ const Player = ({
         return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}.${milliseconds.toString().padStart(3, '0')}`;
     };
 
-    // Handle time slider change
+    // Обрабатываем изменение ползунка времени
     const handleTimeChange = (_, newValue) => {
         if (audioRef.current) {
             audioRef.current.currentTime = newValue;
@@ -197,10 +197,10 @@ const Player = ({
         onTimeUpdate(newValue);
     };
 
-    // Handle direct time input with millisecond precision
+    // Обрабатываем прямой ввод времени с точностью до миллисекунд
     const handleTimeInputChange = (newTimeString) => {
         try {
-            // Parse time string in format MM:SS.mmm
+            // Разбираем строку времени в формате MM:SS.mmm
             const parts = newTimeString.split(':');
             if (parts.length !== 2) return;
 
@@ -223,7 +223,7 @@ const Player = ({
         }
     };
 
-    // Handle volume change
+    // Обрабатываем изменение громкости
     const handleVolumeChange = (_, newValue) => {
         setVolume(newValue);
         if (audioRef.current) {
@@ -236,7 +236,7 @@ const Player = ({
         }
     };
 
-    // Toggle mute
+    // Переключаем отключение звука
     const handleMuteToggle = () => {
         if (audioRef.current) {
             if (isMuted) {

@@ -15,38 +15,38 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// RegisterAuthRoutes registers all authentication routes
+// RegisterAuthRoutes регистрирует все маршруты аутентификации
 func RegisterAuthRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	auth := router.Group("/auth")
 	{
 		auth.POST("/register", register(cfg))
 		auth.POST("/login", login(cfg))
 		
-		// Add a test endpoint to verify auth routes are accessible
+		// Добавляем тестовый эндпоинт для проверки доступности маршрутов аутентификации
 		auth.GET("/test", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"message": "Auth routes are working"})
 		})
 		
-		// Test endpoint for password hashing
+		// Тестовый эндпоинт для хеширования пароля
 		auth.GET("/test-password", func(c *gin.Context) {
 			password := c.Query("password")
 			if password == "" {
 				password = "test123"
 			}
 			
-			// Create a test user with the password
+			// Создаем тестового пользователя с паролем
 			user := models.User{
 				Password: password,
 			}
 			
-			// Hash the password
+			// Хешируем пароль
 			err := user.HashPassword()
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 				return
 			}
 			
-			// Test password comparison
+			// Проверяем соответствие пароля
 			match := user.ComparePassword(password)
 			
 			c.JSON(http.StatusOK, gin.H{
@@ -58,7 +58,7 @@ func RegisterAuthRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	}
 }
 
-// register handles user registration
+// register обрабатывает регистрацию пользователя
 func register(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Println("Registration attempt received")
@@ -83,7 +83,7 @@ func register(cfg *config.Config) gin.HandlerFunc {
 			input.Name = input.Username
 		}
 
-		// Check if email or username already exists
+		// Проверяем, существуют ли уже email или имя пользователя
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -95,27 +95,27 @@ func register(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// Create new user
+		// Создаем нового пользователя
 		user := models.User{
 			ID:        primitive.NewObjectID(),
 			Username:  input.Username,
 			Name:      input.Name,
 			Email:     input.Email,
 			Password:  input.Password,
-			Role:      "user", // Default role
+			Role:      "user", // Роль по умолчанию
 			Teams:     []primitive.ObjectID{},
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
 
-		// Hash password
+		// Хешируем пароль
 		if err := user.HashPassword(); err != nil {
 			log.Printf("Registration failed: Failed to hash password - %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 			return
 		}
 
-		// Insert user into database
+		// Вставляем пользователя в базу данных
 		_, err = config.UsersCollection.InsertOne(ctx, user)
 		if err != nil {
 			log.Printf("Registration failed: Failed to create user - %v", err)
@@ -125,7 +125,7 @@ func register(cfg *config.Config) gin.HandlerFunc {
 
 		log.Printf("User created successfully: %s (%s)", user.Username, user.ID.Hex())
 
-		// Generate JWT token
+		// Генерируем JWT токен
 		token, err := middleware.GenerateToken(user.ID, cfg)
 		if err != nil {
 			log.Printf("Failed to generate token: %v", err)
@@ -135,20 +135,20 @@ func register(cfg *config.Config) gin.HandlerFunc {
 		
 		log.Printf("Token generated successfully for user: %s", user.Username)
 		
-		// Return user and token
+		// Возвращаем пользователя и токен
 		c.JSON(http.StatusCreated, gin.H{
 			"user":  user.ToResponse(),
 			"token": token,
 		})
 		
-		// Create preview projects for the new user (после отправки ответа клиенту)
+		// Создаем демонстрационные проекты для нового пользователя (после отправки ответа клиенту)
 		go createPreviewProjects(context.Background(), user.ID)
 		
 		log.Printf("Registration successful for user: %s", user.Username)
 	}
 }
 
-// login handles user login
+// login обрабатывает вход пользователя
 func login(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Println("Login attempt received")
@@ -166,11 +166,11 @@ func login(cfg *config.Config) gin.HandlerFunc {
 		
 		log.Printf("Login attempt for username: %s, password: %s", input.Username, input.Password)
 
-		// Find user by username
+		// Ищем пользователя по имени пользователя
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Verify MongoDB connection
+		// Проверяем соединение с MongoDB
 		if config.DB == nil {
 			log.Println("ERROR: MongoDB connection is nil")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection not established"})
@@ -197,7 +197,7 @@ func login(cfg *config.Config) gin.HandlerFunc {
 		log.Printf("User found: ID=%s, Username=%s, Password hash=%s", 
 			user.ID.Hex(), user.Username, user.Password)
 
-		// Verify password
+		// Проверяем пароль
 		log.Printf("Comparing provided password with stored hash")
 		log.Printf("Password from request: '%s'", input.Password)
 		log.Printf("Password hash from database: '%s'", user.Password)

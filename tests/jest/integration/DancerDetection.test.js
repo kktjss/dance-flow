@@ -8,13 +8,13 @@ import thunk from 'redux-thunk';
 import axios from 'axios';
 import ConstructorPage from '../../../client/src/pages/ConstructorPage';
 
-// Mock axios
+// Мокаем axios
 jest.mock('axios');
 
-// Mock modules that interact with the API
+// Мокаем модули, которые взаимодействуют с API
 jest.mock('../../../client/src/services/api', () => ({
     processVideoFrame: jest.fn().mockImplementation((frameData, options) => {
-        // Simulate API response for pose detection
+        // Имитируем ответ API для обнаружения поз
         return Promise.resolve({
             data: {
                 found: true,
@@ -25,7 +25,7 @@ jest.mock('../../../client/src/services/api', () => ({
                             x: Math.random(),
                             y: Math.random(),
                             z: Math.random(),
-                            v: 0.9  // visibility
+                            v: 0.9  // видимость
                         })),
                         score: 0.95,
                         bbox: { x1: 100, y1: 100, x2: 300, y2: 400 }
@@ -37,7 +37,7 @@ jest.mock('../../../client/src/services/api', () => ({
     })
 }));
 
-// Mock video element functionality
+// Мокаем функциональность элемента видео
 window.HTMLVideoElement.prototype.play = jest.fn().mockImplementation(function () {
     this.paused = false;
     this.dispatchEvent(new Event('play'));
@@ -49,11 +49,11 @@ window.HTMLVideoElement.prototype.pause = jest.fn().mockImplementation(function 
     this.dispatchEvent(new Event('pause'));
 });
 
-// Create a URL.createObjectURL mock
+// Создаем мок для URL.createObjectURL
 URL.createObjectURL = jest.fn().mockReturnValue('blob:http://localhost/test');
 URL.revokeObjectURL = jest.fn();
 
-// Configure mock store
+// Настраиваем мок-стор
 const middlewares = [thunk];
 const mockStore = configureStore(middlewares);
 
@@ -61,10 +61,10 @@ describe('Dancer Detection Integration Test', () => {
     let store;
 
     beforeEach(() => {
-        // Reset mocks
+        // Сбрасываем моки
         jest.clearAllMocks();
 
-        // Create a canvas mock
+        // Создаем мок для canvas
         window.HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue({
             drawImage: jest.fn(),
             getImageData: jest.fn().mockReturnValue({ data: new Uint8ClampedArray(100) }),
@@ -79,7 +79,7 @@ describe('Dancer Detection Integration Test', () => {
             fill: jest.fn()
         });
 
-        // Mock Element.prototype.getBoundingClientRect
+        // Мокаем Element.prototype.getBoundingClientRect
         Element.prototype.getBoundingClientRect = jest.fn().mockReturnValue({
             width: 800,
             height: 600,
@@ -89,7 +89,7 @@ describe('Dancer Detection Integration Test', () => {
             bottom: 600
         });
 
-        // Create mock redux store with initial state
+        // Создаем мок-стор Redux с начальным состоянием
         store = mockStore({
             auth: {
                 isAuthenticated: true,
@@ -108,11 +108,11 @@ describe('Dancer Detection Integration Test', () => {
     });
 
     test('end-to-end dancer detection workflow', async () => {
-        // Mock video
+        // Мокаем видео
         const mockFile = new File(['test video content'], 'test-video.mp4', { type: 'video/mp4' });
         const mockUrl = URL.createObjectURL(mockFile);
 
-        // Render the constructor page
+        // Рендерим страницу конструктора
         render(
             <Provider store={store}>
                 <BrowserRouter>
@@ -121,39 +121,39 @@ describe('Dancer Detection Integration Test', () => {
             </Provider>
         );
 
-        // Wait for the page to load
+        // Ждем загрузки страницы
         await waitFor(() => {
             expect(screen.getByTestId('constructor-page')).toBeInTheDocument();
         });
 
-        // Click on video upload/add button
+        // Нажимаем на кнопку загрузки/добавления видео
         const uploadButton = screen.getByRole('button', { name: /Add Video/i });
         fireEvent.click(uploadButton);
 
-        // Find file input and upload a video file
+        // Находим поле ввода файла и загружаем видеофайл
         const fileInput = screen.getByTestId('video-upload-input');
         fireEvent.change(fileInput, { target: { files: [mockFile] } });
 
-        // Wait for video to be loaded
+        // Ждем загрузки видео
         await waitFor(() => {
             expect(screen.getByTestId('video-player')).toBeInTheDocument();
         });
 
-        // Click the Find Dancer button to enter dancer detection mode
+        // Нажимаем на кнопку "Найти танцора", чтобы войти в режим обнаружения танцора
         const findDancerButton = screen.getByRole('button', { name: /Find Dancer/i });
         fireEvent.click(findDancerButton);
 
-        // Verify that the video is paused for dancer selection
+        // Проверяем, что видео приостановлено для выбора танцора
         const videoElement = screen.getByTestId('video-player');
         expect(videoElement.paused).toBe(true);
 
-        // Click on the video to detect a dancer
+        // Кликаем на видео для обнаружения танцора
         const canvasOverlay = screen.getByTestId('video-analyzer-canvas');
         fireEvent.click(canvasOverlay, { clientX: 400, clientY: 300 });
 
-        // Wait for dancer detection request and processing
+        // Ждем запроса на обнаружение танцора и обработку
         await waitFor(() => {
-            // Verify that processVideoFrame was called with correct parameters
+            // Проверяем, что processVideoFrame был вызван с правильными параметрами
             const { processVideoFrame } = require('../../../client/src/services/api');
             expect(processVideoFrame).toHaveBeenCalledWith(
                 expect.any(Blob),
@@ -164,28 +164,28 @@ describe('Dancer Detection Integration Test', () => {
             );
         });
 
-        // Verify that a dancer was detected and highlighted
+        // Проверяем, что танцор был обнаружен и выделен
         const dancerOutline = screen.getByTestId('dancer-outline');
         expect(dancerOutline).toBeInTheDocument();
 
-        // Verify that dancer selection controls are shown
+        // Проверяем, что показаны элементы управления выбором танцора
         expect(screen.getByText(/Selected Dancer/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Clear Selection/i })).toBeInTheDocument();
 
-        // Click to clear the dancer selection
+        // Нажимаем, чтобы очистить выбор танцора
         const clearButton = screen.getByRole('button', { name: /Clear Selection/i });
         fireEvent.click(clearButton);
 
-        // Verify that the dancer selection has been cleared
+        // Проверяем, что выбор танцора был очищен
         await waitFor(() => {
             expect(screen.queryByTestId('dancer-outline')).not.toBeInTheDocument();
         });
 
-        // Exit dancer detection mode
+        // Выходим из режима обнаружения танцора
         const exitButton = screen.getByRole('button', { name: /Exit Dancer Detection/i });
         fireEvent.click(exitButton);
 
-        // Verify that we're back to normal mode
+        // Проверяем, что мы вернулись в обычный режим
         await waitFor(() => {
             expect(screen.queryByText(/Selected Dancer/i)).not.toBeInTheDocument();
             expect(findDancerButton).toBeInTheDocument();
@@ -193,18 +193,18 @@ describe('Dancer Detection Integration Test', () => {
     });
 
     test('persists dancer detection across video playback', async () => {
-        // Mock video file and URL
+        // Мокаем видеофайл и URL
         const mockFile = new File(['test video content'], 'test-video.mp4', { type: 'video/mp4' });
         const mockUrl = URL.createObjectURL(mockFile);
 
-        // Mock video timestamps and current time
+        // Мокаем временные метки видео и текущее время
         let currentTime = 0;
         Object.defineProperty(HTMLVideoElement.prototype, 'currentTime', {
             get: function () { return currentTime; },
             set: function (newTime) { currentTime = newTime; }
         });
 
-        // Render constructor page
+        // Рендерим страницу конструктора
         render(
             <Provider store={store}>
                 <BrowserRouter>
@@ -213,66 +213,66 @@ describe('Dancer Detection Integration Test', () => {
             </Provider>
         );
 
-        // Upload a video
+        // Загружаем видео
         const uploadButton = screen.getByRole('button', { name: /Add Video/i });
         fireEvent.click(uploadButton);
 
         const fileInput = screen.getByTestId('video-upload-input');
         fireEvent.change(fileInput, { target: { files: [mockFile] } });
 
-        // Wait for video to load
+        // Ждем загрузки видео
         await waitFor(() => {
             expect(screen.getByTestId('video-player')).toBeInTheDocument();
         });
 
-        // Go to dancer detection mode
+        // Переходим в режим обнаружения танцора
         const findDancerButton = screen.getByRole('button', { name: /Find Dancer/i });
         fireEvent.click(findDancerButton);
 
-        // Select a dancer
+        // Выбираем танцора
         const canvasOverlay = screen.getByTestId('video-analyzer-canvas');
         fireEvent.click(canvasOverlay, { clientX: 400, clientY: 300 });
 
-        // Wait for dancer detection
+        // Ждем обнаружение танцора
         await waitFor(() => {
             expect(screen.getByTestId('dancer-outline')).toBeInTheDocument();
         });
 
-        // Exit dancer detection mode
+        // Выходим из режима обнаружения танцора
         const exitButton = screen.getByRole('button', { name: /Exit Dancer Detection/i });
         fireEvent.click(exitButton);
 
-        // Play the video
+        // Воспроизводим видео
         const playButton = screen.getByRole('button', { name: /Play/i });
         fireEvent.click(playButton);
 
-        // Simulate time update event
+        // Симулируем событие обновления времени
         const videoElement = screen.getByTestId('video-player');
         act(() => {
             currentTime = 2.0;
             videoElement.dispatchEvent(new Event('timeupdate'));
         });
 
-        // Verify dancer outline is still visible during playback
+        // Проверяем, что контур танцора остается видимым во время воспроизведения
         expect(screen.getByTestId('dancer-outline')).toBeInTheDocument();
 
-        // Pause the video
+        // Останавливаем видео
         const pauseButton = screen.getByRole('button', { name: /Pause/i });
         fireEvent.click(pauseButton);
 
-        // Seek to a different time
+        // Переходим к другому времени
         act(() => {
             currentTime = 5.0;
             videoElement.dispatchEvent(new Event('seeked'));
         });
 
-        // Verify dancer outline is updated for the new time position
+        // Проверяем, что контур танцора обновляется для новой временной позиции
         await waitFor(() => {
             const { processVideoFrame } = require('../../../client/src/services/api');
             expect(processVideoFrame).toHaveBeenCalledTimes(2);
         });
 
-        // Dancer outline should still be visible
+        // Контур танцора должен остаться видимым
         expect(screen.getByTestId('dancer-outline')).toBeInTheDocument();
     });
 }); 

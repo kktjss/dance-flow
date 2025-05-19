@@ -4,7 +4,7 @@ import { ThreeDRotation, Videocam, Close } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
-// Import components
+// Импорт компонентов
 import Player from '../components/Player';
 import Canvas from '../components/Canvas';
 import Navbar from '../components/Navbar';
@@ -15,7 +15,7 @@ const API_URL = 'http://localhost:5000/api';
 
 // Функция для преобразования элементов в правильный формат
 const normalizeElements = (elements) => {
-    // Default element to return if no valid elements are found
+    // Элемент по умолчанию, который будет возвращен, если не найдены корректные элементы
     const DEFAULT_ELEMENT = {
         id: 'default-element',
         type: 'rectangle',
@@ -38,7 +38,7 @@ const normalizeElements = (elements) => {
 
     if (!elements || !Array.isArray(elements)) {
         console.warn('Elements is not an array or undefined:', elements);
-        // Return a default element to prevent "No valid elements" error
+        // Возвращаем элемент по умолчанию, чтобы избежать ошибки "No valid elements"
         return [DEFAULT_ELEMENT];
     }
 
@@ -116,7 +116,7 @@ const normalizeElements = (elements) => {
             style: el.style || { opacity: 1, backgroundColor: '#cccccc' },
             content: el.content || '',
             keyframes: el.keyframes || [],
-            // Preserve 3D model properties
+            // Сохраняем свойства 3D-модели
             modelUrl: el.modelUrl || null,
             modelPath: el.modelPath || null,
             glbUrl: el.glbUrl || null,
@@ -142,13 +142,13 @@ const normalizeElements = (elements) => {
         return normalizedElement;
     });
 
-    // If no valid elements were found, add a default one
+    // Если не найдено корректных элементов, добавляем элемент по умолчанию
     if (normalized.length === 0) {
         console.warn('No elements found after normalization, adding a default element');
         normalized.push(DEFAULT_ELEMENT);
     }
 
-    // Additional check to ensure all elements have the required fields
+    // Дополнительная проверка, чтобы убедиться, что все элементы имеют необходимые поля
     const validElements = normalized.filter(el => el && el.id && el.type && el.position);
     if (validElements.length === 0) {
         console.warn('No valid elements after normalization, using default element');
@@ -159,37 +159,37 @@ const normalizeElements = (elements) => {
     return validElements;
 };
 
-// Define a standalone model viewer modal component
+// Определяем компонент модального окна просмотрщика модели
 const ModelViewerModal = ({ isOpen, onClose, elementId, modelUrl, elementKeyframes, videoUrl }) => {
     console.log('ModelViewerModal render:', { isOpen, elementId, modelUrl });
 
-    // Create enhanced keyframes with modelPath
+    // Создаем расширенные ключевые кадры с modelPath
     const enhancedKeyframes = React.useMemo(() => {
-        // Start with existing keyframes or empty array
+        // Начинаем с существующих ключевых кадров или пустого массива
         const baseKeyframes = elementKeyframes || [];
 
-        // Extract filename from modelUrl
+        // Извлекаем имя файла из modelUrl
         let filename = null;
         if (modelUrl) {
             const parts = modelUrl.split('/');
             filename = parts[parts.length - 1];
         }
 
-        // Create a direct element with modelPath to ensure it renders
+        // Создаем прямой элемент с modelPath, чтобы гарантировать его отображение
         const directElement = {
             id: elementId,
             elementId: elementId,
-            modelPath: modelUrl, // Use the full original path
-            // Also include common alternate properties used by different components
+            modelPath: modelUrl, // Используем полный исходный путь
+            // Также включаем альтернативные свойства, используемые разными компонентами
             modelUrl: modelUrl,
             glbUrl: modelUrl,
             model3dUrl: modelUrl,
-            // Include basic required properties
+            // Включаем базовые обязательные свойства
             type: '3d',
             position: { x: 0, y: 0 },
             size: { width: 100, height: 100 },
             style: { opacity: 1 },
-            // Add a keyframe to make it visible
+            // Добавляем ключевой кадр, чтобы сделать его видимым
             keyframes: [
                 {
                     time: 0,
@@ -201,17 +201,17 @@ const ModelViewerModal = ({ isOpen, onClose, elementId, modelUrl, elementKeyfram
             ]
         };
 
-        // Add our element to the keyframes array
+        // Добавляем наш элемент в массив ключевых кадров
         const newKeyframes = [directElement, ...baseKeyframes];
 
         console.log('Enhanced keyframes for 3D model:', newKeyframes);
         return newKeyframes;
     }, [elementId, modelUrl, elementKeyframes]);
 
-    // Ensure we always have a default model URL
+    // Убедитесь, что у вас всегда есть URL модели по умолчанию
     const effectiveModelUrl = modelUrl || '/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
 
-    // Log additional debug info
+    // Логируем дополнительную отладочную информацию
     console.log('ModelViewerModal detailed props:', {
         isOpen,
         elementId,

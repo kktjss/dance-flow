@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api';
 
-// Create axios instance with default config
+// Создаем экземпляр axios с базовой конфигурацией
 const api = axios.create({
     baseURL: API_URL,
     headers: {
@@ -11,32 +11,32 @@ const api = axios.create({
     }
 });
 
-// Add request interceptor to add auth token
+// Добавляем перехватчик запросов для добавления токена авторизации
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
-        console.log('Current token:', token); // Debug log
+        console.log('Current token:', token); // Отладочный лог
         if (token) {
-            // Ensure headers object exists
+            // Убеждаемся, что объект headers существует
             config.headers = config.headers || {};
-            // Set Authorization header
+            // Устанавливаем заголовок Authorization
             config.headers['Authorization'] = `Bearer ${token}`;
-            console.log('Request headers:', config.headers); // Debug log
+            console.log('Request headers:', config.headers); // Отладочный лог
         } else {
-            console.warn('No token found in localStorage'); // Debug log
+            console.warn('No token found in localStorage'); // Отладочный лог
         }
         return config;
     },
     (error) => {
-        console.error('Request interceptor error:', error); // Debug log
+        console.error('Request interceptor error:', error); // Отладочный лог
         return Promise.reject(error);
     }
 );
 
-// Add response interceptor to handle errors
+// Добавляем перехватчик ответов для обработки ошибок
 api.interceptors.response.use(
     (response) => {
-        console.log('Response received:', response.status); // Debug log
+        console.log('Response received:', response.status); // Отладочный лог
         return response;
     },
     (error) => {
@@ -44,10 +44,10 @@ api.interceptors.response.use(
             status: error.response?.status,
             data: error.response?.data,
             headers: error.response?.headers
-        }); // Debug log
+        }); // Отладочный лог
 
         if (error.response?.status === 401) {
-            console.log('Unauthorized access, redirecting to login...'); // Debug log
+            console.log('Unauthorized access, redirecting to login...'); // Отладочный лог
             localStorage.removeItem('token');
             window.location.href = '/login';
         }
@@ -58,56 +58,56 @@ api.interceptors.response.use(
 export const authService = {
     login: async (credentials) => {
         try {
-            console.log('Attempting login with credentials:', credentials); // Debug log
+            console.log('Attempting login with credentials:', credentials); // Отладочный лог
             const response = await api.post('/auth/login', credentials);
-            console.log('Login response:', response.data); // Debug log
+            console.log('Login response:', response.data); // Отладочный лог
 
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-                console.log('Token saved to localStorage'); // Debug log
-                // Verify token was saved
+                console.log('Token saved to localStorage'); // Отладочный лог
+                // Проверяем, что токен был сохранен
                 const savedToken = localStorage.getItem('token');
-                console.log('Verified saved token:', savedToken); // Debug log
+                console.log('Verified saved token:', savedToken); // Отладочный лог
             } else {
-                console.warn('No token in login response'); // Debug log
+                console.warn('No token in login response'); // Отладочный лог
             }
             return response.data;
         } catch (error) {
-            console.error('Login error:', error.response?.data || error.message); // Debug log
+            console.error('Login error:', error.response?.data || error.message); // Отладочный лог
             throw error;
         }
     },
     register: async (userData) => {
         try {
             const response = await api.post('/auth/register', userData);
-            console.log('Register response:', response.data); // Debug log
+            console.log('Register response:', response.data); // Отладочный лог
             return response.data;
         } catch (error) {
-            console.error('Register error:', error.response?.data || error.message); // Debug log
+            console.error('Register error:', error.response?.data || error.message); // Отладочный лог
             throw error;
         }
     },
     logout: () => {
-        console.log('Logging out, removing token...'); // Debug log
+        console.log('Logging out, removing token...'); // Отладочный лог
         localStorage.removeItem('token');
-        // Verify token was removed
+        // Проверяем, что токен был удален
         const tokenAfterLogout = localStorage.getItem('token');
-        console.log('Token after logout:', tokenAfterLogout); // Debug log
+        console.log('Token after logout:', tokenAfterLogout); // Отладочный лог
     }
 };
 
 export const projectService = {
     getProjects: async () => {
         try {
-            console.log('Fetching projects...'); // Debug log
+            console.log('Fetching projects...'); // Отладочный лог
             const token = localStorage.getItem('token');
-            console.log('Token before fetch:', token); // Debug log
+            console.log('Token before fetch:', token); // Отладочный лог
 
             const response = await api.get('/projects');
-            console.log('Projects response:', response.data); // Debug log
+            console.log('Projects response:', response.data); // Отладочный лог
             return response.data;
         } catch (error) {
-            console.error('Get projects error:', error.response?.data || error.message); // Debug log
+            console.error('Get projects error:', error.response?.data || error.message); // Отладочный лог
             throw error;
         }
     },
@@ -116,7 +116,7 @@ export const projectService = {
             const response = await api.post('/projects', projectData);
             return response.data;
         } catch (error) {
-            console.error('Create project error:', error.response?.data || error.message); // Debug log
+            console.error('Create project error:', error.response?.data || error.message); // Отладочный лог
             throw error;
         }
     },
@@ -125,7 +125,7 @@ export const projectService = {
             const response = await api.put(`/projects/${id}`, projectData);
             return response.data;
         } catch (error) {
-            console.error('Update project error:', error.response?.data || error.message); // Debug log
+            console.error('Update project error:', error.response?.data || error.message); // Отладочный лог
             throw error;
         }
     },
@@ -134,7 +134,7 @@ export const projectService = {
             const response = await api.delete(`/projects/${id}`);
             return response.data;
         } catch (error) {
-            console.error('Delete project error:', error.response?.data || error.message); // Debug log
+            console.error('Delete project error:', error.response?.data || error.message); // Отладочный лог
             throw error;
         }
     }
@@ -152,7 +152,7 @@ export const uploadService = {
             });
             return response.data;
         } catch (error) {
-            console.error('Upload video error:', error.response?.data || error.message); // Debug log
+            console.error('Upload video error:', error.response?.data || error.message); // Отладочный лог
             throw error;
         }
     }
@@ -198,7 +198,6 @@ export const frameService = {
                 error: error.message,
                 response: error.response?.data,
                 status: error.response?.status,
-                headers: error.response?.headers
             });
             throw error;
         }

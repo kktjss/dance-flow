@@ -43,7 +43,7 @@ const Canvas = ({
     onToggleRecording = null
 }) => {
     const theme = useTheme();
-    // Use elements as provided without a default element
+    // Используем элементы как предоставлено, без элемента по умолчанию
     const effectiveElements = elements;
 
     const containerRef = useRef(null);
@@ -56,7 +56,7 @@ const Canvas = ({
 
     // ВРЕМЕННО: Состояния для модальных окон 3D и видео - будут удалены позже
     const [showChoreoModal, setShowChoreoModal] = useState(false);
-    const [viewMode, setViewMode] = useState('3d'); // '3d' or 'video'
+    const [viewMode, setViewMode] = useState('3d'); // '3d' или 'video'
     const [showCombinedViewer, setShowCombinedViewer] = useState(false);
 
     // Добавим специальную функцию для форсированного обновления позиций всех объектов
@@ -123,7 +123,7 @@ const Canvas = ({
                     }
                 }
 
-                // Ensure object is still clickable
+                // Убеждаемся, что объект все еще кликабельный
                 obj.selectable = !readOnly;
                 obj.evented = !readOnly;
                 obj.hasControls = !readOnly;
@@ -161,21 +161,21 @@ const Canvas = ({
             canvas.height = canvasContainer.clientHeight;
             canvasContainer.appendChild(canvas);
 
-            // Create grid pattern for canvas background
+            // Создаем узор сетки для фона canvas
             const gridSize = 20;
             const gridColor = theme.palette.mode === 'dark'
                 ? 'rgba(255, 255, 255, 0.07)'
                 : 'rgba(0, 0, 0, 0.04)';
 
             const backgroundColor = theme.palette.mode === 'dark'
-                ? 'rgba(17, 21, 54, 0.1)' // More transparent
-                : 'rgba(245, 245, 250, 0.1)'; // More transparent
+                ? 'rgba(17, 21, 54, 0.1)' // Более прозрачный
+                : 'rgba(245, 245, 250, 0.1)'; // Более прозрачный
 
             // Инициализируем Fabric
             const fabricCanvas = new fabric.Canvas(canvasId.current, {
                 width: canvasContainer.clientWidth,
                 height: canvasContainer.clientHeight,
-                backgroundColor: 'rgba(0, 0, 0, 0)', // Make it transparent to show parent's grid
+                backgroundColor: 'rgba(0, 0, 0, 0)', // Делаем прозрачным, чтобы показать сетку родителя
                 preserveObjectStacking: true,
                 selection: !readOnly,
                 interactive: !readOnly
@@ -191,14 +191,14 @@ const Canvas = ({
                 height: canvasContainer.clientHeight
             });
 
-            // Set selection properties based on readOnly mode
+            // Устанавливаем свойства выделения в зависимости от режима только для чтения
             if (readOnly) {
-                // Disable selection for readOnly mode
+                // Отключаем выделение для режима только для чтения
                 fabricCanvas.selection = false;
                 fabricCanvas.hoverCursor = 'default';
                 fabricCanvas.defaultCursor = 'default';
             } else {
-                // Ensure selection is enabled for editable mode
+                // Убеждаемся, что выделение включено для редактируемого режима
                 fabricCanvas.selection = true;
                 fabricCanvas.skipTargetFind = false;
                 fabricCanvas.selectable = true;

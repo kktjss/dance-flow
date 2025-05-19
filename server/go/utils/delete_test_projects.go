@@ -11,11 +11,11 @@ import (
 )
 
 func main() {
-	// Load configuration
+	// Загрузка конфигурации
 	log.Println("Loading configuration...")
 	cfg := config.Load()
 
-	// Connect to MongoDB
+	// Подключение к MongoDB
 	log.Println("Connecting to MongoDB...")
 	err := config.Connect(cfg.MongoURI)
 	if err != nil {
@@ -23,17 +23,17 @@ func main() {
 	}
 	defer config.Close()
 
-	// Create a context with timeout
+	// Создание контекста с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Define the filter for test projects
+	// Определение фильтра для тестовых проектов
 	filter := bson.M{
 		"name":        "Test Project",
 		"description": "Created for API testing",
 	}
 
-	// Delete the test projects
+	// Удаление тестовых проектов
 	result, err := config.ProjectsCollection.DeleteMany(ctx, filter)
 	if err != nil {
 		log.Fatalf("Failed to delete test projects: %v", err)

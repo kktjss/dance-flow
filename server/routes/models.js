@@ -6,12 +6,12 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const auth = require('../middleware/auth');
 
-// Set up storage for uploaded files
+// Настройка хранилища для загружаемых файлов
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../public/models');
+        const uploadDir = path.join(__dirname, '../go/uploads/models');
 
-        // Create directory if it doesn't exist
+        // Создать директорию, если она не существует
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
@@ -19,21 +19,21 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        // Generate unique filename
+        // Генерация уникального имени файла
         const uniqueId = uuidv4();
         const fileExt = path.extname(file.originalname);
         cb(null, `${uniqueId}${fileExt}`);
     }
 });
 
-// Create multer instance with file size limits
+// Создание экземпляра multer с ограничениями размера файла
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 50 * 1024 * 1024, // 50MB limit
+        fileSize: 50 * 1024 * 1024, // ограничение 50МБ
     },
     fileFilter: (req, file, cb) => {
-        // Only accept .glb files
+        // Принимать только .glb файлы
         if (file.mimetype === 'model/gltf-binary' || path.extname(file.originalname).toLowerCase() === '.glb') {
             return cb(null, true);
         }
@@ -41,16 +41,16 @@ const upload = multer({
     }
 });
 
-// Models database (in-memory for simplicity, replace with actual DB in production)
+// База данных моделей (в памяти для простоты, заменить на реальную БД в продакшене)
 let models = [];
 
-// Get all models
+// Получить все модели
 router.get('/', auth, (req, res) => {
     try {
-        // In a real app, you would query your database here
+        // В реальном приложении здесь был бы запрос к базе данных
         res.json(models.map(model => ({
             ...model,
-            url: `/models/${model.filename}` // Add URL for client-side use
+            url: `/models/${model.filename}` // Добавить URL для использования на клиентской стороне
         })));
     } catch (error) {
         console.error('Error fetching models:', error);
@@ -58,7 +58,7 @@ router.get('/', auth, (req, res) => {
     }
 });
 
-// Upload a new model
+// Загрузить новую модель
 router.post('/upload', auth, upload.single('model'), (req, res) => {
     try {
         if (!req.file) {
@@ -67,7 +67,7 @@ router.post('/upload', auth, upload.single('model'), (req, res) => {
 
         const modelName = req.body.name || path.parse(req.file.originalname).name;
 
-        // Create model record
+        // Создать запись о модели
         const newModel = {
             id: uuidv4(),
             name: modelName,
@@ -79,7 +79,7 @@ router.post('/upload', auth, upload.single('model'), (req, res) => {
             url: `/models/${req.file.filename}`
         };
 
-        // Save to database (in-memory for now)
+        // Сохранить в базу данных (пока в памяти)
         models.push(newModel);
 
         res.status(201).json(newModel);
@@ -89,7 +89,7 @@ router.post('/upload', auth, upload.single('model'), (req, res) => {
     }
 });
 
-// Get a specific model
+// Получить конкретную модель
 router.get('/:id', auth, (req, res) => {
     try {
         const model = models.find(m => m.id === req.params.id);
@@ -108,7 +108,7 @@ router.get('/:id', auth, (req, res) => {
     }
 });
 
-// Delete a model
+// Удалить модель
 router.delete('/:id', auth, (req, res) => {
     try {
         const modelIndex = models.findIndex(m => m.id === req.params.id);
@@ -119,18 +119,18 @@ router.delete('/:id', auth, (req, res) => {
 
         const model = models[modelIndex];
 
-        // Check if user owns this model
+        // Проверить, является ли пользователь владельцем этой модели
         if (model.userId !== req.user.id) {
             return res.status(403).json({ message: 'Not authorized to delete this model' });
         }
 
-        // Delete file from disk
-        const filePath = path.join(__dirname, '../public/models', model.filename);
+        // Удалить файл с диска
+        const filePath = path.join(__dirname, '../go/uploads/models', model.filename);
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
         }
 
-        // Remove from database
+        // Удалить из базы данных
         models.splice(modelIndex, 1);
 
         res.json({ message: 'Model deleted successfully' });

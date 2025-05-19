@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// User model
+// Модель пользователя
 type User struct {
 	ID           primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Username     string             `json:"username" bson:"username"`
@@ -20,13 +20,13 @@ type User struct {
 	UpdatedAt    time.Time          `json:"updatedAt" bson:"updatedAt,omitempty"`
 }
 
-// TeamRef represents a team reference in User model
+// TeamRef представляет ссылку на команду в модели User
 type TeamRef struct {
 	TeamID primitive.ObjectID `json:"teamId" bson:"teamId"`
 	Role   string             `json:"role" bson:"role"`
 }
 
-// UserResponse is the response model for user data
+// UserResponse является моделью ответа для данных пользователя
 type UserResponse struct {
 	ID        primitive.ObjectID `json:"id"`
 	Username  string             `json:"username"`
@@ -38,7 +38,7 @@ type UserResponse struct {
 	UpdatedAt time.Time          `json:"updatedAt,omitempty"`
 }
 
-// ToResponse converts a User to UserResponse, removing sensitive fields
+// ToResponse преобразует User в UserResponse, удаляя конфиденциальные поля
 func (u *User) ToResponse() UserResponse {
 	return UserResponse{
 		ID:        u.ID,
@@ -52,7 +52,7 @@ func (u *User) ToResponse() UserResponse {
 	}
 }
 
-// HashPassword hashes a user password
+// HashPassword хеширует пароль пользователя
 func (u *User) HashPassword() error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -62,7 +62,7 @@ func (u *User) HashPassword() error {
 	return nil
 }
 
-// ComparePassword checks if the provided password matches the stored hash
+// ComparePassword проверяет, соответствует ли предоставленный пароль сохраненному хешу
 func (u *User) ComparePassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	return err == nil
