@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, IconButton, Tooltip, Paper, Alert, Fade, CircularProgress, Menu, MenuItem, FormControlLabel, Switch } from '@mui/material';
-import { PersonSearch, Close, VideoLibrary, Videocam, HighQuality, SettingsInputSvideo, Refresh, Settings, FindInPage } from '@mui/icons-material';
+import { PersonSearch, Close, VideoLibrary, Videocam, HighQuality, SettingsInputSvideo, Refresh, Settings } from '@mui/icons-material';
 import VideoAnalyzer from './VideoAnalyzer.js';
 
 const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTime = 0, isPlaying = false }) => {
@@ -13,23 +13,22 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
     const [videoFormat, setVideoFormat] = useState(null);
     const [playbackMode, setPlaybackMode] = useState('normal'); // 'normal', 'lowLatency', 'progressive'
     const [useFallbackPlayer, setUseFallbackPlayer] = useState(false);
-    const [isDetectingDancer, setIsDetectingDancer] = useState(false);
     const videoRef = useRef(null);
     const fallbackVideoRef = useRef(null);
     const loadTimeoutRef = useRef(null);
     const [settingsAnchor, setSettingsAnchor] = useState(null);
 
-    // Detect video format from URL for optimized loading
+    // Определение формата видео из URL для оптимизации загрузки
     useEffect(() => {
         if (videoUrl) {
-            // Extract extension from URL
+            // Извлекаем расширение из URL
             const extension = videoUrl.split('.').pop().toLowerCase();
 
             if (['mp4', 'mov', 'webm', 'ogv'].includes(extension)) {
                 setVideoFormat(extension);
-                console.log(`Detected video format: ${extension}`);
+                console.log(`Обнаружен формат видео: ${extension}`);
 
-                // Set optimal playback mode based on format
+                // Устанавливаем оптимальный режим воспроизведения в зависимости от формата
                 if (extension === 'mp4') {
                     setPlaybackMode('progressive');
                 } else if (extension === 'webm') {
@@ -37,24 +36,24 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                 }
             } else {
                 setVideoFormat('unknown');
-                console.log('Unknown video format');
+                console.log('Неизвестный формат видео');
             }
         }
     }, [videoUrl]);
 
-    // Handle video loading state and timeouts with format-specific optimizations
+    // Обработка состояния загрузки видео и таймаутов с оптимизацией по формату
     useEffect(() => {
         if (videoUrl) {
             setIsLoading(true);
             setLoadError(null);
 
-            // Adjust timeout based on format - longer for certain formats
-            const timeoutDuration = videoFormat === 'mp4' ? 90000 : 60000; // 1.5 min for MP4, 1 min for others
+            // Регулируем таймаут в зависимости от формата - дольше для определенных форматов
+            const timeoutDuration = videoFormat === 'mp4' ? 90000 : 60000; // 1.5 мин для MP4, 1 мин для других
 
-            // Set a timeout to detect extremely long loading times
+            // Устанавливаем таймаут для обнаружения чрезмерно долгой загрузки
             loadTimeoutRef.current = setTimeout(() => {
                 if (isLoading && !videoElement) {
-                    console.warn('Video loading timeout exceeded');
+                    console.warn('Превышено время загрузки видео');
                     setLoadError('Превышено время загрузки видео. Видео может быть слишком длинным или в неподдерживаемом формате.');
                 }
             }, timeoutDuration);
@@ -67,53 +66,53 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
         };
     }, [videoUrl, videoFormat]);
 
-    // Handle fallback video player
+    // Обработка запасного видеоплеера
     useEffect(() => {
         if (!fallbackVideoRef.current || !videoUrl) return;
 
         const video = fallbackVideoRef.current;
 
         const handleVideoReady = () => {
-            console.log('Fallback video is ready, duration:', video.duration);
+            console.log('Запасной видеоплеер готов, длительность:', video.duration);
             setIsLoading(false);
 
-            // Set controls and properties
+            // Устанавливаем элементы управления и свойства
             if (video.duration > 180) {
-                // For long videos
+                // Для длинных видео
                 video.controls = true;
             }
         };
 
         const handleVideoError = (error) => {
-            console.error('Fallback video error:', error);
+            console.error('Ошибка запасного видеоплеера:', error);
             setLoadError('Ошибка воспроизведения видео даже в запасном плеере. Формат видео может не поддерживаться браузером.');
         };
 
-        // Handle plaback state
+        // Обработка состояния воспроизведения
         const syncPlaybackState = () => {
             if (isPlaying && video.paused) {
-                video.play().catch(e => console.error('Failed to play fallback video:', e));
+                video.play().catch(e => console.error('Не удалось воспроизвести запасное видео:', e));
             } else if (!isPlaying && !video.paused) {
                 video.pause();
             }
 
-            // Sync time
+            // Синхронизация времени
             if (Math.abs(video.currentTime - currentTime) > 0.5) {
                 try {
                     video.currentTime = currentTime;
                 } catch (e) {
-                    console.error('Error setting fallback video time:', e);
+                    console.error('Ошибка установки времени запасного видео:', e);
                 }
             }
         };
 
-        // Set up event listeners
+        // Устанавливаем слушатели событий
         video.addEventListener('loadeddata', handleVideoReady);
         video.addEventListener('canplay', handleVideoReady);
         video.addEventListener('error', handleVideoError);
         video.addEventListener('timeupdate', syncPlaybackState);
 
-        // Initial load
+        // Начальная загрузка
         video.load();
 
         return () => {
@@ -124,51 +123,51 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
         };
     }, [videoUrl, isPlaying, currentTime]);
 
-    // Synchronize with external time and playback state
+    // Синхронизация с внешним временем и состоянием воспроизведения
     useEffect(() => {
         if (videoElement && typeof currentTime === 'number') {
             try {
-                // Seeking in videos might throw errors if the video isn't fully loaded
-                // or if the browser can't handle it for some reason
+                // Перемотка в видео может вызвать ошибки, если видео не полностью загружено
+                // или если браузер не может обработать это по какой-то причине
                 if (Math.abs(videoElement.currentTime - currentTime) > 0.5) {
-                    console.log(`Seeking to ${currentTime}s in VideoViewer`);
+                    console.log(`Перемотка на ${currentTime}с в VideoViewer`);
                     videoElement.currentTime = currentTime;
                 }
             } catch (err) {
-                console.error('Error setting video time:', err);
+                console.error('Ошибка установки времени видео:', err);
             }
 
-            // Handle playback state
+            // Обработка состояния воспроизведения
             try {
                 if (isPlaying && videoElement.paused) {
-                    console.log('External play command received in VideoViewer');
+                    console.log('Получена внешняя команда воспроизведения в VideoViewer');
                     videoElement.play().catch(e => {
-                        console.error('Failed to play video:', e);
-                        // Show user-friendly error for autoplay issues
+                        console.error('Не удалось воспроизвести видео:', e);
+                        // Показываем понятную ошибку для проблем с автовоспроизведением
                         if (e.name === 'NotAllowedError') {
                             setLoadError('Автоматическое воспроизведение заблокировано. Пожалуйста, нажмите на видео для воспроизведения.');
                         }
                     });
                 } else if (!isPlaying && !videoElement.paused) {
-                    console.log('External pause command received in VideoViewer');
+                    console.log('Получена внешняя команда паузы в VideoViewer');
                     videoElement.pause();
                 }
             } catch (playErr) {
-                console.error('Error controlling playback:', playErr);
+                console.error('Ошибка управления воспроизведением:', playErr);
             }
         }
     }, [currentTime, isPlaying, videoElement]);
 
-    // Log changes to dancer selection mode and video URL
+    // Журналирование изменений режима выбора танцора и URL видео
     useEffect(() => {
-        console.log('VideoViewer: Dancer selection mode changed to:', isDancerSelectionMode);
+        console.log('VideoViewer: Режим выбора танцора изменен на:', isDancerSelectionMode);
         console.log('VideoViewer: videoUrl =', videoUrl);
     }, [isDancerSelectionMode, videoUrl]);
 
     if (!isVisible) return null;
 
     const handlePersonSelected = (personId) => {
-        console.log('VideoViewer: Person selected:', personId);
+        console.log('VideoViewer: Выбран человек:', personId);
         if (isDancerSelectionMode) {
             setSelectedDancer(personId);
             setIsDancerSelectionMode(false);
@@ -176,54 +175,12 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
     };
 
     const toggleDancerSelectionMode = () => {
-        console.log('VideoViewer: Toggling dancer selection mode from:', isDancerSelectionMode);
+        console.log('VideoViewer: Переключение режима выбора танцора с:', isDancerSelectionMode);
         const newMode = !isDancerSelectionMode;
-        console.log('VideoViewer: New mode will be:', newMode);
+        console.log('VideoViewer: Новый режим будет:', newMode);
         setIsDancerSelectionMode(newMode);
         if (!isDancerSelectionMode) {
             setSelectedDancer(null);
-        }
-    };
-
-    const findDancerAutomatically = async () => {
-        if (isDetectingDancer || !videoElement) return;
-
-        try {
-            setIsDetectingDancer(true);
-
-            // Pause the video during detection
-            if (!videoElement.paused) {
-                videoElement.pause();
-            }
-
-            // Request to the backend for dancer detection
-            const response = await fetch('http://127.0.0.1:8000/detect-dancer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    timestamp: videoElement.currentTime,
-                    videoId: videoUrl.split('/').pop() // Extract video ID from URL
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Ошибка запроса: ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            if (result.dancer_id !== undefined) {
-                setSelectedDancer(result.dancer_id);
-                console.log('Dancer automatically detected:', result.dancer_id);
-            } else {
-                console.log('No dancer was detected automatically');
-            }
-        } catch (error) {
-            console.error('Error finding dancer automatically:', error);
-        } finally {
-            setIsDetectingDancer(false);
         }
     };
 
@@ -232,7 +189,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
     };
 
     const handleVideoLoaded = (videoRef) => {
-        console.log('Video loaded successfully, duration:', videoRef.duration, 'format:', videoFormat);
+        console.log('Видео успешно загружено, длительность:', videoRef.duration, 'формат:', videoFormat);
         setIsLoading(false);
         setVideoElement(videoRef);
         setLoadError(null);
@@ -242,13 +199,13 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
             loadTimeoutRef.current = null;
         }
 
-        // Apply optimizations for long videos
-        if (videoRef.duration > 180) { // longer than 3 minutes
-            console.log('Applying long video optimizations');
+        // Применяем оптимизации для длинных видео
+        if (videoRef.duration > 180) { // дольше 3 минут
+            console.log('Применение оптимизаций для длинных видео');
 
-            // Additional optimizations specific to VideoViewer
+            // Дополнительные оптимизации специфичные для VideoViewer
             if (playbackMode === 'lowLatency') {
-                videoRef.playbackRate = 1.0; // Ensure normal speed
+                videoRef.playbackRate = 1.0; // Обеспечиваем нормальную скорость
             }
         }
     };
@@ -258,9 +215,9 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
             setIsLoading(true);
             setLoadError(null);
 
-            // If we have a videoElement reference, try to reload it
+            // Если у нас есть ссылка на videoElement, пробуем перезагрузить его
             if (videoElement) {
-                // Try with different settings based on previous errors
+                // Пробуем с другими настройками в зависимости от предыдущих ошибок
                 if (playbackMode === 'normal') {
                     setPlaybackMode('progressive');
                 } else if (playbackMode === 'progressive') {
@@ -269,7 +226,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                     setPlaybackMode('normal');
                 }
 
-                console.log(`Retrying with playback mode: ${playbackMode}`);
+                console.log(`Повторная попытка с режимом воспроизведения: ${playbackMode}`);
                 videoElement.load();
             }
         }
@@ -288,7 +245,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
         setSettingsAnchor(null);
 
         if (videoElement) {
-            console.log(`Changing playback mode to ${mode}`);
+            console.log(`Изменение режима воспроизведения на ${mode}`);
             videoElement.load();
         }
     };
@@ -298,7 +255,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
         setIsLoading(true);
         setLoadError(null);
 
-        // Give the DOM time to update before loading the video
+        // Даем DOM время обновиться перед загрузкой видео
         setTimeout(() => {
             if (fallbackVideoRef.current) {
                 fallbackVideoRef.current.load();
@@ -323,7 +280,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                 boxShadow: embedded ? '0 8px 32px rgba(0, 0, 0, 0.25)' : 'none',
             }}
         >
-            {/* Header with controls */}
+            {/* Заголовок с элементами управления */}
             <Box sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -344,7 +301,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                    {/* Fallback player switch */}
+                    {/* Переключатель запасного плеера */}
                     <FormControlLabel
                         control={
                             <Switch
@@ -357,30 +314,31 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                         sx={{ mr: 2 }}
                     />
 
-                    {/* Auto dancer detection button */}
+                    {/* Кнопка "Найти танцора" */}
                     {videoUrl && !useFallbackPlayer && (
-                        <Tooltip title="Найти танцора автоматически">
+                        <Tooltip title="Найти танцора">
                             <IconButton
-                                onClick={findDancerAutomatically}
-                                disabled={isDetectingDancer}
+                                onClick={toggleDancerSelectionMode}
                                 size="small"
                                 sx={{
-                                    color: isDetectingDancer ? 'rgba(51, 210, 255, 0.5)' : 'rgba(51, 210, 255, 0.9)',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    color: isDancerSelectionMode ? '#33E2A0' : 'rgba(255, 255, 255, 0.9)',
+                                    backgroundColor: isDancerSelectionMode
+                                        ? 'rgba(51, 226, 160, 0.2)'
+                                        : 'rgba(255, 255, 255, 0.05)',
                                     '&:hover': {
-                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                    }
+                                        backgroundColor: isDancerSelectionMode
+                                            ? 'rgba(51, 226, 160, 0.3)'
+                                            : 'rgba(255, 255, 255, 0.1)',
+                                    },
+                                    border: isDancerSelectionMode ? '1px solid rgba(51, 226, 160, 0.5)' : 'none'
                                 }}
                             >
-                                {isDetectingDancer ?
-                                    <CircularProgress size={20} sx={{ color: 'rgba(51, 210, 255, 0.7)' }} /> :
-                                    <FindInPage />
-                                }
+                                <PersonSearch />
                             </IconButton>
                         </Tooltip>
                     )}
 
-                    {/* Advanced settings for video playback */}
+                    {/* Расширенные настройки для воспроизведения видео */}
                     <Tooltip title="Настройки воспроизведения">
                         <IconButton
                             onClick={handleSettingsClick}
@@ -422,7 +380,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                         </MenuItem>
                     </Menu>
 
-                    {/* Retry button for video loading */}
+                    {/* Кнопка повтора для загрузки видео */}
                     {loadError && (
                         <Tooltip title="Повторить загрузку">
                             <IconButton
@@ -441,7 +399,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                         </Tooltip>
                     )}
 
-                    {/* Video quality toggler */}
+                    {/* Переключатель качества видео */}
                     {videoUrl && !useFallbackPlayer && (
                         <Tooltip title={`Качество: ${videoQuality === 'high' ? 'Высокое' : 'Низкое'}`}>
                             <IconButton
@@ -460,7 +418,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                         </Tooltip>
                     )}
 
-                    {/* Close button */}
+                    {/* Кнопка закрытия */}
                     {!embedded && (
                         <IconButton
                             onClick={onClose}
@@ -479,7 +437,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                 </Box>
             </Box>
 
-            {/* Main content area */}
+            {/* Основная область содержимого */}
             <Box sx={{
                 flex: '1',
                 overflow: 'hidden',
@@ -487,7 +445,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                 backgroundColor: '#050714',
                 minHeight: embedded ? 'auto' : '70vh',
             }}>
-                {/* Dancer selection mode indicator */}
+                {/* Индикатор режима выбора танцора */}
                 {isDancerSelectionMode && !useFallbackPlayer && (
                     <Fade in={true}>
                         <Box sx={{
@@ -512,7 +470,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                     </Fade>
                 )}
 
-                {/* Video content or placeholder */}
+                {/* Содержимое видео или заполнитель */}
                 {videoUrl ? (
                     <Box sx={{
                         width: '100%',
@@ -605,7 +563,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                             </Box>
                         )}
 
-                        {/* Standard VideoAnalyzer component */}
+                        {/* Стандартный компонент VideoAnalyzer */}
                         {!useFallbackPlayer && (
                             <VideoAnalyzer
                                 videoUrl={videoUrl}
@@ -619,7 +577,7 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                             />
                         )}
 
-                        {/* Fallback video player */}
+                        {/* Запасной видеоплеер */}
                         {useFallbackPlayer && (
                             <Box sx={{
                                 width: '100%',

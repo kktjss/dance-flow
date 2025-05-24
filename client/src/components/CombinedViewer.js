@@ -478,7 +478,7 @@ const CombinedViewer = ({
                         width: '100%',
                         height: '100%',
                         position: 'relative',
-                        display: 'block', // Always show 3D view
+                        display: activeView === '3d' ? 'block' : 'none', // Only show when 3d view is active
                         mt: 0, // No top margin needed since buttons are removed
                         overflow: 'hidden',
                         overscrollBehavior: 'contain' // Предотвращает прокрутку родительского элемента

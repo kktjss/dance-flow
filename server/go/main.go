@@ -158,12 +158,6 @@ func main() {
 	// Обслуживание статических файлов из директории uploads с соответствующими заголовками
 	router.StaticFS("/uploads", http.Dir("./uploads"))
 	
-	// Добавление прямого доступа к файлам через путь /files
-	router.StaticFS("/files", http.Dir("./uploads/files"))
-	
-	// Добавление прямого доступа к аудио файлам через путь /audio
-	router.StaticFS("/audio", http.Dir("./uploads/audio"))
-	
 	// Эндпоинт проверки работоспособности
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

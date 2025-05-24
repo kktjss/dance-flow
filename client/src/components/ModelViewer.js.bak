@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import ModelUploader from './ModelUploader';
 
-// Компонент модели Xbot
+// Model component for Xbot
 const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDuration, animationMarkers = [], activeAnimations = [], glbAnimationUrl = null, elementId = null, elementKeyframes = [] }) => {
-    // Мы больше не используем стандартную модель Xbot
+    // We're not using the default Xbot model anymore
     const [customModel, setCustomModel] = useState(null);
     const [loadingError, setLoadingError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +20,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         error: null
     });
 
-    // ПРЯМАЯ ПЕРЕЗАПИСЬ - Принудительное использование заведомо рабочего URL
+    // DIRECT OVERRIDE - Force a known working URL
     const FORCE_MODEL_URL = `${window.location.origin}/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
     console.log('XbotModel: FORCING DIRECT MODEL URL:', FORCE_MODEL_URL);
 
@@ -33,52 +33,52 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     const activeActionsRef = useRef({});
     const [externalAnimations, setExternalAnimations] = useState({});
 
-    // Обработка потери контекста WebGL
+    // Handle WebGL context loss
     useEffect(() => {
         const handleContextLost = (event) => {
             event.preventDefault();
             console.warn('XbotModel: WebGL context was lost');
 
-            // Остановить все текущие анимации
+            // Stop any ongoing animations
             if (animationRef.current) {
                 cancelAnimationFrame(animationRef.current);
                 animationRef.current = null;
             }
 
-            // Сбросить микшер
+            // Reset mixer
             mixer.current = null;
 
-            // Установить ошибку загрузки
+            // Set loading error
             setLoadingError('WebGL контекст был потерян. Пожалуйста, перезагрузите страницу.');
         };
 
         const handleContextRestored = () => {
             console.log('XbotModel: WebGL context was restored');
 
-            // Очистить ошибку
+            // Clear error
             setLoadingError(null);
 
-            // Перезагрузить модель
+            // Reload the model
             if (glbAnimationUrl) {
                 console.log('XbotModel: Reloading model after context restore');
-                // Модель будет перезагружена эффектом, который следит за glbAnimationUrl
+                // The model will be reloaded by the useEffect that watches glbAnimationUrl
             }
         };
 
-        // Добавить обработчики событий
+        // Add event listeners
         window.addEventListener('webglcontextlost', handleContextLost);
         window.addEventListener('webglcontextrestored', handleContextRestored);
 
         return () => {
-            // Удалить обработчики событий
+            // Remove event listeners
             window.removeEventListener('webglcontextlost', handleContextLost);
             window.removeEventListener('webglcontextrestored', handleContextRestored);
         };
     }, [glbAnimationUrl]);
 
-    // Загрузить пользовательскую GLB модель, если предоставлен URL
+    // Load custom GLB model if URL is provided
     useEffect(() => {
-        // Отладочный лог для проверки значения URL
+        // Debug log to check the URL value
         console.log('XbotModel: glbAnimationUrl check:', {
             url: glbAnimationUrl,
             type: typeof glbAnimationUrl,
@@ -89,12 +89,12 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             forcedUrl: FORCE_MODEL_URL
         });
 
-        // НАПРЯМУЮ ЗАГРУЖАЕМ ПРИНУДИТЕЛЬНЫЙ URL НЕЗАВИСИМО ОТ ВХОДНЫХ ДАННЫХ
+        // DIRECTLY LOAD THE FORCED URL REGARDLESS OF INPUT
         console.log('XbotModel: BYPASSING normal URL and loading forced URL:', FORCE_MODEL_URL);
         setIsLoading(true);
         setLoadingError(null);
 
-        // Отправить прямой fetch-запрос для проверки доступности URL
+        // Send direct fetch request to check if the URL is accessible
         fetch(FORCE_MODEL_URL, { method: 'HEAD' })
             .then(response => {
                 console.log('XbotModel: HEAD request result for forced URL:', {
@@ -109,29 +109,29 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     loadModelFromUrl(FORCE_MODEL_URL);
                 } else {
                     console.error('XbotModel: Forced URL is not accessible, status:', response.status);
-                    // Всё равно попробовать прямую загрузку
+                    // Try direct loading anyway
                     loadModelFromUrl(FORCE_MODEL_URL);
                 }
             })
             .catch(error => {
                 console.error('XbotModel: Error checking forced URL accessibility:', error);
-                // Всё равно попробовать прямую загрузку
+                // Try direct loading anyway
                 loadModelFromUrl(FORCE_MODEL_URL);
             });
 
     }, [glbAnimationUrl, onModelLoad, elementId, elementKeyframes]);
 
-    // Вспомогательная функция для загрузки модели по URL
+    // Helper function to load model from URL
     const loadModelFromUrl = useCallback((url) => {
         console.log('XbotModel: Loading model from URL:', url);
 
-        // Отслеживать время начала загрузки
+        // Track load start time
         const loadStartTime = Date.now();
 
-        // Логирование сетевого запроса напрямую
+        // Log network request directly
         console.log(`XbotModel: Sending direct fetch GET request to ${url}`);
 
-        // Сделать прямой GET-запрос fetch, чтобы явно проверить, доступна ли модель
+        // Make a direct fetch GET request to explicitly check if the model is accessible
         fetch(url)
             .then(response => {
                 console.log('XbotModel: Fetch response:', {
@@ -149,7 +149,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             })
             .then(blob => {
                 console.log('XbotModel: Model fetched successfully, blob size:', blob.size);
-                // Если мы получили blob, значит URL доступен
+                // If we got the blob, we know the URL is accessible
             })
             .catch(error => {
                 console.error('XbotModel: Direct fetch test failed:', error);
@@ -159,15 +159,15 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             .load(
                 url,
                 (gltf) => {
-                    // Колбэк успешной загрузки
+                    // Success callback
                     const loadEndTime = Date.now();
                     console.log(`XbotModel: Model loaded successfully in ${loadEndTime - loadStartTime}ms`);
                     console.log('XbotModel: Animations found:', gltf.animations ? gltf.animations.length : 0);
 
-                    // Установить пользовательскую модель
+                    // Set custom model
                     setCustomModel({ scene: gltf.scene, animations: gltf.animations });
 
-                    // Обновить отладочную информацию
+                    // Update debug info
                     setDebugInfo(prev => ({
                         ...prev,
                         modelLoaded: true,
@@ -177,20 +177,20 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         loadSuccess: true
                     }));
 
-                    // Передать анимации родителю, если доступны
+                    // Pass animations to parent if available
                     if (onModelLoad && gltf.animations) {
                         onModelLoad(gltf.animations);
                     }
 
-                    // Очистить состояние загрузки
+                    // Clear loading state
                     setIsLoading(false);
                 },
                 (progress) => {
-                    // Колбэк прогресса
+                    // Progress callback
                     const percentComplete = progress.loaded / progress.total * 100;
                     console.log(`XbotModel: Loading progress: ${percentComplete.toFixed(2)}%`);
 
-                    // Обновить отладочную информацию with progress
+                    // Update debug info with progress
                     setDebugInfo(prev => ({
                         ...prev,
                         loadProgress: percentComplete,
@@ -198,11 +198,11 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     }));
                 },
                 (error) => {
-                    // Колбэк ошибки
+                    // Error callback
                     console.error('XbotModel: Error loading GLB model:', error);
                     console.error('XbotModel: Failed URL was:', url);
 
-                    // Обновить отладочную информацию with error
+                    // Update debug info with error
                     setDebugInfo(prev => ({
                         ...prev,
                         error: error.message,
@@ -210,7 +210,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         loadSuccess: false
                     }));
 
-                    // Использовать более простой запасной URL как последнее средство
+                    // Use a simpler fallback URL as a last resort
                     const simpleUrl = `/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
                     console.log(`XbotModel: Trying one last fallback URL: ${simpleUrl}`);
 
@@ -251,24 +251,24 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             );
     }, [onModelLoad]);
 
-    // Инициализировать микшер анимаций
+    // Initialize animation mixer
     useEffect(() => {
         if (customModel && customModel.animations && customModel.animations.length > 0) {
             console.log('XbotModel: Model loaded successfully with animations:', customModel.animations);
             console.log('XbotModel: Animation names:', customModel.animations.map(anim => anim.name));
 
-            // Создать новый микшер для текущей модели
+            // Create a new mixer for the current model
             mixer.current = new THREE.AnimationMixer(customModel.scene);
             animationsRef.current = customModel.animations;
 
-            // Сохранить оригинальную длительность анимации модели из первой анимации
+            // Store original model animation duration from the first animation
             modelDuration.current = customModel.animations[0].duration;
             console.log('XbotModel: Model duration:', modelDuration.current);
 
-            // Передать анимации родителю
+            // Pass animations to parent
             onModelLoad(customModel.animations);
 
-            // Обновить отладочную информацию
+            // Update debug info
             setDebugInfo(prev => ({
                 ...prev,
                 modelLoaded: true,
@@ -278,7 +278,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         } else if (customModel) {
             console.warn('XbotModel: Model loaded but no animations found:', customModel);
 
-            // Обновить отладочную информацию even if no animations
+            // Update debug info even if no animations
             setDebugInfo(prev => ({
                 ...prev,
                 modelLoaded: true,
@@ -288,14 +288,14 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         }
     }, [customModel, onModelLoad]);
 
-    // Загрузить внешнюю анимацию
+    // Load external animation
     const loadExternalAnimation = useCallback(async (url) => {
         if (!url || externalAnimations[url]) return;
 
         try {
             console.log('XbotModel: Loading external animation from URL:', url);
 
-            // Использовать GLTFLoader напрямую
+            // Use GLTFLoader directly
             const loader = new GLTFLoader();
 
             // Специальная обработка для blob URL
@@ -314,16 +314,16 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     if (animations && animations.length > 0) {
                         console.log(`Loaded ${animations.length} animations from ${url}`);
 
-                        // Сохранить анимации с их URL в качестве ключа
+                        // Store animations with their URL as key
                         setExternalAnimations(prev => ({
                             ...prev,
                             [url]: animations
                         }));
 
-                        // Добавить к доступным анимациям
+                        // Add to available animations
                         const newAnimations = [...animationsRef.current];
                         animations.forEach(anim => {
-                            // Установить пользовательское свойство для идентификации внешних анимаций
+                            // Set a custom property to identify external animations
                             anim.isExternal = true;
                             anim.sourceUrl = url;
                             newAnimations.push(anim);
@@ -331,7 +331,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
                         animationsRef.current = newAnimations;
 
-                        // Уведомить родителя о новых анимациях
+                        // Notify parent about new animations
                         onModelLoad(newAnimations);
                     }
                 },
@@ -347,36 +347,36 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         }
     }, [externalAnimations, onModelLoad]);
 
-    // Обновить активные анимации, когда изменяется свойство activeAnimations
+    // Update active animations when the activeAnimations prop changes
     useEffect(() => {
         if (!mixer.current || !customModel) return;
 
-        // Сначала загрузить любые внешние анимации
+        // Load any external animations first
         activeAnimations.forEach(anim => {
             if (anim.url) {
                 loadExternalAnimation(anim.url);
             }
         });
 
-        // Остановить все текущие действия
+        // Stop all current actions
         Object.values(activeActionsRef.current).forEach(action => {
             if (action) action.stop();
         });
 
-        // Сбросить активные действия
+        // Reset active actions
         activeActionsRef.current = {};
 
-        // Создать новые действия для каждой активной анимации
+        // Create new actions for each active animation
         activeAnimations.forEach(anim => {
-            // Найти анимацию по имени, индексу или из внешнего источника
+            // Find the animation by name, index, or from external source
             let animation;
 
             if (anim.url && externalAnimations[anim.url]) {
-                // Найти анимацию во внешних анимациях
+                // Find animation in external animations
                 const externalAnims = externalAnimations[anim.url];
                 animation = externalAnims[anim.externalIndex || 0];
             } else {
-                // Найти в стандартных анимациях
+                // Find in default animations
                 animation = typeof anim.index === 'number'
                     ? animationsRef.current[anim.index]
                     : animationsRef.current.find(a => a.name === anim.name);
@@ -388,28 +388,28 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 action.clampWhenFinished = true;
                 action.play();
 
-                // Сохранить ссылку на действие
+                // Store the action reference
                 activeActionsRef.current[anim.id] = action;
 
-                // Рассчитать правильный timeScale на основе длительности плеера и модели
+                // Calculate the correct timeScale based on player and model durations
                 let effectiveTimeScale = anim.timeScale || 1;
 
-                // Если у нас есть обе длительности, убедиться, что timeScale установлен правильно
+                // If we have both durations, ensure the timeScale is correctly set
                 if (playerDuration && modelDuration.current && animation.duration) {
-                    // Это гарантирует, что анимация завершится в пределах длительности плеера
+                    // This ensures the animation completes within the player duration
                     const correctTimeScale = playerDuration / animation.duration;
 
-                    // Если timeScale анимации сильно отличается от того, каким он должен быть, обновить его
+                    // If the animation's timeScale is very different from what it should be, update it
                     if (Math.abs(effectiveTimeScale - correctTimeScale) > 0.1) {
                         console.log(`ModelViewer: Correcting timeScale from ${effectiveTimeScale} to ${correctTimeScale}`);
                         effectiveTimeScale = correctTimeScale;
                     }
                 }
 
-                // Установить масштаб времени
+                // Set time scale
                 action.timeScale = effectiveTimeScale;
 
-                // Установить вес, если указан (для смешивания)
+                // Set weight if specified (for blending)
                 if (typeof anim.weight === 'number') {
                     action.weight = anim.weight;
                 }
@@ -426,22 +426,22 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             }
         });
 
-        // Принудительно обновить микшер для применения изменений
+        // Force update mixer to apply changes
         if (mixer.current) {
             mixer.current.update(0);
         }
     }, [activeAnimations, externalAnimations, loadExternalAnimation, customModel, playerDuration, modelDuration]);
 
-    // Найти текущий сегмент анимации на основе маркеров
+    // Find the current animation segment based on markers
     const getCurrentAnimationSegment = useCallback(() => {
         if (!animationMarkers || animationMarkers.length === 0) {
             return { start: 0, end: modelDuration.current, modelStart: 0, modelEnd: modelDuration.current };
         }
 
-        // Отсортировать маркеры по времени
+        // Sort markers by time
         const sortedMarkers = [...animationMarkers].sort((a, b) => a.time - b.time);
 
-        // Найти текущий сегмент
+        // Find the current segment
         for (let i = 0; i < sortedMarkers.length - 1; i++) {
             if (currentTime >= sortedMarkers[i].time && currentTime < sortedMarkers[i + 1].time) {
                 return {
@@ -453,7 +453,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             }
         }
 
-        // Если мы прошли последний маркер, вернуться к первому сегменту
+        // If we're past the last marker, loop back to the first segment
         if (currentTime >= sortedMarkers[sortedMarkers.length - 1].time) {
             return {
                 start: sortedMarkers[sortedMarkers.length - 1].time,
@@ -463,7 +463,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
             };
         }
 
-        // По умолчанию использовать первый сегмент
+        // Default to the first segment
         return {
             start: 0,
             end: sortedMarkers[0]?.time || playerDuration,
@@ -472,67 +472,67 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         };
     }, [currentTime, animationMarkers, playerDuration]);
 
-    // Найти активную анимацию в текущее время
+    // Find the active animation at the current time
     const getActiveAnimationAtTime = useCallback(() => {
         if (!activeAnimations || activeAnimations.length === 0) {
             return [];
         }
 
-        // Найти анимации, которые активны в текущее время
+        // Find animations that are active at the current time
         return activeAnimations.filter(anim =>
             currentTime >= anim.start && currentTime <= anim.end
         );
     }, [currentTime, activeAnimations]);
 
-    // Обновить время анимации при перемотке
+    // Update animation time when scrubbing
     useEffect(() => {
         if (mixer.current && !isPlaying) {
-            // Получить активные анимации в текущее время
+            // Get active animations at current time
             const activeAnimsAtTime = getActiveAnimationAtTime();
 
-            // Если в это время нет активных анимаций, использовать поведение по умолчанию с маркерами
+            // If no animations are active at this time, use the default behavior with markers
             if (activeAnimsAtTime.length === 0) {
                 let scaledTime;
 
                 if (animationMarkers && animationMarkers.length > 0) {
-                    // Использовать маркеры для точного отображения сегментов анимации
+                    // Use markers for precise animation segment mapping
                     const segment = getCurrentAnimationSegment();
                     const segmentProgress = (currentTime - segment.start) / (segment.end - segment.start);
                     scaledTime = segment.modelStart + segmentProgress * (segment.modelEnd - segment.modelStart);
                 } else {
-                    // Масштабирование по умолчанию, когда нет маркеров
-                    // Исправление: Обеспечить правильное масштабирование между длительностью плеера и модели
-                    // Если время плеера 2.5с в 5с временной шкале, а модель 10с, мы должны быть на 5с в модели
+                    // Default scaling when no markers are present
+                    // Fix: Ensure proper scaling between player duration and model duration
+                    // If player time is 2.5s in a 5s timeline, and model is 10s, we need to be at 5s in the model
                     scaledTime = playerDuration && modelDuration.current
                         ? (currentTime / playerDuration) * modelDuration.current
                         : currentTime;
                 }
 
-                // Применить масштабированное время к микшеру
+                // Apply the scaled time to the mixer
                 mixer.current.time = scaledTime;
 
-                // Принудительно обновить микшер для применения изменений
+                // Force update mixer to apply changes
                 mixer.current.update(0);
                 return;
             }
 
-            // Для каждой активной анимации установить её время на основе текущего времени плеера
+            // For each active animation, set its time based on the current player time
             activeAnimsAtTime.forEach(anim => {
                 const action = activeActionsRef.current[anim.id];
                 if (action) {
-                    // Рассчитать прогресс в пределах временного диапазона этой анимации
+                    // Calculate the progress within this animation's time range
                     const animProgress = (currentTime - anim.start) / (anim.end - anim.start);
 
-                    // Рассчитать время модели на основе длительности анимации
+                    // Calculate the model time based on the animation's duration
                     const animation = animationsRef.current[anim.index];
                     if (animation) {
                         const animDuration = animation.duration;
                         const modelTime = animProgress * animDuration;
 
-                        // Установить время действия напрямую
+                        // Set the action time directly
                         action.time = modelTime;
 
-                        // Принудительно обновить микшер для применения изменений
+                        // Force update mixer to apply changes
                         mixer.current.update(0);
                     }
                 }
@@ -540,12 +540,12 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         }
     }, [currentTime, isPlaying, playerDuration, animationMarkers, getCurrentAnimationSegment, getActiveAnimationAtTime]);
 
-    // Цикл анимации с точным таймингом
+    // Animation loop with precise timing
     const animate = useCallback(() => {
         if (!mixer.current || !isPlaying) return;
 
         // Используем фиксированный шаг для обновления миксера
-        const MODEL_TIME_STEP = 0.016; // ~60 кадров в секунду
+        const MODEL_TIME_STEP = 0.016; // ~60fps
 
         // Обновляем миксер с фиксированным шагом для плавной анимации модели
         mixer.current.update(MODEL_TIME_STEP);
@@ -572,7 +572,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         }
     }, [isPlaying, currentTime, playerDuration, onTimeUpdate]);
 
-    // Настройка и очистка кадра анимации
+    // Setup and cleanup animation frame
     useEffect(() => {
         if (isPlaying) {
             // Запускаем анимацию
@@ -597,7 +597,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         };
     }, [isPlaying, animate]);
 
-    // Обработка окончания анимации
+    // Handle animation end
     useEffect(() => {
         if (mixer.current && playerDuration && currentTime >= playerDuration) {
             onTimeUpdate(0);
@@ -662,7 +662,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                             cursor: 'pointer'
                         }}
                         onClick={() => {
-                            // Перезагрузить с запасным URL
+                            // Reload with the fallback URL
                             const fallbackUrl = `/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
                             console.log('Manual reload with fallback URL:', fallbackUrl);
                             loadModelFromUrl(fallbackUrl);
@@ -693,7 +693,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     );
 };
 
-// Пользовательский слайдер с маркерами
+// Custom Slider with markers
 const MarkedSlider = ({ value, min, max, onChange, markers = [], disabled, onMarkerAdd, onMarkerEdit, onMarkerDelete }) => {
     const getMarkerPosition = (time) => ((time - min) / (max - min)) * 100;
 
@@ -764,14 +764,14 @@ const MarkedSlider = ({ value, min, max, onChange, markers = [], disabled, onMar
     );
 };
 
-// Компонент управления анимацией
+// Animation Manager Component
 const AnimationManager = ({ animations = [], activeAnimations = [], onAnimationsChange }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedAnimIndex, setSelectedAnimIndex] = useState(null);
     const [animationDialogOpen, setAnimationDialogOpen] = useState(false);
     const [currentAnimation, setCurrentAnimation] = useState(null);
 
-    // Состояние формы диалога анимации
+    // Animation dialog form state
     const [animName, setAnimName] = useState('');
     const [animIndex, setAnimIndex] = useState(0);
     const [animStart, setAnimStart] = useState(0);
@@ -780,12 +780,12 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
     const [animTimeScale, setAnimTimeScale] = useState(1);
     const [animExternalIndex, setAnimExternalIndex] = useState(0);
 
-    // Сгенерировать уникальный ID для новых анимаций
+    // Generate a unique ID for new animations
     const generateUniqueId = () => {
         return 'anim_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
     };
 
-    // Открыть контекстное меню для анимации
+    // Open context menu for an animation
     const handleAnimationMenuOpen = (event, index) => {
         event.preventDefault();
         event.stopPropagation();
@@ -793,17 +793,17 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
         setSelectedAnimIndex(index);
     };
 
-    // Закрыть контекстное меню
+    // Close context menu
     const handleAnimationMenuClose = () => {
         setAnchorEl(null);
         setSelectedAnimIndex(null);
     };
 
-    // Открыть диалог для добавления новой анимации
+    // Open dialog to add a new animation
     const handleAddAnimation = () => {
         setCurrentAnimation(null);
 
-        // Установить значения по умолчанию для новой анимации
+        // Set default values for a new animation
         setAnimName('');
         setAnimIndex(0);
         setAnimStart(0);
@@ -815,7 +815,7 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
         setAnimationDialogOpen(true);
     };
 
-    // Открыть диалог для редактирования существующей анимации
+    // Open dialog to edit an existing animation
     const handleEditAnimation = () => {
         const anim = activeAnimations[selectedAnimIndex];
 
@@ -832,7 +832,7 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
         handleAnimationMenuClose();
     };
 
-    // Удалить анимацию
+    // Delete an animation
     const handleDeleteAnimation = () => {
         const newAnimations = [...activeAnimations];
         newAnimations.splice(selectedAnimIndex, 1);
@@ -840,10 +840,10 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
         handleAnimationMenuClose();
     };
 
-    // Сохранить изменения анимации
+    // Save animation changes
     const handleSaveAnimation = () => {
         if (currentAnimation) {
-            // Обновить существующую анимацию
+            // Update existing animation
             const newAnimations = activeAnimations.map(anim =>
                 anim.id === currentAnimation.id
                     ? {
@@ -860,7 +860,7 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
             );
             onAnimationsChange(newAnimations);
         } else {
-            // Добавить новую анимацию
+            // Add new animation
             const newAnimation = {
                 id: generateUniqueId(),
                 name: animName,
@@ -932,7 +932,7 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
                 )}
             </MuiBox>
 
-            {/* Контекстное меню анимации */}
+            {/* Animation Context Menu */}
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -946,7 +946,7 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
                 </MenuItem>
             </Menu>
 
-            {/* Диалог редактирования анимации */}
+            {/* Animation Edit Dialog */}
             <Dialog open={animationDialogOpen} onClose={() => setAnimationDialogOpen(false)}>
                 <DialogTitle>
                     {currentAnimation ? 'Редактировать анимацию' : 'Добавить анимацию'}
@@ -1032,26 +1032,26 @@ const AnimationManager = ({ animations = [], activeAnimations = [], onAnimations
     );
 };
 
-// Компонент временной шкалы анимации
+// Animation Timeline Component
 const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 60, currentTime = 0, onAnimationsChange }) => {
     const [draggingAnimation, setDraggingAnimation] = useState(null);
-    const [draggingEdge, setDraggingEdge] = useState(null); // 'start' или 'end'
+    const [draggingEdge, setDraggingEdge] = useState(null); // 'start' or 'end'
     const [dragStartX, setDragStartX] = useState(0);
     const [dragStartTime, setDragStartTime] = useState(0);
     const timelineRef = useRef(null);
 
-    // Рассчитать позицию на временной шкале из времени
+    // Calculate position on timeline from time
     const getPositionFromTime = (time) => {
         return (time / duration) * 100;
     };
 
-    // Рассчитать время из позиции на временной шкале
+    // Calculate time from position on timeline
     const getTimeFromPosition = (position, width) => {
         const percent = position / width;
         return Math.max(0, Math.min(duration, percent * duration));
     };
 
-    // Начать перетаскивание анимации
+    // Start dragging an animation
     const handleDragStart = (e, animId, edge = null) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1063,18 +1063,18 @@ const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 
         setDraggingEdge(edge);
         setDragStartX(mouseX);
 
-        // Найти перетаскиваемую анимацию
+        // Find the animation being dragged
         const anim = activeAnimations.find(a => a.id === animId);
         if (anim) {
             setDragStartTime(edge === 'start' ? anim.start : edge === 'end' ? anim.end : anim.start);
         }
 
-        // Добавить обработчики событий for drag and drop
+        // Add event listeners for drag and drop
         document.addEventListener('mousemove', handleDragMove);
         document.addEventListener('mouseup', handleDragEnd);
     };
 
-    // Обработка движения перетаскивания
+    // Handle drag movement
     const handleDragMove = (e) => {
         if (!draggingAnimation || !timelineRef.current) return;
 
@@ -1082,28 +1082,28 @@ const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 
         const mouseX = e.clientX - timelineRect.left;
         const deltaX = mouseX - dragStartX;
 
-        // Рассчитать разницу времени на основе расстояния перетаскивания
+        // Calculate the time delta based on the drag distance
         const timeDelta = getTimeFromPosition(deltaX, timelineRect.width);
 
-        // Обновить позицию или длину анимации
+        // Update the animation position or length
         const newAnimations = activeAnimations.map(anim => {
             if (anim.id !== draggingAnimation) return anim;
 
             if (draggingEdge === 'start') {
-                // Перетаскивание начального края - обновить время начала
+                // Dragging the start edge - update start time
                 const newStart = Math.max(0, Math.min(anim.end - 0.5, dragStartTime + timeDelta));
                 return { ...anim, start: newStart };
             } else if (draggingEdge === 'end') {
-                // Перетаскивание конечного края - обновить время окончания
+                // Dragging the end edge - update end time
                 const newEnd = Math.max(anim.start + 0.5, Math.min(duration, dragStartTime + timeDelta));
                 return { ...anim, end: newEnd };
             } else {
-                // Перетаскивание всей анимации - переместить и начало, и конец
+                // Dragging the whole animation - move both start and end
                 const newStart = Math.max(0, dragStartTime + timeDelta);
                 const animDuration = anim.end - anim.start;
                 const newEnd = Math.min(duration, newStart + animDuration);
 
-                // Если мы достигли правого края, подкорректировать начало для сохранения длительности
+                // If we hit the right edge, adjust start to maintain duration
                 if (newEnd === duration) {
                     return { ...anim, start: duration - animDuration, end: duration };
                 }
@@ -1115,17 +1115,17 @@ const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 
         onAnimationsChange(newAnimations);
     };
 
-    // Завершить перетаскивание
+    // End dragging
     const handleDragEnd = () => {
         setDraggingAnimation(null);
         setDraggingEdge(null);
 
-        // Удалить обработчики событий
+        // Remove event listeners
         document.removeEventListener('mousemove', handleDragMove);
         document.removeEventListener('mouseup', handleDragEnd);
     };
 
-    // Сгенерировать цвет для анимации на основе её индекса
+    // Generate a color for an animation based on its index
     const getAnimationColor = (index) => {
         const colors = [
             '#4caf50', '#2196f3', '#f44336', '#ff9800', '#9c27b0',
@@ -1152,7 +1152,7 @@ const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 
                     cursor: 'pointer'
                 }}
             >
-                {/* Временные маркеры */}
+                {/* Time markers */}
                 {Array.from({ length: Math.floor(duration / 5) + 1 }).map((_, i) => (
                     <MuiBox
                         key={i}
@@ -1176,7 +1176,7 @@ const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 
                     />
                 ))}
 
-                {/* Индикатор текущего времени */}
+                {/* Current time indicator */}
                 <MuiBox
                     sx={{
                         position: 'absolute',
@@ -1189,7 +1189,7 @@ const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 
                     }}
                 />
 
-                {/* Блоки анимаций */}
+                {/* Animation blocks */}
                 {activeAnimations.map((anim, index) => (
                     <MuiBox
                         key={anim.id}
@@ -1222,7 +1222,7 @@ const AnimationTimeline = ({ animations = [], activeAnimations = [], duration = 
                     >
                         {anim.name || `Анимация ${animations[anim.index]?.name || anim.index}`}
 
-                        {/* Маркеры изменения размера */}
+                        {/* Resize handles */}
                         <MuiBox
                             sx={{
                                 position: 'absolute',
@@ -1266,7 +1266,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
     const [isLoading, setIsLoading] = useState(true);
     const [isPlaying, setIsPlaying] = useState(initialPlaying);
     const [currentTime, setCurrentTime] = useState(initialTime);
-    const [duration, setDuration] = useState(playerDuration || 60); // Использовать длительность плеера, если предоставлена
+    const [duration, setDuration] = useState(playerDuration || 60); // Use player duration if provided
     const [modelLoaded, setModelLoaded] = useState(false);
     const [animationMarkers, setAnimationMarkers] = useState([
         { time: 0, modelTime: 0, label: 'Начало', color: '#4caf50' }
@@ -1292,15 +1292,15 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
-    // Дополнительные состояния для отсутствующих переменных
+    // Additional states for the missing variables
     const [isLoadingModel, setIsLoadingModel] = useState(false);
     const [tabIndex, setTabIndex] = useState(0);
     const [animations, setAnimations] = useState([]);
     const [glbInputUrl, setGlbInputUrl] = useState('');
 
-    // Добавить эти отсутствующие функции-обработчики
+    // Add these missing handler functions
     const handleCloseViewerConfirm = () => {
-        // Проверить, есть ли несохраненные изменения
+        // Check if there are unsaved changes
         if (hasUnsavedChanges) {
             setConfirmDialogOpen(true);
         } else {
@@ -1313,7 +1313,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
     };
 
     const handleSaveModelWithAnimation = () => {
-        // Сохранить и настройки модели, и анимации
+        // Save both model and animation settings
         handleSaveModel();
         if (onSaveAnimations) {
             onSaveAnimations(activeAnimations);
@@ -1321,9 +1321,9 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         onClose();
     };
 
-    // ... существующий код ...
+    // ... existing code ...
 
-    // Загрузить сохраненные анимации из localStorage при монтировании компонента
+    // Load saved animations from localStorage on component mount
     useEffect(() => {
         console.log('ModelViewer: Component mounted, checking for saved animations');
 
@@ -1349,20 +1349,20 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         if (elementId && elementKeyframes && elementKeyframes.length > 0) {
             console.log('ModelViewer: Found element keyframes, checking for saved animations');
 
-            // Проверить, имеет ли какой-либо ключевой кадр наш elementId
+            // Check if any keyframe has our elementId
             const matchingKeyframes = elementKeyframes.filter(kf => kf.elementId === elementId || kf.id === elementId);
 
             if (matchingKeyframes.length > 0) {
                 console.log('ModelViewer: Found matching keyframes for element ID:', elementId);
 
-                // Проверить наличие glbAnimations в любом подходящем ключевом кадре
+                // Check for glbAnimations in any matching keyframe
                 const keyframeWithAnimations = matchingKeyframes.find(kf => kf.glbAnimations && kf.glbAnimations.length > 0);
 
                 if (keyframeWithAnimations) {
                     console.log('ModelViewer: Loading saved animations from keyframe:', keyframeWithAnimations.glbAnimations);
                     setSavedAnimations(keyframeWithAnimations.glbAnimations);
 
-                    // Если у этого ключевого кадра есть modelPath, использовать его
+                    // If this keyframe has a modelPath, use it
                     if (keyframeWithAnimations.modelPath && !selectedModel && !glbAnimationUrl) {
                         console.log('ModelViewer: Using modelPath from keyframe:', keyframeWithAnimations.modelPath);
 
@@ -1387,21 +1387,21 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     }, [elementId, elementKeyframes, selectedModel, glbAnimationUrl]);
 
-    // Обновить состояние, когда изменяются пропсы
+    // Update state when props change
     useEffect(() => {
         if (playerDuration) {
             setDuration(playerDuration);
 
-            // Обновить timeScale активных анимаций, когда изменяется playerDuration
+            // Update the timeScale of active animations when playerDuration changes
             if (modelDuration && activeAnimations.length > 0) {
-                // Рассчитать новый timeScale на основе соотношения длительности плеера к длительности модели
+                // Calculate the new timeScale based on the ratio of player duration to model duration
                 const newTimeScale = playerDuration / modelDuration;
 
-                // Обновить все активные анимации с новым timeScale
+                // Update all active animations with the new timeScale
                 setActiveAnimations(current =>
                     current.map(anim => ({
                         ...anim,
-                        end: Math.min(anim.end, playerDuration), // Убедиться, что время окончания не превышает длительность плеера
+                        end: Math.min(anim.end, playerDuration), // Ensure end time doesn't exceed player duration
                         timeScale: newTimeScale
                     }))
                 );
@@ -1419,9 +1419,9 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         setIsPlaying(initialPlaying);
     }, [initialPlaying]);
 
-    // Синхронизировать маркеры с ключевыми кадрами элемента, когда они изменяются или когда меняется элемент
+    // Sync markers with element keyframes when they change or when element changes
     useEffect(() => {
-        // Обновлять маркеры только если у нас есть действительные ключевые кадры и либо элемент изменился, либо это начальная настройка
+        // Only update markers if we have valid keyframes and either the element changed or it's the initial setup
         if (elementKeyframes && elementKeyframes.length > 0 && (elementId !== prevElementIdRef.current || prevElementIdRef.current === null)) {
             console.log(`Syncing markers with ${elementKeyframes.length} keyframes from element ${elementId}`);
 
@@ -1440,17 +1440,17 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 if (keyframes.length > 0) {
                     console.log(`ModelViewer: Using ${keyframes.length} keyframes from element`);
 
-                    // Преобразовать ключевые кадры элемента в маркеры анимации
+                    // Convert element keyframes to animation markers
                     const newMarkers = keyframes.map((keyframe, index) => {
-                        // Убедиться, что у ключевого кадра действительное время
+                        // Ensure the keyframe has a valid time
                         if (typeof keyframe.time !== 'number' || isNaN(keyframe.time)) {
                             console.warn(`Invalid keyframe time at index ${index}:`, keyframe);
                             return null;
                         }
 
-                        // Рассчитать время модели пропорционально, если оно еще не установлено
-                        // Для первого маркера использовать начало анимации модели
-                        // Для последующих маркеров распределить пропорционально по длительности модели
+                        // Calculate model time proportionally if not already set
+                        // For first marker, use start of model animation
+                        // For subsequent markers, distribute proportionally across model duration
                         const modelTime = index === 0 ? 0 : (keyframe.time / playerDuration) * modelDuration;
 
                         return {
@@ -1461,10 +1461,10 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                         };
                     }).filter(marker => marker !== null);
 
-                    // Отсортировать маркеры по времени
+                    // Sort markers by time
                     newMarkers.sort((a, b) => a.time - b.time);
 
-                    // Всегда убеждаться, что у нас есть хотя бы начальный маркер
+                    // Always ensure we have at least a start marker
                     if (newMarkers.length === 0) {
                         newMarkers.push({
                             time: 0,
@@ -1474,7 +1474,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                         });
                     }
 
-                    // Всегда убеждаться, что у нас есть конечный маркер
+                    // Always ensure we have an end marker
                     const hasEndMarker = newMarkers.some(marker => marker.time === playerDuration);
                     if (!hasEndMarker && playerDuration) {
                         newMarkers.push({
@@ -1511,7 +1511,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 } else {
                     console.log('ModelViewer: Element has no keyframes, using default markers');
 
-                    // Создать маркеры по умолчанию
+                    // Create default markers
                     const newMarkers = [
                         {
                             time: 0,
@@ -1521,7 +1521,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                         }
                     ];
 
-                    // Добавить конечный маркер, если у нас есть длительность
+                    // Add end marker if we have duration
                     if (playerDuration) {
                         newMarkers.push({
                             time: playerDuration,
@@ -1536,7 +1536,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             } else {
                 console.warn(`ModelViewer: Element with ID ${elementId} not found in keyframes`);
 
-                // Создать маркеры по умолчанию
+                // Create default markers
                 const newMarkers = [
                     {
                         time: 0,
@@ -1546,7 +1546,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     }
                 ];
 
-                // Добавить конечный маркер, если у нас есть длительность
+                // Add end marker if we have duration
                 if (playerDuration) {
                     newMarkers.push({
                         time: playerDuration,
@@ -1564,7 +1564,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
     }, [elementKeyframes, elementId, playerDuration, modelDuration, activeAnimations.length]);
 
     useEffect(() => {
-        // Имитировать загрузку движка
+        // Simulate loading the engine
         const timer = setTimeout(() => {
             setIsLoading(false);
         }, 1000);
@@ -1572,28 +1572,28 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         return () => clearTimeout(timer);
     }, []);
 
-    // Форматировать время в ММ:СС
+    // Format time in MM:SS
     const formatTime = (timeInSeconds) => {
         const minutes = Math.floor(timeInSeconds / 60);
         const seconds = Math.floor(timeInSeconds % 60);
         return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     };
 
-    // Обработать изменение слайдера времени с миллисекундной точностью
+    // Handle time slider change with millisecond precision
     const handleTimeChange = (_, newValue) => {
-        const time = Number(newValue.toFixed(3)); // Сохранить 3 десятичных знака для миллисекунд
+        const time = Number(newValue.toFixed(3)); // Keep 3 decimal places for milliseconds
         setCurrentTime(time);
         if (externalTimeUpdate) {
             externalTimeUpdate(time);
         }
     };
 
-    // Обработать воспроизведение/паузу
+    // Handle play/pause
     const handlePlayPause = () => {
         setIsPlaying(!isPlaying);
     };
 
-    // Обработать обновление времени из анимации
+    // Handle time update from animation
     const handleTimeUpdate = useCallback((newTime) => {
         setCurrentTime(newTime);
         if (externalTimeUpdate) {
@@ -1601,14 +1601,14 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     }, [externalTimeUpdate]);
 
-    // Обработать загрузку модели
+    // Handle model load
     const handleModelLoad = useCallback((animations) => {
         if (animations && animations.length > 0) {
             const animDuration = animations[0].duration;
             setModelDuration(animDuration);
             setAvailableAnimations(animations);
 
-            // Использовать длительность модели, только если не предоставлена длительность плеера
+            // Only use model duration if player duration is not provided
             if (!playerDuration) {
                 setDuration(animDuration);
             }
@@ -1620,8 +1620,8 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     return current;
                 }
 
-                // Исправление: Инвертировать расчет timeScale, чтобы анимация воспроизводилась с правильной скоростью
-                // Если длительность модели 10с, а длительность плеера 5с, нам нужно воспроизводить со скоростью 2x
+                // Fix: Invert the timeScale calculation to make animation play at correct speed
+                // If model duration is 10s and player duration is 5s, we need to play at 2x speed
                 const timeScale = playerDuration && animDuration ? playerDuration / animDuration : 1;
 
                 // Добавляем первую анимацию из загруженной модели
@@ -1632,7 +1632,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     start: 0,
                     end: playerDuration || animDuration,
                     weight: 1,
-                    timeScale: timeScale // Исправленный timeScale
+                    timeScale: timeScale // Corrected timeScale
                 };
 
                 return [newAnimation];
@@ -1640,10 +1640,10 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
 
             setModelLoaded(true);
 
-            // Если у нас уже есть ключевые кадры элемента, не добавлять здесь конечный маркер
-            // так как это будет обработано эффектом, который синхронизируется с ключевыми кадрами элемента
+            // If we already have element keyframes, don't add an end marker here
+            // as it will be handled by the useEffect that syncs with element keyframes
             if (elementKeyframes.length === 0) {
-                // Добавить конечный маркер, если он не существует
+                // Add an end marker if none exists
                 setAnimationMarkers(current => {
                     const hasEndMarker = current.some(marker => marker.time === playerDuration);
                     if (!hasEndMarker) {
@@ -1663,17 +1663,17 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     }, [playerDuration, elementKeyframes]);
 
-    // Добавить новый маркер
+    // Add a new marker
     const handleAddMarker = () => {
         setCurrentMarker(null);
         setNewMarkerTime(currentTime);
-        setNewMarkerModelTime(modelDuration / 2); // По умолчанию к середине анимации модели
+        setNewMarkerModelTime(modelDuration / 2); // Default to middle of model animation
         setNewMarkerLabel(`Маркер ${animationMarkers.length + 1}`);
         setNewMarkerColor('#f44336');
         setMarkerDialogOpen(true);
     };
 
-    // Редактировать существующий маркер
+    // Edit an existing marker
     const handleEditMarker = (index) => {
         const marker = animationMarkers[index];
         setCurrentMarker(index);
@@ -1684,18 +1684,18 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         setMarkerDialogOpen(true);
     };
 
-    // Удалить маркер
+    // Delete a marker
     const handleDeleteMarker = (index) => {
-        // Не позволять удалять первый маркер (начальную точку)
+        // Don't allow deleting the first marker (start point)
         if (index === 0) return;
 
         setAnimationMarkers(current => current.filter((_, i) => i !== index));
     };
 
-    // Сохранить изменения маркера
+    // Save marker changes
     const handleSaveMarker = () => {
         if (currentMarker !== null) {
-            // Редактировать существующий маркер
+            // Edit existing marker
             setAnimationMarkers(current => {
                 const updated = [...current];
                 updated[currentMarker] = {
@@ -1707,7 +1707,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 return updated.sort((a, b) => a.time - b.time);
             });
         } else {
-            // Добавить новый маркер
+            // Add new marker
             setAnimationMarkers(current => {
                 return [...current, {
                     time: newMarkerTime,
@@ -1720,23 +1720,23 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         setMarkerDialogOpen(false);
     };
 
-    // Обработать изменение анимаций
+    // Handle animations change
     const handleAnimationsChange = useCallback((newAnimations) => {
         setActiveAnimations(newAnimations);
     }, []);
 
-    // Открыть диалог сохранения
+    // Open save dialog
     const handleOpenSaveDialog = () => {
         setSaveAnimationName('');
         setSaveDialogOpen(true);
     };
 
-    // Сохранить текущие анимации
+    // Save current animations
     const handleSaveAnimations = () => {
         if (!saveAnimationName.trim()) return;
 
         try {
-            // Создать объект пресета анимации
+            // Create animation preset object
             const animationPreset = {
                 id: `preset_${Date.now()}`,
                 name: saveAnimationName,
@@ -1745,68 +1745,68 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 createdAt: new Date().toISOString()
             };
 
-            // Добавить к сохраненным анимациям
+            // Add to saved animations
             const updatedSavedAnimations = [...savedAnimations, animationPreset];
             setSavedAnimations(updatedSavedAnimations);
 
-            // Сохранить в localStorage
+            // Save to localStorage
             localStorage.setItem('savedAnimations', JSON.stringify(updatedSavedAnimations));
 
-            // Если предоставлен колбэк onSaveAnimations, вызвать его
+            // If onSaveAnimations callback is provided, call it
             if (onSaveAnimations) {
                 onSaveAnimations(updatedSavedAnimations);
             }
 
-            // Закрыть диалог
+            // Close dialog
             setSaveDialogOpen(false);
         } catch (error) {
             console.error('Error saving animations:', error);
-            // Показать уведомление об ошибке
+            // Show error notification
         }
     };
 
-    // Открыть диалог загрузки
+    // Open load dialog
     const handleOpenLoadDialog = () => {
         setLoadDialogOpen(true);
     };
 
-    // Загрузить сохраненный пресет анимации
+    // Load saved animation preset
     const handleLoadAnimationPreset = (preset) => {
         if (!preset) return;
 
-        // Установить активные анимации из пресета
+        // Set active animations from preset
         if (preset.animations && preset.animations.length > 0) {
             setActiveAnimations(preset.animations);
         }
 
-        // Установить маркеры из пресета, если доступны
+        // Set markers from preset if available
         if (preset.markers && preset.markers.length > 0) {
             setAnimationMarkers(preset.markers);
         }
 
-        // Закрыть диалог
+        // Close dialog
         setLoadDialogOpen(false);
     };
 
-    // Удалить сохраненный пресет анимации
+    // Delete saved animation preset
     const handleDeleteAnimationPreset = (presetId) => {
         const updatedSavedAnimations = savedAnimations.filter(preset => preset.id !== presetId);
         setSavedAnimations(updatedSavedAnimations);
         localStorage.setItem('savedAnimations', JSON.stringify(updatedSavedAnimations));
     };
 
-    // Обработать выбор модели из загрузчика
+    // Handle model selection from uploader
     const handleModelSelect = (model) => {
         console.log('Selected model:', model);
         setSelectedModel(model);
 
-        // Обновить glbAnimationUrl для использования выбранной модели
-        // Это вызовет useEffect в XbotModel для загрузки новой модели
+        // Update the glbAnimationUrl to use the selected model
+        // This will trigger the useEffect in XbotModel to load the new model
         if (model && model.url) {
-            // Мы будем использовать этот URL для загрузки модели
+            // We'll use this URL to load the model
             console.log('Setting model URL:', model.url);
 
-            // Сохранить URL модели немедленно, чтобы убедиться, что он не потерян
+            // Save the model URL immediately to ensure it's not lost
             if (onSaveAnimations) {
                 const dataToSave = {
                     animations: savedAnimations.length > 0 ? savedAnimations : activeAnimations,
@@ -1817,7 +1817,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     }
                 };
 
-                // Если это blob URL, отметить его как локальный файл
+                // If it's a blob URL, mark it as a local file
                 if (model.url.startsWith('blob:')) {
                     dataToSave.isLocalFile = true;
                     dataToSave.modelName = model.name || 'Uploaded Model';
@@ -1829,24 +1829,24 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     };
 
-    // Обработать открытие диалога загрузки
+    // Handle opening the upload dialog
     const handleOpenUploadDialog = () => {
         console.log('ModelViewer: Opening upload dialog');
         setUploadDialogOpen(true);
     };
 
-    // Обработать закрытие диалога загрузки
+    // Handle closing the upload dialog
     const handleCloseUploadDialog = () => {
         setUploadDialogOpen(false);
     };
 
-    // Загрузить модель на сервер
+    // Upload model to server
     const uploadModelToServer = async (file) => {
         console.log('ModelViewer: Uploading model to server:', file.name);
         setIsLoading(true);
 
         try {
-            // Получить токен аутентификации из localStorage
+            // Get authentication token from localStorage
             const token = localStorage.getItem('token');
 
             if (!token) {
@@ -1854,15 +1854,15 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 throw new Error('Authentication required. Please log in.');
             }
 
-            // Создать данные формы
+            // Create form data
             const formData = new FormData();
             formData.append('model', file);
             formData.append('name', file.name.split('.')[0]);
 
-            // Получить URL API из окружения или использовать значение по умолчанию
+            // Get API URL from environment or use default
             const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-            // Загрузить на сервер с аутентификацией
+            // Upload to server with authentication
             const response = await fetch(`${API_URL}/models/upload`, {
                 method: 'POST',
                 body: formData,
@@ -1879,17 +1879,17 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             const modelData = await response.json();
             console.log('ModelViewer: Model uploaded successfully:', modelData);
 
-            // Создать объект модели с URL сервера
+            // Create a model object with the server URL
             const modelObj = {
                 url: modelData.url,
                 name: modelData.name,
                 id: modelData.id
             };
 
-            // Установить выбранную модель
+            // Set the selected model
             setSelectedModel(modelObj);
 
-            // Немедленно сохранить URL модели
+            // Save the model URL immediately
             if (onSaveAnimations) {
                 const dataToSave = {
                     animations: savedAnimations.length > 0 ? savedAnimations : activeAnimations,
@@ -1904,7 +1904,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 console.log('ModelViewer: Saving server model URL:', modelData.url);
                 onSaveAnimations(dataToSave, elementId);
 
-                // Показать сообщение об успехе
+                // Show success message
                 alert('Модель успешно загружена на сервер и сохранена!');
             }
 
@@ -1913,21 +1913,21 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             console.error('ModelViewer: Error uploading model to server:', error);
             alert(`Ошибка загрузки модели на сервер: ${error.message}. Используем локальную версию.`);
 
-            // Использовать blob URL как запасной вариант, если загрузка на сервер не удалась
+            // Fallback to blob URL if server upload fails
             const url = URL.createObjectURL(file);
             setGlbUrl(url);
 
-            // Создать объект модели с blob URL
+            // Create a model object with the blob URL
             const modelObj = {
                 url: url,
                 name: file.name,
                 isLocalFile: true
             };
 
-            // Установить выбранную модель
+            // Set the selected model
             setSelectedModel(modelObj);
 
-            // Немедленно сохранить blob URL
+            // Save the blob URL immediately
             if (onSaveAnimations) {
                 const dataToSave = {
                     animations: savedAnimations.length > 0 ? savedAnimations : activeAnimations,
@@ -1943,7 +1943,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 console.log('ModelViewer: Saving blob URL as fallback:', url);
                 onSaveAnimations(dataToSave, elementId);
 
-                // Предупредить пользователя об ограничениях локального файла
+                // Alert user about local file limitations
                 setTimeout(() => {
                     alert('Внимание: Модель сохранена локально и будет доступна только в текущей сессии браузера. При перезагрузке страницы вам потребуется загрузить модель заново.');
                 }, 500);
@@ -1953,37 +1953,37 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     };
 
-    // Обработать изменение ввода файла
+    // Handle file input change
     const handleFileInputChange = (event) => {
         const file = event.target.files[0];
         if (file) {
             console.log('ModelViewer: File selected:', file.name);
 
-            // Сначала попытаться загрузить на сервер
+            // Try to upload to server first
             uploadModelToServer(file);
 
-            // Закрыть диалог
+            // Close dialog
             setUploadDialogOpen(false);
         }
     };
 
-    // Обработать отправку URL GLB
+    // Handle GLB URL submit
     const handleGlbUrlSubmit = () => {
         if (glbUrl) {
             console.log('ModelViewer: Submitting GLB URL:', glbUrl);
 
-            // Создать объект модели, аналогичный тому, что возвращает ModelUploader
+            // Create a model object similar to what ModelUploader would return
             const modelObj = {
                 url: glbUrl,
                 name: glbUrl.split('/').pop() || 'Uploaded GLB'
             };
 
-            // Установить выбранную модель
+            // Set the selected model
             setSelectedModel(modelObj);
 
-            // Также обновить активные анимации, чтобы включить эту модель
+            // Also update the active animations to include this model
             if (activeAnimations.length === 0) {
-                // Добавить анимацию по умолчанию на всю длительность
+                // Add a default animation for the entire duration
                 const newAnimation = {
                     id: 'anim_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                     name: 'Default Animation',
@@ -1996,15 +1996,15 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 setActiveAnimations([newAnimation]);
             }
 
-            // Закрыть диалог без автоматического сохранения
+            // Close the dialog without saving automatically
             setUploadDialogOpen(false);
 
-            // Сообщить пользователю, что нужно нажать кнопку сохранения
+            // Inform the user that they need to click the save button
             alert('Модель загружена. Нажмите кнопку "Сохранить модель", чтобы сохранить её.');
         }
     };
 
-    // Обработать закрытие с сохранением анимаций
+    // Handle close with saving animations
     const handleClose = () => {
         console.log('ModelViewer: Closing viewer, preparing to save model data');
 
@@ -2031,29 +2031,29 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 return;
             }
 
-            // Проверить, является ли это blob URL, который нужно загрузить на сервер
+            // Check if it's a blob URL that needs to be uploaded to the server
             if (modelUrl && modelUrl.startsWith('blob:')) {
                 console.log('ModelViewer: Detected blob URL on close, uploading to server first');
 
-                // Получить имя модели
+                // Get the model name
                 const modelName = selectedModel ? selectedModel.name : 'Uploaded Model';
 
-                // Получить blob и преобразовать в файл
+                // Fetch the blob and convert to file
                 fetch(modelUrl)
                     .then(response => response.blob())
                     .then(blob => {
-                        // Создать объект File из blob
+                        // Create a File object from the blob
                         const file = new File([blob], modelName + '.glb', { type: 'model/gltf-binary' });
-                        // Загрузить на сервер и затем закрыть
+                        // Upload to server and then close
                         uploadModelAndClose(file);
                     })
                     .catch(error => {
                         console.error('ModelViewer: Error converting blob to file on close:', error);
-                        // Использовать blob URL как запасной вариант
+                        // Fallback to using the blob URL
                         saveAndClose(modelUrl);
                     });
             } else {
-                // Не blob URL, сохранить напрямую и закрыть
+                // Not a blob URL, save directly and close
                 saveAndClose(modelUrl);
             }
         } else {
@@ -2062,13 +2062,13 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     };
 
-    // Вспомогательная функция для загрузки модели и закрытия
+    // Helper function to upload model and close
     const uploadModelAndClose = async (file) => {
         console.log('ModelViewer: Uploading model to server before closing:', file.name);
         setIsLoading(true);
 
         try {
-            // Получить токен аутентификации из localStorage
+            // Get authentication token from localStorage
             const token = localStorage.getItem('token');
 
             if (!token) {
@@ -2076,15 +2076,15 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 throw new Error('Authentication required. Please log in.');
             }
 
-            // Создать данные формы
+            // Create form data
             const formData = new FormData();
             formData.append('model', file);
             formData.append('name', file.name.split('.')[0]);
 
-            // Получить URL API из окружения или использовать значение по умолчанию
+            // Get API URL from environment or use default
             const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-            // Загрузить на сервер с аутентификацией
+            // Upload to server with authentication
             const response = await fetch(`${API_URL}/models/upload`, {
                 method: 'POST',
                 body: formData,
@@ -2101,11 +2101,11 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             const modelData = await response.json();
             console.log('ModelViewer: Model uploaded successfully before closing:', modelData);
 
-            // Сохранить с URL сервера и закрыть
+            // Save with the server URL and close
             saveAndClose(modelData.url, modelData.id);
         } catch (error) {
             console.error('ModelViewer: Error uploading model to server on close:', error);
-            // Использовать blob URL как запасной вариант
+            // Fallback to blob URL
             const blobUrl = selectedModel ? selectedModel.url : glbAnimationUrl;
             saveAndClose(blobUrl);
         } finally {
@@ -2113,14 +2113,14 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     };
 
-    // Вспомогательная функция для сохранения и закрытия
+    // Helper function to save and close
     const saveAndClose = (modelUrl, modelId = null) => {
-        // Убедиться, что URL начинается с / для серверных URL, если это не blob
+        // Make sure the URL starts with / for server URLs if it's not a blob
         if (modelUrl && !modelUrl.startsWith('blob:') && !modelUrl.startsWith('http') && !modelUrl.startsWith('/')) {
             modelUrl = '/' + modelUrl;
         }
 
-        // Записать в лог окончательный сохраняемый URL
+        // Log the final URL being saved
         console.log('ModelViewer: Final modelUrl for saving on close:', modelUrl);
 
         // Создаем объект с анимациями и URL модели
@@ -2185,7 +2185,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     };
 
-    // Вспомогательная функция для закрытия без сохранения
+    // Helper function to close without saving
     const closeViewerWithoutSaving = () => {
         // Вызываем onClose из props
         if (onClose) {
@@ -2196,7 +2196,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     };
 
-    // Кнопка сохранения модели
+    // Save model button
     const handleSaveModel = () => {
         console.log('ModelViewer: Save model button clicked');
 
@@ -2209,25 +2209,25 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             // Определяем URL модели
             const modelUrl = selectedModel ? selectedModel.url : glbAnimationUrl;
 
-            // Проверить, является ли это blob URL, который нужно загрузить на сервер
+            // Check if it's a blob URL that needs to be uploaded to the server
             if (modelUrl && modelUrl.startsWith('blob:')) {
                 console.log('ModelViewer: Detected blob URL, uploading to server first');
 
-                // Получить имя модели
+                // Get the model name
                 const modelName = selectedModel ? selectedModel.name : 'Uploaded Model';
 
-                // Получить blob и преобразовать в файл
+                // Fetch the blob and convert to file
                 fetch(modelUrl)
                     .then(response => response.blob())
                     .then(blob => {
-                        // Создать объект File из blob
+                        // Create a File object from the blob
                         const file = new File([blob], modelName + '.glb', { type: 'model/gltf-binary' });
                         // Upload to server
                         uploadModelToServer(file);
                     })
                     .catch(error => {
                         console.error('ModelViewer: Error converting blob to file:', error);
-                        // Использовать blob URL как запасной вариант
+                        // Fallback to using the blob URL
                         saveModelWithUrl(modelUrl);
                     });
             } else {
@@ -2240,14 +2240,14 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     };
 
-    // Вспомогательная функция для сохранения модели с URL
+    // Helper function to save model with URL
     const saveModelWithUrl = (modelUrl) => {
-        // Убедиться, что URL начинается с / для серверных URL, если это не blob
+        // Make sure the URL starts with / for server URLs if it's not a blob
         if (modelUrl && !modelUrl.startsWith('blob:') && !modelUrl.startsWith('http') && !modelUrl.startsWith('/')) {
             modelUrl = '/' + modelUrl;
         }
 
-        // Записать в лог окончательный сохраняемый URL
+        // Log the final URL being saved
         console.log('ModelViewer: Final modelUrl for saving:', modelUrl);
 
         // Создаем объект с анимациями и URL модели
@@ -2282,7 +2282,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     };
 
-    // ВАЖНО: Явно логировать, какие URL передаются
+    // IMPORTANT: Explicitly log what URLs are being passed
     console.log('ModelViewer: Rendering with props:', {
         hasGlbAnimationUrl: !!glbAnimationUrl,
         glbAnimationUrl: glbAnimationUrl,
@@ -2293,10 +2293,10 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         keyframesCount: elementKeyframes ? elementKeyframes.length : 0
     });
 
-    // Проверить, существует ли элемент непосредственно в массиве ключевых кадров
+    // Check if the element exists directly in the keyframes array
     let directElementWithModelPath = null;
     if (elementId && elementKeyframes && elementKeyframes.length > 0) {
-        // Прямая проверка самого элемента
+        // Direct check for the element itself
         directElementWithModelPath = elementKeyframes.find(kf =>
             (kf.id === elementId || kf.elementId === elementId) && kf.modelPath
         );
@@ -2304,7 +2304,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         if (directElementWithModelPath) {
             console.log('ModelViewer: Found direct element with modelPath:', directElementWithModelPath.modelPath);
         } else {
-            // Проверить, есть ли у какого-либо ключевого кадра modelPath
+            // Check if any keyframe has modelPath
             const keyframeWithModelPath = elementKeyframes.find(kf => kf.modelPath);
             if (keyframeWithModelPath) {
                 console.log('ModelViewer: Found keyframe with modelPath:', keyframeWithModelPath.modelPath);
@@ -2313,12 +2313,12 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     }
 
-    // Подробное логирование ключевых кадров элемента
+    // Detailed logging of element keyframes
     if (elementKeyframes && elementKeyframes.length > 0) {
         console.log('ModelViewer: All element keyframes:', elementKeyframes);
         console.log('ModelViewer: Looking for keyframes with elementId:', elementId);
 
-        // Проверить, есть ли ключевой кадр, соответствующий нашему elementId
+        // Check if there's a keyframe matching our elementId
         const matchingKeyframes = elementKeyframes.filter(kf =>
             kf.id === elementId || kf.elementId === elementId
         );
@@ -2339,7 +2339,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 });
             });
         } else {
-            // Если нет прямого соответствия, записать все ID ключевых кадров для отладки
+            // If no direct match, log all keyframe IDs for debugging
             console.log('ModelViewer: No keyframes match elementId:', elementId);
             console.log('ModelViewer: Available keyframe IDs:', elementKeyframes.map(kf => ({
                 id: kf.id || 'none',
@@ -2348,7 +2348,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     }
 
-    // Явно проверить URL модели из различных источников
+    // Check for model URL explicitly from various sources
     const elementWithModel = elementKeyframes ? elementKeyframes.find(kf =>
         (kf.id === elementId || kf.elementId === elementId) &&
         (kf.modelPath || kf.modelUrl)
@@ -2361,14 +2361,14 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         });
     }
 
-    // Убедиться, что мы используем правильный URL, проверяя несколько источников
+    // Make sure we're using the correct URL by checking multiple sources
     const findModelUrlInElement = () => {
         if (!elementId || !elementKeyframes || elementKeyframes.length === 0) {
             console.log('ModelViewer: findModelUrlInElement - No element data available');
             return null;
         }
 
-        // Попытаться найти элемент в ключевых кадрах
+        // Try to find the element in keyframes
         const element = elementKeyframes.find(el => el.id === elementId || el.elementId === elementId);
 
         if (!element) {
@@ -2378,7 +2378,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
 
         console.log('ModelViewer: findModelUrlInElement - Element found:', element);
 
-        // Проверить различные возможные свойства для URL модели
+        // Check the various possible properties for model URL
         const modelUrl = element.modelUrl || element.modelPath || element.glbUrl || element.model3dUrl;
 
         if (modelUrl) {
@@ -2386,7 +2386,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             return modelUrl;
         }
 
-        // Если нет прямого URL, проверить в ключевых кадрах
+        // If no direct URL, check in keyframes
         if (element.keyframes && element.keyframes.length > 0) {
             const keyframeWithModel = element.keyframes.find(kf => kf.modelPath || kf.modelUrl || kf.glbUrl || kf.model3dUrl);
             if (keyframeWithModel) {
@@ -2400,10 +2400,10 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         return null;
     };
 
-    // Сохранить URL из элемента в переменной состояния, чтобы он сохранялся
+    // Store the URL from element in a state variable so it persists
     const [elementModelUrl, setElementModelUrl] = useState(null);
 
-    // Эффект для поиска URL модели при монтировании компонента или изменении elementId/keyframes
+    // Effect to find the model URL when component mounts or elementId/keyframes change
     useEffect(() => {
         const foundUrl = findModelUrlInElement();
         if (foundUrl) {
@@ -2429,9 +2429,9 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         }
     }, [elementId, elementKeyframes, findModelUrlInElement]);
 
-    // Затем в расчете effectiveModelUrl:
+    // Then in the effectiveModelUrl calculation:
     const effectiveModelUrl = (() => {
-        // Логирование всех возможных источников URL модели для отладки
+        // Log all possible model URL sources for debugging
         console.log('ModelViewer: Calculating effectiveModelUrl with sources:', {
             elementId: elementId || 'none',
             keyframesCount: elementKeyframes ? elementKeyframes.length : 0,
@@ -2440,21 +2440,21 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             elementModelUrl: elementModelUrl || 'none'
         });
 
-        // Первый приоритет: URL выбранной модели (пользователь только что выбрал модель)
+        // First priority: selectedModel URL (user just selected a model)
         if (selectedModel && selectedModel.url) {
             console.log('ModelViewer: Using URL from selectedModel:', selectedModel.url);
             return selectedModel.url;
         }
 
-        // Второй приоритет: Прямой путь к модели/URL элемента, если у нас есть elementId
+        // Second priority: Direct element modelPath/modelUrl if we have elementId
         if (elementId && elementKeyframes && elementKeyframes.length > 0) {
-            // Найти элемент в ключевых кадрах
+            // Find the element in keyframes
             const element = elementKeyframes.find(kf =>
                 kf.id === elementId ||
                 kf.elementId === elementId
             );
 
-            // Проверить наличие modelPath или modelUrl в элементе
+            // Check for modelPath or modelUrl in the element
             if (element) {
                 if (element.modelPath) {
                     console.log('ModelViewer: Using modelPath from element:', element.modelPath);
@@ -2466,33 +2466,33 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             }
         }
 
-        // Третий приоритет: свойство glbAnimationUrl
+        // Third priority: glbAnimationUrl prop
         if (glbAnimationUrl) {
             console.log('ModelViewer: Using URL from glbAnimationUrl prop:', glbAnimationUrl);
             return glbAnimationUrl;
         }
 
-        // Четвертый приоритет: URL из состояния elementModelUrl
+        // Fourth priority: URL from element model URL state
         if (elementModelUrl) {
             console.log('ModelViewer: Using URL from elementModelUrl state:', elementModelUrl);
             return elementModelUrl;
         }
 
-        // Пятый приоритет: URL из функции поиска ключевых кадров элемента
+        // Fifth priority: URL from element keyframes find function
         const urlFromFindFunction = findModelUrlInElement();
         if (urlFromFindFunction) {
             console.log('ModelViewer: Using URL from findModelUrlInElement:', urlFromFindFunction);
             return urlFromFindFunction;
         }
 
-        // По умолчанию: вернуть null, если URL не найден
+        // Default: return null if no URL found
         console.log('ModelViewer: No valid model URL found');
         return null;
     })();
 
     console.log('ModelViewer: Final effective model URL:', effectiveModelUrl);
 
-    // Определить, должны ли мы отображать модель
+    // Determine if we should display a model
     const shouldDisplayModel = () => {
         console.log('ModelViewer: shouldDisplayModel check:', {
             elementId: elementId || 'none',
@@ -2504,8 +2504,9 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             selectedModelUrl: selectedModel ? selectedModel.url : 'none',
             effectiveModelUrl: effectiveModelUrl || 'none'
         });
-        // ПЕРЕОПРЕДЕЛЕНИЕ: Для автономного просмотра 3D-модели, если у нас есть URL модели (effectiveModelUrl),
-        // всегда отображать модель независимо от других условий
+
+        // OVERRIDE: For standalone 3D model viewing, if we have a model URL (effectiveModelUrl), 
+        // always display the model regardless of other conditions
         if (effectiveModelUrl) {
             console.log('ModelViewer: Forcing model display because effectiveModelUrl exists:', effectiveModelUrl);
             return true;
@@ -2543,7 +2544,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             }
 
             console.log(`ModelViewer: Element ${elementId} does not have any model URL`);
-            // В любом случае вернуть true, если у нас есть glbAnimationUrl
+            // Return true anyway if we have glbAnimationUrl
             if (glbAnimationUrl) {
                 console.log(`ModelViewer: But we have glbAnimationUrl, so showing model anyway:`, glbAnimationUrl);
                 return true;
@@ -2571,7 +2572,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         return false;
     };
 
-    // Рендерить модель, только если мы должны ее отображать
+    // Only render the model if we should display it
     const renderModel = () => {
         const shouldShow = shouldDisplayModel();
         console.log(`ModelViewer: renderModel - shouldDisplayModel() returned ${shouldShow}`);
@@ -2657,7 +2658,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             overflow: 'hidden',
             boxShadow: embedded ? '0 8px 32px rgba(0, 0, 0, 0.25)' : 'none',
         }}>
-            {/* Область заголовка с названием и элементами управления */}
+            {/* Header area with title and controls */}
             <Box sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -2678,7 +2679,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    {/* Отключенная кнопка загрузки GLB 
+                    {/* Commented out GLB Upload Button 
                     <Button
                         variant="outlined"
                         size="small"
@@ -2697,7 +2698,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     </Button>
                     */}
 
-                    {/* Кнопка закрытия для полноэкранного режима */}
+                    {/* Close button for fullscreen mode */}
                     {!embedded && (
                         <IconButton
                             onClick={handleCloseViewerConfirm}
@@ -2720,21 +2721,21 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 flexDirection: { xs: 'column', md: 'row' },
                 height: embedded ? 'calc(100% - 60px)' : 'calc(100vh - 60px)' // Adjust for header height
             }}>
-                {/* Основная область просмотра - теперь занимает всю ширину */}
+                {/* Main viewer area - now takes full width */}
                 <Box sx={{
-                    flex: '1', // Занимает все доступное пространство
+                    flex: '1', // Take full available space
                     position: 'relative',
                     bgcolor: '#050714',
-                    minHeight: embedded ? 'auto' : '70vh', // Минимальная высота в полноэкранном режиме
+                    minHeight: embedded ? 'auto' : '70vh', // Minimum height when in full screen
                 }}>
-                    {/* Холст 3D модели */}
+                    {/* 3D model canvas */}
                     <Box sx={{
                         position: 'relative',
                         width: '100%',
                         height: '100%',
                         overflow: 'hidden'
                     }}>
-                        {/* Индикатор загрузки */}
+                        {/* Loading indicator */}
                         {(isLoadingModel || !shouldDisplayModel()) && (
                             <Box
                                 sx={{
@@ -2770,7 +2771,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                                         <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 3 }}>
                                             Загрузите новую 3D модель или выберите существующую из списка доступных моделей
                                         </Typography>
-                                        {/* Отключенная кнопка загрузки модели
+                                        {/* Commented out upload model button
                                         <Button
                                             variant="contained"
                                             startIcon={<Upload />}
@@ -2791,10 +2792,10 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                             </Box>
                         )}
 
-                        {/* Рендеринг холста 3D модели */}
+                        {/* Render the actual 3D model canvas */}
                         {renderModel()}
 
-                        {/* Элементы управления воспроизведением */}
+                        {/* Playback controls */}
                         <Box sx={{
                             position: 'absolute',
                             bottom: 0,
@@ -2844,7 +2845,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     </Box>
                 </Box>
 
-                {/* Отключенная панель управления анимацией - удалена для предоставления полного пространства модели
+                {/* Commented out animation controls panel - removing to give full space to model viewer
                 <Box sx={{
                     width: { xs: '100%', md: embedded ? '300px' : '350px' }, // Wider in fullscreen
                     height: { xs: '300px', md: '100%' },
@@ -2885,7 +2886,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 */}
             </Box>
 
-            {/* Диалог загрузки GLB модели */}
+            {/* Upload GLB model dialog */}
             <Dialog
                 open={uploadDialogOpen}
                 onClose={handleCloseUploadDialog}
@@ -2909,7 +2910,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                             Выберите GLB файл или введите URL модели
                         </Typography>
 
-                        {/* Область загрузки файла */}
+                        {/* File upload area */}
                         <Box sx={{
                             border: '2px dashed rgba(255, 255, 255, 0.2)',
                             borderRadius: '8px',
@@ -2941,7 +2942,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                             />
                         </Box>
 
-                        {/* Область ввода URL */}
+                        {/* URL input area */}
                         <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
                             Или укажите URL модели:
                         </Typography>
@@ -2989,8 +2990,8 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 </DialogContent>
             </Dialog>
 
-            {/* Другие существующие диалоги */}
-            {/* ... существующий код для диалогов ... */}
+            {/* Other existing dialogs */}
+            {/* ... existing code for dialogs ... */}
         </div>
     );
 };
