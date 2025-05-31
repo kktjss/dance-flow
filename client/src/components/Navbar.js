@@ -54,7 +54,7 @@ const LogoDanceFlow = ({ variant = "h6", component = "span", color = "primary", 
 );
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
-    backgroundColor: `rgba(26, 32, 46, 0.95)`, // Lighter, more neutral dark background
+    backgroundColor: `rgba(26, 32, 46, 0.95)`,
     backdropFilter: 'blur(8px)',
     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
     borderBottom: `1px solid rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.2)`,
@@ -72,7 +72,7 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
 
 const StyledButton = styled(Button)(({ theme }) => ({
     marginLeft: theme.spacing(2),
-    borderRadius: '12px', // Увеличили закругление
+    borderRadius: '12px',
     textTransform: 'none',
     fontWeight: 600,
     fontFamily: '"Inter", "Golos Text", sans-serif',
@@ -98,7 +98,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
 
 const NavButton = styled(Button)(({ theme, active }) => ({
     marginLeft: theme.spacing(2),
-    borderRadius: '12px', // Увеличили закругление
+    borderRadius: '12px',
     textTransform: 'none',
     fontWeight: 600,
     fontFamily: '"Inter", "Golos Text", sans-serif',

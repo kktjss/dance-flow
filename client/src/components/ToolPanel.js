@@ -14,17 +14,10 @@ import {
     alpha
 } from '@mui/material';
 import {
-    SquareOutlined,
-    CircleOutlined,
-    TextFields,
-    Image as ImageIcon,
-    ViewInAr,
-    DragIndicator,
     Crop169,
     RadioButtonUnchecked,
     Add,
-    FormatColorFill,
-    Brush
+    DragIndicator
 } from '@mui/icons-material';
 import { v4 as uuidv4 } from 'uuid';
 import { styled } from '@mui/system';
@@ -102,25 +95,6 @@ const ToolPanel = ({ onAddElement }) => {
     // Basic tools
     const tools = [
         {
-            id: 'text',
-            name: 'Текст',
-            icon: <TextFields />,
-            defaults: {
-                type: 'text',
-                content: 'Введите текст',
-                position: { x: 100, y: 100 },
-                size: { width: 200, height: 24 },
-                style: {
-                    color: theme.palette.mode === 'dark' ? '#FFFFFF' : '#111111',
-                    backgroundColor: 'rgba(0, 0, 0, 0)',
-                    borderColor: 'rgba(0, 0, 0, 0)',
-                    borderWidth: 0,
-                    opacity: 1,
-                    zIndex: 1
-                }
-            }
-        },
-        {
             id: 'rectangle',
             name: 'Прямоугольник',
             icon: <Crop169 />,
@@ -149,42 +123,6 @@ const ToolPanel = ({ onAddElement }) => {
                 style: {
                     color: '#FFFFFF',
                     backgroundColor: PALETTE.tertiary.main, // Turquoise circle
-                    borderColor: 'rgba(0, 0, 0, 0)',
-                    borderWidth: 0,
-                    opacity: 0.8,
-                    zIndex: 1
-                }
-            }
-        },
-        {
-            id: 'rectangle2',
-            name: 'Синий блок',
-            icon: <Crop169 />,
-            defaults: {
-                type: 'rectangle',
-                position: { x: 100, y: 100 },
-                size: { width: 120, height: 80 },
-                style: {
-                    color: '#FFFFFF',
-                    backgroundColor: PALETTE.primary.main, // Blue-violet block
-                    borderColor: 'rgba(0, 0, 0, 0)',
-                    borderWidth: 0,
-                    opacity: 0.8,
-                    zIndex: 1
-                }
-            }
-        },
-        {
-            id: 'circle2',
-            name: 'Желтый круг',
-            icon: <RadioButtonUnchecked />,
-            defaults: {
-                type: 'circle',
-                position: { x: 100, y: 100 },
-                size: { width: 80, height: 80 },
-                style: {
-                    color: '#FFFFFF',
-                    backgroundColor: PALETTE.accent.main, // Yellow circle
                     borderColor: 'rgba(0, 0, 0, 0)',
                     borderWidth: 0,
                     opacity: 0.8,

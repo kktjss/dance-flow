@@ -17,13 +17,13 @@ const CombinedViewer = ({
     elementId = null,
     onSaveAnimations = null,
     glbAnimations = [], // Поддержка GLB анимаций
-    embedded = false, // Add support for embedded mode
-    modelUrl = null // Add support for direct model URL
+    embedded = false, // Поддержка встроенного режима
+    modelUrl = null // Поддержка прямого URL модели
 }) => {
     const [activeView, setActiveView] = useState('3d'); // '3d' или 'video'
     const [selectedGlbAnimation, setSelectedGlbAnimation] = useState(null);
 
-    // Log all props received by CombinedViewer
+    // Логирование всех свойств, полученных CombinedViewer
     useEffect(() => {
         console.log('CombinedViewer: Received props:', {
             isVisible,
@@ -62,17 +62,17 @@ const CombinedViewer = ({
             elementId,
             hasElementKeyframes: !!(elementKeyframes && elementKeyframes.length > 0),
             glbAnimationsCount: glbAnimations?.length || 0,
-            modelUrl: modelUrl // Log the modelUrl prop
+            modelUrl: modelUrl // Логирование параметра modelUrl
         });
 
-        // First check if modelUrl prop is provided
+        // Сначала проверяем, предоставлен ли параметр modelUrl
         if (modelUrl) {
             console.log('CombinedViewer: Using provided modelUrl prop:', modelUrl);
 
-            // Format the URL to use the correct path
+            // Форматируем URL для использования правильного пути
             let formattedUrl = modelUrl;
 
-            // If it contains '/uploads/models/', change to '/models/'
+            // Если содержит '/uploads/models/', изменяем на '/models/'
             if (formattedUrl.includes('/uploads/models/')) {
                 const filename = formattedUrl.split('/').pop();
                 formattedUrl = `/models/${filename}`;
@@ -89,7 +89,7 @@ const CombinedViewer = ({
             return;
         }
 
-        // Continue with original logic
+        // Продолжаем с оригинальной логикой
         // Сначала проверяем, есть ли modelPath у выбранного элемента
         if (elementId && elementKeyframes && elementKeyframes.length > 0) {
             const element = elementKeyframes.find(kf => kf.id === elementId || kf.elementId === elementId);
@@ -106,13 +106,13 @@ const CombinedViewer = ({
                     has3DModel: !!element.has3DModel
                 });
 
-                // Process the model URL to ensure it's correctly formatted
+                // Обрабатываем URL модели для правильного форматирования
                 let modelUrl = element.modelPath;
 
-                // If no modelPath but has3DModel is set, check if we have model info in keyframes
+                // Если нет modelPath, но установлен has3DModel, проверяем наличие информации о модели в кадрах
                 if (!modelUrl && element.has3DModel && element.keyframes && element.keyframes.length > 0) {
                     console.log('CombinedViewer: Element has has3DModel flag but no modelPath, checking keyframes');
-                    // Find first keyframe with modelPath
+                    // Находим первый кадр с modelPath
                     const keyframeWithModel = element.keyframes.find(kf => kf.modelPath);
                     if (keyframeWithModel && keyframeWithModel.modelPath) {
                         console.log('CombinedViewer: Found model path in keyframe:', keyframeWithModel.modelPath);
@@ -120,9 +120,9 @@ const CombinedViewer = ({
                     }
                 }
 
-                // If the URL doesn't start with http, ensure it has the correct prefix
+                // Если URL не начинается с http, убедимся, что он имеет правильный префикс
                 if (!modelUrl.startsWith('http')) {
-                    // Convert /uploads/models/ to /models/ if needed
+                    // Конвертируем /uploads/models/ в /models/ при необходимости
                     if (modelUrl.startsWith('/uploads/models/')) {
                         const filename = modelUrl.split('/').pop();
                         modelUrl = `/models/${filename}`;
@@ -131,12 +131,12 @@ const CombinedViewer = ({
                         modelUrl = `/models/${filename}`;
                     }
 
-                    // If it doesn't start with /, add it
+                    // Если не начинается с /, добавляем его
                     if (!modelUrl.startsWith('/')) {
                         modelUrl = `/models/${modelUrl.split('/').pop()}`;
                     }
 
-                    // If it's not a full URL, add the origin
+                    // Если это не полный URL, добавляем origin
                     if (!modelUrl.includes('://')) {
                         modelUrl = `${window.location.origin}${modelUrl}`;
                     }
@@ -255,26 +255,26 @@ const CombinedViewer = ({
         if (onSaveAnimations && selectedGlbAnimation) {
             let modelUrl = selectedGlbAnimation ? selectedGlbAnimation.url : null;
 
-            // Process the model URL to ensure it's properly formatted
+            // Обрабатываем URL модели, чтобы убедиться, что он правильно отформатирован
             if (modelUrl) {
-                // Extract the filename from the path
+                // Извлекаем имя файла из пути
                 const filename = modelUrl.split('/').pop();
                 console.log('CombinedViewer: Extracted filename on close:', filename);
 
-                // Try using the API endpoint if we have a filename
+                // Пробуем использовать API-эндпоинт, если у нас есть имя файла
                 if (filename) {
                     modelUrl = `${window.location.origin}/api/models/file/${filename}`;
                     console.log('CombinedViewer: Using API endpoint URL on close:', modelUrl);
                 } else if (modelUrl.startsWith('/') && !modelUrl.startsWith('//')) {
-                    // URL starts with a single slash - add origin
+                    // URL начинается с одного слеша - добавляем origin
                     modelUrl = `${window.location.origin}${modelUrl}`;
                     console.log('CombinedViewer: Added origin to URL on close:', modelUrl);
                 } else if (modelUrl.startsWith('uploads/')) {
-                    // URL starts with 'uploads/' - add slash and origin
+                    // URL начинается с 'uploads/' - добавляем слеш и origin
                     modelUrl = `${window.location.origin}/${modelUrl}`;
                     console.log('CombinedViewer: Added slash and origin to uploads URL on close:', modelUrl);
                 } else if (!modelUrl.startsWith('http') && !modelUrl.startsWith('/')) {
-                    // URL doesn't start with protocol, blob: or / - consider it relative
+                    // URL не начинается с протокола, blob: или / - считаем его относительным
                     modelUrl = `${window.location.origin}/${modelUrl}`;
                     console.log('CombinedViewer: Converted to absolute URL on close:', modelUrl);
                 }
@@ -290,10 +290,10 @@ const CombinedViewer = ({
             const dataToSave = {
                 animations: glbAnimations || [],
                 modelUrl: modelUrl,
-                // Explicitly set visibility to true to ensure the object remains visible
+                // Явно устанавливаем видимость в true, чтобы объект оставался видимым
                 visible: true,
                 style: {
-                    opacity: 1 // Ensure opacity is set to fully visible
+                    opacity: 1 // Убеждаемся, что прозрачность установлена на полностью видимую
                 }
             };
 
@@ -307,7 +307,7 @@ const CombinedViewer = ({
                 fullData: JSON.stringify(dataToSave).substring(0, 100) + '...'
             });
 
-            // Call the save animations callback
+            // Вызываем callback сохранения анимаций
             onSaveAnimations(dataToSave, elementId);
             console.log('CombinedViewer: onSaveAnimations callback executed with elementId:', elementId);
         } else if (!selectedGlbAnimation) {
@@ -439,7 +439,7 @@ const CombinedViewer = ({
                 </MuiBox>
 
                 {/* Выбор GLB анимации, если они доступны */}
-                {/* Commented out animation selection UI
+                {/* Отключенный UI выбора анимации
                 {glbAnimations && glbAnimations.length > 0 && activeView === '3d' && (
                     <MuiBox
                         sx={{
@@ -478,13 +478,13 @@ const CombinedViewer = ({
                         width: '100%',
                         height: '100%',
                         position: 'relative',
-                        display: activeView === '3d' ? 'block' : 'none', // Only show when 3d view is active
-                        mt: 0, // No top margin needed since buttons are removed
+                        display: activeView === '3d' ? 'block' : 'none', // Показывать только когда активен 3d вид
+                        mt: 0, // Верхний отступ не нужен, так как кнопки удалены
                         overflow: 'hidden',
                         overscrollBehavior: 'contain' // Предотвращает прокрутку родительского элемента
                     }}
                 >
-                    {/* Enhanced debugging for model URL */}
+                    {/* Расширенная отладка для URL модели */}
                     {console.log('CombinedViewer: Direct model URL debugging:', {
                         modelUrl: modelUrl,
                         selectedGlbAnimationUrl: selectedGlbAnimation ? selectedGlbAnimation.url : null,
@@ -494,41 +494,41 @@ const CombinedViewer = ({
                         origin: window.location.origin
                     })}
 
-                    {/* Add absolute URL model test */}
+                    {/* Тест абсолютного URL модели */}
                     {console.log('CombinedViewer: Absolute URL test:', {
                         rawUrl: modelUrl,
                         absoluteUrl: modelUrl ? `${window.location.origin}${modelUrl.startsWith('/') ? '' : '/'}${modelUrl}` : null
                     })}
 
-                    {/* Create direct working URL */}
+                    {/* Создание прямого рабочего URL */}
                     {(() => {
-                        // Get filename from URL or use a default
+                        // Получаем имя файла из URL или используем стандартное
                         const getFilename = (url) => {
                             if (!url) return null;
                             return url.split('/').pop();
                         };
 
-                        // Get direct model URL
+                        // Получаем прямой URL модели
                         const directUrl = (() => {
-                            // First try filename from model URL
+                            // Сначала пробуем имя файла из URL модели
                             const filename = getFilename(modelUrl) || getFilename(selectedGlbAnimation?.url);
 
-                            // If we have a filename, use it with the correct path
+                            // Если есть имя файла, используем его с правильным путем
                             if (filename) {
                                 return `/models/${filename}`;
                             }
 
-                            // Fallback to known working model
+                            // Запасной вариант - известная рабочая модель
                             return `/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
                         })();
 
                         console.log('CombinedViewer: Using direct override URL:', directUrl);
 
-                        return null;  // Don't render anything in JSX
+                        return null;  // Ничего не рендерить в JSX
                     })()}
 
                     <ModelViewer
-                        isVisible={true} // Always visible
+                        isVisible={true} // Всегда видимый
                         onClose={handleClose}
                         playerDuration={playerDuration}
                         currentTime={currentTime}
@@ -539,22 +539,22 @@ const CombinedViewer = ({
                         embedded={true}
                         onSaveAnimations={handleSaveAnimations}
                         glbAnimationUrl={(() => {
-                            // FIXED: Use the original modelUrl directly without modification
-                            // This ensures the server URL structure is preserved
+                            // ИСПРАВЛЕНО: Используем оригинальный modelUrl напрямую без модификаций
+                            // Это гарантирует сохранение структуры URL сервера
 
-                            // First priority: use the direct model URL if it exists
+                            // Первый приоритет: использовать прямой URL модели, если он существует
                             if (modelUrl) {
                                 console.log('CombinedViewer: Using original modelUrl directly:', modelUrl);
                                 return modelUrl;
                             }
 
-                            // Second priority: use selected animation URL
+                            // Второй приоритет: использовать URL выбранной анимации
                             if (selectedGlbAnimation && selectedGlbAnimation.url) {
                                 console.log('CombinedViewer: Using selected animation URL:', selectedGlbAnimation.url);
                                 return selectedGlbAnimation.url;
                             }
 
-                            // Fallback to default model with correct path for Go server
+                            // Запасной вариант - стандартная модель с правильным путем для Go-сервера
                             console.log('CombinedViewer: Using fallback model URL with correct server path');
                             return '/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
                         })()}
@@ -586,7 +586,7 @@ const CombinedViewer = ({
             {/* Кнопка закрытия - только если не в режиме embedded */}
             {!embedded && (
                 <Box sx={{ mt: 2 }}>
-                    {/* Commented out save button
+                    {/* Отключенная кнопка сохранения
                     <Button
                         variant="contained"
                         color="primary"
@@ -597,10 +597,10 @@ const CombinedViewer = ({
                                 const dataToSave = {
                                     animations: glbAnimations || [],
                                     modelUrl: selectedGlbAnimation ? selectedGlbAnimation.url : null,
-                                    // Explicitly set visibility to true to ensure the object remains visible
+                                    // Явно устанавливаем видимость в true, чтобы объект оставался видимым
                                     visible: true,
                                     style: {
-                                        opacity: 1 // Ensure opacity is set to fully visible
+                                        opacity: 1 // Убеждаемся, что прозрачность установлена на полностью видимую
                                     }
                                 };
 

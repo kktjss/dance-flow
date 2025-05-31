@@ -7,9 +7,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import ModelUploader from './ModelUploader';
 
-// Компонент модели Xbot
-const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDuration, animationMarkers = [], activeAnimations = [], glbAnimationUrl = null, elementId = null, elementKeyframes = [] }) => {
-    // Мы больше не используем стандартную модель Xbot
+// Компонент модели 
+const Model = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDuration, animationMarkers = [], activeAnimations = [], glbAnimationUrl = null, elementId = null, elementKeyframes = [] }) => {
     const [customModel, setCustomModel] = useState(null);
     const [loadingError, setLoadingError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +21,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
     // ПРЯМАЯ ПЕРЕЗАПИСЬ - Принудительное использование заведомо рабочего URL
     const FORCE_MODEL_URL = `${window.location.origin}/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
-    console.log('XbotModel: FORCING DIRECT MODEL URL:', FORCE_MODEL_URL);
+    console.log('Model: FORCING DIRECT MODEL URL:', FORCE_MODEL_URL);
 
     const mixer = useRef(null);
     const lastTimeRef = useRef(null);
@@ -37,7 +36,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     useEffect(() => {
         const handleContextLost = (event) => {
             event.preventDefault();
-            console.warn('XbotModel: WebGL context was lost');
+            console.warn('Model: WebGL context was lost');
 
             // Остановить все текущие анимации
             if (animationRef.current) {
@@ -53,14 +52,14 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         };
 
         const handleContextRestored = () => {
-            console.log('XbotModel: WebGL context was restored');
+            console.log('Model: WebGL context was restored');
 
             // Очистить ошибку
             setLoadingError(null);
 
             // Перезагрузить модель
             if (glbAnimationUrl) {
-                console.log('XbotModel: Reloading model after context restore');
+                console.log('Model: Reloading model after context restore');
                 // Модель будет перезагружена эффектом, который следит за glbAnimationUrl
             }
         };
@@ -79,7 +78,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     // Загрузить пользовательскую GLB модель, если предоставлен URL
     useEffect(() => {
         // Отладочный лог для проверки значения URL
-        console.log('XbotModel: glbAnimationUrl check:', {
+        console.log('Model: glbAnimationUrl check:', {
             url: glbAnimationUrl,
             type: typeof glbAnimationUrl,
             isNull: glbAnimationUrl === null,
@@ -90,14 +89,14 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         });
 
         // НАПРЯМУЮ ЗАГРУЖАЕМ ПРИНУДИТЕЛЬНЫЙ URL НЕЗАВИСИМО ОТ ВХОДНЫХ ДАННЫХ
-        console.log('XbotModel: BYPASSING normal URL and loading forced URL:', FORCE_MODEL_URL);
+        console.log('Model: BYPASSING normal URL and loading forced URL:', FORCE_MODEL_URL);
         setIsLoading(true);
         setLoadingError(null);
 
         // Отправить прямой fetch-запрос для проверки доступности URL
         fetch(FORCE_MODEL_URL, { method: 'HEAD' })
             .then(response => {
-                console.log('XbotModel: HEAD request result for forced URL:', {
+                console.log('Model: HEAD request result for forced URL:', {
                     status: response.status,
                     ok: response.ok,
                     statusText: response.statusText,
@@ -105,16 +104,16 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 });
 
                 if (response.ok) {
-                    console.log('XbotModel: Forced URL is accessible, loading model');
+                    console.log('Model: Forced URL is accessible, loading model');
                     loadModelFromUrl(FORCE_MODEL_URL);
                 } else {
-                    console.error('XbotModel: Forced URL is not accessible, status:', response.status);
+                    console.error('Model: Forced URL is not accessible, status:', response.status);
                     // Всё равно попробовать прямую загрузку
                     loadModelFromUrl(FORCE_MODEL_URL);
                 }
             })
             .catch(error => {
-                console.error('XbotModel: Error checking forced URL accessibility:', error);
+                console.error('Model: Error checking forced URL accessibility:', error);
                 // Всё равно попробовать прямую загрузку
                 loadModelFromUrl(FORCE_MODEL_URL);
             });
@@ -123,18 +122,18 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
     // Вспомогательная функция для загрузки модели по URL
     const loadModelFromUrl = useCallback((url) => {
-        console.log('XbotModel: Loading model from URL:', url);
+        console.log('Model: Loading model from URL:', url);
 
         // Отслеживать время начала загрузки
         const loadStartTime = Date.now();
 
         // Логирование сетевого запроса напрямую
-        console.log(`XbotModel: Sending direct fetch GET request to ${url}`);
+        console.log(`Model: Sending direct fetch GET request to ${url}`);
 
         // Сделать прямой GET-запрос fetch, чтобы явно проверить, доступна ли модель
         fetch(url)
             .then(response => {
-                console.log('XbotModel: Fetch response:', {
+                console.log('Model: Fetch response:', {
                     status: response.status,
                     ok: response.ok,
                     type: response.type,
@@ -148,11 +147,11 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 return response.blob();
             })
             .then(blob => {
-                console.log('XbotModel: Model fetched successfully, blob size:', blob.size);
+                console.log('Model: Model fetched successfully, blob size:', blob.size);
                 // Если мы получили blob, значит URL доступен
             })
             .catch(error => {
-                console.error('XbotModel: Direct fetch test failed:', error);
+                console.error('Model: Direct fetch test failed:', error);
             });
 
         new GLTFLoader()
@@ -161,8 +160,8 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 (gltf) => {
                     // Колбэк успешной загрузки
                     const loadEndTime = Date.now();
-                    console.log(`XbotModel: Model loaded successfully in ${loadEndTime - loadStartTime}ms`);
-                    console.log('XbotModel: Animations found:', gltf.animations ? gltf.animations.length : 0);
+                    console.log(`Model: Model loaded successfully in ${loadEndTime - loadStartTime}ms`);
+                    console.log('Model: Animations found:', gltf.animations ? gltf.animations.length : 0);
 
                     // Установить пользовательскую модель
                     setCustomModel({ scene: gltf.scene, animations: gltf.animations });
@@ -188,7 +187,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 (progress) => {
                     // Колбэк прогресса
                     const percentComplete = progress.loaded / progress.total * 100;
-                    console.log(`XbotModel: Loading progress: ${percentComplete.toFixed(2)}%`);
+                    console.log(`Model: Loading progress: ${percentComplete.toFixed(2)}%`);
 
                     // Обновить отладочную информацию with progress
                     setDebugInfo(prev => ({
@@ -199,8 +198,8 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 },
                 (error) => {
                     // Колбэк ошибки
-                    console.error('XbotModel: Error loading GLB model:', error);
-                    console.error('XbotModel: Failed URL was:', url);
+                    console.error('Model: Error loading GLB model:', error);
+                    console.error('Model: Failed URL was:', url);
 
                     // Обновить отладочную информацию with error
                     setDebugInfo(prev => ({
@@ -212,12 +211,12 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
                     // Использовать более простой запасной URL как последнее средство
                     const simpleUrl = `/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb`;
-                    console.log(`XbotModel: Trying one last fallback URL: ${simpleUrl}`);
+                    console.log(`Model: Trying one last fallback URL: ${simpleUrl}`);
 
                     new GLTFLoader().load(
                         simpleUrl,
                         (gltf) => {
-                            console.log('XbotModel: Fallback model loaded successfully');
+                            console.log('Model: Fallback model loaded successfully');
                             setCustomModel({ scene: gltf.scene, animations: gltf.animations });
                             setDebugInfo(prev => ({
                                 ...prev,
@@ -235,7 +234,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                         },
                         null,
                         (fallbackError) => {
-                            console.error('XbotModel: Error loading fallback GLB model:', fallbackError);
+                            console.error('Model: Error loading fallback GLB model:', fallbackError);
                             setLoadingError(`Ошибка загрузки модели: ${error.message}. Также не удалось загрузить запасную модель.`);
                             setDebugInfo(prev => ({
                                 ...prev,
@@ -254,8 +253,8 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
     // Инициализировать микшер анимаций
     useEffect(() => {
         if (customModel && customModel.animations && customModel.animations.length > 0) {
-            console.log('XbotModel: Model loaded successfully with animations:', customModel.animations);
-            console.log('XbotModel: Animation names:', customModel.animations.map(anim => anim.name));
+            console.log('Model: Model loaded successfully with animations:', customModel.animations);
+            console.log('Model: Animation names:', customModel.animations.map(anim => anim.name));
 
             // Создать новый микшер для текущей модели
             mixer.current = new THREE.AnimationMixer(customModel.scene);
@@ -263,7 +262,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
 
             // Сохранить оригинальную длительность анимации модели из первой анимации
             modelDuration.current = customModel.animations[0].duration;
-            console.log('XbotModel: Model duration:', modelDuration.current);
+            console.log('Model: Model duration:', modelDuration.current);
 
             // Передать анимации родителю
             onModelLoad(customModel.animations);
@@ -276,7 +275,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                 modelScene: true
             }));
         } else if (customModel) {
-            console.warn('XbotModel: Model loaded but no animations found:', customModel);
+            console.warn('Model: Model loaded but no animations found:', customModel);
 
             // Обновить отладочную информацию even if no animations
             setDebugInfo(prev => ({
@@ -293,14 +292,14 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
         if (!url || externalAnimations[url]) return;
 
         try {
-            console.log('XbotModel: Loading external animation from URL:', url);
+            console.log('Model: Loading external animation from URL:', url);
 
             // Использовать GLTFLoader напрямую
             const loader = new GLTFLoader();
 
             // Специальная обработка для blob URL
             if (url.startsWith('blob:')) {
-                console.log('XbotModel: Detected blob URL for animation, using special handling for local file');
+                console.log('Model: Detected blob URL for animation, using special handling for local file');
             }
 
             // Устанавливаем crossOrigin для загрузчика
@@ -414,7 +413,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     action.weight = anim.weight;
                 }
 
-                console.log('XbotModel: Added animation action:', {
+                console.log('Model: Added animation action:', {
                     id: anim.id,
                     name: animation.name,
                     duration: animation.duration,
@@ -422,7 +421,7 @@ const XbotModel = ({ currentTime, isPlaying, onTimeUpdate, onModelLoad, playerDu
                     weight: action.weight
                 });
             } else {
-                console.warn('XbotModel: Could not find animation for:', anim);
+                console.warn('Model: Could not find animation for:', anim);
             }
         });
 
@@ -1321,8 +1320,6 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         onClose();
     };
 
-    // ... существующий код ...
-
     // Загрузить сохраненные анимации из localStorage при монтировании компонента
     useEffect(() => {
         console.log('ModelViewer: Component mounted, checking for saved animations');
@@ -1801,7 +1798,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
         setSelectedModel(model);
 
         // Обновить glbAnimationUrl для использования выбранной модели
-        // Это вызовет useEffect в XbotModel для загрузки новой модели
+        // Это вызовет useEffect в Model для загрузки новой модели
         if (model && model.url) {
             // Мы будем использовать этот URL для загрузки модели
             console.log('Setting model URL:', model.url);
@@ -2602,7 +2599,7 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                 <directionalLight position={[0, 5, -5]} intensity={0.5} />
                 <PerspectiveCamera makeDefault position={[0, 2, 10]} />
                 <Suspense fallback={null}>
-                    <XbotModel
+                    <Model
                         currentTime={currentTime}
                         isPlaying={isPlaying}
                         onTimeUpdate={handleTimeUpdate}

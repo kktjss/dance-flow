@@ -208,6 +208,46 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         maxConcurrentRequests: 1, // Максимальное количество одновременных запросов к серверу
     });
 
+    // Initialize canvas sizes when video is ready - MOVED THIS FUNCTION TO THE TOP
+    const setupCanvases = useCallback(() => {
+        if (!videoRef.current) return false;
+
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const overlay = overlayCanvasRef.current;
+
+        if (canvas && video.videoWidth && video.videoHeight) {
+            console.log(`Setting up canvases for native video resolution: ${video.videoWidth}x${video.videoHeight}`);
+
+            // Set the main canvas size to match video's native resolution
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Set the overlay canvas size to match video's native resolution
+            if (overlay) {
+                // Always use the original video dimensions for the canvas size
+                overlay.width = video.videoWidth;
+                overlay.height = video.videoHeight;
+
+                console.log(`Overlay canvas set to: ${overlay.width}x${overlay.height}`);
+            }
+
+            // Log current video status to help with debugging
+            console.log(`Video status: currentTime=${video.currentTime}s, paused=${video.paused}, readyState=${video.readyState}`);
+
+            return true; // Return true if setup was successful
+        } else {
+            // Log error information if setup failed
+            console.warn(`Canvas setup failed: video dimensions not available (${video.videoWidth}x${video.videoHeight})`);
+
+            if (video.readyState < 2) {
+                console.warn(`Video not ready yet, readyState=${video.readyState}`);
+            }
+
+            return false; // Return false if setup failed
+        }
+    }, []);
+
     // Расчетные настройки, основанные на производительности - более динамичный отклик на возможности устройства
     const computedSettings = useMemo(() => {
         let quality = settings.quality;
@@ -671,6 +711,14 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         const handlePause = () => {
             // При паузе НЕ начинаем обрабатывать кадры автоматически
             console.log('Video paused');
+
+            // If in dancer selection mode, make sure canvases are set up for capture
+            if (isDancerSelectionMode) {
+                console.log('Video paused in dancer selection mode, preparing canvas for frame capture');
+                setTimeout(() => {
+                    setupCanvases();
+                }, 50); // Small delay to ensure the video is fully paused
+            }
         };
 
         const handleEnded = () => {
@@ -701,6 +749,17 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             if (video.currentTime > 0 && !video.paused) {
                 // Video is playing successfully
             }
+
+            // If in dancer selection mode and video is paused, ensure canvas is ready
+            // This helps when the video has been seeked to a different position
+            if (isDancerSelectionMode && video.paused) {
+                // Only update if it's been a while since the last update or if seek was requested
+                if (seekRequested.current) {
+                    console.log(`Video seeked to ${video.currentTime}s, updating canvas for frame capture`);
+                    setupCanvases();
+                    seekRequested.current = false;
+                }
+            }
         };
 
         video.addEventListener('timeupdate', handleTimeUpdate);
@@ -716,7 +775,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 animationFrameRef.current = null;
             }
         };
-    }, [isVideoReady, isDancerSelectionMode]);
+    }, [isVideoReady, isDancerSelectionMode, setupCanvases]);
 
     // React to changes in dancer selection mode
     useEffect(() => {
@@ -734,6 +793,13 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 video.pause();
                 pausedForSelectionRef.current = true;
             }
+
+            // Make sure canvases are set up with correct dimensions when entering dancer selection mode
+            // This ensures we're ready to capture the current frame
+            setTimeout(() => {
+                const setupSuccess = setupCanvases();
+                console.log(`Canvas setup in dancer selection mode: ${setupSuccess ? 'successful' : 'failed'}`);
+            }, 100); // Small delay to ensure video is fully paused
 
             // ВАЖНО: Не начинаем автоматическую обработку кадров в режиме выбора танцора
             // Обработка будет запускаться ТОЛЬКО по клику пользователя
@@ -779,7 +845,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             // Сбрасываем состояние выбора
             setCurrentPoses([]);
         }
-    }, [isDancerSelectionMode]);
+    }, [isDancerSelectionMode, setupCanvases]);
 
     // Обработчик клика по canvas - ТОЛЬКО здесь запускаем обработку кадра для выбора танцора
     const handleCanvasClick = useCallback(async (event) => {
@@ -799,6 +865,10 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             if (!video || !canvas || !overlay) {
                 throw new Error("Video or canvas elements not available");
             }
+
+            // Make sure canvas is properly set up with correct dimensions
+            // This ensures we're working with the current video dimensions
+            setupCanvases();
 
             // Очищаем предыдущие результаты
             const overlayCtx = overlay.getContext('2d');
@@ -853,7 +923,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 return;
             }
 
-            // Ensure video frame is captured to canvas
+            // Ensure video frame is captured to canvas with correct dimensions
             canvas.width = videoWidth;
             canvas.height = videoHeight;
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -861,7 +931,9 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             // Очищаем канвас перед рисованием
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw video on canvas with proper RGB format
+            // Draw the CURRENT video frame on canvas
+            // This ensures we get the frame that's currently paused
+            console.log(`Drawing current paused frame at time ${video.currentTime}s`);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             // Convert canvas to blob for API request with proper BGR encoding
@@ -943,33 +1015,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         } finally {
             setIsProcessing(false);
         }
-    }, [isDancerSelectionMode, onPersonSelected, settings.resizeEnabled]);
-
-    // Initialize canvas sizes when video is ready
-    const setupCanvases = useCallback(() => {
-        if (!videoRef.current) return;
-
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        const overlay = overlayCanvasRef.current;
-
-        if (canvas && video.videoWidth && video.videoHeight) {
-            console.log(`Setting up canvases for native video resolution: ${video.videoWidth}x${video.videoHeight}`);
-
-            // Set the main canvas size to match video's native resolution
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            // Set the overlay canvas size to match video's native resolution
-            if (overlay) {
-                // Always use the original video dimensions for the canvas size
-                overlay.width = video.videoWidth;
-                overlay.height = video.videoHeight;
-
-                console.log(`Overlay canvas set to: ${overlay.width}x${overlay.height}`);
-            }
-        }
-    }, []);
+    }, [isDancerSelectionMode, onPersonSelected, settings.resizeEnabled, setupCanvases]);
 
     // Initialize video element with proper error handling
     useEffect(() => {
@@ -1048,6 +1094,14 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             } else if (!isPlaying && !video.paused) {
                 console.log('VideoAnalyzer: External pause command received');
                 video.pause();
+
+                // If in dancer selection mode, make sure canvas is ready for frame capture
+                if (isDancerSelectionMode) {
+                    console.log('Video externally paused in dancer selection mode, preparing canvas');
+                    setTimeout(() => {
+                        setupCanvases();
+                    }, 50); // Small delay to ensure the video is fully paused
+                }
             }
         }
 
@@ -1060,6 +1114,15 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             if (video.readyState >= 3) {
                 try {
                     video.currentTime = currentTime;
+
+                    // If in dancer selection mode and video is paused, ensure canvas is ready after seek
+                    if (isDancerSelectionMode && video.paused) {
+                        console.log('Video externally seeked in dancer selection mode, preparing canvas');
+                        setTimeout(() => {
+                            setupCanvases();
+                        }, 100); // Longer delay after seek to ensure video frame is loaded
+                    }
+
                     seekRequested.current = false;
                 } catch (err) {
                     console.error('Error during immediate seek:', err);
@@ -1067,7 +1130,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             }
             // Otherwise the timeupdate handler will handle it
         }
-    }, [isPlaying, currentTime, isVideoReady]);
+    }, [isPlaying, currentTime, isVideoReady, isDancerSelectionMode, setupCanvases]);
 
     // Update selected person from external props
     useEffect(() => {

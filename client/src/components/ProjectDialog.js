@@ -28,6 +28,14 @@ const StyledButton = styled(Button)(({ theme }) => ({
     }
 }));
 
+// Стилизованный диалог с прозрачным фоном для списка проектов
+const TransparentDialog = styled(Dialog)(({ theme }) => ({
+    '& .MuiDialog-paper': {
+        backgroundColor: 'transparent',
+        boxShadow: 'none'
+    }
+}));
+
 const ProjectDialog = ({
     open,
     onClose,
@@ -71,8 +79,11 @@ const ProjectDialog = ({
         setShowProjectsList(false);
     };
 
+    // Используем разные диалоги в зависимости от состояния
+    const DialogComponent = showProjectsList ? TransparentDialog : Dialog;
+
     return (
-        <Dialog
+        <DialogComponent
             open={open}
             onClose={onClose}
             maxWidth="md"
@@ -161,8 +172,8 @@ const ProjectDialog = ({
                     />
                 </Box>
             )}
-        </Dialog>
+        </DialogComponent>
     );
 };
 
-export default ProjectDialog; 
+export default ProjectDialog;

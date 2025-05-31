@@ -15,7 +15,7 @@ import DebugPage from './pages/DebugPage';
 import ModelDebugPage from './pages/ModelDebugPage';
 import { COLORS } from './constants/colors';
 
-// Add custom tertiary color to Material UI theme
+// Добавление пользовательского третичного цвета в тему Material UI
 const theme = createTheme({
     palette: {
         mode: 'dark',
@@ -33,8 +33,8 @@ const theme = createTheme({
             contrastText: '#fff',
         },
         background: {
-            default: '#121620', // Lighter, more neutral dark background
-            paper: '#1A202E',   // Less purple, more neutral dark paper
+            default: '#121620',
+            paper: '#1A202E',
         },
         text: {
             primary: COLORS.white,
@@ -50,7 +50,7 @@ const theme = createTheme({
                 root: {
                     borderRadius: '8px',
                 },
-                // Add support for tertiary color in Chip component
+                // Добавляем поддержку третичного цвета в компонент Chip
                 colorTertiary: {
                     backgroundColor: COLORS.tertiary,
                     color: '#fff',
