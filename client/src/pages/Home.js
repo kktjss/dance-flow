@@ -338,7 +338,7 @@ const SectionTitle = styled(Typography)(({ theme, inView = false }) => ({
     }
 }));
 
-// Diagonal section divider component
+// Компонент диагонального разделителя секций
 const DiagonalDivider = styled(Box)(({ theme, position = 'top', color = '#111536', bgColor = '#0a0e24' }) => ({
     position: 'relative',
     height: '80px',
@@ -358,7 +358,7 @@ const DiagonalDivider = styled(Box)(({ theme, position = 'top', color = '#111536
     }
 }));
 
-// Wave animation for the canvas section
+// Волновая анимация для секции холста
 const WaveBox = styled(Box)(({ theme }) => ({
     position: 'absolute',
     top: 0,
@@ -387,7 +387,7 @@ const WaveBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-// Добавим стилизованный компонент для логотипа DanceFlow
+// Стилизованный компонент для логотипа DanceFlow
 const LogoDanceFlow = ({ variant = "h1", component = "span", color = "primary", ...props }) => (
     <Typography
         variant={variant}
@@ -429,7 +429,7 @@ const LogoDanceFlow = ({ variant = "h1", component = "span", color = "primary", 
     </Typography>
 );
 
-// Обновим компонент карточки возможностей - исправим "кривость"
+// Компонент карточки возможностей - исправлено искажение
 const FeatureCard = ({ title, description, onClick }) => {
     return (
         <StyledCard sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -520,7 +520,7 @@ function Home() {
     const finalSectionRef = useRef(null);
 
     useEffect(() => {
-        // Set hero in view immediately for better UX
+        // Устанавливаем hero in view сразу для лучшего UX
         setHeroInView(true);
 
         setTimeout(() => {
@@ -529,7 +529,7 @@ function Home() {
             }
         }, 500);
 
-        // Create intersection observers for sections
+        // Создаем наблюдатели пересечения для секций
         const createObserver = (ref, setInView) => {
             const observer = new IntersectionObserver(
                 (entries) => {
@@ -552,7 +552,7 @@ function Home() {
         const animatedObserver = createObserver(animatedSectionRef, setAnimatedSectionInView);
         const finalObserver = createObserver(finalSectionRef, setFinalSectionInView);
 
-        // Canvas animation code unchanged
+        // Код анимации холста без изменений
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -560,11 +560,11 @@ function Home() {
         const width = canvas.width = window.innerWidth;
         const height = canvas.height = 400;
 
-        // Flow particles settings
+        // Настройки частиц потока
         const particles = [];
         const particleCount = 120;
 
-        // Create particles code unchanged
+        // Создаем частицы - код без изменений
         for (let i = 0; i < particleCount; i++) {
             particles.push({
                 x: Math.random() * width,
@@ -574,34 +574,34 @@ function Home() {
                 speedY: Math.random() * 3 - 1.5,
                 color: i % 5 === 0 ? '#6366F1' : i % 7 === 0 ? '#3B82F6' : '#ffffff',
                 opacity: Math.random() * 0.7 + 0.3,
-                edges: Math.floor(Math.random() * 3) + 3, // 3-5 edges for angular shapes
+                edges: Math.floor(Math.random() * 3) + 3, // 3-5 граней для угловатых форм
             });
         }
 
-        // Draw the animation function unchanged
+        // Функция анимации отрисовки без изменений
         function draw() {
-            // Set semi-transparent background
+            // Устанавливаем полупрозрачный фон
             ctx.fillStyle = 'rgba(10, 14, 36, 0.15)';
             ctx.fillRect(0, 0, width, height);
 
-            // Draw each particle
+            // Рисуем каждую частицу
             particles.forEach(particle => {
                 ctx.save();
                 ctx.beginPath();
 
-                // Create angular shapes instead of circles
-                if (particle.edges === 3) { // Triangle
+                // Создаем угловатые формы вместо кругов
+                if (particle.edges === 3) { // Треугольник
                     const size = particle.size * 1.5;
                     ctx.moveTo(particle.x, particle.y - size);
                     ctx.lineTo(particle.x + size, particle.y + size);
                     ctx.lineTo(particle.x - size, particle.y + size);
-                } else if (particle.edges === 4) { // Square/Diamond
+                } else if (particle.edges === 4) { // Квадрат/Ромб
                     const rotation = Date.now() * 0.001 % (Math.PI * 2);
                     ctx.translate(particle.x, particle.y);
                     ctx.rotate(rotation);
                     ctx.rect(-particle.size, -particle.size, particle.size * 2, particle.size * 2);
                     ctx.translate(-particle.x, -particle.y);
-                } else { // Pentagon
+                } else { // Пятиугольник
                     const size = particle.size;
                     ctx.moveTo(particle.x + size * Math.cos(0), particle.y + size * Math.sin(0));
                     for (let i = 1; i <= 5; i++) {
@@ -615,18 +615,18 @@ function Home() {
                 ctx.fill();
                 ctx.restore();
 
-                // Update position with slight acceleration for more dynamic motion
+                // Обновляем позицию с небольшим ускорением для более динамичного движения
                 particle.speedX += (Math.random() - 0.5) * 0.1;
                 particle.speedY += (Math.random() - 0.5) * 0.1;
 
-                // Cap speed
+                // Ограничиваем скорость
                 particle.speedX = Math.max(-2.5, Math.min(2.5, particle.speedX));
                 particle.speedY = Math.max(-2.5, Math.min(2.5, particle.speedY));
 
                 particle.x += particle.speedX;
                 particle.y += particle.speedY;
 
-                // Bounce off edges with slight random variation
+                // Отскок от краёв с небольшими случайными вариациями
                 if (particle.x < 0 || particle.x > width) {
                     particle.speedX *= -1;
                     particle.speedX += (Math.random() - 0.5) * 0.5;
@@ -637,7 +637,7 @@ function Home() {
                 }
             });
 
-            // Draw connections between close particles with more angular line style
+            // Рисуем соединения между близкими частицами с более угловатым стилем линий
             particles.forEach((particle, i) => {
                 for (let j = i + 1; j < particles.length; j++) {
                     const dx = particle.x - particles[j].x;
@@ -647,7 +647,7 @@ function Home() {
                     if (distance < 80) {
                         ctx.beginPath();
 
-                        // More angular connection lines
+                        // Более угловатые линии соединений
                         const midX = (particle.x + particles[j].x) / 2;
                         const midY = (particle.y + particles[j].y) / 2 + (Math.random() * 10 - 5);
 
@@ -678,7 +678,7 @@ function Home() {
             <Navbar />
             <Box sx={{ flexGrow: 1 }}>
                 <HeroSection>
-                    {/* Decorative elements */}
+                    {/* Декоративные элементы */}
                     <DecorativeGrid />
                     <AnimatedDot size={10} delay={0.2} color={COLORS.primary} sx={{ top: '15%', left: '10%' }} />
                     <AnimatedDot size={16} delay={0.5} color={COLORS.secondary} sx={{ top: '60%', left: '85%' }} />

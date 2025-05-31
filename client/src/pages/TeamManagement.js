@@ -208,20 +208,20 @@ function TeamManagement() {
     const [error, setError] = useState(null);
     const [selectedTeam, setSelectedTeam] = useState(null);
 
-    // Dialog states
+    // Состояния диалогов
     const [createTeamDialog, setCreateTeamDialog] = useState(false);
     const [addMemberDialog, setAddMemberDialog] = useState(false);
     const [addProjectDialog, setAddProjectDialog] = useState(false);
     const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
 
-    // Form states
+    // Состояния форм
     const [newTeamName, setNewTeamName] = useState('');
     const [newTeamDescription, setNewTeamDescription] = useState('');
     const [selectedUserId, setSelectedUserId] = useState('');
     const [selectedUserRole, setSelectedUserRole] = useState('viewer');
     const [selectedProjectId, setSelectedProjectId] = useState('');
 
-    // Tabs
+    // Вкладки
     const [tabValue, setTabValue] = useState(0);
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -231,7 +231,7 @@ function TeamManagement() {
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
 
-    // Check if user can add members
+    // Проверка, может ли пользователь добавлять участников
     const canOpenAddMemberDialog = selectedTeam && userStr && (() => {
         try {
             const user = JSON.parse(userStr);
@@ -244,7 +244,7 @@ function TeamManagement() {
         }
     })();
 
-    // Fetch teams on component mount
+    // Получаем команды при монтировании компонента
     useEffect(() => {
         const checkAuth = () => {
             const token = localStorage.getItem('token');
@@ -408,7 +408,7 @@ function TeamManagement() {
             console.error('Error fetching projects:', err);
             console.error('Response details:', err.response?.status, err.response?.data);
 
-            // Try fallback endpoint if main one fails
+            // Пробуем резервный эндпоинт, если основной не работает
             try {
                 const token = localStorage.getItem('token');
                 console.log('Trying fallback projects endpoint...');
@@ -592,48 +592,48 @@ function TeamManagement() {
         }
     };
 
-    // Add debounced search handler
+    // Добавляем обработчик поиска с задержкой
     const handleSearchChange = (event) => {
         const value = event.target.value;
         console.log('Search input changed:', value);
         setSearchQuery(value);
 
-        // Clear previous timeout
+        // Очищаем предыдущий таймаут
         if (searchTimeout) {
             clearTimeout(searchTimeout);
         }
 
-        // Set new timeout
+        // Устанавливаем новый таймаут
         const timeout = setTimeout(() => {
             console.log('Executing search for:', value);
             fetchUsers(value);
-        }, 300); // 300ms delay
+        }, 300); // задержка 300мс
 
         setSearchTimeout(timeout);
 
-        // Clear selected user when search changes
+        // Очищаем выбранного пользователя при изменении поиска
         if (selectedUserId) {
             setSelectedUserId('');
         }
     };
 
-    // Add handler for user selection from search results
+    // Добавляем обработчик выбора пользователя из результатов поиска
     const handleUserSelect = (user) => {
         console.log('User selected:', user);
         // Используем id или _id, в зависимости от того, что доступно
         const userId = user._id || user.id;
         setSelectedUserId(userId);
-        setSearchQuery(user.username); // Show selected user in search field
+        setSearchQuery(user.username); // Показываем выбранного пользователя в поле поиска
     };
 
-    // Update useEffect to fetch users when team is selected
+    // Обновляем useEffect для загрузки пользователей при выборе команды
     useEffect(() => {
         if (selectedTeam) {
             fetchUsers(searchQuery);
         }
     }, [selectedTeam]);
 
-    // Add a new useEffect to debug selectedUserId changes
+    // Добавляем новый useEffect для отладки изменений selectedUserId
     useEffect(() => {
         console.log('Selected user ID changed:', selectedUserId);
     }, [selectedUserId]);
@@ -778,7 +778,7 @@ function TeamManagement() {
                     setError(null);
                 }, 3000);
 
-                // Update teams list
+                // Обновляем список команд
                 fetchTeams();
 
                 // Переключаемся на вкладку с участниками
@@ -1001,7 +1001,7 @@ function TeamManagement() {
             setSelectedTeam(teamData);
             setError(null);
 
-            // Update teams list
+            // Обновляем список команд
             fetchTeams();
         } catch (err) {
             console.error('Error removing member:', err);
@@ -1054,7 +1054,7 @@ function TeamManagement() {
 
             console.log('Project successfully removed');
 
-            // Refresh team data
+            // Обновляем данные команды
             const response = await axios.get(
                 `${API_BASE_URL}/api/teams/${selectedTeam._id}`,
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -1065,7 +1065,7 @@ function TeamManagement() {
             setSelectedTeam(response.data);
             setError(null);
 
-            // Update teams list
+            // Обновляем списки команд и проектов
             fetchTeams();
             fetchProjects();
         } catch (err) {
@@ -1132,7 +1132,7 @@ function TeamManagement() {
                 return;
             }
 
-            // Get the team ID, handling potential different field names
+            // Получаем ID команды, учитывая возможные разные имена полей
             const teamId = team._id || team.id;
             console.log('Using team ID:', teamId);
 
@@ -1173,10 +1173,10 @@ function TeamManagement() {
                     teamData.members = [];
                 }
 
-                // Ensure projects array exists and process it properly
+                // Проверяем существование массива проектов и правильно обрабатываем его
                 if (Array.isArray(teamData.projectObjects)) {
                     console.log('Using projectObjects from API response:', teamData.projectObjects);
-                    // Use the full project objects directly from the API response
+                    // Используем полные объекты проектов напрямую из ответа API
                     teamData.projects = teamData.projectObjects;
                 } else if (!teamData.projects) {
                     teamData.projects = [];
@@ -1184,24 +1184,24 @@ function TeamManagement() {
                 } else {
                     console.log('Raw team projects from API:', teamData.projects);
 
-                    // If projects is an array of strings (project IDs), process them
+                    // Если projects - это массив строк (ID проектов), обрабатываем их
                     if (Array.isArray(teamData.projects)) {
-                        // Get all project IDs from the team
+                        // Получаем все ID проектов из команды
                         const teamProjectIds = teamData.projects.map(project =>
                             typeof project === 'string' ? project : (project?._id || project?.id)
                         ).filter(Boolean);
 
-                        // Find full project objects from the projects list
+                        // Находим полные объекты проектов из списка проектов
                         const fullProjects = projects.filter(project =>
                             teamProjectIds.includes(project._id)
                         );
 
-                        // If we found all projects, use them
+                        // Если мы нашли все проекты, используем их
                         if (fullProjects.length === teamProjectIds.length) {
                             console.log('Found all projects in projects list:', fullProjects);
                             teamData.projects = fullProjects;
                         } else {
-                            // For any missing projects, create minimal objects
+                            // Для любых отсутствующих проектов создаем минимальные объекты
                             const processedProjects = teamProjectIds.map(projectId => {
                                 const fullProject = projects.find(p => p._id === projectId);
                                 return fullProject || null;
@@ -1217,13 +1217,13 @@ function TeamManagement() {
                 setSelectedTeam(teamData);
                 setError(null);
 
-                // Reset tab to first tab when selecting a new team
+                // Сбрасываем вкладку на первую при выборе новой команды
                 setTabValue(0);
             } catch (mainErr) {
                 console.error('Main API error:', mainErr);
                 console.error('Response details:', mainErr.response?.status, mainErr.response?.data);
 
-                // Try test endpoint if main endpoint fails
+                // Пробуем тестовый эндпоинт, если основной не работает
                 try {
                     console.log('Trying test endpoint...');
                     const testResponse = await axios.get(`${API_BASE_URL}/api/teams-test/${teamId}`);
@@ -1268,26 +1268,26 @@ function TeamManagement() {
                         // Обработка проектов так же, как в основном блоке
                         if (Array.isArray(teamData.projectObjects)) {
                             console.log('Using projectObjects from test API response:', teamData.projectObjects);
-                            // Use the full project objects directly from the API response
+                            // Используем полные объекты проектов напрямую из ответа API
                             teamData.projects = teamData.projectObjects;
                         } else if (!teamData.projects) {
                             teamData.projects = [];
                         } else if (Array.isArray(teamData.projects)) {
-                            // Get all project IDs from the team
+                            // Получаем все ID проектов из команды
                             const teamProjectIds = teamData.projects.map(project =>
                                 typeof project === 'string' ? project : (project?._id || project?.id)
                             ).filter(Boolean);
 
-                            // Find full project objects from the projects list
+                            // Находим полные объекты проектов из списка проектов
                             const fullProjects = projects.filter(project =>
                                 teamProjectIds.includes(project._id)
                             );
 
-                            // If we found all projects, use them
+                            // Если мы нашли все проекты, используем их
                             if (fullProjects.length === teamProjectIds.length) {
                                 teamData.projects = fullProjects;
                             } else {
-                                // For any missing projects, create minimal objects
+                                // Для любых отсутствующих проектов создаем минимальные объекты
                                 const processedProjects = teamProjectIds.map(projectId => {
                                     const fullProject = projects.find(p => p._id === projectId);
                                     return fullProject || null;
@@ -1321,7 +1321,7 @@ function TeamManagement() {
         setTabValue(newValue);
     };
 
-    // Dialog handlers with safety checks
+    // Обработчики диалогов с проверками безопасности
     const openAddMemberDialog = () => {
         // Получаем текущего пользователя
         try {
@@ -1380,7 +1380,7 @@ function TeamManagement() {
 
     const openAddProjectDialog = () => {
         if (selectedTeam) {
-            // Refresh projects before opening dialog to ensure we have the latest list
+            // Обновляем проекты перед открытием диалога, чтобы убедиться в актуальности списка
             fetchProjects();
             setAddProjectDialog(true);
         }
@@ -1527,7 +1527,7 @@ function TeamManagement() {
             background: `linear-gradient(135deg, #0a0e24 0%, #111536 100%)`,
             position: 'relative',
         }}>
-            {/* Decorative elements */}
+            {/* Декоративные элементы */}
             <DecorativeCircle top="15%" left="-5%" size={300} color={COLORS.primary} delay={0.2} />
             <DecorativeCircle top="70%" left="90%" size={200} color={COLORS.tertiary} delay={0.4} />
             <DecorativeCircle top="90%" left="10%" size={150} color={COLORS.secondary} delay={0.6} />
@@ -2294,12 +2294,12 @@ function TeamManagement() {
                                             return false;
                                         }
 
-                                        // Fix: properly handle project filtering
+                                        // Правильная обработка фильтрации проектов
                                         if (!selectedTeam || !selectedTeam.projects) {
-                                            return true; // If no projects in team, show all
+                                            return true; // Если в команде нет проектов, показываем все
                                         }
 
-                                        // Convert the team's project array to ensure we're comparing properly
+                                        // Преобразуем массив проектов команды для корректного сравнения
                                         const teamProjectIds = Array.isArray(selectedTeam.projects)
                                             ? selectedTeam.projects.map(teamProject => {
                                                 console.log('Team project item:', teamProject);

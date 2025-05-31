@@ -236,7 +236,7 @@ const ModelViewerModal = ({ isOpen, onClose, elementId, modelUrl, elementKeyfram
                 backgroundColor: 'rgba(0, 0, 0, 0.85)'
             }}
         >
-            {/* Close button in top-right corner */}
+            {/* Кнопка закрытия в правом верхнем углу */}
             <IconButton
                 onClick={onClose}
                 sx={{
@@ -272,7 +272,7 @@ const ModelViewerModal = ({ isOpen, onClose, elementId, modelUrl, elementKeyfram
 };
 
 const ProjectViewPage = () => {
-    // State for project data
+    // Состояние для данных проекта
     const [project, setProject] = useState({
         _id: null,
         name: '',
@@ -288,12 +288,12 @@ const ProjectViewPage = () => {
     const [currentTime, setCurrentTime] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [error, setError] = useState(null);
-    const [viewerMode, setViewerMode] = useState('canvas'); // 'canvas', '3d', or 'video'
+    const [viewerMode, setViewerMode] = useState('canvas'); // 'canvas', '3d', или 'video'
     const [showCombinedViewer, setShowCombinedViewer] = useState(false);
     const animationRef = useRef(null);
     const lastTimeRef = useRef(null);
-    const [view3DMode, setView3DMode] = useState(false); // New state for 3D viewer
-    const [model3dUrl, setModel3dUrl] = useState('/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb'); // New state for model URL
+    const [view3DMode, setView3DMode] = useState(false); // Новое состояние для 3D-просмотрщика
+    const [model3dUrl, setModel3dUrl] = useState('/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb'); // Новое состояние для URL модели
     const [modelDialogOpen, setModelDialogOpen] = useState(false);
     const [selectedModelUrl, setSelectedModelUrl] = useState(null);
 
@@ -301,14 +301,14 @@ const ProjectViewPage = () => {
 
     const theme = useTheme();
 
-    // Load project on mount
+    // Загружаем проект при монтировании
     useEffect(() => {
         if (projectId) {
             loadProject(projectId);
         }
     }, [projectId]);
 
-    // Animation effect when no audio is present
+    // Эффект анимации, когда аудио отсутствует
     useEffect(() => {
         if (!project.audioUrl && isPlaying) {
             const animateTime = (timestamp) => {
@@ -347,7 +347,7 @@ const ProjectViewPage = () => {
         };
     }, [isPlaying, project.duration, project.audioUrl, currentTime]);
 
-    // Load project from API
+    // Загрузка проекта из API
     const loadProject = async (id) => {
         try {
             setError(null);
@@ -371,7 +371,7 @@ const ProjectViewPage = () => {
 
             console.log('Project data received:', response.data);
 
-            // Process keyframesJson if available
+            // Обрабатываем keyframesJson, если доступен
             let elementsToNormalize = response.data.elements || [];
 
             if (response.data.keyframesJson) {
@@ -379,7 +379,7 @@ const ProjectViewPage = () => {
                     console.log('KeyframesJson found, parsing...');
                     const keyframesData = JSON.parse(response.data.keyframesJson);
 
-                    // Add keyframes to corresponding elements
+                    // Добавляем ключевые кадры к соответствующим элементам
                     if (keyframesData && typeof keyframesData === 'object') {
                         elementsToNormalize = elementsToNormalize.map(element => {
                             if (element.id && keyframesData[element.id]) {
@@ -397,7 +397,7 @@ const ProjectViewPage = () => {
                 }
             }
 
-            // Normalize elements
+            // Нормализуем элементы
             if (elementsToNormalize.length > 0) {
                 const normalized = normalizeElements(elementsToNormalize);
                 console.log('Normalized elements:', normalized);
@@ -406,7 +406,7 @@ const ProjectViewPage = () => {
                 setNormalizedElements([]);
             }
 
-            // Set project data with a default duration if none is provided
+            // Устанавливаем данные проекта с длительностью по умолчанию, если она не указана
             setProject({
                 ...response.data,
                 duration: response.data.duration || 60,
@@ -419,19 +419,19 @@ const ProjectViewPage = () => {
         }
     };
 
-    // Handle time update from player
+    // Обработка обновления времени от плеера
     const handleTimeUpdate = (time) => {
         console.log('Time updated to:', time);
         setCurrentTime(time);
     };
 
-    // Handle play/pause
+    // Обработка воспроизведения/паузы
     const handlePlayPause = (playing) => {
         console.log('Play state changed to:', playing);
         setIsPlaying(playing);
     };
 
-    // Handle duration change from Player
+    // Обработка изменения длительности от плеера
     const handleDurationChange = (newDuration) => {
         console.log('ProjectViewPage: Duration changed to:', newDuration);
         setProject(prev => ({
@@ -440,42 +440,42 @@ const ProjectViewPage = () => {
         }));
     };
 
-    // Show Combined Viewer
+    // Показать комбинированный просмотрщик
     const handleShowCombinedViewer = () => {
         setShowCombinedViewer(true);
-        // Pause animation when showing viewer
+        // Приостанавливаем анимацию при показе просмотрщика
         if (isPlaying) {
             setIsPlaying(false);
         }
     };
 
-    // Hide Combined Viewer
+    // Скрыть комбинированный просмотрщик
     const handleHideCombinedViewer = () => {
         setShowCombinedViewer(false);
         setViewerMode('canvas');
     };
 
-    // Switch viewer mode
+    // Переключение режима просмотрщика
     const handleModeChange = (mode) => {
         console.log('Changing viewer mode to:', mode);
         setViewerMode(mode);
 
-        // Don't show CombinedViewer for video mode
-        // Instead, we'll render VideoViewer directly in the content area
+        // Не показываем CombinedViewer для режима видео
+        // Вместо этого мы отрисуем VideoViewer непосредственно в области содержимого
         if (mode === 'video') {
             console.log('Video URL:', videoUrl);
-            // Don't call handleShowCombinedViewer() here anymore
+            // Не вызываем здесь handleShowCombinedViewer() больше
         }
     };
 
-    // Get video URL from project data
+    // Получение URL видео из данных проекта
     const getVideoUrl = () => {
-        // Check if project has video
+        // Проверяем, есть ли видео в проекте
         if (project.videoUrl) {
             return project.videoUrl;
         }
 
-        // Check if any element has video
+        // Проверяем, есть ли видео в каком-либо элементе
         if (project.elements && project.elements.length > 0) {
             const elementWithVideo = project.elements.find(el => el.videoUrl);
             if (elementWithVideo) {
@@ -483,26 +483,26 @@ const ProjectViewPage = () => {
             }
         }
 
-        // No video found
+        // Видео не найдено
         return null;
     };
 
     const videoUrl = getVideoUrl();
 
-    // Handle element selection
+    // Обработка выбора элемента
     const handleElementSelect = (element) => {
         console.log('Element selected:', element);
 
-        // Debug full element content to find any 3D model properties
+        // Отладка полного содержимого элемента для поиска свойств 3D-модели
         if (element) {
             console.log('Full element data:', JSON.stringify(element, null, 2));
         }
 
         setSelectedElement(element);
 
-        // If element is selected, briefly display a message to inform user
+        // Если элемент выбран, кратковременно отображаем сообщение для информирования пользователя
         if (element) {
-            // Using browser's native toast functionality for simplicity
+            // Используем собственную функциональность toast браузера для простоты
             const toast = document.createElement('div');
             toast.textContent = `Выбран элемент: ${element.id}`;
             toast.style.position = 'fixed';
@@ -517,21 +517,21 @@ const ProjectViewPage = () => {
             toast.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
             document.body.appendChild(toast);
 
-            // Remove the toast after 2 seconds
+            // Удаляем toast через 2 секунды
             setTimeout(() => {
                 document.body.removeChild(toast);
             }, 2000);
         }
     };
 
-    // Check if element has a 3D model
+    // Проверка наличия 3D-модели у элемента
     const has3DModel = (element) => {
         if (!element) {
             console.log('Element is null or undefined');
             return false;
         }
 
-        // Check if the element has any 3D model properties
+        // Проверяем, есть ли у элемента какие-либо свойства 3D-модели
         if (element.modelUrl || element.modelPath || element.glbUrl || element.model3dUrl) {
             console.log('Element has 3D model properties:', {
                 modelUrl: element.modelUrl,
@@ -542,13 +542,13 @@ const ProjectViewPage = () => {
             return true;
         }
 
-        // Check if the element type is '3d'
+        // Проверяем, является ли тип элемента '3d'
         if (element.type === '3d' || element.is3d) {
             console.log('Element has 3D type');
             return true;
         }
 
-        // Check the original project elements for this ID
+        // Проверяем оригинальные элементы проекта для этого ID
         if (project && project.elements) {
             const originalElement = project.elements.find(el =>
                 el.id === element.id || el._id === element.id);
@@ -567,7 +567,7 @@ const ProjectViewPage = () => {
         return false;
     };
 
-    // NEW: Handle opening the 3D model dialog
+    // НОВОЕ: Обработка открытия диалога 3D-модели
     const handleOpen3DDialog = () => {
         console.log('Opening 3D dialog for element:', selectedElement);
 
@@ -577,27 +577,25 @@ const ProjectViewPage = () => {
         }
 
         try {
-            // Get raw model URLs directly from the element properties
+            // Получаем необработанные URL-адреса моделей непосредственно из свойств элемента
             const modelUrl = selectedElement.modelUrl || null;
             const modelPath = selectedElement.modelPath || null;
 
             console.log('Raw model URLs:', { modelUrl, modelPath });
 
-            // Choose the most appropriate URL with a clear priority order
-            // IMPORTANT: We want to PRESERVE the original URL format
+            // Сначала предпочитаем modelPath, если он существует (сохраняем исходный формат)
             let effectiveUrl = null;
 
-            // First prefer modelPath if it exists (keep original format)
             if (modelPath) {
                 effectiveUrl = modelPath;
                 console.log('Using modelPath as is:', effectiveUrl);
             }
-            // Then try modelUrl (keep original format) 
+            // Затем пробуем modelUrl (сохраняем исходный формат) 
             else if (modelUrl) {
-                effectiveUrl = modelUrl;  // Keep the FULL URL including server part
+                effectiveUrl = modelUrl;  // Сохраняем ПОЛНЫЙ URL, включая серверную часть
                 console.log('Using modelUrl as is:', effectiveUrl);
             }
-            // Fallback to other properties or default
+            // Резервный вариант для других свойств или по умолчанию
             else {
                 effectiveUrl = selectedElement.glbUrl ||
                     selectedElement.model3dUrl ||
@@ -607,11 +605,11 @@ const ProjectViewPage = () => {
 
             console.log('Final model URL for 3D view:', effectiveUrl);
 
-            // Set the model URL and open the dialog
+            // Устанавливаем URL модели и открываем диалог
             setSelectedModelUrl(effectiveUrl);
             setModelDialogOpen(true);
 
-            // Log the complete set of data for debugging
+            // Логируем полный набор данных для отладки
             console.log('ModelViewerModal receiving:', {
                 isOpen: true,
                 elementId: selectedElement.id,
@@ -624,7 +622,7 @@ const ProjectViewPage = () => {
         } catch (err) {
             console.error('Error preparing 3D model:', err);
 
-            // Show an error notification
+            // Показываем уведомление об ошибке
             const toast = document.createElement('div');
             toast.textContent = `Ошибка загрузки 3D модели: ${err.message}`;
             toast.style.position = 'fixed';
@@ -639,14 +637,14 @@ const ProjectViewPage = () => {
             toast.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
             document.body.appendChild(toast);
 
-            // Remove the toast after 3 seconds
+            // Удаляем toast через 3 секунды
             setTimeout(() => {
                 document.body.removeChild(toast);
             }, 3000);
         }
     };
 
-    // NEW: Handle closing the 3D model dialog
+    // НОВОЕ: Обработка закрытия диалога 3D-модели
     const handleClose3DDialog = () => {
         console.log('Closing 3D dialog');
         setModelDialogOpen(false);
@@ -680,7 +678,7 @@ const ProjectViewPage = () => {
                                 )}
                             </Box>
 
-                            {/* Player */}
+                            {/* Плеер */}
                             <Box sx={{ mb: 2 }}>
                                 <Player
                                     duration={project.duration || 60}
@@ -699,14 +697,14 @@ const ProjectViewPage = () => {
                                 )}
                             </Box>
 
-                            {/* Canvas/3D/Video Container */}
+                            {/* Контейнер Canvas/3D/Video */}
                             <Paper
                                 elevation={3}
                                 sx={{
                                     position: 'relative',
                                     backgroundColor: theme.palette.mode === 'dark'
-                                        ? 'rgba(32, 38, 52, 0.85)'  // Lighter, more neutral dark blue
-                                        : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
+                                        ? 'rgba(32, 38, 52, 0.85)'  // Более светлый, более нейтральный темно-синий
+                                        : 'rgba(240, 245, 255, 0.9)', // Очень светлый сине-серый в светлом режиме
                                     borderRadius: '12px',
                                     overflow: 'hidden',
                                     height: 'calc(100vh - 300px)',
@@ -728,7 +726,7 @@ const ProjectViewPage = () => {
                                     }
                                 }}
                             >
-                                {/* Mode selection buttons */}
+                                {/* Кнопки выбора режима */}
                                 <Box sx={{
                                     p: 1,
                                     display: 'flex',
@@ -737,7 +735,7 @@ const ProjectViewPage = () => {
                                         ? 'rgba(255, 255, 255, 0.08)'
                                         : 'rgba(0, 0, 0, 0.08)'}`,
                                     backgroundColor: theme.palette.mode === 'dark'
-                                        ? 'rgba(26, 32, 46, 0.95)' // Darker blue for contrast
+                                        ? 'rgba(26, 32, 46, 0.95)' // Более темный синий для контраста
                                         : 'rgba(240, 245, 255, 0.95)'
                                 }}>
                                     <ButtonGroup variant="contained">
@@ -786,14 +784,14 @@ const ProjectViewPage = () => {
                                     </ButtonGroup>
                                 </Box>
 
-                                {/* Content area */}
+                                {/* Область содержимого */}
                                 <Box sx={{
                                     flexGrow: 1,
                                     position: 'relative',
                                     // Добавляем фоновую сетку как в ConstructorPage
                                     backgroundColor: theme.palette.mode === 'dark'
-                                        ? 'rgba(32, 38, 52, 0.85)'  // Lighter, more neutral dark blue
-                                        : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
+                                        ? 'rgba(32, 38, 52, 0.85)'  // Более светлый, более нейтральный темно-синий
+                                        : 'rgba(240, 245, 255, 0.9)', // Очень светлый сине-серый в светлом режиме
                                     backgroundImage: `
                                         linear-gradient(to right, ${theme.palette.mode === 'dark'
                                             ? 'rgba(160, 140, 255, 0.07)'
@@ -804,7 +802,7 @@ const ProjectViewPage = () => {
                                     `,
                                     backgroundSize: '20px 20px'
                                 }}>
-                                    {/* Canvas View - only render when it's the active view */}
+                                    {/* Просмотр Canvas - отображается только когда это активный режим */}
                                     {viewerMode === 'canvas' && (
                                         <>
                                             <Canvas
@@ -818,7 +816,7 @@ const ProjectViewPage = () => {
                                         </>
                                     )}
 
-                                    {/* Video View - added directly to main content area */}
+                                    {/* Просмотр видео - добавлен непосредственно в основную область содержимого */}
                                     {viewerMode === 'video' && videoUrl && (
                                         <Box sx={{
                                             width: '100%',
@@ -838,7 +836,7 @@ const ProjectViewPage = () => {
                                         </Box>
                                     )}
 
-                                    {/* No video message */}
+                                    {/* Сообщение об отсутствии видео */}
                                     {viewerMode === 'video' && !videoUrl && (
                                         <Box sx={{
                                             width: '100%',
@@ -859,7 +857,7 @@ const ProjectViewPage = () => {
                                 </Box>
                             </Paper>
 
-                            {/* NEW: Standalone 3D Model Dialog */}
+                            {/* НОВОЕ: Автономный диалог 3D-модели */}
                             <ModelViewerModal
                                 isOpen={modelDialogOpen}
                                 onClose={handleClose3DDialog}
@@ -869,7 +867,7 @@ const ProjectViewPage = () => {
                                 videoUrl={videoUrl}
                             />
 
-                            {/* Debug output for development - make it visible */}
+                            {/* Вывод отладочной информации для разработки - сделать видимым */}
                             {process.env.NODE_ENV !== 'production' && (
                                 <div style={{
                                     position: 'fixed',

@@ -41,7 +41,7 @@ import Navbar from '../components/Navbar';
 import ChoreographyList from '../components/ChoreographyList';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { COLORS } from '../constants/colors';  // Import COLORS from constants
+import { COLORS } from '../constants/colors';
 
 // Анимации
 const fadeIn = keyframes`
@@ -79,7 +79,7 @@ const DecorativeCircle = styled(Box)(({ size = 120, top, left, color = COLORS.pr
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
     borderRadius: '20px',
-    backgroundColor: 'rgba(17, 21, 54, 0.9)',  // Updated to match TeamManagement.js
+    backgroundColor: 'rgba(17, 21, 54, 0.9)',
     boxShadow: `0 10px 30px rgba(0, 0, 0, 0.2)`,
     border: '1px solid rgba(30, 144, 255, 0.15)',
     position: 'relative',
@@ -143,7 +143,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
-        backgroundColor: 'rgba(17, 21, 54, 0.95)',  // Updated to match TeamManagement.js
+        backgroundColor: 'rgba(17, 21, 54, 0.95)',
         color: COLORS.white,
         borderRadius: '20px',
         boxShadow: `0 10px 30px rgba(0, 0, 0, 0.4)`,
@@ -172,7 +172,7 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 const UserInfoCard = styled(Box)(({ theme }) => ({
     padding: theme.spacing(3),
     borderRadius: '20px',
-    backgroundColor: 'rgba(17, 21, 54, 0.9)',  // Updated to match TeamManagement.js
+    backgroundColor: 'rgba(17, 21, 54, 0.9)',
     border: '1px solid rgba(30, 144, 255, 0.15)',
     display: 'flex',
     flexDirection: 'column',
@@ -415,7 +415,7 @@ function Dashboard() {
     const getActionColor = (action) => {
         switch (action) {
             case 'PROJECT_CREATED':
-                return 'tertiary';  // Using MUI palette color name
+                return 'tertiary';
             case 'PROJECT_UPDATED':
                 return 'secondary';
             case 'TEAM_MEMBER_ADDED':
@@ -425,7 +425,7 @@ function Dashboard() {
             case 'TEAM_PROJECT_UPDATED':
                 return 'secondary';
             default:
-                return 'default';  // Default MUI chip color
+                return 'default';
         }
     };
 
@@ -759,7 +759,6 @@ function Dashboard() {
                 </DialogActions>
             </StyledDialog>
 
-            {/* Delete Account Confirmation Dialog */}
             <StyledDialog
                 open={openDeleteConfirm}
                 onClose={() => setOpenDeleteConfirm(false)}

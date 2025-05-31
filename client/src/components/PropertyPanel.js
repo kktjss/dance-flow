@@ -58,28 +58,28 @@ const PALETTE = {
     // Основные цвета
     primary: {
         light: COLORS.primaryLight,
-        main: COLORS.primary, // Blue-violet
+        main: COLORS.primary, // Сине-фиолетовый
         dark: '#5449A6'
     },
     secondary: {
         light: COLORS.secondaryLight,
-        main: COLORS.secondary, // Light blue
+        main: COLORS.secondary, // Светло-синий
         dark: '#0071CE'
     },
     tertiary: {
         light: COLORS.tertiaryLight,
-        main: COLORS.tertiary, // Turquoise
+        main: COLORS.tertiary, // Бирюзовый
         dark: '#2CB5B5'
     },
     // Дополнительные цвета
     teal: {
         light: '#7DEEFF',
-        main: COLORS.teal, // Teal
+        main: COLORS.teal, // Бирюзовый
         dark: '#008B9A'
     },
     accent: {
         light: '#FFE066',
-        main: COLORS.accent, // Yellow
+        main: COLORS.accent, // Желтый
         dark: '#E6C300'
     },
     // Нейтральные цвета
@@ -90,14 +90,14 @@ const PALETTE = {
     }
 };
 
-// Styled components for the PropertyPanel
+// Стилизованные компоненты для панели свойств
 const StyledSection = styled(Box)(({ theme }) => ({
     marginBottom: theme.spacing(3),
     padding: theme.spacing(2),
     borderRadius: theme.spacing(1),
     backgroundColor: theme.palette.mode === 'dark'
-        ? 'rgba(32, 38, 52, 0.7)'  // Lighter section background
-        : 'rgba(250, 252, 255, 0.8)', // Very light blue-gray
+        ? 'rgba(32, 38, 52, 0.7)'  // Более светлый фон секции
+        : 'rgba(250, 252, 255, 0.8)', // Очень светлый сине-серый
     border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`,
     transition: 'all 0.2s',
     '&:hover': {
@@ -196,7 +196,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
     const theme = useTheme();
     const [properties, setProperties] = useState(null);
 
-    // Update the local state when the selected element changes
+    // Обновляем локальное состояние, когда выбранный элемент изменяется
     useEffect(() => {
         if (selectedElement) {
             setProperties(selectedElement);
@@ -205,7 +205,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
         }
     }, [selectedElement]);
 
-    // If no element is selected, show a message
+    // Если элемент не выбран, показываем сообщение
     if (!properties) {
         return (
             <Paper sx={{
@@ -218,8 +218,8 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 backgroundColor: theme.palette.mode === 'dark'
-                    ? 'rgba(26, 32, 46, 0.85)'  // Lighter, more neutral dark blue
-                    : 'rgba(240, 245, 255, 0.9)', // Light blue-gray
+                    ? 'rgba(26, 32, 46, 0.85)'
+                    : 'rgba(240, 245, 255, 0.9)',
                 backdropFilter: 'blur(10px)',
                 border: `1px solid ${theme.palette.mode === 'dark'
                     ? 'rgba(255, 255, 255, 0.05)'
@@ -244,7 +244,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
         );
     }
 
-    // Handle changes to properties
+    // Обработка изменений свойств
     const handlePropertyChange = (name, value) => {
         // Для безопасности заменяем 'transparent' на rgba(0,0,0,0)
         if (value === 'transparent') {
@@ -306,7 +306,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
         }
     };
 
-    // Create a keyframe at the current time
+    // Создать ключевой кадр в текущее время
     const createKeyframeAtCurrentTime = () => {
         if (!selectedElement || !properties) {
             console.error('Cannot create keyframe: No element selected or properties not loaded');
@@ -315,13 +315,13 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
 
         console.log('Creating keyframe at time:', currentTime);
 
-        // VALIDATION: Check time is valid
+        // ВАЛИДАЦИЯ: Проверка валидности времени
         if (typeof currentTime !== 'number' || isNaN(currentTime) || currentTime < 0) {
             console.error('Invalid current time:', currentTime);
             return;
         }
 
-        // VALIDATION: Ensure element has valid position
+        // ВАЛИДАЦИЯ: Убедиться, что элемент имеет валидную позицию
         if (!properties.position ||
             typeof properties.position.x !== 'number' || isNaN(properties.position.x) ||
             typeof properties.position.y !== 'number' || isNaN(properties.position.y)) {
@@ -329,7 +329,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             return;
         }
 
-        // VALIDATION: Ensure opacity is valid
+        // ВАЛИДАЦИЯ: Убедиться, что прозрачность валидна
         if (!properties.style ||
             typeof properties.style.opacity !== 'number' ||
             isNaN(properties.style.opacity)) {
@@ -337,7 +337,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             return;
         }
 
-        // Create new keyframe with complete, validated properties
+        // Создаем новый ключевой кадр с полными, проверенными свойствами
         const keyframeProps = {
             time: currentTime,
             position: {
@@ -350,7 +350,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
 
         console.log('Creating new keyframe with props:', JSON.stringify(keyframeProps));
 
-        // Final validation of keyframe data
+        // Финальная проверка данных ключевого кадра
         if (isNaN(keyframeProps.time) ||
             isNaN(keyframeProps.position.x) ||
             isNaN(keyframeProps.position.y) ||
@@ -361,8 +361,8 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             return;
         }
 
-        // IMPORTANT: Create a completely new object to avoid reference issues
-        // Don't use properties directly or JSON parse/stringify which can cause issues
+        // ВАЖНО: Создаем полностью новый объект, чтобы избежать проблем с ссылками
+        // Не используем напрямую properties или JSON parse/stringify, которые могут вызвать проблемы
         const updatedElement = {
             ...selectedElement,
             position: { ...selectedElement.position },
@@ -370,7 +370,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             style: { ...selectedElement.style }
         };
 
-        // Ensure keyframes array exists and is properly initialized
+        // Убедимся, что массив ключевых кадров существует и правильно инициализирован
         if (!updatedElement.keyframes) {
             console.log('Initializing new keyframes array');
             updatedElement.keyframes = [];
@@ -378,7 +378,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             console.error(`Element has non-array keyframes: ${typeof updatedElement.keyframes}`);
             updatedElement.keyframes = [];
         } else {
-            // Make a deep copy of existing keyframes array to avoid reference issues
+            // Делаем глубокую копию существующего массива ключевых кадров, чтобы избежать проблем с ссылками
             updatedElement.keyframes = updatedElement.keyframes.map(kf => ({
                 time: kf.time,
                 position: { x: kf.position.x, y: kf.position.y },
@@ -387,27 +387,27 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             }));
         }
 
-        // Check if a keyframe already exists at this time
+        // Проверяем, существует ли уже ключевой кадр в это время
         const existingKeyframeIndex = updatedElement.keyframes.findIndex(
             kf => Math.abs(kf.time - currentTime) < 0.01
         );
 
         if (existingKeyframeIndex >= 0) {
             console.log(`Updating existing keyframe at index ${existingKeyframeIndex}`);
-            // Replace existing keyframe with new one
+            // Заменяем существующий ключевой кадр новым
             updatedElement.keyframes[existingKeyframeIndex] = keyframeProps;
         } else {
             console.log('Adding new keyframe to array');
-            // Add new keyframe
+            // Добавляем новый ключевой кадр
             updatedElement.keyframes.push(keyframeProps);
         }
 
-        // Sort keyframes by time
+        // Сортируем ключевые кадры по времени
         updatedElement.keyframes.sort((a, b) => a.time - b.time);
 
         console.log(`Element now has ${updatedElement.keyframes.length} keyframes`);
 
-        // Final validation check of all keyframes
+        // Финальная проверка всех ключевых кадров
         let allValid = true;
         updatedElement.keyframes.forEach((kf, idx) => {
             if (!kf ||
@@ -428,19 +428,19 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             return;
         }
 
-        // Create comprehensive backups
+        // Создаем комплексные резервные копии
         try {
             if (selectedElement.id && updatedElement.keyframes.length > 0) {
-                // 1. Element-specific backup
+                // 1. Резервная копия для конкретного элемента
                 const elementBackupKey = `keyframe-backup-${selectedElement.id}`;
                 localStorage.setItem(elementBackupKey, JSON.stringify(updatedElement.keyframes));
                 console.log(`Element backup created with ${updatedElement.keyframes.length} keyframes for element ${selectedElement.id}`);
 
-                // 2. For project-wide backup, we need to get existing backup or create a new one
+                // 2. Для проектной резервной копии нам нужно получить существующую копию или создать новую
                 if (window.currentProjectId) {
                     const projectBackupKey = `project-keyframes-${window.currentProjectId}`;
                     try {
-                        // Load existing backup
+                        // Загружаем существующую резервную копию
                         let projectBackup = {};
                         const existingBackup = localStorage.getItem(projectBackupKey);
 
@@ -453,13 +453,13 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                             }
                         }
 
-                        // Update with new keyframes for this element
+                        // Обновляем с новыми ключевыми кадрами для этого элемента
                         projectBackup[selectedElement.id] = updatedElement.keyframes;
 
-                        // Save updated project backup
+                        // Сохраняем обновленную проектную резервную копию
                         localStorage.setItem(projectBackupKey, JSON.stringify(projectBackup));
 
-                        // Count total keyframes in backup
+                        // Подсчитываем общее количество ключевых кадров в резервной копии
                         const totalBackupKeyframes = Object.values(projectBackup).reduce(
                             (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0
                         );
@@ -476,33 +476,33 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
             console.warn('Failed to create keyframe backup:', err);
         }
 
-        // Update the element with new keyframes
+        // Обновляем элемент с новыми ключевыми кадрами
         console.log('Updating element with new keyframes');
         onElementUpdate(updatedElement);
     };
 
-    // Delete a keyframe
+    // Удалить ключевой кадр
     const deleteKeyframe = (index) => {
-        // Create a deep copy of the properties
+        // Создаем глубокую копию свойств
         const updatedProperties = JSON.parse(JSON.stringify(properties));
 
-        // Remove the keyframe
+        // Удаляем ключевой кадр
         updatedProperties.keyframes.splice(index, 1);
 
-        // Update state and notify parent
+        // Обновляем состояние и уведомляем родителя
         setProperties(updatedProperties);
         onElementUpdate(updatedProperties);
     };
 
-    // Jump to a keyframe's time
+    // Перейти к времени ключевого кадра
     const jumpToKeyframeTime = (time) => {
-        // This will be handled by a parent component via props
+        // Это будет обрабатываться родительским компонентом через props
         if (window.jumpToTime) {
             window.jumpToTime(time);
         }
     };
 
-    // Format time in MM:SS.ms
+    // Форматировать время в ММ:СС.мс
     const formatTime = (timeInSeconds) => {
         const minutes = Math.floor(timeInSeconds / 60);
         const seconds = Math.floor(timeInSeconds % 60);
@@ -547,7 +547,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
 
             <Divider sx={{ mb: 2 }} />
 
-            {/* Basic properties */}
+            {/* Основные свойства */}
             <StyledSection>
                 <SectionTitle>
                     <TitleIcon />
@@ -612,7 +612,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                 </Grid>
             </StyledSection>
 
-            {/* Style properties */}
+            {/* Свойства стиля */}
             <StyledAccordion>
                 <StyledAccordionSummary expandIcon={<ExpandMore />}>
                     <Typography>Стиль</Typography>
@@ -708,7 +708,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                 </AccordionDetails>
             </StyledAccordion>
 
-            {/* Animation keyframes */}
+            {/* Анимация ключевых кадров */}
             <StyledAccordion defaultExpanded>
                 <StyledAccordionSummary expandIcon={<ExpandMore />}>
                     <Typography>Анимация (Ключевые кадры)</Typography>
@@ -834,7 +834,7 @@ const PropertyPanel = ({ selectedElement, onElementUpdate, currentTime }) => {
                 </AccordionDetails>
             </StyledAccordion>
 
-            {/* Element visibility timing */}
+            {/* Время видимости элемента */}
             <StyledAccordion>
                 <StyledAccordionSummary expandIcon={<ExpandMore />}>
                     <Typography>Время появления на сцене</Typography>

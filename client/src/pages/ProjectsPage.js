@@ -70,8 +70,7 @@ const ProjectsPage = () => {
         );
     }
 
-    // Пример данных для CanvasViewer (замените на реальные)
-    const exampleElements = [
+    const Elements = [
         {
             id: '1',
             type: 'rectangle',
@@ -100,7 +99,7 @@ const ProjectsPage = () => {
                     </Typography>
                     <Box sx={{ width: '100%', height: '70vh', border: '1px solid #eee', borderRadius: 2, overflow: 'hidden' }}>
                         <CanvasViewer
-                            elements={exampleElements}
+                            elements={Elements}
                             currentTime={0}
                             isPlaying={false}
                             project={{}}

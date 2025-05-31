@@ -208,7 +208,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         maxConcurrentRequests: 1, // Максимальное количество одновременных запросов к серверу
     });
 
-    // Initialize canvas sizes when video is ready - MOVED THIS FUNCTION TO THE TOP
+    // Инициализация размеров canvas когда видео готово - ПЕРЕНЕСЕНА ЭТА ФУНКЦИЯ В НАЧАЛО
     const setupCanvases = useCallback(() => {
         if (!videoRef.current) return false;
 
@@ -219,32 +219,32 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         if (canvas && video.videoWidth && video.videoHeight) {
             console.log(`Setting up canvases for native video resolution: ${video.videoWidth}x${video.videoHeight}`);
 
-            // Set the main canvas size to match video's native resolution
+            // Устанавливаем размер основного canvas соответствующим нативному разрешению видео
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
 
-            // Set the overlay canvas size to match video's native resolution
+            // Устанавливаем размер оверлейного canvas соответствующим нативному разрешению видео
             if (overlay) {
-                // Always use the original video dimensions for the canvas size
+                // Всегда используем исходные размеры видео для размера canvas
                 overlay.width = video.videoWidth;
                 overlay.height = video.videoHeight;
 
                 console.log(`Overlay canvas set to: ${overlay.width}x${overlay.height}`);
             }
 
-            // Log current video status to help with debugging
+            // Логируем текущий статус видео для помощи с отладкой
             console.log(`Video status: currentTime=${video.currentTime}s, paused=${video.paused}, readyState=${video.readyState}`);
 
-            return true; // Return true if setup was successful
+            return true; // Возвращаем true, если настройка прошла успешно
         } else {
-            // Log error information if setup failed
+            // Логируем информацию об ошибке, если настройка не удалась
             console.warn(`Canvas setup failed: video dimensions not available (${video.videoWidth}x${video.videoHeight})`);
 
             if (video.readyState < 2) {
                 console.warn(`Video not ready yet, readyState=${video.readyState}`);
             }
 
-            return false; // Return false if setup failed
+            return false; // Возвращаем false, если настройка не удалась
         }
     }, []);
 
@@ -545,26 +545,26 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
             const startTime = performance.now();
 
-            // Use the queue to manage the request
+            // Используем очередь для управления запросом
             const result = await requestQueue.current.add(makeRequest);
 
             const processingTime = performance.now() - startTime;
             lastProcessingDuration.current = processingTime;
 
-            // Only process result if we're still in the right mode
+            // Обрабатываем результат только если мы все еще в правильном режиме
             if (isDancerSelectionMode || videoRef.current.paused) {
-                // Set smart frame skipping based on processing time
+                // Устанавливаем умный пропуск кадров на основе времени обработки
                 if (settings.smartSkipping) {
                     const skipFrames = Math.floor(processingTime / computedSettings.frameInterval);
-                    framesToSkip.current = Math.min(5, skipFrames); // Cap at 5 frames to skip
+                    framesToSkip.current = Math.min(5, skipFrames); // Ограничиваем 5 кадрами для пропуска
                 }
 
-                // Handle response
+                // Обрабатываем ответ
                 if (result.image && canvasRef.current && overlayCanvasRef.current) {
-                    // Create image from response
+                    // Создаем изображение из ответа
                     const img = new Image();
                     img.onload = () => {
-                        // Only draw if we're still in dancer selection mode
+                        // Рисуем только если мы все еще в режиме выбора танцора
                         if (!isDancerSelectionMode && !videoRef.current.paused) return;
 
                         const overlay = overlayCanvasRef.current;
@@ -575,7 +575,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                         ctx.drawImage(img, 0, 0, overlay.width, overlay.height);
                     };
 
-                    // Set image source with error handling
+                    // Устанавливаем источник изображения с обработкой ошибок
                     img.onerror = (err) => {
                         console.error("Failed to load image:", err);
                     };
@@ -583,12 +583,12 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     img.src = result.image;
                 }
 
-                // Process landmarks
+                // Обрабатываем ключевые точки
                 if (result.poses && result.poses.length > 0) {
                     setCurrentPoses(result.poses);
                     lastDetectedPoses.current = result.poses;
 
-                    // Handle selected pose if provided
+                    // Обрабатываем выбранную позу, если предоставлена
                     if (result.selected_pose_index !== undefined) {
                         setSelectedPerson(result.selected_pose_index);
                         if (onPersonSelected) {
@@ -605,18 +605,18 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }
     };
 
-    // Optimized pose similarity calculation with caching
+    // Оптимизированный расчет схожести поз с кэшированием
     const calculatePoseSimilarity = (pose1, pose2) => {
         if (!pose1 || !pose2) return 0;
 
-        // Create a cache key
+        // Создаем ключ кэша
         const keypoints1 = JSON.stringify(pose1.keypoints.map(kp => [Math.round(kp.x), Math.round(kp.y), kp.score > 0.5 ? 1 : 0]));
         const keypoints2 = JSON.stringify(pose2.keypoints.map(kp => [Math.round(kp.x), Math.round(kp.y), kp.score > 0.5 ? 1 : 0]));
 
         const cacheKey = keypoints1 + '|' + keypoints2;
         const reverseCacheKey = keypoints2 + '|' + keypoints1;
 
-        // Check cache
+        // Проверяем кэш
         if (poseSimilarityCache.current.has(cacheKey)) {
             return poseSimilarityCache.current.get(cacheKey);
         }
@@ -625,14 +625,14 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             return poseSimilarityCache.current.get(reverseCacheKey);
         }
 
-        // Calculate similarity if not in cache
+        // Вычисляем схожесть, если нет в кэше
         let totalScore = 0;
         let validPoints = 0;
         let importantPointsScore = 0;
         let importantPointsCount = 0;
 
-        // Define important keypoints for tracking (shoulders, hips, head)
-        const importantIndices = [0, 11, 12, 23, 24]; // assuming these are the indices for head, shoulders, hips
+        // Определяем важные ключевые точки для отслеживания (плечи, бедра, голова)
+        const importantIndices = [0, 11, 12, 23, 24]; // предполагаем, что это индексы для головы, плеч, бедер
 
         pose1.keypoints.forEach((kp1, i) => {
             const kp2 = pose2.keypoints[i];
@@ -642,7 +642,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 const dx = kp1.x - kp2.x;
                 const dy = kp1.y - kp2.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                const similarity = Math.max(0, 1 - distance / 120);  // Adjusted normalization
+                const similarity = Math.max(0, 1 - distance / 120);  // Скорректированная нормализация
 
                 totalScore += similarity;
                 validPoints++;
@@ -654,17 +654,17 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             }
         });
 
-        // Calculate overall similarity with emphasis on important points
+        // Вычисляем общую схожесть с акцентом на важные точки
         let finalScore = 0;
         if (validPoints > 0) {
             const regularScore = totalScore / validPoints;
             const importantScore = importantPointsCount > 0 ? importantPointsScore / importantPointsCount : 0;
-            finalScore = regularScore * 0.4 + importantScore * 0.6;  // Weight important points higher
+            finalScore = regularScore * 0.4 + importantScore * 0.6;  // Придаем больший вес важным точкам
         }
 
-        // Cache the result (limit cache size to prevent memory issues)
+        // Кэшируем результат (ограничиваем размер кэша для предотвращения проблем с памятью)
         if (poseSimilarityCache.current.size > 1000) {
-            // Clear half the cache when it gets too large
+            // Очищаем половину кэша, когда он становится слишком большим
             const keys = Array.from(poseSimilarityCache.current.keys());
             keys.slice(0, 500).forEach(key => poseSimilarityCache.current.delete(key));
         }
@@ -673,7 +673,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         return finalScore;
     };
 
-    // Video processing setup - OPTIMIZED to only activate processing in dancer selection mode
+    // Настройка обработки видео - ОПТИМИЗИРОВАНО для активации обработки только в режиме выбора танцора
     useEffect(() => {
         if (!videoRef.current || !canvasRef.current || !isVideoReady) {
             return;
@@ -684,13 +684,13 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         const handlePlay = () => {
             console.log('Video started playing');
 
-            // Clean the overlay on playback start
+            // Очищаем оверлей при начале воспроизведения
             if (overlayCanvasRef.current) {
                 const ctx = overlayCanvasRef.current.getContext('2d');
                 ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
             }
 
-            // Disable automatic frame processing - only process on click
+            // Отключаем автоматическую обработку кадров - обрабатываем только по клику
             isProcessingRef.current = false;
             setIsProcessing(false);
 
@@ -699,7 +699,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 animationFrameRef.current = null;
             }
 
-            // If in dancer selection mode, pause the video
+            // Если в режиме выбора танцора, ставим видео на паузу
             if (isDancerSelectionMode && !video.paused) {
                 video.pause();
                 pausedForSelectionRef.current = true;
@@ -712,19 +712,19 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             // При паузе НЕ начинаем обрабатывать кадры автоматически
             console.log('Video paused');
 
-            // If in dancer selection mode, make sure canvases are set up for capture
+            // Если в режиме выбора танцора, убеждаемся, что canvas готов для захвата
             if (isDancerSelectionMode) {
-                console.log('Video paused in dancer selection mode, preparing canvas for frame capture');
+                console.log('Видео поставлено на паузу извне в режиме выбора танцора, подготавливаем canvas');
                 setTimeout(() => {
                     setupCanvases();
-                }, 50); // Small delay to ensure the video is fully paused
+                }, 50); // Небольшая задержка, чтобы убедиться, что видео полностью остановлено
             }
         };
 
         const handleEnded = () => {
             console.log('Video ended');
 
-            // Clear any overlays
+            // Очищаем все оверлеи
             if (overlayCanvasRef.current) {
                 const ctx = overlayCanvasRef.current.getContext('2d');
                 ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
@@ -742,18 +742,18 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         video.addEventListener('pause', handlePause);
         video.addEventListener('ended', handleEnded);
 
-        // Add timeupdate listener to handle long videos
+        // Добавляем слушатель timeupdate для обработки длинных видео
         const handleTimeUpdate = () => {
-            // This event fires regularly during playback
-            // For long videos, this confirms the video is still playing
+            // Это событие срабатывает регулярно во время воспроизведения
+            // Для длинных видео это подтверждает, что видео все еще воспроизводится
             if (video.currentTime > 0 && !video.paused) {
-                // Video is playing successfully
+                // Видео успешно воспроизводится
             }
 
-            // If in dancer selection mode and video is paused, ensure canvas is ready
-            // This helps when the video has been seeked to a different position
+            // Если в режиме выбора танцора и видео на паузе, убеждаемся, что canvas готов
+            // Это помогает, когда видео было перемотано на другую позицию
             if (isDancerSelectionMode && video.paused) {
-                // Only update if it's been a while since the last update or if seek was requested
+                // Обновляем только если прошло время с последнего обновления или если была запрошена перемотка
                 if (seekRequested.current) {
                     console.log(`Video seeked to ${video.currentTime}s, updating canvas for frame capture`);
                     setupCanvases();
@@ -777,7 +777,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         };
     }, [isVideoReady, isDancerSelectionMode, setupCanvases]);
 
-    // React to changes in dancer selection mode
+    // Реагируем на изменения в режиме выбора танцора
     useEffect(() => {
         if (!videoRef.current) return;
 
@@ -786,20 +786,20 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         const video = videoRef.current;
 
         if (isDancerSelectionMode) {
-            // Entering dancer selection mode
+            // Входим в режим выбора танцора
 
-            // If video is playing, pause it
+            // Если видео воспроизводится, ставим на паузу
             if (!video.paused) {
                 video.pause();
                 pausedForSelectionRef.current = true;
             }
 
-            // Make sure canvases are set up with correct dimensions when entering dancer selection mode
-            // This ensures we're ready to capture the current frame
+            // Убеждаемся, что canvas настроены с правильными размерами при входе в режим выбора танцора
+            // Это гарантирует, что мы готовы захватить текущий кадр
             setTimeout(() => {
                 const setupSuccess = setupCanvases();
                 console.log(`Canvas setup in dancer selection mode: ${setupSuccess ? 'successful' : 'failed'}`);
-            }, 100); // Small delay to ensure video is fully paused
+            }, 100); // Небольшая задержка, чтобы убедиться, что видео полностью остановлено
 
             // ВАЖНО: Не начинаем автоматическую обработку кадров в режиме выбора танцора
             // Обработка будет запускаться ТОЛЬКО по клику пользователя
@@ -822,9 +822,9 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             setShowMessage(true);
             setTimeout(() => setShowMessage(false), 5000);
         } else {
-            // Exiting dancer selection mode
+            // Выходим из режима выбора танцора
 
-            // Stop processing to save resources
+            // Останавливаем обработку для экономии ресурсов
             isProcessingRef.current = false;
             setIsProcessing(false);
 
@@ -833,7 +833,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 animationFrameRef.current = null;
             }
 
-            // Reset pause flag
+            // Сбрасываем флаг паузы
             pausedForSelectionRef.current = false;
 
             // ВАЖНО: Явно очищаем оверлей при выходе из режима выбора танцора
@@ -849,7 +849,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
     // Обработчик клика по canvas - ТОЛЬКО здесь запускаем обработку кадра для выбора танцора
     const handleCanvasClick = useCallback(async (event) => {
-        // Only process clicks in dancer selection mode and when video is paused
+        // Обрабатываем клики только в режиме выбора танцора и когда видео на паузе
         if (!isDancerSelectionMode || !videoRef.current || !videoRef.current.paused) {
             return;
         }
@@ -863,25 +863,25 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             const overlay = overlayCanvasRef.current;
 
             if (!video || !canvas || !overlay) {
-                throw new Error("Video or canvas elements not available");
+                throw new Error("Элементы видео или canvas недоступны");
             }
 
-            // Make sure canvas is properly set up with correct dimensions
-            // This ensures we're working with the current video dimensions
+            // Убеждаемся, что canvas правильно настроен с корректными размерами
+            // Это гарантирует, что мы работаем с текущими размерами видео
             setupCanvases();
 
             // Очищаем предыдущие результаты
             const overlayCtx = overlay.getContext('2d');
             overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
 
-            // Get overlay position and dimensions
+            // Получаем позицию и размеры оверлея
             const overlayRect = overlay.getBoundingClientRect();
 
-            // Get original video dimensions
+            // Получаем исходные размеры видео
             const videoWidth = video.videoWidth;
             const videoHeight = video.videoHeight;
 
-            // Calculate the actual displayed video dimensions within the overlay
+            // Вычисляем фактические отображаемые размеры видео внутри оверлея
             const containerWidth = overlayRect.width;
             const containerHeight = overlayRect.height;
             const videoAspect = videoWidth / videoHeight;
@@ -890,40 +890,40 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             let displayedWidth, displayedHeight, offsetX = 0, offsetY = 0;
 
             if (containerAspect > videoAspect) {
-                // Video height is constrained to container height
+                // Высота видео ограничена высотой контейнера
                 displayedHeight = containerHeight;
                 displayedWidth = displayedHeight * videoAspect;
-                // Calculate left offset for centering
+                // Вычисляем левое смещение для центрирования
                 offsetX = (containerWidth - displayedWidth) / 2;
             } else {
-                // Video width is constrained to container width
+                // Ширина видео ограничена шириной контейнера
                 displayedWidth = containerWidth;
                 displayedHeight = displayedWidth / videoAspect;
-                // Calculate top offset for centering
+                // Вычисляем верхнее смещение для центрирования
                 offsetY = (containerHeight - displayedHeight) / 2;
             }
 
-            // Calculate click position relative to the video display area
+            // Вычисляем позицию клика относительно области отображения видео
             const clickX = event.clientX - overlayRect.left - offsetX;
             const clickY = event.clientY - overlayRect.top - offsetY;
 
-            // Convert click position to video coordinates
+            // Преобразуем позицию клика в координаты видео
             const videoX = (clickX / displayedWidth) * videoWidth;
             const videoY = (clickY / displayedHeight) * videoHeight;
 
-            console.log(`Click at client (${event.clientX}, ${event.clientY})`);
-            console.log(`Video display: ${displayedWidth}x${displayedHeight} with offset (${offsetX}, ${offsetY})`);
-            console.log(`Mapped to video coordinates: (${videoX}, ${videoY})`);
+            console.log(`Клик в клиентских координатах (${event.clientX}, ${event.clientY})`);
+            console.log(`Отображение видео: ${displayedWidth}x${displayedHeight} со смещением (${offsetX}, ${offsetY})`);
+            console.log(`Преобразовано в координаты видео: (${videoX}, ${videoY})`);
 
-            // Skip if the click is outside the video display area
+            // Пропускаем, если клик за пределами области отображения видео
             if (clickX < 0 || clickX > displayedWidth || clickY < 0 || clickY > displayedHeight) {
-                console.log("Click outside of video area");
+                console.log("Клик за пределами области видео");
                 setIsProcessing(false);
                 setShowMessage(false);
                 return;
             }
 
-            // Ensure video frame is captured to canvas with correct dimensions
+            // Убеждаемся, что кадр видео захвачен на canvas с правильными размерами
             canvas.width = videoWidth;
             canvas.height = videoHeight;
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -931,18 +931,18 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             // Очищаем канвас перед рисованием
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the CURRENT video frame on canvas
-            // This ensures we get the frame that's currently paused
-            console.log(`Drawing current paused frame at time ${video.currentTime}s`);
+            // Рисуем ТЕКУЩИЙ кадр видео на canvas
+            // Это гарантирует, что мы получаем кадр, который сейчас на паузе
+            console.log(`Рисуем текущий кадр на паузе, время ${video.currentTime}s`);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Convert canvas to blob for API request with proper BGR encoding
+            // Преобразуем canvas в blob для API-запроса с правильной BGR кодировкой
             const blob = await new Promise(resolve => {
                 canvas.toBlob(resolve, 'image/jpeg', 0.95);
             });
 
-            // Send request to backend for pose detection with click coordinates
-            console.log("Sending request for pose detection...");
+            // Отправляем запрос на бэкенд для определения поз с координатами клика
+            console.log("Отправляем запрос для определения поз...");
             const result = await requestQueue.current.add(() =>
                 processVideoFrame(blob, {
                     overlay: true,
@@ -952,32 +952,32 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 })
             );
 
-            console.log("Got result from server:", result);
+            console.log("Получен результат от сервера:", result);
 
             if (result.error) {
-                console.error("Server returned error:", result.error);
+                console.error("Сервер вернул ошибку:", result.error);
                 throw new Error(result.error);
             }
 
-            // Check if poses were detected
+            // Проверяем, были ли обнаружены позы
             if (result.poses && result.poses.length > 0) {
-                console.log(`Detected ${result.poses.length} poses, selected index: ${result.selected_pose_index}`);
+                console.log(`Обнаружено ${result.poses.length} поз, выбранный индекс: ${result.selected_pose_index}`);
                 const poses = result.poses;
                 setCurrentPoses(poses);
 
-                // Get the selected pose if available
+                // Получаем выбранную позу, если доступна
                 if (result.selected_pose_index !== undefined) {
                     const selectedPose = result.selected_pose_index;
-                    console.log("Selected pose:", selectedPose);
+                    console.log("Выбранная поза:", selectedPose);
                     setSelectedPerson(selectedPose);
 
                     if (onPersonSelected) {
                         onPersonSelected(selectedPose);
                     }
 
-                    // Draw the pose overlay
+                    // Рисуем оверлей позы
                     if (result.image) {
-                        console.log("Drawing pose overlay from server image");
+                        console.log("Рисуем оверлей позы из изображения сервера");
                         const img = new Image();
                         img.onload = () => {
                             if (!overlayCanvasRef.current) return;
@@ -986,30 +986,30 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                             ctx.drawImage(img, 0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
                         };
                         img.onerror = (err) => {
-                            console.error("Failed to load pose overlay image:", err);
+                            console.error("Не удалось загрузить изображение оверлея позы:", err);
                         };
                         img.src = result.image;
                     } else {
-                        console.warn("No image data in result");
+                        console.warn("Нет данных изображения в результате");
                     }
 
                     setShowMessage(false);
                 } else {
-                    // No pose was close to the click point
-                    console.warn("No pose selected near click point");
+                    // Ни одна поза не была близка к точке клика
+                    console.warn("Возле точки клика не выбрана ни одна поза");
                     setShowMessage(true);
                     setTimeout(() => setShowMessage(false), 3000);
                 }
             } else {
-                // No poses detected
-                console.warn("No poses detected in the frame");
+                // Позы не обнаружены
+                console.warn("В кадре не обнаружены позы");
                 setCurrentPoses([]);
                 setSelectedPerson(null);
                 setShowMessage(true);
                 setTimeout(() => setShowMessage(false), 3000);
             }
         } catch (error) {
-            console.error("Error processing click:", error);
+            console.error("Ошибка при обработке клика:", error);
             setShowMessage(true);
             setTimeout(() => setShowMessage(false), 3000);
         } finally {
@@ -1017,57 +1017,57 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }
     }, [isDancerSelectionMode, onPersonSelected, settings.resizeEnabled, setupCanvases]);
 
-    // Initialize video element with proper error handling
+    // Инициализируем элемент видео с правильной обработкой ошибок
     useEffect(() => {
         if (!videoRef.current || !videoUrl) return;
 
         const video = videoRef.current;
         console.log('Setting up video with URL:', videoUrl);
 
-        // Reset error state
+        // Сбрасываем состояние ошибки
         setVideoError(null);
         videoLoadAttempts.current = 0;
 
-        // Configure video element
-        video.crossOrigin = "anonymous"; // Enable CORS
+        // Настраиваем элемент видео
+        video.crossOrigin = "anonymous"; // Включаем CORS
         video.preload = "auto";
         video.playsInline = true;
-        video.muted = true; // Mute to allow autoplay
+        video.muted = true; // Отключаем звук для разрешения автовоспроизведения
 
-        // Set up error handling
+        // Настраиваем обработку ошибок
         const handleError = (error) => {
             console.error('Video error:', error);
             setVideoError(error);
 
-            // Try to recover
+            // Пытаемся восстановиться
             if (videoLoadAttempts.current < 3) {
                 videoLoadAttempts.current++;
-                console.log(`Retrying video load (attempt ${videoLoadAttempts.current})`);
+                console.log(`Повтор загрузки видео (попытка ${videoLoadAttempts.current})`);
                 setTimeout(() => {
                     video.load();
                 }, 1000 * videoLoadAttempts.current);
             }
         };
 
-        // Set up load handling
+        // Настраиваем обработку загрузки
         const handleLoad = () => {
-            console.log('Video loaded successfully');
+            console.log('VideoAnalyzer: Видео успешно загружено');
             setIsVideoReady(true);
             if (onVideoLoaded) {
                 onVideoLoaded(video);
             }
         };
 
-        // Add event listeners
+        // Добавляем слушатели событий
         video.addEventListener('error', handleError);
         video.addEventListener('loadeddata', handleLoad);
         video.addEventListener('canplay', handleLoad);
 
-        // Load video
+        // Загружаем видео
         video.src = videoUrl;
         video.load();
 
-        // Cleanup
+        // Очистка
         return () => {
             video.removeEventListener('error', handleError);
             video.removeEventListener('loadeddata', handleLoad);
@@ -1077,27 +1077,27 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         };
     }, [videoUrl, onVideoLoaded]);
 
-    // Respond to external playback controls
+    // Реагируем на внешние элементы управления воспроизведением
     useEffect(() => {
         const video = videoRef.current;
         if (!video || !isVideoReady) return;
 
-        // Synchronize playback state if needed
+        // Синхронизируем состояние воспроизведения при необходимости
         if (typeof isPlaying === 'boolean') {
             if (isPlaying && video.paused) {
-                console.log('VideoAnalyzer: External play command received');
+                console.log('VideoAnalyzer: Получена внешняя команда воспроизведения');
                 manualPlayRequest.current = true;
                 video.play().catch(e => {
-                    console.error('Failed to play video:', e);
+                    console.error('Не удалось воспроизвести видео:', e);
                     manualPlayRequest.current = false;
                 });
             } else if (!isPlaying && !video.paused) {
-                console.log('VideoAnalyzer: External pause command received');
+                console.log('VideoAnalyzer: Получена внешняя команда паузы');
                 video.pause();
 
-                // If in dancer selection mode, make sure canvas is ready for frame capture
+                // Если в режиме выбора танцора, make sure canvas is ready for frame capture
                 if (isDancerSelectionMode) {
-                    console.log('Video externally paused in dancer selection mode, preparing canvas');
+                    console.log('Видео поставлено на паузу извне в режиме выбора танцора, подготавливаем canvas');
                     setTimeout(() => {
                         setupCanvases();
                     }, 50); // Small delay to ensure the video is fully paused
@@ -1105,19 +1105,19 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             }
         }
 
-        // Synchronize time position if needed
+        // Синхронизируем позицию времени при необходимости
         if (typeof currentTime === 'number' && Math.abs(video.currentTime - currentTime) > 0.5) {
-            console.log(`VideoAnalyzer: External seek command received to ${currentTime}s`);
+            console.log(`VideoAnalyzer: Получена внешняя команда перемотки на ${currentTime}с`);
             seekRequested.current = true;
 
-            // If the video is already loaded enough, seek immediately
+            // Если видео уже достаточно загружено, перематываем немедленно
             if (video.readyState >= 3) {
                 try {
                     video.currentTime = currentTime;
 
-                    // If in dancer selection mode and video is paused, ensure canvas is ready after seek
+                    // Если в режиме выбора танцора и видео на паузе, ensure canvas is ready after seek
                     if (isDancerSelectionMode && video.paused) {
-                        console.log('Video externally seeked in dancer selection mode, preparing canvas');
+                        console.log('Видео перемотано извне в режиме выбора танцора, подготавливаем canvas');
                         setTimeout(() => {
                             setupCanvases();
                         }, 100); // Longer delay after seek to ensure video frame is loaded
@@ -1125,28 +1125,28 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
                     seekRequested.current = false;
                 } catch (err) {
-                    console.error('Error during immediate seek:', err);
+                    console.error('Ошибка при немедленной перемотке:', err);
                 }
             }
             // Otherwise the timeupdate handler will handle it
         }
     }, [isPlaying, currentTime, isVideoReady, isDancerSelectionMode, setupCanvases]);
 
-    // Update selected person from external props
+    // Обновляем выбранного человека из внешних props
     useEffect(() => {
         if (externalSelectedPerson !== undefined) {
             setSelectedPerson(externalSelectedPerson);
         }
     }, [externalSelectedPerson]);
 
-    // Check if the component has a method to properly notify when video is loaded
+    // Проверяем, есть ли у компонента метод для правильного уведомления, когда видео загружено
     useEffect(() => {
         if (videoRef.current) {
-            // Add event listener for 'loadeddata' event to know when video is fully loaded
+            // Добавляем слушатель события 'loadeddata', чтобы знать, когда видео полностью загружено
             const videoElement = videoRef.current;
 
             const handleVideoLoaded = () => {
-                console.log('VideoAnalyzer: Video loaded successfully');
+                console.log('VideoAnalyzer: Видео успешно загружено');
                 if (onVideoLoaded) {
                     onVideoLoaded(videoRef.current);
                 }
@@ -1154,7 +1154,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
             videoElement.addEventListener('loadeddata', handleVideoLoaded);
 
-            // Also add canplay event as a fallback
+            // Также добавляем событие canplay в качестве резервного варианта
             videoElement.addEventListener('canplay', handleVideoLoaded);
 
             return () => {
@@ -1164,47 +1164,47 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }
     }, [videoRef, onVideoLoaded]);
 
-    // Handle video quality changes
+    // Обрабатываем изменения качества видео
     useEffect(() => {
         if (videoRef.current) {
             const videoElement = videoRef.current;
 
-            // Set video quality based on the prop
+            // Устанавливаем качество видео на основе prop
             if (videoQuality === 'high') {
                 videoElement.setAttribute('controls', '');
                 videoElement.style.objectFit = 'contain';
 
-                // For high quality playback of long videos
-                if (videoElement.duration > 180) { // longer than 3 minutes
-                    // Lower buffer settings for high quality to avoid memory issues
+                // Для высококачественного воспроизведения длинных видео
+                if (videoElement.duration > 180) { // длиннее 3 минут
+                    // Понижаем настройки буфера для высокого качества, чтобы избежать проблем с памятью
                     videoElement.preload = 'auto';
                 } else {
-                    // Regular settings for shorter videos
+                    // Обычные настройки для коротких видео
                     videoElement.preload = 'auto';
                 }
             } else {
-                // For low quality, reduce resolution and remove controls
+                // Для низкого качества уменьшаем разрешение и убираем элементы управления
                 videoElement.removeAttribute('controls');
                 videoElement.style.objectFit = 'cover';
 
-                // Set lower resolution for performance
+                // Устанавливаем более низкое разрешение для производительности
                 if (videoElement.videoWidth > 640) {
                     videoElement.style.width = '640px';
                 }
 
-                // Use different buffer strategy for long videos in low quality mode
+                // Используем другую стратегию буферизации для длинных видео в режиме низкого качества
                 if (videoElement.duration > 180) {
                     videoElement.preload = 'auto';
                 }
             }
 
-            console.log('VideoAnalyzer: Video quality set to', videoQuality);
+            console.log('VideoAnalyzer: Качество видео установлено на', videoQuality);
         }
     }, [videoQuality, videoRef]);
 
     return (
         <div className="video-analyzer" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
-            {/* Video element with optimized settings for long videos */}
+            {/* Элемент видео с оптимизированными настройками для длинных видео */}
             <video
                 ref={videoRef}
                 src={videoUrl}
@@ -1222,18 +1222,18 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     pointerEvents: isDancerSelectionMode ? 'none' : 'auto',
                     display: videoError ? 'none' : 'block'
                 }}
-                // Performance optimization attributes for long videos
+                // Атрибуты оптимизации производительности для длинных видео
                 playsInline
                 preload="auto"
                 controlsList="nodownload"
                 onContextMenu={(e) => e.preventDefault()}
-                // Add important attributes for optimized video playback
+                // Добавляем важные атрибуты для оптимизированного воспроизведения видео
                 disablePictureInPicture
                 disableRemotePlayback
                 muted
             />
 
-            {/* Show error message if video fails to load */}
+            {/* Показываем сообщение об ошибке, если видео не удалось загрузить */}
             {videoError && (
                 <div style={{
                     position: 'absolute',
@@ -1272,13 +1272,13 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 </div>
             )}
 
-            {/* Hidden canvas for processing frames */}
+            {/* Скрытый canvas для обработки кадров */}
             <canvas
                 ref={canvasRef}
                 style={{ display: 'none' }}
             />
 
-            {/* Overlay canvas for displaying pose detection */}
+            {/* Оверлейный canvas для отображения обнаружения поз */}
             <canvas
                 ref={overlayCanvasRef}
                 onClick={handleCanvasClick}
@@ -1296,7 +1296,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 }}
             />
 
-            {/* Instruction overlay in dancer selection mode */}
+            {/* Оверлей с инструкциями в режиме выбора танцора */}
             {isDancerSelectionMode && (
                 <div
                     style={{
@@ -1313,11 +1313,11 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                         zIndex: 10
                     }}
                 >
-                    Click on a dancer to select them
+                    Нажмите на танцора, чтобы выбрать его
                 </div>
             )}
 
-            {/* Processing or error message */}
+            {/* Сообщение о обработке или ошибке */}
             {showMessage && (
                 <div
                     style={{
@@ -1334,8 +1334,8 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     }}
                 >
                     {isProcessing ?
-                        'Processing...' :
-                        currentPoses.length ? 'No dancer found at click position' : 'No dancers detected'}
+                        'Обработка...' :
+                        currentPoses.length ? 'Танцор не найден в месте клика' : 'Танцоры не обнаружены'}
                 </div>
             )}
         </div>

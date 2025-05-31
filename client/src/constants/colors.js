@@ -1,4 +1,3 @@
-// Define app colors
 export const COLORS = {
     primary: '#6A5ACD',        // Сине-фиолетовый (основной)
     primaryLight: '#7B68EE',   // Светлее сине-фиолетового

@@ -1,8 +1,142 @@
 import React, { useState, useEffect } from 'react';
-import './ProjectsList.css';
-import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, IconButton, Snackbar, Alert, TextField, Typography, Box, Tooltip, Chip, CircularProgress } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, IconButton, Snackbar, Alert, TextField, Typography, Box, Tooltip, Chip, CircularProgress, Paper } from '@mui/material';
 import { Delete, Edit, AccessTime, FolderOpen, Description, ErrorOutline, ArrowBack } from '@mui/icons-material';
 import { projectService } from '../services/api';
+
+// Стили компонента
+const styles = {
+    container: {
+        backgroundColor: 'rgba(32, 38, 52, 0.95)',
+        borderRadius: '16px',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)',
+        width: '80%',
+        maxWidth: '1200px',
+        maxHeight: '80vh',
+        margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        zIndex: 1000,
+        overflow: 'hidden',
+        border: '1px solid rgba(255, 255, 255, 0.05)'
+    },
+    header: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px 24px',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+    },
+    closeButton: {
+        background: 'none',
+        border: 'none',
+        color: 'rgba(255, 255, 255, 0.7)',
+        fontSize: '24px',
+        cursor: 'pointer',
+        width: '36px',
+        height: '36px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '50%',
+        transition: 'all 0.2s',
+        '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            color: 'white'
+        }
+    },
+    projectsGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: '20px',
+        padding: '24px',
+        overflowY: 'auto',
+        maxHeight: 'calc(80vh - 70px)'
+    },
+    projectCard: {
+        backgroundColor: 'rgba(43, 51, 70, 0.7)',
+        borderRadius: '12px',
+        padding: '16px',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&:hover': {
+            backgroundColor: 'rgba(51, 59, 81, 0.9)',
+            transform: 'translateY(-3px)',
+            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.2)'
+        }
+    },
+    projectTitle: {
+        fontSize: '18px',
+        fontWeight: 600,
+        marginBottom: '8px',
+        color: 'white',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+    },
+    projectDescription: {
+        fontSize: '14px',
+        color: 'rgba(255, 255, 255, 0.7)',
+        marginBottom: '12px',
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+        position: 'relative'
+    },
+    projectInfo: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '8px',
+        marginBottom: '12px'
+    },
+    projectDate: {
+        fontSize: '12px',
+        color: 'rgba(255, 255, 255, 0.5)',
+        display: 'flex',
+        alignItems: 'center'
+    },
+    projectActions: {
+        position: 'absolute',
+        top: '12px',
+        right: '12px',
+        display: 'flex',
+        gap: '4px',
+        opacity: 0,
+        transition: 'opacity 0.2s',
+        '$projectCard:hover &': {
+            opacity: 1
+        }
+    },
+    statusContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '300px',
+        color: 'rgba(255, 255, 255, 0.7)'
+    },
+    // Особая обработка для hover-эффекта действий проекта
+    projectCardWithActions: {
+        '& .project-actions': {
+            opacity: 0,
+            transition: 'opacity 0.2s'
+        },
+        '&:hover .project-actions': {
+            opacity: 1
+        }
+    },
+    backButton: {
+        color: 'rgba(255, 255, 255, 0.7)',
+        '&:hover': {
+            color: 'white',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+        }
+    }
+};
 
 const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) => {
     const [projects, setProjects] = useState([]);
@@ -35,34 +169,45 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
 
     const handleProjectSelect = (projectId) => {
         console.log('Selected project ID:', projectId);
-        onSelectProject(projectId);
+        // Проверяем, является ли projectId объектом, и если да, извлекаем ID
+        if (typeof projectId === 'object' && projectId !== null) {
+            const id = projectId._id || projectId.id;
+            if (id) {
+                console.log('Extracted ID from project object:', id);
+                onSelectProject(id);
+            } else {
+                console.error('Could not extract ID from project object:', projectId);
+            }
+        } else {
+            onSelectProject(projectId);
+        }
         setShowProjects(false);
     };
 
-    // Function to open delete confirmation dialog
+    // Функция для открытия диалога подтверждения удаления
     const openDeleteConfirm = (e, project) => {
-        e.stopPropagation(); // Prevent card click event
+        e.stopPropagation(); // Предотвращаем событие клика по карточке
         setProjectToDelete(project);
         setDeleteConfirmOpen(true);
     };
 
-    // Function to close delete confirmation dialog
+    // Функция для закрытия диалога подтверждения удаления
     const closeDeleteConfirm = () => {
         setDeleteConfirmOpen(false);
         setProjectToDelete(null);
     };
 
-    // Function to delete a project
+    // Функция для удаления проекта
     const handleDeleteProject = async () => {
         if (!projectToDelete) return;
 
         try {
             await projectService.deleteProject(projectToDelete.id);
 
-            // Update projects list
+            // Обновляем список проектов
             setProjects(projects.filter(p => p.id !== projectToDelete.id));
 
-            // Show success notification
+            // Показываем уведомление об успехе
             setNotification({
                 open: true,
                 message: `Проект "${projectToDelete.name}" успешно удален`,
@@ -73,7 +218,7 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
         } catch (err) {
             console.error('Error deleting project:', err);
 
-            // Show error notification
+            // Показываем уведомление об ошибке
             setNotification({
                 open: true,
                 message: `Ошибка при удалении проекта: ${err.message}`,
@@ -84,9 +229,9 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
         }
     };
 
-    // Function to open edit dialog
+    // Функция для открытия диалога редактирования
     const openEditDialog = (e, project) => {
-        e.stopPropagation(); // Prevent card click event
+        e.stopPropagation(); // Предотвращаем событие клика по карточке
         setProjectToEdit(project);
         setEditFormData({
             name: project.name || '',
@@ -95,13 +240,13 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
         setEditDialogOpen(true);
     };
 
-    // Function to close edit dialog
+    // Функция для закрытия диалога редактирования
     const closeEditDialog = () => {
         setEditDialogOpen(false);
         setProjectToEdit(null);
     };
 
-    // Handle form input changes
+    // Обработка изменений в полях формы
     const handleEditInputChange = (e) => {
         const { name, value } = e.target;
         setEditFormData({
@@ -110,21 +255,21 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
         });
     };
 
-    // Function to save project changes
+    // Функция для сохранения изменений проекта
     const handleSaveProject = async () => {
         if (!projectToEdit) return;
 
         try {
             await projectService.updateProject(projectToEdit.id, editFormData);
 
-            // Update projects list with edited project
+            // Обновляем список проектов с отредактированным проектом
             setProjects(projects.map(p =>
                 p.id === projectToEdit.id
                     ? { ...p, name: editFormData.name, description: editFormData.description }
                     : p
             ));
 
-            // Show success notification
+            // Показываем уведомление об успехе
             setNotification({
                 open: true,
                 message: `Проект "${editFormData.name}" успешно обновлен`,
@@ -135,7 +280,7 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
         } catch (err) {
             console.error('Error updating project:', err);
 
-            // Show error notification
+            // Показываем уведомление об ошибке
             setNotification({
                 open: true,
                 message: `Ошибка при обновлении проекта: ${err.message}`,
@@ -144,12 +289,12 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
         }
     };
 
-    // Function to close notification
+    // Функция для закрытия уведомления
     const handleCloseNotification = () => {
         setNotification({ ...notification, open: false });
     };
 
-    // Function to format date in a readable way
+    // Функция для форматирования даты в читаемом виде
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return new Intl.DateTimeFormat('ru-RU', {
@@ -160,13 +305,36 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
     };
 
     return (
-        <div className={`projects-list-container ${isDialog ? 'in-dialog' : ''}`}>
-            <div className="projects-list-header">
+        <Paper
+            sx={{
+                ...styles.container,
+                ...(isDialog ? {
+                    position: 'relative',
+                    top: 'auto',
+                    left: 'auto',
+                    transform: 'none',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)',
+                    backdropFilter: 'none'
+                } : {
+                    position: 'fixed',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    backdropFilter: 'none'
+                }),
+                '@media (max-width: 600px)': {
+                    width: '95%',
+                    maxHeight: '90vh'
+                }
+            }}
+            elevation={0}
+        >
+            <Box sx={styles.header}>
                 {isDialog && (
                     <IconButton
                         onClick={() => setShowProjects(false)}
                         edge="start"
-                        sx={{ mr: 1 }}
+                        sx={{ ...styles.backButton, mr: 1 }}
                         aria-label="back"
                     >
                         <ArrowBack />
@@ -176,47 +344,58 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                     <FolderOpen sx={{ mr: 1, verticalAlign: 'middle' }} />
                     Мои проекты
                 </Typography>
+
                 {!isDialog && (
-                    <button className="close-button" onClick={() => setShowProjects(false)}>×</button>
+                    <IconButton
+                        onClick={() => setShowProjects(false)}
+                        edge="end"
+                        sx={styles.closeButton}
+                        aria-label="close"
+                    >
+                        ×
+                    </IconButton>
                 )}
-            </div>
+            </Box>
 
             {loading ? (
-                <div className="loading">
+                <Box sx={styles.statusContainer}>
                     <CircularProgress size={40} color="primary" sx={{ mb: 2 }} />
                     <Typography>Загрузка проектов...</Typography>
-                </div>
+                </Box>
             ) : error ? (
-                <div className="error">
+                <Box sx={styles.statusContainer}>
                     <ErrorOutline sx={{ fontSize: 40, mb: 2, color: 'error.main' }} />
                     <Typography color="error">{error}</Typography>
-                </div>
+                </Box>
             ) : projects.length === 0 ? (
-                <div className="no-projects">
-                    <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <FolderOpen sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
-                        <Typography variant="h6">Нет доступных проектов</Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            Создайте новый проект или импортируйте существующий
-                        </Typography>
-                    </Box>
-                </div>
+                <Box sx={styles.statusContainer}>
+                    <FolderOpen sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+                    <Typography variant="h6">Нет доступных проектов</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Создайте новый проект или импортируйте существующий
+                    </Typography>
+                </Box>
             ) : (
-                <div className="projects-grid">
+                <Box sx={styles.projectsGrid}>
                     {projects.map(project => (
-                        <div
+                        <Box
                             key={project.id}
-                            className="project-card"
+                            sx={{
+                                ...styles.projectCard,
+                                ...styles.projectCardWithActions
+                            }}
                             onClick={() => handleProjectSelect(project.id)}
                         >
-                            <div className="project-title">{project.name || 'Без названия'}</div>
+                            <Typography sx={styles.projectTitle}>
+                                {project.name || 'Без названия'}
+                            </Typography>
                             {project.description && (
-                                <div className="project-description">
+                                <Box sx={styles.projectDescription}>
                                     <Description sx={{ fontSize: 14, mr: 0.5, opacity: 0.7, verticalAlign: 'middle' }} />
                                     {project.description}
-                                </div>
+                                </Box>
                             )}
-                            <div className="project-info">
+                            <Box sx={styles.projectInfo}>
                                 <Chip
                                     size="small"
                                     label={project.elements ? `${project.elements.length} элементов` : '0 элементов'}
@@ -233,15 +412,14 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                                         sx={{ fontSize: '0.75rem' }}
                                     />
                                 )}
-                            </div>
-                            <div className="project-date">
+                            </Box>
+                            <Box sx={styles.projectDate}>
                                 <AccessTime sx={{ fontSize: 14, mr: 0.5, opacity: 0.7 }} />
                                 {formatDate(project.updatedAt || project.createdAt)}
-                            </div>
-                            <div className="project-actions">
+                            </Box>
+                            <Box className="project-actions" sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: '4px' }}>
                                 <Tooltip title="Редактировать">
                                     <IconButton
-                                        className="edit-button"
                                         onClick={(e) => openEditDialog(e, project)}
                                         size="small"
                                         color="primary"
@@ -255,7 +433,6 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                                 </Tooltip>
                                 <Tooltip title="Удалить">
                                     <IconButton
-                                        className="delete-button"
                                         onClick={(e) => openDeleteConfirm(e, project)}
                                         size="small"
                                         color="error"
@@ -267,13 +444,13 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                                         <Delete fontSize="small" />
                                     </IconButton>
                                 </Tooltip>
-                            </div>
-                        </div>
+                            </Box>
+                        </Box>
                     ))}
-                </div>
+                </Box>
             )}
 
-            {/* Delete confirmation dialog */}
+            {/* Диалог подтверждения удаления */}
             <Dialog
                 open={deleteConfirmOpen}
                 onClose={closeDeleteConfirm}
@@ -298,7 +475,7 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                 </DialogActions>
             </Dialog>
 
-            {/* Edit project dialog */}
+            {/* Диалог редактирования проекта */}
             <Dialog
                 open={editDialogOpen}
                 onClose={closeEditDialog}
@@ -345,7 +522,7 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                 </DialogActions>
             </Dialog>
 
-            {/* Notification snackbar */}
+            {/* Снэкбар уведомлений */}
             <Snackbar
                 open={notification.open}
                 autoHideDuration={6000}
@@ -360,7 +537,7 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                     {notification.message}
                 </Alert>
             </Snackbar>
-        </div>
+        </Paper>
     );
 };
 

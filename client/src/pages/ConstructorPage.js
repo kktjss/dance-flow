@@ -169,7 +169,7 @@ const ConstructorPage = () => {
         };
     }, [project]); // Зависимость от project, чтобы функция всегда имела доступ к актуальному состоянию
 
-    // State for UI
+    // Состояние для UI
     const [tabIndex, setTabIndex] = useState(0);
     const [isEditingDuration, setIsEditingDuration] = useState(false);
     const [viewMode, setViewMode] = useState('2d'); // '2d' или 'video'
@@ -208,7 +208,7 @@ const ConstructorPage = () => {
         }
     }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Expose jumpToTime function to the window for PropertyPanel's keyframe navigation
+    // Экспортируем функцию jumpToTime в объект window для навигации по ключевым кадрам из PropertyPanel
     useEffect(() => {
         window.jumpToTime = (time) => {
             setCurrentTime(Math.min(project.duration, Math.max(0, time)));
@@ -219,50 +219,50 @@ const ConstructorPage = () => {
         };
     }, [project.duration]);
 
-    // Handle time update from player
+    // Обработка обновления времени из плеера
     const handleTimeUpdate = (time) => {
         setCurrentTime(time);
     };
 
-    // Handle play/pause
+    // Обработка воспроизведения/паузы
     const handlePlayPause = (playing) => {
         setIsPlaying(playing);
     };
 
-    // Handle element selection
+    // Обработка выбора элемента
     const handleElementSelect = (element) => {
         setSelectedElement(element);
-        // Switch to properties tab when an element is selected
+        // Переключение на вкладку свойств при выборе элемента
         if (element) {
             setTabIndex(1);
         }
     };
 
-    // Handle adding a new element to the canvas
+    // Обработка добавления нового элемента на холст
     const handleAddElement = (element) => {
         setProject(prev => ({
             ...prev,
             elements: prev.elements ? [...prev.elements, element] : [element]
         }));
 
-        // Auto-select the newly added element
+        // Автоматический выбор только что добавленного элемента
         setSelectedElement(element);
         setTabIndex(1);
     };
 
-    // Open Copy menu
+    // Открытие меню копирования
     const handleOpenCopyMenu = (event) => {
         if (selectedElement) {
             setCopyMenuAnchorEl(event.currentTarget);
         }
     };
 
-    // Close Copy menu
+    // Закрытие меню копирования
     const handleCloseCopyMenu = () => {
         setCopyMenuAnchorEl(null);
     };
 
-    // Copy element properties (without animations)
+    // Копирование свойств элемента (без анимаций)
     const handleCopyElementProperties = () => {
         if (selectedElement) {
             const elementProperties = {
@@ -277,17 +277,17 @@ const ConstructorPage = () => {
         }
     };
 
-    // Copy element animations (keyframes)
+    // Копирование анимаций элемента (ключевых кадров)
     const handleCopyElementAnimations = () => {
         if (selectedElement && selectedElement.keyframes) {
-            // Deep copy keyframes
+            // Глубокое копирование ключевых кадров
             const keyframesCopy = JSON.parse(JSON.stringify(selectedElement.keyframes));
             setCopiedAnimations(keyframesCopy);
             handleCloseCopyMenu();
         }
     };
 
-    // Paste element properties to selected element
+    // Вставка свойств элемента в выбранный элемент
     const handlePasteElementProperties = () => {
         if (selectedElement && copiedProperties) {
             const updatedElement = {
@@ -296,7 +296,7 @@ const ConstructorPage = () => {
                 style: { ...copiedProperties.style }
             };
 
-            // Paste content only if types match
+            // Вставка содержимого только если типы совпадают
             if (selectedElement.type === copiedProperties.type &&
                 (selectedElement.type === 'text' || selectedElement.type === 'image')) {
                 updatedElement.content = copiedProperties.content;
@@ -306,10 +306,10 @@ const ConstructorPage = () => {
         }
     };
 
-    // Paste animations to selected element
+    // Вставка анимаций в выбранный элемент
     const handlePasteElementAnimations = () => {
         if (selectedElement && copiedAnimations) {
-            // Create a new version of the element with copied keyframes
+            // Создаем новую версию элемента с копированными ключевыми кадрами
             const updatedElement = {
                 ...selectedElement,
                 keyframes: JSON.parse(JSON.stringify(copiedAnimations))
@@ -319,24 +319,24 @@ const ConstructorPage = () => {
         }
     };
 
-    // Check if we can paste properties or animations
+    // Проверка возможности вставки свойств или анимаций
     const canPasteProperties = Boolean(copiedProperties && selectedElement);
     const canPasteAnimations = Boolean(copiedAnimations && selectedElement);
 
-    // Handle drag and drop from tool panel
+    // Обработка перетаскивания элементов из панели инструментов
     const handleDrop = (e) => {
         e.preventDefault();
         try {
             const elementData = JSON.parse(e.dataTransfer.getData('application/json'));
             if (elementData) {
-                // Adjust position based on drop location
+                // Корректировка позиции в зависимости от места сброса
                 const canvasBounds = e.currentTarget.getBoundingClientRect();
                 elementData.position = {
                     x: e.clientX - canvasBounds.left,
                     y: e.clientY - canvasBounds.top
                 };
 
-                // Add to project
+                // Добавление в проект
                 handleAddElement(elementData);
             }
         } catch (err) {
@@ -344,7 +344,7 @@ const ConstructorPage = () => {
         }
     };
 
-    // Handle element update
+    // Обработка обновления элемента
     const handleElementUpdate = (updatedElement) => {
         setProject(prev => ({
             ...prev,
@@ -353,13 +353,13 @@ const ConstructorPage = () => {
                 : [updatedElement]
         }));
 
-        // Update selected element if it's the one being updated
+        // Обновление выбранного элемента, если это тот, который обновляется
         if (selectedElement && selectedElement.id === updatedElement.id) {
             setSelectedElement(updatedElement);
         }
     };
 
-    // Handle bulk update to all elements
+    // Обработка массового обновления всех элементов
     const handleElementsUpdate = (updatedElements) => {
         if (!updatedElements || !Array.isArray(updatedElements)) {
             console.error('Invalid elements array received:', updatedElements);
@@ -368,7 +368,7 @@ const ConstructorPage = () => {
 
         setProject(prev => ({ ...prev, elements: updatedElements }));
 
-        // Update selected element if it's in the updated list
+        // Обновление выбранного элемента, если он находится в обновленном списке
         if (selectedElement) {
             const updatedSelectedElement = updatedElements.find(elem => elem.id === selectedElement.id);
             if (updatedSelectedElement) {
@@ -377,29 +377,29 @@ const ConstructorPage = () => {
         }
     };
 
-    // Handle project duration change
+    // Обработка изменения длительности проекта
     const handleDurationChange = (e) => {
         const newDuration = Math.max(1, parseInt(e.target.value) || 1);
         setProject(prev => ({ ...prev, duration: newDuration }));
 
-        // If current time is beyond the new duration, reset it
+        // Если текущее время больше новой длительности, сбрасываем его
         if (currentTime > newDuration) {
             setCurrentTime(0);
         }
     };
 
-    // Toggle keyframe recording mode
+    // Переключение режима записи ключевых кадров
     const toggleKeyframeRecording = () => {
         setIsRecordingKeyframes(prev => !prev);
     };
 
-    // Test keyframe saving
+    // Тестирование сохранения ключевых кадров
     const handleTestSave = async () => {
         try {
             console.log('*** KEYFRAME SAVE TEST ***');
             console.log(`Current project has ${project.elements?.reduce((sum, el) => sum + (el.keyframes?.length || 0), 0)} total keyframes`);
 
-            // Verify keyframes before copying
+            // Проверка ключевых кадров перед копированием
             if (project.elements && project.elements.length > 0) {
                 project.elements.forEach((element, idx) => {
                     console.log(`Element ${idx} (${element.id}): keyframes=${element.keyframes?.length || 0}`);
@@ -409,7 +409,7 @@ const ConstructorPage = () => {
                 });
             }
 
-            // Make a deep copy of the project, as we would for a real save
+            // Создаем глубокую копию проекта, как для реального сохранения
             console.log('Creating deep copy of project...');
             let projectCopy;
             try {
@@ -423,7 +423,7 @@ const ConstructorPage = () => {
                 throw new Error(`JSON serialization failed: ${jsonError.message}`);
             }
 
-            // Log first element's keyframes for inspection
+            // Лог ключевых кадров первого элемента для проверки
             if (projectCopy.elements && projectCopy.elements.length > 0) {
                 const element = projectCopy.elements[0];
                 console.log(`First element (${element.id}) after copy has ${element.keyframes?.length || 0} keyframes`);
@@ -435,7 +435,7 @@ const ConstructorPage = () => {
                 }
             }
 
-            // Send to the debug endpoint with POST method
+            // Отправка на отладочную конечную точку методом POST
             console.log('Sending project to debug endpoint...');
             const debugUrl = `${API_URL}/projects/${project.id || 'test-project'}/debug`;
             console.log(`Debug POST URL: ${debugUrl}`);
@@ -444,7 +444,7 @@ const ConstructorPage = () => {
                 const response = await axios.post(debugUrl, projectCopy);
                 console.log('Debug response:', response.data);
 
-                // Alert with results
+                // Оповещение с результатами
                 const { totalKeyframes, elementsWithKeyframes } = response.data;
                 const extractedData = response.data.extractedKeyframesData;
 
@@ -471,7 +471,7 @@ See console for complete details.`);
         }
     };
 
-    // Direct save function definition (rebuilt from scratch)
+    // Определение функции прямого сохранения (перестроено с нуля)
     const handleDirectSave = async () => {
         console.log('*** DIRECT KEYFRAME SAVE - FRESH IMPLEMENTATION ***');
 
@@ -481,7 +481,7 @@ See console for complete details.`);
                 return;
             }
 
-            // Find elements with keyframes
+            // Поиск элементов с ключевыми кадрами
             const elementsWithKeyframes = [];
 
             if (project.elements && project.elements.length > 0) {
@@ -490,7 +490,7 @@ See console for complete details.`);
                         elementsWithKeyframes.push({
                             id: element.id,
                             keyframesCount: element.keyframes.length,
-                            keyframes: JSON.parse(JSON.stringify(element.keyframes)) // Deep copy
+                            keyframes: JSON.parse(JSON.stringify(element.keyframes)) // Глубокое копирование
                         });
                     }
                 }
@@ -503,7 +503,7 @@ See console for complete details.`);
 
             console.log(`Found ${elementsWithKeyframes.length} elements with keyframes`);
 
-            // Select the element with the most keyframes
+            // Выбираем элемент с наибольшим количеством ключевых кадров
             const targetElement = elementsWithKeyframes.reduce(
                 (max, current) => current.keyframesCount > max.keyframesCount ? current : max,
                 elementsWithKeyframes[0]
@@ -511,7 +511,7 @@ See console for complete details.`);
 
             console.log(`Selected element ${targetElement.id} with ${targetElement.keyframesCount} keyframes for direct save`);
 
-            // Send direct update request
+            // Отправляем запрос прямого обновления
             const directUrl = `${API_URL}/projects/${project.id}/direct-keyframes`;
             console.log(`Direct update URL: ${directUrl}`);
 
@@ -525,7 +525,7 @@ See console for complete details.`);
 
             console.log('Direct update response:', response.data);
 
-            // Show success message
+            // Показываем сообщение об успехе
             if (response.data.success) {
                 const verification = response.data.verification;
 
@@ -546,7 +546,7 @@ See console for complete details.`);
         }
     };
 
-    // Function to show notification
+    // Функция для показа уведомления
     const showNotification = (message, severity = 'success') => {
         setNotification({
             open: true,
@@ -555,7 +555,7 @@ See console for complete details.`);
         });
     };
 
-    // Function to close notification
+    // Функция для закрытия уведомления
     const handleCloseNotification = (event, reason) => {
         if (reason === 'clickaway') {
             return;
@@ -563,20 +563,20 @@ See console for complete details.`);
         setNotification({ ...notification, open: false });
     };
 
-    // Handle saving the project
+    // Обработка сохранения проекта
     const handleSaveProject = async () => {
         try {
-            // Log current project state before processing
+            // Логируем текущее состояние проекта перед обработкой
             const initialKeframesCount = project.elements?.reduce((sum, el) => sum + (el.keyframes?.length || 0), 0);
             console.log(`Project state before saving has ${initialKeframesCount} total keyframes across ${project.elements?.length || 0} elements`);
 
-            // **CRITICAL DIAGNOSTIC**: Direct check for keyframes in every element
+            // **КРИТИЧЕСКАЯ ДИАГНОСТИКА**: Прямая проверка ключевых кадров в каждом элементе
             if (project.elements && project.elements.length > 0) {
                 console.log('*** KEYFRAME DIAGNOSTIC BEFORE SAVE ***');
                 project.elements.forEach((el, index) => {
                     console.log(`Element ${index}: id=${el.id}, type=${el.type}, keyframes=${el.keyframes?.length || 0}`);
 
-                    // Verify keyframes array exists and is valid
+                    // Проверяем, существует ли массив ключевых кадров и является ли он корректным
                     if (el.keyframes === undefined) {
                         console.error(`  ERROR: Element ${el.id} has undefined keyframes property`);
                     } else if (!Array.isArray(el.keyframes)) {
@@ -584,7 +584,7 @@ See console for complete details.`);
                     } else if (el.keyframes.length > 0) {
                         console.log(`  Sample keyframe for ${el.id}: ${JSON.stringify(el.keyframes[0])}`);
 
-                        // Check for NaN or invalid values
+                        // Проверка на NaN или недопустимые значения
                         el.keyframes.forEach((kf, kfIndex) => {
                             if (isNaN(kf.time) ||
                                 isNaN(kf.position?.x) ||
@@ -597,26 +597,26 @@ See console for complete details.`);
                 });
             }
 
-            // Create a deep copy of the project to avoid mutating the state
+            // Создаем глубокую копию проекта, чтобы избежать изменения состояния
             const projectToSave = JSON.parse(JSON.stringify(project));
 
             // Проверим, что ключевые кадры правильно скопировались
             const copiedKeframesCount = projectToSave.elements?.reduce((sum, el) => sum + (el.keyframes?.length || 0), 0);
             console.log(`Deep copied project has ${copiedKeframesCount} total keyframes (original: ${initialKeframesCount})`);
 
-            // **CRITICAL**: Create comprehensive project backup before saving
+            // **КРИТИЧЕСКИ ВАЖНО**: Создаем комплексную резервную копию проекта перед сохранением
             try {
-                // Only backup if we have keyframes and a project ID
+                // Создаем резервную копию только если у нас есть ключевые кадры и ID проекта
                 if (projectToSave.elements && projectToSave.elements.length > 0 && initialKeframesCount > 0) {
                     console.log('Creating comprehensive keyframes backup before save...');
 
-                    // Create a map of element ID to keyframes
+                    // Создаем карту элементов с их ключевыми кадрами
                     const keyframesBackup = {};
                     let totalBackedUpKeyframes = 0;
 
                     projectToSave.elements.forEach(element => {
                         if (element.id && element.keyframes && Array.isArray(element.keyframes) && element.keyframes.length > 0) {
-                            // Validate and store only valid keyframes
+                            // Проверяем и сохраняем только корректные ключевые кадры
                             const validKeyframes = element.keyframes.filter(kf =>
                                 kf &&
                                 typeof kf.time === 'number' && !isNaN(kf.time) &&
@@ -633,13 +633,13 @@ See console for complete details.`);
                         }
                     });
 
-                    // If we have a project ID, store the backup
+                    // Если у нас есть ID проекта, сохраняем резервную копию
                     if (project.id) {
                         const backupKey = `project-keyframes-${project.id}`;
                         localStorage.setItem(backupKey, JSON.stringify(keyframesBackup));
                         console.log(`Created localStorage backup with ${totalBackedUpKeyframes} keyframes for ${Object.keys(keyframesBackup).length} elements`);
                     } else {
-                        // Store in a temporary key for new projects
+                        // Сохраняем во временный ключ для новых проектов
                         localStorage.setItem('new-project-keyframes-backup', JSON.stringify(keyframesBackup));
                         console.log(`Created temporary backup with ${totalBackedUpKeyframes} keyframes for ${Object.keys(keyframesBackup).length} elements`);
                     }
@@ -648,10 +648,10 @@ See console for complete details.`);
                 console.error('Failed to create keyframes backup:', backupError);
             }
 
-            // **CRITICAL BUGFIX**: Ensure keyframes arrays exist for all elements
+            // **КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ ОШИБКИ**: Убеждаемся, что массивы ключевых кадров существуют для всех элементов
             if (projectToSave.elements) {
                 projectToSave.elements.forEach(element => {
-                    // Create keyframes array if it doesn't exist
+                    // Создаем массив ключевых кадров, если он не существует
                     if (!element.keyframes) {
                         console.log(`Creating missing keyframes array for element ${element.id}`);
                         element.keyframes = [];
@@ -660,14 +660,14 @@ See console for complete details.`);
                         element.keyframes = [];
                     }
 
-                    // CRITICAL FIX: Ensure modelPath and modelUrl are properly preserved
+                    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убеждаемся, что modelPath и modelUrl правильно сохранены
                     if (element.type === '3d') {
                         console.log(`Ensuring model data is preserved for 3D element ${element.id}:`, {
                             modelPath: element.modelPath || 'none',
                             modelUrl: element.modelUrl || 'none'
                         });
 
-                        // Make sure modelPath and modelUrl are consistent
+                        // Убеждаемся, что modelPath и modelUrl согласованы
                         if (element.modelPath && !element.modelUrl) {
                             element.modelUrl = element.modelPath;
                             console.log(`Set missing modelUrl to modelPath for element ${element.id}`);
@@ -676,7 +676,7 @@ See console for complete details.`);
                             console.log(`Set missing modelPath to modelUrl for element ${element.id}`);
                         }
 
-                        // If element has keyframes, make sure they all have the model information
+                        // Если у элемента есть ключевые кадры, убеждаемся, что все они содержат информацию о модели
                         if (element.keyframes && element.keyframes.length > 0) {
                             const modelPath = element.modelPath || element.modelUrl;
                             if (modelPath) {
@@ -702,13 +702,13 @@ See console for complete details.`);
                 });
             }
 
-            // Validate all keyframes before sending to server
+            // Проверяем все ключевые кадры перед отправкой на сервер
             let validationFailed = false;
 
             if (projectToSave.elements) {
                 projectToSave.elements.forEach(element => {
                     if (element.keyframes && element.keyframes.length > 0) {
-                        // Filter out invalid keyframes
+                        // Фильтруем недопустимые ключевые кадры
                         const validKeyframes = element.keyframes.filter(kf => {
                             const isValid = kf &&
                                 typeof kf.time === 'number' && !isNaN(kf.time) &&
@@ -725,7 +725,7 @@ See console for complete details.`);
                             return isValid;
                         });
 
-                        // Fix any keyframes with missing properties
+                        // Исправляем ключевые кадры с отсутствующими свойствами
                         const fixedKeyframes = validKeyframes.map(kf => ({
                             time: kf.time,
                             position: {
@@ -749,19 +749,19 @@ See console for complete details.`);
                 console.warn("Some invalid keyframes were removed or fixed before saving");
             }
 
-            // Dump serialized data for direct inspection if there are keyframes
+            // Выводим сериализованные данные для прямой проверки, если есть ключевые кадры
             if (initialKeframesCount > 0) {
                 const serialized = JSON.stringify(projectToSave);
                 console.log(`Serialized project size: ${serialized.length} characters`);
                 console.log(`Sample of serialized data: ${serialized.substring(0, 200)}...`);
 
-                // Check if keyframes are in the serialized data
+                // Проверяем, есть ли ключевые кадры в сериализованных данных
                 if (!serialized.includes('"keyframes":')) {
                     console.error("CRITICAL ERROR: Keyframes not found in serialized data!");
                 }
             }
 
-            // Final verification of keyframes count
+            // Финальная проверка количества ключевых кадров
             const finalKeframesCount = projectToSave.elements?.reduce((sum, el) => sum + (el.keyframes?.length || 0), 0) || 0;
             console.log(`Final project to save has ${finalKeframesCount} total keyframes`);
 
@@ -775,7 +775,7 @@ See console for complete details.`);
                 let response;
 
                 if (project.id) {
-                    // Update existing project
+                    // Обновление существующего проекта
                     console.log('Updating existing project with ID:', project.id);
                     const token = localStorage.getItem('token');
                     response = await axios.put(`${API_URL}/projects/${project.id}`, projectToSave, {
@@ -785,14 +785,14 @@ See console for complete details.`);
                         }
                     });
                 } else {
-                    // Create new project
+                    // Создание нового проекта
                     console.log('Creating new project with data:', JSON.stringify(projectToSave).substring(0, 200) + '...');
                     const token = localStorage.getItem('token');
                     if (!token) {
                         throw new Error('No authentication token found. Please log in.');
                     }
 
-                    // Ensure we have the required fields
+                    // Убеждаемся, что у нас есть все необходимые поля
                     const projectData = {
                         ...projectToSave,
                         name: projectToSave.name || 'Новый проект',
@@ -818,7 +818,7 @@ See console for complete details.`);
                 console.log('Server response received:', response.status, response.statusText);
                 console.log('RAW SERVER RESPONSE DATA:', JSON.stringify(response.data).substring(0, 300) + '...');
 
-                // Examine elements structure
+                // Анализируем структуру элементов
                 const rawElements = response.data.elements;
                 console.log('ELEMENTS DATA TYPE:', typeof rawElements);
                 console.log('IS ARRAY:', Array.isArray(rawElements));
@@ -829,7 +829,7 @@ See console for complete details.`);
                     console.log('ELEMENTS IS NULL OR UNDEFINED');
                 }
 
-                // Direct check for received keyframes in response
+                // Прямая проверка полученных ключевых кадров в ответе
                 console.log('*** KEYFRAME DIAGNOSTIC AFTER SAVE ***');
                 if (response.data.elements) {
                     response.data.elements.forEach((el, index) => {
@@ -850,12 +850,12 @@ See console for complete details.`);
                 if (project.id && responseKeyframesCount < finalKeframesCount) {
                     console.warn(`WARNING: Server returned fewer keyframes (${responseKeyframesCount}) than sent (${finalKeframesCount})`);
 
-                    // **CRITICAL FIX**: If keyframes were lost, manually add them back from our original data
+                    // **КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ**: Если ключевые кадры были потеряны, вручную добавляем их обратно из наших исходных данных
                     if (responseKeyframesCount === 0 && finalKeframesCount > 0) {
                         console.log("Attempting to manually restore keyframes to server response");
 
                         response.data.elements.forEach(element => {
-                            // Find matching element in our project to save
+                            // Ищем соответствующий элемент в нашем проекте для сохранения
                             const originalElement = projectToSave.elements.find(el => el.id === element.id);
                             if (originalElement && originalElement.keyframes && originalElement.keyframes.length > 0) {
                                 console.log(`Restoring ${originalElement.keyframes.length} keyframes to element ${element.id}`);
@@ -863,7 +863,7 @@ See console for complete details.`);
                             }
                         });
 
-                        // Recount after restoration
+                        // Пересчитываем после восстановления
                         const restoredCount = response.data.elements?.reduce(
                             (sum, el) => sum + (el.keyframes?.length || 0), 0
                         ) || 0;
@@ -877,14 +877,14 @@ See console for complete details.`);
                 // Непосредственно используем проект из ответа сервера
                 console.log('Updating state with server response');
 
-                // Ensure the response has a valid structure before setting the state
+                // Убеждаемся, что ответ имеет правильную структуру перед установкой состояния
                 const validatedResponse = {
                     ...response.data,
-                    // Ensure elements is an array
+                    // Убеждаемся, что elements - это массив
                     elements: Array.isArray(response.data.elements) ? response.data.elements : []
                 };
 
-                // Check if server returned valid elements
+                // Проверяем, вернул ли сервер корректные элементы
                 let hasValidElements = validatedResponse.elements.length > 0 &&
                     validatedResponse.elements[0] &&
                     validatedResponse.elements[0].id &&
@@ -893,10 +893,10 @@ See console for complete details.`);
                 if (!hasValidElements) {
                     console.warn('Server returned elements with missing properties, using original elements');
 
-                    // Use elements from the project we just saved since server didn't return proper elements
+                    // Используем элементы из проекта, который мы только что сохранили, так как сервер не вернул правильные элементы
                     validatedResponse.elements = projectToSave.elements.map(element => ({
                         ...element,
-                        // Ensure deep cloning
+                        // Обеспечиваем глубокое клонирование
                         position: { ...element.position },
                         size: { ...element.size },
                         style: { ...element.style },
@@ -905,18 +905,18 @@ See console for complete details.`);
 
                     console.log('Restored elements from client-side cache:', validatedResponse.elements.length);
                 } else {
-                    // Make sure each element has the required properties
+                    // Убеждаемся, что каждый элемент имеет необходимые свойства
                     validatedResponse.elements = validatedResponse.elements.map(element => ({
                         ...element,
-                        // Ensure ID is preserved
+                        // Убеждаемся, что ID сохранен
                         id: element.id,
-                        // Ensure type is preserved exactly as is
+                        // Убеждаемся, что тип сохранен точно как есть
                         type: element.type,
-                        // Ensure position exists
+                        // Убеждаемся, что позиция существует
                         position: element.position || { x: 0, y: 0 },
-                        // Ensure size exists
+                        // Убеждаемся, что размер существует
                         size: element.size || { width: 100, height: 100 },
-                        // Ensure style exists
+                        // Убеждаемся, что стиль существует
                         style: element.style || {
                             color: '#000000',
                             backgroundColor: 'transparent',
@@ -925,14 +925,14 @@ See console for complete details.`);
                             opacity: 1,
                             zIndex: 0
                         },
-                        // Ensure content is preserved
+                        // Убеждаемся, что содержимое сохранено
                         content: element.content,
-                        // Ensure keyframes is an array
+                        // Убеждаемся, что keyframes - это массив
                         keyframes: Array.isArray(element.keyframes) ? element.keyframes : []
                     }));
                 }
 
-                // Cache the project data with valid elements
+                // Кэшируем данные проекта с корректными элементами
                 if (validatedResponse.id && window.localStorage) {
                     try {
                         const cacheKey = `project-data-${validatedResponse.id}`;
@@ -949,7 +949,7 @@ See console for complete details.`);
 
                 setProject(validatedResponse);
 
-                // Make project ID available for backup purposes
+                // Делаем ID проекта доступным для целей резервного копирования
                 window.currentProjectId = response.data.id;
                 console.log(`Set window.currentProjectId to ${window.currentProjectId}`);
 
@@ -1032,7 +1032,7 @@ See console for complete details.`);
         }
     };
 
-    // Handle uploading audio
+    // Обработка загрузки аудио
     const handleAudioUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1066,7 +1066,7 @@ See console for complete details.`);
             });
     };
 
-    // Handle video upload
+    // Обработка загрузки видео
     const handleVideoUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1104,7 +1104,7 @@ See console for complete details.`);
                     return;
                 }
 
-                // Update project with video URL
+                // Обновляем проект с URL видео
                 setProject(prev => {
                     const updated = {
                         ...prev,
@@ -1130,7 +1130,7 @@ See console for complete details.`);
             });
     };
 
-    // Handle uploading GLB animation files
+    // Обработка загрузки GLB файлов анимации
     const handleGlbUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1214,7 +1214,7 @@ See console for complete details.`);
             });
     };
 
-    // Remove GLB animation
+    // Удаление GLB анимации
     const handleRemoveGlbAnimation = (id) => {
         setProject(prev => ({
             ...prev,
@@ -1222,7 +1222,7 @@ See console for complete details.`);
         }));
     };
 
-    // Handle project selection
+    // Обработка выбора проекта
     const handleSelectProject = async (projectId) => {
         if (!projectId) return;
 
@@ -1247,14 +1247,14 @@ See console for complete details.`);
 
             console.log('Fetched project:', fetchedProject);
 
-            // Initialize elements array if it doesn't exist
+            // Инициализируем массив элементов, если он не существует
             if (!fetchedProject.elements) {
                 fetchedProject.elements = [];
             }
 
-            // Ensure all elements have correct structure
+            // Убеждаемся, что все элементы имеют правильную структуру
             fetchedProject.elements = fetchedProject.elements.map(element => {
-                // Set default values for animation if they don't exist
+                // Устанавливаем значения по умолчанию для анимации, если они не существуют
                 if (!element.animation) {
                     element.animation = {
                         keyframes: []
@@ -1294,7 +1294,7 @@ See console for complete details.`);
                     }
                 }
 
-                // For shapes, ensure they have all required properties
+                // Для форм убеждаемся, что они имеют все необходимые свойства
                 if (element.type === 'shape') {
                     return {
                         ...element,
@@ -1319,13 +1319,13 @@ See console for complete details.`);
                 });
             }
 
-            // Convert old style animations to new format if needed
+            // Конвертируем анимации старого стиля в новый формат, если необходимо
             if (fetchedProject.elements.some(el => el.animation && Array.isArray(el.animation))) {
                 console.log('Converting old animation format to new format');
 
                 fetchedProject.elements = fetchedProject.elements.map(element => {
                     if (element.animation && Array.isArray(element.animation)) {
-                        // Convert old format [{ time, properties }] to new format { keyframes: [{ time, properties }] }
+                        // Конвертируем старый формат [{ time, properties }] в новый формат { keyframes: [{ time, properties }] }
                         return {
                             ...element,
                             animation: {
@@ -1337,19 +1337,19 @@ See console for complete details.`);
                 });
             }
 
-            // Ensure project has a glbAnimations array
+            // Убеждаемся, что проект имеет массив glbAnimations
             if (!fetchedProject.glbAnimations) {
                 fetchedProject.glbAnimations = [];
             }
 
-            // Set the loaded project to state
+            // Устанавливаем загруженный проект в состояние
             setProject(fetchedProject);
 
-            // Reset current state
+            // Сбрасываем текущее состояние
             setCurrentTime(0);
             setSelectedElement(null);
 
-            // Show notification
+            // Показываем уведомление
             setNotification({
                 open: true,
                 message: `Проект "${fetchedProject.name}" успешно загружен`,
@@ -1395,7 +1395,7 @@ See console for complete details.`);
         return `${API_URL}${formattedUrl}`;
     };
 
-    // Auto-update project duration based on audio
+    // Автоматическое обновление длительности проекта на основе аудио
     useEffect(() => {
         const audioElement = document.createElement('audio');
         if (project.audioUrl) {
@@ -1415,16 +1415,16 @@ See console for complete details.`);
         };
     }, [project.audioUrl]);
 
-    // Add this function to the ConstructorPage component
+    // Добавляем эту функцию в компонент ConstructorPage
     const handleDebugKeyframes = async () => {
         try {
             console.log('*** MANUAL KEYFRAME DIAGNOSTIC ***');
 
-            // Check current state of keyframes
+            // Проверяем текущее состояние ключевых кадров
             const totalKeyframes = project.elements?.reduce((sum, el) => sum + (el.keyframes?.length || 0), 0) || 0;
             console.log(`Current project has ${totalKeyframes} keyframes across ${project.elements?.length || 0} elements`);
 
-            // Element-by-element keyframe analysis
+            // Покадровый анализ ключевых кадров элементов
             if (project.elements && project.elements.length > 0) {
                 project.elements.forEach((el, index) => {
                     console.log(`Element ${index}: id=${el.id}, type=${el.type}, keyframes=${el.keyframes?.length || 0}`);
@@ -1434,10 +1434,10 @@ See console for complete details.`);
                     } else if (!Array.isArray(el.keyframes)) {
                         console.error(`  Element ${el.id} has non-array keyframes: ${typeof el.keyframes}`);
                     } else if (el.keyframes.length > 0) {
-                        // Log first keyframe for inspection
+                        // Выводим первый ключевой кадр для проверки
                         console.log(`  First keyframe: ${JSON.stringify(el.keyframes[0])}`);
 
-                        // Check for invalid values
+                        // Проверяем недопустимые значения
                         el.keyframes.forEach((kf, kfIdx) => {
                             if (!kf || typeof kf !== 'object') {
                                 console.error(`  Invalid keyframe at index ${kfIdx}: not an object`);
@@ -1455,7 +1455,7 @@ See console for complete details.`);
                 });
             }
 
-            // Check localStorage for backups
+            // Проверяем localStorage на наличие резервных копий
             if (project.id) {
                 const backupKey = `project-keyframes-${project.id}`;
                 const backupData = localStorage.getItem(backupKey);
@@ -1474,15 +1474,15 @@ See console for complete details.`);
                 }
             }
 
-            // If project exists, fetch raw data from server
+            // Если проект существует, получаем необработанные данные с сервера
             if (project.id) {
                 try {
-                    // Log the API URL and full debug URL for troubleshooting
+                    // Логируем API URL и полный URL для отладки
                     console.log(`Base API URL: ${API_URL}`);
                     const debugUrl = `${API_URL}/projects/${project.id}/debug`;
                     console.log(`Attempting to fetch debug info from: ${debugUrl}`);
 
-                    // Make the request with detailed error handling
+                    // Делаем запрос с подробной обработкой ошибок
                     console.log('Sending debug request to server...');
                     const response = await axios.get(debugUrl);
 
@@ -1493,21 +1493,21 @@ See console for complete details.`);
                     console.log(`Server response status: ${response.status}`);
                     const debugData = response.data;
 
-                    // Analyze the server's debug data
+                    // Анализируем отладочные данные с сервера
                     console.log('Server debug info received:', debugData);
 
-                    // Check if keyframesJson exists on the server
+                    // Проверяем, существует ли keyframesJson на сервере
                     const hasKeyframesJson = debugData.hasKeyframesJson ||
                         (debugData.validation && debugData.validation.hasKeyframesJson) ||
                         (debugData.rawProject && debugData.rawProject.keyframesJson);
 
                     console.log(`Server has keyframesJson: ${hasKeyframesJson}`);
 
-                    // Check if keyframes were properly parsed
+                    // Проверяем, были ли правильно проанализированы ключевые кадры
                     if (debugData.keyframeData) {
                         console.log(`Server parsed ${debugData.keyframeData.totalKeyframes} keyframes for ${debugData.keyframeData.elementCount} elements`);
 
-                        // Element-by-element comparison if available
+                        // Поэлементное сравнение, если доступно
                         if (debugData.elements && debugData.elements.length > 0) {
                             console.log('Server element-by-element breakdown:');
                             debugData.elements.forEach(el => {
@@ -1518,7 +1518,7 @@ See console for complete details.`);
                         console.log(`Server validation info: ${JSON.stringify(debugData.validation)}`);
                     }
 
-                    // Check localStorage info if available
+                    // Проверяем информацию localStorage, если доступна
                     if (debugData.localStorage) {
                         if (debugData.localStorage.exists) {
                             console.log(`Server has localStorage backup with ${debugData.localStorage.totalKeyframes || '?'} keyframes`);
@@ -1527,7 +1527,7 @@ See console for complete details.`);
                         }
                     }
 
-                    // Show debug info to user with more details
+                    // Показываем отладочную информацию пользователю с подробными сведениями
                     let alertMessage = `Диагностика: Проект имеет ${totalKeyframes} ключевых кадров на клиенте.`;
                     if (debugData.keyframeData && debugData.keyframeData.totalKeyframes) {
                         alertMessage += ` На сервере: ${debugData.keyframeData.totalKeyframes} кадров.`;
@@ -1538,19 +1538,19 @@ See console for complete details.`);
                 } catch (err) {
                     console.error('Error fetching debug info:', err);
 
-                    // More detailed error reporting
+                    // Более подробный отчет об ошибке
                     let errorDetails = '';
                     if (err.response) {
-                        // Server responded with non-2xx status
+                        // Сервер ответил со статусом, отличным от 2xx
                         errorDetails = `Status: ${err.response.status}`;
                         if (err.response.data) {
                             errorDetails += `, Message: ${JSON.stringify(err.response.data)}`;
                         }
                     } else if (err.request) {
-                        // Request was made but no response received
+                        // Запрос был сделан, но ответ не получен
                         errorDetails = 'No response received from server (timeout or CORS issue)';
                     } else {
-                        // Error in setting up the request
+                        // Ошибка при настройке запроса
                         errorDetails = err.message;
                     }
 
@@ -1566,21 +1566,21 @@ See console for complete details.`);
         }
     };
 
-    // Make project ID available on mount/unmount
+    // Делаем ID проекта доступным при монтировании/размонтировании
     useEffect(() => {
-        // Set project ID when available
+        // Устанавливаем ID проекта, когда он доступен
         if (project.id) {
             window.currentProjectId = project.id;
             console.log(`Set window.currentProjectId to ${window.currentProjectId}`);
         }
 
-        // Clean up on unmount
+        // Очистка при размонтировании
         return () => {
             window.currentProjectId = null;
         };
     }, [project.id]);
 
-    // Add this function to the ConstructorPage component
+    // Добавляем эту функцию в компонент ConstructorPage
     const handleTestSaveKeyframes = async () => {
         try {
             if (!selectedElement) {
@@ -1597,7 +1597,7 @@ See console for complete details.`);
             console.log("- Element ID:", elementId);
             console.log("- Keyframes:", keyframes);
 
-            // Use fetch for the request
+            // Используем fetch для запроса
             const response = await fetch('/api/test/test-save-keyframes', {
                 method: 'POST',
                 headers: {
@@ -1610,7 +1610,7 @@ See console for complete details.`);
                 }),
             });
 
-            // Check if the response was successful
+            // Проверяем, был ли ответ успешным
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error('Error saving keyframes:', errorData);
@@ -1627,7 +1627,7 @@ See console for complete details.`);
         }
     };
 
-    // Handle when animations are saved from the ModelViewer
+    // Обработка сохранения анимаций из ModelViewer
     const handleSaveAnimations = (animations, modelUrl) => {
         if (!selectedElement) return;
 
@@ -1674,7 +1674,7 @@ See console for complete details.`);
 
     // Добавлю новые функции для удаления аудио и видео
 
-    // Handle removing audio
+    // Обработка удаления аудио
     const handleRemoveAudio = () => {
         setProject(prev => ({
             ...prev,
@@ -1683,7 +1683,7 @@ See console for complete details.`);
         showNotification('Аудио удалено', 'success');
     };
 
-    // Handle removing video
+    // Обработка удаления видео
     const handleRemoveVideo = () => {
         setProject(prev => ({
             ...prev,

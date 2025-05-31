@@ -23,7 +23,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { styled } from '@mui/system';
 import { COLORS } from '../constants/colors';
 
-// Styled components
+// Стилизованные компоненты
 const ToolButton = styled(Button)(({ theme }) => ({
     width: '100%',
     display: 'flex',
@@ -52,39 +52,39 @@ const ToolButton = styled(Button)(({ theme }) => ({
     backdropFilter: 'blur(10px)',
 }));
 
-// Color palette
+// Цветовая палитра
 const PALETTE = {
-    // Primary colors
+    // Основные цвета
     primary: {
         light: COLORS.primaryLight,
-        main: COLORS.primary, // Blue-violet
+        main: COLORS.primary, // Сине-фиолетовый
         dark: '#5449A6'
     },
     secondary: {
         light: COLORS.secondaryLight,
-        main: COLORS.secondary, // Light blue
+        main: COLORS.secondary, // Светло-синий
         dark: '#0071CE'
     },
     tertiary: {
         light: COLORS.tertiaryLight,
-        main: COLORS.tertiary, // Turquoise
+        main: COLORS.tertiary, // Бирюзовый
         dark: '#2CB5B5'
     },
-    // Additional colors
+    // Дополнительные цвета
     teal: {
         light: '#7DEEFF',
-        main: COLORS.teal, // Teal
+        main: COLORS.teal, // Бирюзовый
         dark: '#008B9A'
     },
     accent: {
         light: '#FFE066',
-        main: COLORS.accent, // Yellow
+        main: COLORS.accent, // Желтый
         dark: '#E6C300'
     },
-    // Neutral colors
+    // Нейтральные цвета
     purpleGrey: {
         light: '#9D94D3',
-        main: '#8678B2', // Grey-purple
+        main: '#8678B2', // Серо-фиолетовый
         dark: '#5D5080'
     }
 };
@@ -92,7 +92,7 @@ const PALETTE = {
 const ToolPanel = ({ onAddElement }) => {
     const theme = useTheme();
 
-    // Basic tools
+    // Основные инструменты
     const tools = [
         {
             id: 'rectangle',
@@ -104,7 +104,7 @@ const ToolPanel = ({ onAddElement }) => {
                 size: { width: 100, height: 100 },
                 style: {
                     color: '#FFFFFF',
-                    backgroundColor: PALETTE.secondary.main, // Light blue rectangle
+                    backgroundColor: PALETTE.secondary.main, // Светло-синий прямоугольник
                     borderColor: 'rgba(0, 0, 0, 0)',
                     borderWidth: 0,
                     opacity: 0.8,
@@ -122,7 +122,7 @@ const ToolPanel = ({ onAddElement }) => {
                 size: { width: 100, height: 100 },
                 style: {
                     color: '#FFFFFF',
-                    backgroundColor: PALETTE.tertiary.main, // Turquoise circle
+                    backgroundColor: PALETTE.tertiary.main, // Бирюзовый круг
                     borderColor: 'rgba(0, 0, 0, 0)',
                     borderWidth: 0,
                     opacity: 0.8,
@@ -132,21 +132,21 @@ const ToolPanel = ({ onAddElement }) => {
         }
     ];
 
-    // Drag and Drop for elements
+    // Перетаскивание элементов
     const handleDragStart = (e, tool) => {
-        // Create new element
+        // Создаем новый элемент
         const newElement = {
             ...tool.defaults,
             id: `${tool.id}-${uuidv4()}`,
             createdAt: new Date().toISOString(),
-            // Position will be updated on drop
+            // Позиция будет обновлена при сбросе
             keyframes: []
         };
 
-        // Serialize element data for transfer
+        // Сериализуем данные элемента для передачи
         e.dataTransfer.setData('application/json', JSON.stringify(newElement));
 
-        // Create visual representation for drag and drop
+        // Создаем визуальное представление для перетаскивания
         const dragImage = document.createElement('div');
         dragImage.style.width = '100px';
         dragImage.style.height = '100px';
@@ -161,20 +161,20 @@ const ToolPanel = ({ onAddElement }) => {
 
         e.dataTransfer.setDragImage(dragImage, 50, 50);
 
-        // Remove element after a small delay
+        // Удаляем элемент после небольшой задержки
         setTimeout(() => {
             document.body.removeChild(dragImage);
         }, 0);
     };
 
-    // Display tool elements
+    // Отображаем элементы инструментов
     return (
         <Paper sx={{
             p: 3,
             borderRadius: 3,
             backgroundColor: theme.palette.mode === 'dark'
-                ? 'rgba(26, 32, 46, 0.85)'  // Lighter, more neutral dark blue background
-                : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
+                ? 'rgba(26, 32, 46, 0.85)'  // Более светлый, более нейтральный темно-синий фон
+                : 'rgba(240, 245, 255, 0.9)', // Очень светлый сине-серый в светлом режиме
             backdropFilter: 'blur(12px)',
             border: `1px solid ${theme.palette.mode === 'dark'
                 ? 'rgba(255, 255, 255, 0.08)'
@@ -228,7 +228,7 @@ const ToolPanel = ({ onAddElement }) => {
                                 </Box>
                             }
                             onClick={() => {
-                                // Create new element
+                                // Создаем новый элемент
                                 const newElement = {
                                     ...tool.defaults,
                                     id: `${tool.id}-${uuidv4()}`,
@@ -236,7 +236,7 @@ const ToolPanel = ({ onAddElement }) => {
                                     keyframes: []
                                 };
 
-                                // Add element
+                                // Добавляем элемент
                                 onAddElement(newElement);
                             }}
                             sx={{
