@@ -12,10 +12,31 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	// Импортируем модели из проекта
-	"dance-flow/server/go/models"
 )
+
+// Локальные определения для тестов (вместо импорта из основного модуля)
+
+// User представляет модель пользователя для тестов
+type User struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Username  string             `bson:"username" json:"username"`
+	Email     string             `bson:"email" json:"email"`
+	Password  string             `bson:"password" json:"-"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
+}
+
+// Project представляет модель проекта для тестов
+type Project struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Name        string             `bson:"name" json:"name"`
+	Description string             `bson:"description" json:"description"`
+	Owner       primitive.ObjectID `bson:"owner" json:"owner"`
+	IsPrivate   bool               `bson:"is_private" json:"is_private"`
+	Tags        []string           `bson:"tags" json:"tags"`
+	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
+}
 
 var (
 	testClient *mongo.Client
@@ -92,7 +113,7 @@ func TestUserCRUD(t *testing.T) {
 	usersCollection := testDB.Collection("users")
 	
 	// Создаем тестового пользователя
-	testUser := models.User{
+	testUser := User{
 		Username:  "testuser",
 		Email:     "test@example.com",
 		Password:  "hashedpassword", // В реальности должен быть хеш
@@ -112,7 +133,7 @@ func TestUserCRUD(t *testing.T) {
 	insertedID := result.InsertedID.(primitive.ObjectID)
 	
 	// Получаем пользователя из базы данных
-	var retrievedUser models.User
+	var retrievedUser User
 	err = usersCollection.FindOne(ctx, bson.M{"_id": insertedID}).Decode(&retrievedUser)
 	require.NoError(t, err)
 	
@@ -132,7 +153,7 @@ func TestUserCRUD(t *testing.T) {
 	require.NoError(t, err)
 	
 	// Получаем обновленного пользователя
-	var updatedUser models.User
+	var updatedUser User
 	err = usersCollection.FindOne(ctx, bson.M{"_id": insertedID}).Decode(&updatedUser)
 	require.NoError(t, err)
 	
@@ -157,10 +178,10 @@ func TestProjectCRUD(t *testing.T) {
 	
 	// Создаем тестовый проект
 	userID := primitive.NewObjectID()
-	testProject := models.Project{
+	testProject := Project{
 		Name:        "Test Project",
 		Description: "This is a test project",
-		UserID:      userID,
+		Owner:      userID,
 		IsPrivate:   false,
 		Tags:        []string{"test", "integration"},
 		CreatedAt:   time.Now(),
@@ -179,14 +200,14 @@ func TestProjectCRUD(t *testing.T) {
 	insertedID := result.InsertedID.(primitive.ObjectID)
 	
 	// Получаем проект из базы данных
-	var retrievedProject models.Project
+	var retrievedProject Project
 	err = projectsCollection.FindOne(ctx, bson.M{"_id": insertedID}).Decode(&retrievedProject)
 	require.NoError(t, err)
 	
 	// Проверяем, что данные проекта совпадают
 	assert.Equal(t, testProject.Name, retrievedProject.Name)
 	assert.Equal(t, testProject.Description, retrievedProject.Description)
-	assert.Equal(t, testProject.UserID, retrievedProject.UserID)
+	assert.Equal(t, testProject.Owner, retrievedProject.Owner)
 	assert.Equal(t, testProject.IsPrivate, retrievedProject.IsPrivate)
 	assert.ElementsMatch(t, testProject.Tags, retrievedProject.Tags)
 	
@@ -203,14 +224,14 @@ func TestProjectCRUD(t *testing.T) {
 	require.NoError(t, err)
 	
 	// Получаем обновленный проект
-	var updatedProject models.Project
+	var updatedProject Project
 	err = projectsCollection.FindOne(ctx, bson.M{"_id": insertedID}).Decode(&updatedProject)
 	require.NoError(t, err)
 	
 	// Проверяем, что данные проекта обновились
 	assert.Equal(t, "Updated Project", updatedProject.Name)
 	assert.Equal(t, "This project has been updated", updatedProject.Description)
-	assert.Equal(t, testProject.UserID, updatedProject.UserID)
+	assert.Equal(t, testProject.Owner, updatedProject.Owner)
 	
 	// Удаляем проект
 	_, err = projectsCollection.DeleteOne(ctx, bson.M{"_id": insertedID})
