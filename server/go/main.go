@@ -16,18 +16,18 @@ import (
 )
 
 func main() {
-	// Загрузка конфигурации
+	// Load configuration
 	log.Println("Loading configuration...")
 	cfg := config.Load()
 
-	// Инициализация логгера
+	// Initialize logger
 	log.Println("Initializing logger...")
 	if err := config.InitLogger(); err != nil {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer config.CloseLogger()
 
-	// Подключение к MongoDB
+	// Connect to MongoDB
 	log.Println("Connecting to MongoDB...")
 	err := config.Connect(cfg.MongoURI)
 	if err != nil {
@@ -37,11 +37,11 @@ func main() {
 	log.Println("Successfully connected to MongoDB!")
 	defer config.Close()
 
-	// Создание роутера
+	// Create router
 	log.Println("Setting up HTTP router...")
 	router := gin.Default()
 
-	// Настройка CORS
+	// Configure CORS
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.AllowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
@@ -51,15 +51,15 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// Добавление промежуточного ПО для логирования
+	// Add middleware for logging
 	router.Use(func(c *gin.Context) {
-		// Запуск таймера
+		// Start timer
 		start := time.Now()
 
-		// Обработка запроса
+		// Process request
 		c.Next()
 
-		// Логирование запроса в консоль и файл
+		// Log request to both console and file
 		duration := time.Since(start)
 		log.Printf("[%s] %s %s %d %s", 
 			c.Request.Method, 
@@ -77,88 +77,35 @@ func main() {
 		)
 	})
 
-	// Добавление специального обработчика для файлов моделей для обеспечения правильного типа контента
-	// Это должно быть ДО StaticFS, чтобы избежать конфликтов с маршрутами подстановки
+	// Add a special handler for model files to ensure proper content type
+	// This must come BEFORE the StaticFS to avoid conflicts with wildcard routes
 	router.GET("/models/:filename", func(c *gin.Context) {
 		filename := c.Param("filename")
 		filepath := fmt.Sprintf("./uploads/models/%s", filename)
 		
-		// Логирование запроса
+		// Log the request
 		log.Printf("Serving model file: %s", filepath)
 		
-		// Проверка существования файла
+		// Check if file exists
 		if _, err := os.Stat(filepath); os.IsNotExist(err) {
 			log.Printf("Model file not found: %s", filepath)
 			c.JSON(http.StatusNotFound, gin.H{"error": "Model file not found"})
 			return
 		}
 		
-		// Установка соответствующих заголовков
+		// Set appropriate headers
 		c.Header("Content-Type", "model/gltf-binary")
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Cache-Control", "public, max-age=3600")
 		
-		// Отправка файла
-		c.File(filepath)
-	})
-
-	// Добавление специальных обработчиков для медиафайлов
-	router.GET("/files/:filename", func(c *gin.Context) {
-		filename := c.Param("filename")
-		filepath := fmt.Sprintf("./uploads/files/%s", filename)
-		
-		// Логирование запроса
-		log.Printf("Serving file: %s", filepath)
-		
-		// Проверка существования файла
-		if _, err := os.Stat(filepath); os.IsNotExist(err) {
-			log.Printf("File not found: %s", filepath)
-			c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
-			return
-		}
-		
-		// Установка соответствующих заголовков для видео файлов
-		c.Header("Content-Type", "video/mp4")
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Range")
-		c.Header("Accept-Ranges", "bytes")
-		c.Header("Cache-Control", "public, max-age=3600")
-		
-		// Отправка файла
-		c.File(filepath)
-	})
-
-	router.GET("/audio/:filename", func(c *gin.Context) {
-		filename := c.Param("filename")
-		filepath := fmt.Sprintf("./uploads/audio/%s", filename)
-		
-		// Логирование запроса
-		log.Printf("Serving audio file: %s", filepath)
-		
-		// Проверка существования файла
-		if _, err := os.Stat(filepath); os.IsNotExist(err) {
-			log.Printf("Audio file not found: %s", filepath)
-			c.JSON(http.StatusNotFound, gin.H{"error": "Audio file not found"})
-			return
-		}
-		
-		// Установка соответствующих заголовков для аудио файлов
-		c.Header("Content-Type", "audio/mpeg")
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Range")
-		c.Header("Accept-Ranges", "bytes")
-		c.Header("Cache-Control", "public, max-age=3600")
-		
-		// Отправка файла
+		// Serve the file
 		c.File(filepath)
 	})
 	
-	// Обслуживание статических файлов из директории uploads с соответствующими заголовками
+	// Serve static files from uploads directory with proper headers
 	router.StaticFS("/uploads", http.Dir("./uploads"))
 	
-	// Эндпоинт проверки работоспособности
+	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "ok",
@@ -166,17 +113,17 @@ func main() {
 		})
 	})
 
-	// Создание группы API
+	// Create API group
 	api := router.Group("/api")
 
-	// Регистрация маршрутов
+	// Register routes
 	log.Println("Registering API routes...")
 	routes.RegisterAuthRoutes(api, cfg)
 	routes.RegisterProjectRoutes(api, cfg)
 	routes.RegisterKeyframesRoutes(api, cfg)
 	routes.RegisterUploadRoutes(api, cfg)
 	
-	// Регистрация новых маршрутов
+	// Register new routes
 	routes.RegisterHistoryRoutes(api, cfg)
 	routes.RegisterDirectKeyframesRoutes(api, cfg)
 	routes.RegisterTestRoutes(api, cfg)
@@ -186,15 +133,11 @@ func main() {
 	
 	log.Println("All routes registered successfully!")
 
-	// Вывод текущей рабочей директории для отладки
-	dir, _ := os.Getwd()
-	log.Println("Current working directory:", dir)
-
-	// Создание канала для прослушивания сигналов прерывания
+	// Create a channel to listen for interrupt signals
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
-	// Запуск сервера в горутине
+	// Run server in a goroutine
 	go func() {
 		addr := fmt.Sprintf(":%d", cfg.Port)
 		config.Log("MAIN", "Server starting on %s", addr)
@@ -205,12 +148,12 @@ func main() {
 		}
 	}()
 
-	// Ожидание сигнала прерывания
+	// Wait for interrupt signal
 	<-stop
 	config.Log("MAIN", "Shutting down server...")
 	log.Println("Shutting down server...")
 
-	// Здесь можно реализовать graceful shutdown при необходимости
+	// Implement graceful shutdown here if needed
 	config.Log("MAIN", "Server stopped")
 	log.Println("Server stopped")
 } 

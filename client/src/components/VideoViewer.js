@@ -4,6 +4,14 @@ import { PersonSearch, Close, VideoLibrary, Videocam, HighQuality, SettingsInput
 import VideoAnalyzer from './VideoAnalyzer.js';
 
 const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTime = 0, isPlaying = false }) => {
+    console.log('VideoViewer: Инициализация компонента', {
+        isVisible,
+        videoUrl,
+        embedded,
+        currentTime,
+        isPlaying
+    });
+
     const [isDancerSelectionMode, setIsDancerSelectionMode] = useState(false);
     const [selectedDancer, setSelectedDancer] = useState(null);
     const [videoQuality, setVideoQuality] = useState('high');
@@ -20,23 +28,57 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
 
     // Определение формата видео из URL для оптимизации загрузки
     useEffect(() => {
+        console.log('VideoViewer: Проверка URL видео:', {
+            videoUrl,
+            isValidUrl: videoUrl && (videoUrl.startsWith('http') || videoUrl.startsWith('blob') || videoUrl.startsWith('/'))
+        });
+
         if (videoUrl) {
-            // Извлекаем расширение из URL
-            const extension = videoUrl.split('.').pop().toLowerCase();
+            try {
+                // Добавляем /api к пути, так как видео загружается через API
+                const correctedUrl = videoUrl.startsWith('/api') ? videoUrl : `/api${videoUrl}`;
+                const url = new URL(correctedUrl, window.location.origin);
+                console.log('VideoViewer: Скорректированный URL:', {
+                    originalUrl: videoUrl,
+                    correctedUrl: url.href,
+                    protocol: url.protocol,
+                    pathname: url.pathname
+                });
 
-            if (['mp4', 'mov', 'webm', 'ogv'].includes(extension)) {
-                setVideoFormat(extension);
-                console.log(`Обнаружен формат видео: ${extension}`);
+                // Проверяем доступность видео
+                fetch(url.href, { method: 'HEAD' })
+                    .then(response => {
+                        console.log('VideoViewer: Проверка доступности видео:', {
+                            status: response.status,
+                            ok: response.ok,
+                            contentType: response.headers.get('content-type'),
+                            contentLength: response.headers.get('content-length')
+                        });
+                    })
+                    .catch(error => {
+                        console.error('VideoViewer: Ошибка проверки видео:', error);
+                    });
 
-                // Устанавливаем оптимальный режим воспроизведения в зависимости от формата
-                if (extension === 'mp4') {
-                    setPlaybackMode('progressive');
-                } else if (extension === 'webm') {
-                    setPlaybackMode('normal');
+                // Извлекаем расширение из URL
+                const extension = videoUrl.split('.').pop().toLowerCase();
+                console.log('VideoViewer: Определение формата видео:', {
+                    extension,
+                    isSupported: ['mp4', 'mov', 'webm', 'ogv'].includes(extension)
+                });
+
+                if (['mp4', 'mov', 'webm', 'ogv'].includes(extension)) {
+                    setVideoFormat(extension);
+                    if (extension === 'mp4') {
+                        setPlaybackMode('progressive');
+                    } else if (extension === 'webm') {
+                        setPlaybackMode('normal');
+                    }
+                } else {
+                    setVideoFormat('unknown');
+                    console.log('Неизвестный формат видео');
                 }
-            } else {
-                setVideoFormat('unknown');
-                console.log('Неизвестный формат видео');
+            } catch (e) {
+                console.error('VideoViewer: Ошибка разбора URL:', e);
             }
         }
     }, [videoUrl]);
@@ -68,59 +110,103 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
 
     // Обработка запасного видеоплеера
     useEffect(() => {
-        if (!fallbackVideoRef.current || !videoUrl) return;
-
         const video = fallbackVideoRef.current;
 
-        const handleVideoReady = () => {
-            console.log('Запасной видеоплеер готов, длительность:', video.duration);
-            setIsLoading(false);
+        if (video && videoUrl) {
+            // Корректируем URL для API
+            const correctedUrl = videoUrl.startsWith('/api') ? videoUrl : `/api${videoUrl}`;
+            video.src = correctedUrl;
 
-            // Устанавливаем элементы управления и свойства
-            if (video.duration > 180) {
-                // Для длинных видео
-                video.controls = true;
-            }
-        };
-
-        const handleVideoError = (error) => {
-            console.error('Ошибка запасного видеоплеера:', error);
-            setLoadError('Ошибка воспроизведения видео даже в запасном плеере. Формат видео может не поддерживаться браузером.');
-        };
-
-        // Обработка состояния воспроизведения
-        const syncPlaybackState = () => {
-            if (isPlaying && video.paused) {
-                video.play().catch(e => console.error('Не удалось воспроизвести запасное видео:', e));
-            } else if (!isPlaying && !video.paused) {
-                video.pause();
-            }
-
-            // Синхронизация времени
-            if (Math.abs(video.currentTime - currentTime) > 0.5) {
-                try {
-                    video.currentTime = currentTime;
-                } catch (e) {
-                    console.error('Ошибка установки времени запасного видео:', e);
+            console.log('VideoViewer: Инициализация запасного плеера:', {
+                originalUrl: videoUrl,
+                correctedUrl,
+                videoState: {
+                    readyState: video.readyState,
+                    networkState: video.networkState,
+                    error: video.error,
+                    currentSrc: video.currentSrc
                 }
-            }
-        };
+            });
 
-        // Устанавливаем слушатели событий
-        video.addEventListener('loadeddata', handleVideoReady);
-        video.addEventListener('canplay', handleVideoReady);
-        video.addEventListener('error', handleVideoError);
-        video.addEventListener('timeupdate', syncPlaybackState);
+            const handleLoadStart = () => {
+                console.log('VideoViewer: Начало загрузки видео в плеере:', {
+                    readyState: video.readyState,
+                    networkState: video.networkState
+                });
+            };
 
-        // Начальная загрузка
-        video.load();
+            const handleProgress = () => {
+                const buffered = video.buffered;
+                console.log('VideoViewer: Прогресс загрузки:', {
+                    bufferedRanges: buffered.length > 0 ? {
+                        start: buffered.start(0),
+                        end: buffered.end(0)
+                    } : 'Нет буфера',
+                    networkState: video.networkState,
+                    readyState: video.readyState
+                });
+            };
 
-        return () => {
-            video.removeEventListener('loadeddata', handleVideoReady);
-            video.removeEventListener('canplay', handleVideoReady);
-            video.removeEventListener('error', handleVideoError);
-            video.removeEventListener('timeupdate', syncPlaybackState);
-        };
+            video.addEventListener('loadstart', handleLoadStart);
+            video.addEventListener('progress', handleProgress);
+
+            const handleVideoReady = () => {
+                console.log('VideoViewer: Запасной плеер готов:', {
+                    duration: video.duration,
+                    videoWidth: video.videoWidth,
+                    videoHeight: video.videoHeight,
+                    readyState: video.readyState,
+                    networkState: video.networkState
+                });
+                setIsLoading(false);
+
+                if (video.duration > 180) {
+                    video.controls = true;
+                }
+            };
+
+            const handleVideoError = (error) => {
+                console.error('VideoViewer: Ошибка запасного плеера:', {
+                    error,
+                    videoError: video.error,
+                    networkState: video.networkState,
+                    currentSrc: video.currentSrc
+                });
+                setLoadError('Ошибка воспроизведения видео даже в запасном плеере. Формат видео может не поддерживаться браузером.');
+            };
+
+            const syncPlaybackState = () => {
+                if (isPlaying && video.paused) {
+                    video.play().catch(e => console.error('Не удалось воспроизвести запасное видео:', e));
+                } else if (!isPlaying && !video.paused) {
+                    video.pause();
+                }
+
+                if (Math.abs(video.currentTime - currentTime) > 0.5) {
+                    try {
+                        video.currentTime = currentTime;
+                    } catch (e) {
+                        console.error('Ошибка установки времени запасного видео:', e);
+                    }
+                }
+            };
+
+            video.addEventListener('loadeddata', handleVideoReady);
+            video.addEventListener('canplay', handleVideoReady);
+            video.addEventListener('error', handleVideoError);
+            video.addEventListener('timeupdate', syncPlaybackState);
+
+            video.load();
+
+            return () => {
+                video.removeEventListener('loadstart', handleLoadStart);
+                video.removeEventListener('progress', handleProgress);
+                video.removeEventListener('loadeddata', handleVideoReady);
+                video.removeEventListener('canplay', handleVideoReady);
+                video.removeEventListener('error', handleVideoError);
+                video.removeEventListener('timeupdate', syncPlaybackState);
+            };
+        }
     }, [videoUrl, isPlaying, currentTime]);
 
     // Синхронизация с внешним временем и состоянием воспроизведения

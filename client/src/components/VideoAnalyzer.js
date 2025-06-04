@@ -1,14 +1,14 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { processVideoFrame } from '../services/api';
 
-// Продвинутый алгоритм дифференцирования кадров для улучшенного обнаружения движения
-/* ОТКЛЮЧЕНО - НЕ ТРЕБУЕТСЯ ДЛЯ ОБНАРУЖЕНИЯ РЕЖИМА ПАУЗЫ
+// Advanced frame differencing worker for better motion detection
+/* COMMENTED OUT - NOT NEEDED FOR PAUSE MODE DETECTION
 const createImageProcessor = () => {
-    // Создаем воркер только если браузер его поддерживает
+    // Only create worker if browser supports it
     if (typeof Worker !== 'undefined') {
         try {
             const workerCode = `
-                // Предварительно вычисляем таблицы преобразования для повышения производительности
+                // Precompute conversion tables for performance
                 const YCbCrTable = {
                     r: new Float32Array(256),
                     g: new Float32Array(256),
@@ -16,7 +16,7 @@ const createImageProcessor = () => {
                 };
                 
                 for(let i = 0; i < 256; i++) {
-                    // Предварительно вычисленное преобразование RGB в YCbCr (только компонент Y)
+                    // Precalculated RGB to YCbCr conversion (just Y component)
                     YCbCrTable.r[i] = 0.299 * i;
                     YCbCrTable.g[i] = 0.587 * i;
                     YCbCrTable.b[i] = 0.114 * i;
@@ -25,15 +25,15 @@ const createImageProcessor = () => {
                 self.onmessage = function(e) {
                     const {videoData, width, height, lastFrameData, threshold} = e.data;
                     
-                    // Создаем canvas в воркере
+                    // Create canvas in worker
                     const canvas = new OffscreenCanvas(width, height);
                     const ctx = canvas.getContext('2d');
                     
-                    // Рисуем данные изображения на canvas
+                    // Draw image data to canvas
                     const imgData = new ImageData(new Uint8ClampedArray(videoData), width, height);
                     ctx.putImageData(imgData, 0, 0);
                     
-                    // Обнаруживаем движение, если lastFrameData существует
+                    // Detect motion if lastFrameData exists
                     let motionDetected = true;
                     let diffScore = 0;
                     let motionAreas = [];
@@ -42,27 +42,27 @@ const createImageProcessor = () => {
                         const currentData = ctx.getImageData(0, 0, width, height).data;
                         const lastData = new Uint8ClampedArray(lastFrameData);
                         
-                        // Оптимизированное сравнение кадров - сравниваем только яркость
-                        // и используем блочное сравнение для повышения производительности
-                        const blockSize = 16; // блоки 16x16 пикселей
+                        // Optimized frame comparison - compare luminance only
+                        // and use block-based comparison for better performance
+                        const blockSize = 16; // 16x16 pixel blocks
                         const blocksX = Math.ceil(width / blockSize);
                         const blocksY = Math.ceil(height / blockSize);
                         let diffBlocks = 0;
                         const totalBlocks = blocksX * blocksY;
                         
-                        // Обрабатываем каждый блок
+                        // Process each block
                         for (let by = 0; by < blocksY; by++) {
                             for (let bx = 0; bx < blocksX; bx++) {
                                 let blockDiff = 0;
                                 let pixelsChecked = 0;
                                 
-                                // Для эффективности проверяем несколько пикселей в блоке
+                                // Sample a few pixels in the block for efficiency
                                 const startX = bx * blockSize;
                                 const startY = by * blockSize;
                                 const endX = Math.min(startX + blockSize, width);
                                 const endY = Math.min(startY + blockSize, height);
                                 
-                                // Пропускаем некоторые пиксели для повышения производительности
+                                // Skip some pixels for performance
                                 const skipFactor = 2;
                                 
                                 for (let y = startY; y < endY; y += skipFactor) {
@@ -71,12 +71,12 @@ const createImageProcessor = () => {
                                     for (let x = startX; x < endX; x += skipFactor) {
                                         const idx = rowOffset + x * 4;
                                         
-                                        // Быстрый расчет Y (яркости) с использованием предварительно вычисленных таблиц
+                                        // Fast Y (luminance) calculation using precalculated tables
                                         const y1 = YCbCrTable.r[currentData[idx]] + YCbCrTable.g[currentData[idx+1]] + YCbCrTable.b[currentData[idx+2]];
                                         const y2 = YCbCrTable.r[lastData[idx]] + YCbCrTable.g[lastData[idx+1]] + YCbCrTable.b[lastData[idx+2]];
                                         
                                         const diff = Math.abs(y1 - y2);
-                                        if (diff > 15) { // Порог для различия яркости
+                                        if (diff > 15) { // Threshold for luminance difference
                                             blockDiff++;
                                         }
                                         
@@ -84,7 +84,7 @@ const createImageProcessor = () => {
                                     }
                                 }
                                 
-                                // Если изменилось достаточно пикселей, отмечаем блок как отличающийся
+                                // If enough pixels changed, mark the block as different
                                 if (pixelsChecked > 0 && blockDiff / pixelsChecked > 0.2) {
                                     diffBlocks++;
                                     motionAreas.push({x: bx, y: by});
@@ -96,10 +96,10 @@ const createImageProcessor = () => {
                         motionDetected = diffScore > threshold;
                     }
                     
-                    // Оптимизированное сжатие JPEG
-                    const quality = motionDetected ? 0.7 : 0.6; // Более низкое качество, если нет движения
+                    // Optimized JPEG compression
+                    const quality = motionDetected ? 0.7 : 0.6; // Lower quality if no motion
                     
-                    // Создаем blob с оптимизированными настройками
+                    // Create blob with optimized settings
                     canvas.convertToBlob({type: 'image/jpeg', quality}).then(blob => {
                         self.postMessage({
                             blob,
@@ -126,7 +126,7 @@ const createImageProcessor = () => {
 };
 */
 
-// Создаем очередь запросов для лучшего управления сетевыми запросами
+// Create request queue for better network request management
 const createRequestQueue = () => {
     const queue = [];
     let isProcessing = false;
@@ -144,7 +144,7 @@ const createRequestQueue = () => {
             reject(error);
         } finally {
             isProcessing = false;
-            processQueue(); // Обрабатываем следующий запрос
+            processQueue(); // Process next request
         }
     };
 
@@ -179,127 +179,87 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
     const requestQueue = useRef(null);
     const consecutiveErrorCount = useRef(0);
     const processingTimes = useRef([]);
-    const lastSelectedPose = useRef(null);  // Отслеживаем последнюю выбранную позу
-    const poseSimilarityCache = useRef(new Map()); // Кэш для расчетов сходства поз
+    const lastSelectedPose = useRef(null);  // Track the last selected pose
+    const poseSimilarityCache = useRef(new Map()); // Cache for pose similarity calculations
     const devicePixelRatio = useRef(window.devicePixelRatio || 1);
     const lastDetectedPoses = useRef([]);
     const framesToSkip = useRef(0);
     const [showMessage, setShowMessage] = useState(false);
     const overlayCanvasRef = useRef(null);
     const pausedForSelectionRef = useRef(false);
-    const videoLoadAttempts = useRef(0); // Отслеживаем попытки загрузки
+    const videoLoadAttempts = useRef(0); // Track load attempts
     const [videoError, setVideoError] = useState(null);
     const seekRequested = useRef(false);
     const manualPlayRequest = useRef(false);
     const playbackErrorCount = useRef(0);
 
-    // Улучшенные адаптивные настройки, соответствующие возможностям устройства
+    // Improved adaptive settings to match device capabilities
     const [settings, setSettings] = useState({
-        frameInterval: 1000 / 15, // Целевые 15 FPS 
-        maxProcessingTime: 100, // Пропуск кадров, если обработка занимает слишком много времени (мс)
-        quality: 0.8, // Качество JPEG (0-1)
-        motionThreshold: 0.05, // Порог обнаружения движения (0-1)
-        motionDetectionEnabled: true, // Включение/выключение обнаружения движения
-        resizeEnabled: true, // Включение/выключение изменения размера кадра на бэкенде
-        adaptiveQuality: true, // Включение/выключение адаптивного качества
+        frameInterval: 1000 / 15, // Target 15 FPS 
+        maxProcessingTime: 100, // Skip frames if processing takes too long (ms)
+        quality: 0.8, // JPEG quality (0-1)
+        motionThreshold: 0.05, // Motion detection threshold (0-1)
+        motionDetectionEnabled: true, // Enable/disable motion detection
+        resizeEnabled: true, // Enable/disable backend frame resize
+        adaptiveQuality: true, // Enable/disable adaptive quality
         userDevicePerformance: 'medium', // 'low', 'medium', 'high'
-        smartSkipping: true, // Включение умного пропуска кадров
+        smartSkipping: true, // Enable smart frame skipping
         trackingMode: 'hybrid', // 'simple', 'advanced', 'hybrid'
-        maxConcurrentRequests: 1, // Максимальное количество одновременных запросов к серверу
+        maxConcurrentRequests: 1, // Max concurrent requests to server
     });
 
-    // Инициализация размеров canvas когда видео готово - ПЕРЕНЕСЕНА ЭТА ФУНКЦИЯ В НАЧАЛО
-    const setupCanvases = useCallback(() => {
-        if (!videoRef.current) return false;
-
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        const overlay = overlayCanvasRef.current;
-
-        if (canvas && video.videoWidth && video.videoHeight) {
-            console.log(`Setting up canvases for native video resolution: ${video.videoWidth}x${video.videoHeight}`);
-
-            // Устанавливаем размер основного canvas соответствующим нативному разрешению видео
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-
-            // Устанавливаем размер оверлейного canvas соответствующим нативному разрешению видео
-            if (overlay) {
-                // Всегда используем исходные размеры видео для размера canvas
-                overlay.width = video.videoWidth;
-                overlay.height = video.videoHeight;
-
-                console.log(`Overlay canvas set to: ${overlay.width}x${overlay.height}`);
-            }
-
-            // Логируем текущий статус видео для помощи с отладкой
-            console.log(`Video status: currentTime=${video.currentTime}s, paused=${video.paused}, readyState=${video.readyState}`);
-
-            return true; // Возвращаем true, если настройка прошла успешно
-        } else {
-            // Логируем информацию об ошибке, если настройка не удалась
-            console.warn(`Canvas setup failed: video dimensions not available (${video.videoWidth}x${video.videoHeight})`);
-
-            if (video.readyState < 2) {
-                console.warn(`Video not ready yet, readyState=${video.readyState}`);
-            }
-
-            return false; // Возвращаем false, если настройка не удалась
-        }
-    }, []);
-
-    // Расчетные настройки, основанные на производительности - более динамичный отклик на возможности устройства
+    // Computed settings based on performance - more dynamic response to device capabilities
     const computedSettings = useMemo(() => {
         let quality = settings.quality;
         let frameInterval = settings.frameInterval;
         let motionThreshold = settings.motionThreshold;
-        let skipThreshold = 0.02; // Порог по умолчанию для пропуска кадров
-        let sizeLimit = 640; // Максимальный размер по умолчанию для видеокадров
+        let skipThreshold = 0.02; // Default threshold for frame skipping
+        let sizeLimit = 640; // Default max size for video frames
 
-        // Корректировка на основе производительности устройства
+        // Adjust based on device performance
         if (settings.adaptiveQuality) {
             const avgProcessingTime = processingTimes.current.length > 0
                 ? processingTimes.current.reduce((a, b) => a + b, 0) / processingTimes.current.length
                 : 50;
 
-            // Более детальные уровни производительности
+            // More detailed performance tiers
             if (avgProcessingTime > 250) {
-                // Очень медленное устройство
+                // Very slow device
                 quality = 0.5;
                 frameInterval = 1000 / 6; // 6 FPS
                 motionThreshold = 0.15;
                 skipThreshold = 0.05;
                 sizeLimit = 320;
             } else if (avgProcessingTime > 200) {
-                // Медленное устройство
+                // Slow device
                 quality = 0.55;
                 frameInterval = 1000 / 8; // 8 FPS
                 motionThreshold = 0.12;
                 skipThreshold = 0.04;
                 sizeLimit = 480;
             } else if (avgProcessingTime > 150) {
-                // Устройство ниже среднего
+                // Below average device
                 quality = 0.6;
                 frameInterval = 1000 / 10; // 10 FPS
                 motionThreshold = 0.1;
                 skipThreshold = 0.03;
                 sizeLimit = 480;
             } else if (avgProcessingTime > 100) {
-                // Среднее устройство
+                // Average device
                 quality = 0.65;
                 frameInterval = 1000 / 12; // 12 FPS
                 motionThreshold = 0.08;
                 skipThreshold = 0.03;
                 sizeLimit = 640;
             } else if (avgProcessingTime > 50) {
-                // Хорошее устройство
+                // Good device
                 quality = 0.75;
                 frameInterval = 1000 / 15; // 15 FPS
                 motionThreshold = 0.05;
                 skipThreshold = 0.02;
                 sizeLimit = 720;
             } else if (avgProcessingTime < 30) {
-                // Высокопроизводительное устройство
+                // High-end device
                 quality = 0.85;
                 frameInterval = 1000 / 24; // 24 FPS
                 motionThreshold = 0.02;
@@ -321,37 +281,37 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
     const frameSkipCount = useRef(0);
     const lastProcessingDuration = useRef(0);
 
-    // Инициализируем воркер и очередь запросов при монтировании компонента
+    // Initialize worker and request queue when component mounts
     useEffect(() => {
-        // Создаем очередь запросов для управления сетевыми запросами
+        // Create request queue for network request management
         requestQueue.current = createRequestQueue();
 
-        // Определяем производительность устройства
+        // Detect device performance
         detectDevicePerformance();
 
-        // Очистка памяти
+        // Memory cleanup
         return () => {
-            // Очищаем очередь запросов
+            // Clear request queue
             if (requestQueue.current) {
                 requestQueue.current.clear();
             }
 
-            // Очищаем кэши
+            // Clear caches
             poseSimilarityCache.current.clear();
             lastSelectedPose.current = null;
         };
     }, []);
 
-    // Определяем производительность устройства
+    // Detect device performance
     const detectDevicePerformance = () => {
-        // Более сложное определение устройства
+        // More sophisticated device detection
         const hardwareConcurrency = navigator.hardwareConcurrency || 2;
-        const memory = navigator.deviceMemory || 4; // По умолчанию 4 ГБ, если недоступно
+        const memory = navigator.deviceMemory || 4; // Default to 4GB if not available
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
         let performanceLevel = 'medium';
 
-        // Проверяем возможности устройства
+        // Check device capabilities
         if (isMobile) {
             if (hardwareConcurrency <= 4 || memory <= 2) {
                 performanceLevel = 'low';
@@ -360,7 +320,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             } else {
                 performanceLevel = 'medium';
             }
-        } else { // Настольный компьютер
+        } else { // Desktop
             if (hardwareConcurrency <= 2 || memory <= 4) {
                 performanceLevel = 'low';
             } else if (hardwareConcurrency >= 8 && memory >= 8) {
@@ -373,32 +333,32 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         setSettings(prev => ({
             ...prev,
             userDevicePerformance: performanceLevel,
-            // Корректируем настройки на основе обнаруженной производительности
+            // Adjust settings based on detected performance
             quality: performanceLevel === 'low' ? 0.6 : performanceLevel === 'medium' ? 0.7 : 0.8,
             frameInterval: performanceLevel === 'low' ? 1000 / 10 : performanceLevel === 'medium' ? 1000 / 15 : 1000 / 24,
         }));
     };
 
-    // Захватываем кадр видео в оригинальном разрешении
+    // Capture video frame at original resolution
     const captureVideoFrame = useCallback((video) => {
         if (!video) return null;
 
-        // Всегда используем исходные размеры видео
+        // Always use the video's native dimensions
         const width = video.videoWidth;
         const height = video.videoHeight;
 
-        // Создаем canvas при необходимости
+        // Create canvas if needed
         if (!offscreenCanvasRef.current) {
             offscreenCanvasRef.current = document.createElement('canvas');
         }
 
         const canvas = offscreenCanvasRef.current;
 
-        // Устанавливаем размеры canvas, чтобы точно соответствовали размерам видео
+        // Set canvas to match video dimensions exactly
         canvas.width = width;
         canvas.height = height;
 
-        // Получаем контекст и рисуем кадр видео
+        // Get context and draw the video frame
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
@@ -406,23 +366,23 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         // Очищаем канвас перед рисованием
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Сначала заполняем черным фоном, чтобы избежать прозрачности
+        // Fill with black background first to ensure no transparency
         ctx.fillStyle = 'rgb(0,0,0)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Рисуем видео на канвас, гарантируя непрозрачность
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Возвращаем как blob с оптимизированными настройками качества
+        // Return as blob with optimized quality settings
         return new Promise(resolve => {
-            // Используем более низкое качество при обработке кадров для производительности
-            // Высокое качество используем только для выбора танцора
+            // Use lower quality when processing frames for performance
+            // Only use high quality for the actual dancer selection
             const quality = isDancerSelectionMode && video.paused ? 0.9 : 0.7;
             canvas.toBlob(resolve, 'image/jpeg', quality);
         });
     }, [isDancerSelectionMode]);
 
-    // Обработка кадра видео с оптимизированным планированием
+    // Process video frame with optimized scheduling
     const processFrame = useCallback(async (timestamp) => {
         if (!isProcessingRef.current || !isVideoReady || !videoRef.current) {
             return;
@@ -464,16 +424,16 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
         lastProcessTime.current = timestamp;
 
-        // Получаем элемент видео
+        // Get video element
         const video = videoRef.current;
 
-        // Обрабатываем только если нужно (режим выбора танцора или видео на паузе)
+        // Only process if we need to (dancer selection mode or video paused)
         if (isDancerSelectionMode || video.paused) {
             try {
-                // Захватываем кадр
+                // Capture frame
                 const blob = await captureVideoFrame(video);
 
-                // Обрабатываем только если в режиме выбора или на паузе
+                // Process only if in selection mode or if paused
                 if (blob && (isDancerSelectionMode || video.paused)) {
                     await processBlob(blob);
                 }
@@ -482,11 +442,11 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             }
         }
 
-        // Продолжаем цикл анимации
+        // Continue the animation loop
         animationFrameRef.current = requestAnimationFrame(processFrame);
     }, [isVideoReady, captureVideoFrame, computedSettings, settings, isDancerSelectionMode]);
 
-    // Оптимизированная обработка blob с улучшенной обработкой ошибок и регулированием
+    // Optimized blob processing with better error handling and throttling
     const processBlob = async (blob) => {
         if (processingInProgress.current) {
             return;
@@ -494,30 +454,30 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
         processingInProgress.current = true;
         try {
-            // Регулируем API-запросы на основе производительности
+            // Throttle API requests based on performance
             const now = performance.now();
             const timeSinceLastProcess = now - lastProcessingDuration.current;
 
-            // Если мы недавно обработали и видео воспроизводится, пропускаем эту обработку
+            // If we processed recently and video is playing, skip this processing
             if (timeSinceLastProcess < 100 && !videoRef.current.paused && !isDancerSelectionMode) {
                 processingInProgress.current = false;
                 return;
             }
 
-            // Создаем форму данных
+            // Create form data
             const formData = new FormData();
             formData.append('file', blob, 'frame.jpg');
 
-            // Добавляем параметр изменения размера на основе настроек
+            // Add resize parameter based on settings
             const resize = settings.resizeEnabled ? 1 : 0;
 
-            // Запрашиваем наложение только в режиме выбора танцора и когда видео на паузе
+            // Only request overlay when in dancer selection mode and paused
             const overlay = isDancerSelectionMode && videoRef.current.paused ? 1 : 0;
 
-            // Используем очередь запросов для управления параллельными запросами с тайм-аутом
+            // Use request queue to manage concurrent requests with timeout
             const makeRequest = async () => {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000); // Более короткий тайм-аут
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // Shorter timeout
 
                 try {
                     const response = await fetch(`http://127.0.0.1:8000/process-frame?resize=${resize}&overlay=${overlay}`, {
@@ -545,26 +505,26 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
             const startTime = performance.now();
 
-            // Используем очередь для управления запросом
+            // Use the queue to manage the request
             const result = await requestQueue.current.add(makeRequest);
 
             const processingTime = performance.now() - startTime;
             lastProcessingDuration.current = processingTime;
 
-            // Обрабатываем результат только если мы все еще в правильном режиме
+            // Only process result if we're still in the right mode
             if (isDancerSelectionMode || videoRef.current.paused) {
-                // Устанавливаем умный пропуск кадров на основе времени обработки
+                // Set smart frame skipping based on processing time
                 if (settings.smartSkipping) {
                     const skipFrames = Math.floor(processingTime / computedSettings.frameInterval);
-                    framesToSkip.current = Math.min(5, skipFrames); // Ограничиваем 5 кадрами для пропуска
+                    framesToSkip.current = Math.min(5, skipFrames); // Cap at 5 frames to skip
                 }
 
-                // Обрабатываем ответ
+                // Handle response
                 if (result.image && canvasRef.current && overlayCanvasRef.current) {
-                    // Создаем изображение из ответа
+                    // Create image from response
                     const img = new Image();
                     img.onload = () => {
-                        // Рисуем только если мы все еще в режиме выбора танцора
+                        // Only draw if we're still in dancer selection mode
                         if (!isDancerSelectionMode && !videoRef.current.paused) return;
 
                         const overlay = overlayCanvasRef.current;
@@ -575,7 +535,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                         ctx.drawImage(img, 0, 0, overlay.width, overlay.height);
                     };
 
-                    // Устанавливаем источник изображения с обработкой ошибок
+                    // Set image source with error handling
                     img.onerror = (err) => {
                         console.error("Failed to load image:", err);
                     };
@@ -583,12 +543,12 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     img.src = result.image;
                 }
 
-                // Обрабатываем ключевые точки
+                // Process landmarks
                 if (result.poses && result.poses.length > 0) {
                     setCurrentPoses(result.poses);
                     lastDetectedPoses.current = result.poses;
 
-                    // Обрабатываем выбранную позу, если предоставлена
+                    // Handle selected pose if provided
                     if (result.selected_pose_index !== undefined) {
                         setSelectedPerson(result.selected_pose_index);
                         if (onPersonSelected) {
@@ -605,18 +565,18 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }
     };
 
-    // Оптимизированный расчет схожести поз с кэшированием
+    // Optimized pose similarity calculation with caching
     const calculatePoseSimilarity = (pose1, pose2) => {
         if (!pose1 || !pose2) return 0;
 
-        // Создаем ключ кэша
+        // Create a cache key
         const keypoints1 = JSON.stringify(pose1.keypoints.map(kp => [Math.round(kp.x), Math.round(kp.y), kp.score > 0.5 ? 1 : 0]));
         const keypoints2 = JSON.stringify(pose2.keypoints.map(kp => [Math.round(kp.x), Math.round(kp.y), kp.score > 0.5 ? 1 : 0]));
 
         const cacheKey = keypoints1 + '|' + keypoints2;
         const reverseCacheKey = keypoints2 + '|' + keypoints1;
 
-        // Проверяем кэш
+        // Check cache
         if (poseSimilarityCache.current.has(cacheKey)) {
             return poseSimilarityCache.current.get(cacheKey);
         }
@@ -625,14 +585,14 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             return poseSimilarityCache.current.get(reverseCacheKey);
         }
 
-        // Вычисляем схожесть, если нет в кэше
+        // Calculate similarity if not in cache
         let totalScore = 0;
         let validPoints = 0;
         let importantPointsScore = 0;
         let importantPointsCount = 0;
 
-        // Определяем важные ключевые точки для отслеживания (плечи, бедра, голова)
-        const importantIndices = [0, 11, 12, 23, 24]; // предполагаем, что это индексы для головы, плеч, бедер
+        // Define important keypoints for tracking (shoulders, hips, head)
+        const importantIndices = [0, 11, 12, 23, 24]; // assuming these are the indices for head, shoulders, hips
 
         pose1.keypoints.forEach((kp1, i) => {
             const kp2 = pose2.keypoints[i];
@@ -642,7 +602,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 const dx = kp1.x - kp2.x;
                 const dy = kp1.y - kp2.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                const similarity = Math.max(0, 1 - distance / 120);  // Скорректированная нормализация
+                const similarity = Math.max(0, 1 - distance / 120);  // Adjusted normalization
 
                 totalScore += similarity;
                 validPoints++;
@@ -654,17 +614,17 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             }
         });
 
-        // Вычисляем общую схожесть с акцентом на важные точки
+        // Calculate overall similarity with emphasis on important points
         let finalScore = 0;
         if (validPoints > 0) {
             const regularScore = totalScore / validPoints;
             const importantScore = importantPointsCount > 0 ? importantPointsScore / importantPointsCount : 0;
-            finalScore = regularScore * 0.4 + importantScore * 0.6;  // Придаем больший вес важным точкам
+            finalScore = regularScore * 0.4 + importantScore * 0.6;  // Weight important points higher
         }
 
-        // Кэшируем результат (ограничиваем размер кэша для предотвращения проблем с памятью)
+        // Cache the result (limit cache size to prevent memory issues)
         if (poseSimilarityCache.current.size > 1000) {
-            // Очищаем половину кэша, когда он становится слишком большим
+            // Clear half the cache when it gets too large
             const keys = Array.from(poseSimilarityCache.current.keys());
             keys.slice(0, 500).forEach(key => poseSimilarityCache.current.delete(key));
         }
@@ -673,7 +633,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         return finalScore;
     };
 
-    // Настройка обработки видео - ОПТИМИЗИРОВАНО для активации обработки только в режиме выбора танцора
+    // Video processing setup - OPTIMIZED to only activate processing in dancer selection mode
     useEffect(() => {
         if (!videoRef.current || !canvasRef.current || !isVideoReady) {
             return;
@@ -684,13 +644,13 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         const handlePlay = () => {
             console.log('Video started playing');
 
-            // Очищаем оверлей при начале воспроизведения
+            // Clean the overlay on playback start
             if (overlayCanvasRef.current) {
                 const ctx = overlayCanvasRef.current.getContext('2d');
                 ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
             }
 
-            // Отключаем автоматическую обработку кадров - обрабатываем только по клику
+            // Disable automatic frame processing - only process on click
             isProcessingRef.current = false;
             setIsProcessing(false);
 
@@ -699,7 +659,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 animationFrameRef.current = null;
             }
 
-            // Если в режиме выбора танцора, ставим видео на паузу
+            // If in dancer selection mode, pause the video
             if (isDancerSelectionMode && !video.paused) {
                 video.pause();
                 pausedForSelectionRef.current = true;
@@ -711,20 +671,12 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         const handlePause = () => {
             // При паузе НЕ начинаем обрабатывать кадры автоматически
             console.log('Video paused');
-
-            // Если в режиме выбора танцора, убеждаемся, что canvas готов для захвата
-            if (isDancerSelectionMode) {
-                console.log('Видео поставлено на паузу извне в режиме выбора танцора, подготавливаем canvas');
-                setTimeout(() => {
-                    setupCanvases();
-                }, 50); // Небольшая задержка, чтобы убедиться, что видео полностью остановлено
-            }
         };
 
         const handleEnded = () => {
             console.log('Video ended');
 
-            // Очищаем все оверлеи
+            // Clear any overlays
             if (overlayCanvasRef.current) {
                 const ctx = overlayCanvasRef.current.getContext('2d');
                 ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
@@ -742,23 +694,12 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         video.addEventListener('pause', handlePause);
         video.addEventListener('ended', handleEnded);
 
-        // Добавляем слушатель timeupdate для обработки длинных видео
+        // Add timeupdate listener to handle long videos
         const handleTimeUpdate = () => {
-            // Это событие срабатывает регулярно во время воспроизведения
-            // Для длинных видео это подтверждает, что видео все еще воспроизводится
+            // This event fires regularly during playback
+            // For long videos, this confirms the video is still playing
             if (video.currentTime > 0 && !video.paused) {
-                // Видео успешно воспроизводится
-            }
-
-            // Если в режиме выбора танцора и видео на паузе, убеждаемся, что canvas готов
-            // Это помогает, когда видео было перемотано на другую позицию
-            if (isDancerSelectionMode && video.paused) {
-                // Обновляем только если прошло время с последнего обновления или если была запрошена перемотка
-                if (seekRequested.current) {
-                    console.log(`Video seeked to ${video.currentTime}s, updating canvas for frame capture`);
-                    setupCanvases();
-                    seekRequested.current = false;
-                }
+                // Video is playing successfully
             }
         };
 
@@ -775,9 +716,9 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 animationFrameRef.current = null;
             }
         };
-    }, [isVideoReady, isDancerSelectionMode, setupCanvases]);
+    }, [isVideoReady, isDancerSelectionMode]);
 
-    // Реагируем на изменения в режиме выбора танцора
+    // React to changes in dancer selection mode
     useEffect(() => {
         if (!videoRef.current) return;
 
@@ -786,20 +727,13 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         const video = videoRef.current;
 
         if (isDancerSelectionMode) {
-            // Входим в режим выбора танцора
+            // Entering dancer selection mode
 
-            // Если видео воспроизводится, ставим на паузу
+            // If video is playing, pause it
             if (!video.paused) {
                 video.pause();
                 pausedForSelectionRef.current = true;
             }
-
-            // Убеждаемся, что canvas настроены с правильными размерами при входе в режим выбора танцора
-            // Это гарантирует, что мы готовы захватить текущий кадр
-            setTimeout(() => {
-                const setupSuccess = setupCanvases();
-                console.log(`Canvas setup in dancer selection mode: ${setupSuccess ? 'successful' : 'failed'}`);
-            }, 100); // Небольшая задержка, чтобы убедиться, что видео полностью остановлено
 
             // ВАЖНО: Не начинаем автоматическую обработку кадров в режиме выбора танцора
             // Обработка будет запускаться ТОЛЬКО по клику пользователя
@@ -822,9 +756,9 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             setShowMessage(true);
             setTimeout(() => setShowMessage(false), 5000);
         } else {
-            // Выходим из режима выбора танцора
+            // Exiting dancer selection mode
 
-            // Останавливаем обработку для экономии ресурсов
+            // Stop processing to save resources
             isProcessingRef.current = false;
             setIsProcessing(false);
 
@@ -833,7 +767,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 animationFrameRef.current = null;
             }
 
-            // Сбрасываем флаг паузы
+            // Reset pause flag
             pausedForSelectionRef.current = false;
 
             // ВАЖНО: Явно очищаем оверлей при выходе из режима выбора танцора
@@ -845,11 +779,11 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             // Сбрасываем состояние выбора
             setCurrentPoses([]);
         }
-    }, [isDancerSelectionMode, setupCanvases]);
+    }, [isDancerSelectionMode]);
 
     // Обработчик клика по canvas - ТОЛЬКО здесь запускаем обработку кадра для выбора танцора
     const handleCanvasClick = useCallback(async (event) => {
-        // Обрабатываем клики только в режиме выбора танцора и когда видео на паузе
+        // Only process clicks in dancer selection mode and when video is paused
         if (!isDancerSelectionMode || !videoRef.current || !videoRef.current.paused) {
             return;
         }
@@ -863,25 +797,21 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             const overlay = overlayCanvasRef.current;
 
             if (!video || !canvas || !overlay) {
-                throw new Error("Элементы видео или canvas недоступны");
+                throw new Error("Video or canvas elements not available");
             }
-
-            // Убеждаемся, что canvas правильно настроен с корректными размерами
-            // Это гарантирует, что мы работаем с текущими размерами видео
-            setupCanvases();
 
             // Очищаем предыдущие результаты
             const overlayCtx = overlay.getContext('2d');
             overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
 
-            // Получаем позицию и размеры оверлея
+            // Get overlay position and dimensions
             const overlayRect = overlay.getBoundingClientRect();
 
-            // Получаем исходные размеры видео
+            // Get original video dimensions
             const videoWidth = video.videoWidth;
             const videoHeight = video.videoHeight;
 
-            // Вычисляем фактические отображаемые размеры видео внутри оверлея
+            // Calculate the actual displayed video dimensions within the overlay
             const containerWidth = overlayRect.width;
             const containerHeight = overlayRect.height;
             const videoAspect = videoWidth / videoHeight;
@@ -890,40 +820,40 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             let displayedWidth, displayedHeight, offsetX = 0, offsetY = 0;
 
             if (containerAspect > videoAspect) {
-                // Высота видео ограничена высотой контейнера
+                // Video height is constrained to container height
                 displayedHeight = containerHeight;
                 displayedWidth = displayedHeight * videoAspect;
-                // Вычисляем левое смещение для центрирования
+                // Calculate left offset for centering
                 offsetX = (containerWidth - displayedWidth) / 2;
             } else {
-                // Ширина видео ограничена шириной контейнера
+                // Video width is constrained to container width
                 displayedWidth = containerWidth;
                 displayedHeight = displayedWidth / videoAspect;
-                // Вычисляем верхнее смещение для центрирования
+                // Calculate top offset for centering
                 offsetY = (containerHeight - displayedHeight) / 2;
             }
 
-            // Вычисляем позицию клика относительно области отображения видео
+            // Calculate click position relative to the video display area
             const clickX = event.clientX - overlayRect.left - offsetX;
             const clickY = event.clientY - overlayRect.top - offsetY;
 
-            // Преобразуем позицию клика в координаты видео
+            // Convert click position to video coordinates
             const videoX = (clickX / displayedWidth) * videoWidth;
             const videoY = (clickY / displayedHeight) * videoHeight;
 
-            console.log(`Клик в клиентских координатах (${event.clientX}, ${event.clientY})`);
-            console.log(`Отображение видео: ${displayedWidth}x${displayedHeight} со смещением (${offsetX}, ${offsetY})`);
-            console.log(`Преобразовано в координаты видео: (${videoX}, ${videoY})`);
+            console.log(`Click at client (${event.clientX}, ${event.clientY})`);
+            console.log(`Video display: ${displayedWidth}x${displayedHeight} with offset (${offsetX}, ${offsetY})`);
+            console.log(`Mapped to video coordinates: (${videoX}, ${videoY})`);
 
-            // Пропускаем, если клик за пределами области отображения видео
+            // Skip if the click is outside the video display area
             if (clickX < 0 || clickX > displayedWidth || clickY < 0 || clickY > displayedHeight) {
-                console.log("Клик за пределами области видео");
+                console.log("Click outside of video area");
                 setIsProcessing(false);
                 setShowMessage(false);
                 return;
             }
 
-            // Убеждаемся, что кадр видео захвачен на canvas с правильными размерами
+            // Ensure video frame is captured to canvas
             canvas.width = videoWidth;
             canvas.height = videoHeight;
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -931,18 +861,16 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             // Очищаем канвас перед рисованием
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Рисуем ТЕКУЩИЙ кадр видео на canvas
-            // Это гарантирует, что мы получаем кадр, который сейчас на паузе
-            console.log(`Рисуем текущий кадр на паузе, время ${video.currentTime}s`);
+            // Draw video on canvas with proper RGB format
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Преобразуем canvas в blob для API-запроса с правильной BGR кодировкой
+            // Convert canvas to blob for API request with proper BGR encoding
             const blob = await new Promise(resolve => {
                 canvas.toBlob(resolve, 'image/jpeg', 0.95);
             });
 
-            // Отправляем запрос на бэкенд для определения поз с координатами клика
-            console.log("Отправляем запрос для определения поз...");
+            // Send request to backend for pose detection with click coordinates
+            console.log("Sending request for pose detection...");
             const result = await requestQueue.current.add(() =>
                 processVideoFrame(blob, {
                     overlay: true,
@@ -952,32 +880,32 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 })
             );
 
-            console.log("Получен результат от сервера:", result);
+            console.log("Got result from server:", result);
 
             if (result.error) {
-                console.error("Сервер вернул ошибку:", result.error);
+                console.error("Server returned error:", result.error);
                 throw new Error(result.error);
             }
 
-            // Проверяем, были ли обнаружены позы
+            // Check if poses were detected
             if (result.poses && result.poses.length > 0) {
-                console.log(`Обнаружено ${result.poses.length} поз, выбранный индекс: ${result.selected_pose_index}`);
+                console.log(`Detected ${result.poses.length} poses, selected index: ${result.selected_pose_index}`);
                 const poses = result.poses;
                 setCurrentPoses(poses);
 
-                // Получаем выбранную позу, если доступна
+                // Get the selected pose if available
                 if (result.selected_pose_index !== undefined) {
                     const selectedPose = result.selected_pose_index;
-                    console.log("Выбранная поза:", selectedPose);
+                    console.log("Selected pose:", selectedPose);
                     setSelectedPerson(selectedPose);
 
                     if (onPersonSelected) {
                         onPersonSelected(selectedPose);
                     }
 
-                    // Рисуем оверлей позы
+                    // Draw the pose overlay
                     if (result.image) {
-                        console.log("Рисуем оверлей позы из изображения сервера");
+                        console.log("Drawing pose overlay from server image");
                         const img = new Image();
                         img.onload = () => {
                             if (!overlayCanvasRef.current) return;
@@ -986,167 +914,315 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                             ctx.drawImage(img, 0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
                         };
                         img.onerror = (err) => {
-                            console.error("Не удалось загрузить изображение оверлея позы:", err);
+                            console.error("Failed to load pose overlay image:", err);
                         };
                         img.src = result.image;
                     } else {
-                        console.warn("Нет данных изображения в результате");
+                        console.warn("No image data in result");
                     }
 
                     setShowMessage(false);
                 } else {
-                    // Ни одна поза не была близка к точке клика
-                    console.warn("Возле точки клика не выбрана ни одна поза");
+                    // No pose was close to the click point
+                    console.warn("No pose selected near click point");
                     setShowMessage(true);
                     setTimeout(() => setShowMessage(false), 3000);
                 }
             } else {
-                // Позы не обнаружены
-                console.warn("В кадре не обнаружены позы");
+                // No poses detected
+                console.warn("No poses detected in the frame");
                 setCurrentPoses([]);
                 setSelectedPerson(null);
                 setShowMessage(true);
                 setTimeout(() => setShowMessage(false), 3000);
             }
         } catch (error) {
-            console.error("Ошибка при обработке клика:", error);
+            console.error("Error processing click:", error);
             setShowMessage(true);
             setTimeout(() => setShowMessage(false), 3000);
         } finally {
             setIsProcessing(false);
         }
-    }, [isDancerSelectionMode, onPersonSelected, settings.resizeEnabled, setupCanvases]);
+    }, [isDancerSelectionMode, onPersonSelected, settings.resizeEnabled]);
 
-    // Инициализируем элемент видео с правильной обработкой ошибок
-    useEffect(() => {
-        if (!videoRef.current || !videoUrl) return;
+    // Initialize canvas sizes when video is ready
+    const setupCanvases = useCallback(() => {
+        if (!videoRef.current) return;
 
         const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const overlay = overlayCanvasRef.current;
+
+        if (canvas && video.videoWidth && video.videoHeight) {
+            console.log(`Setting up canvases for native video resolution: ${video.videoWidth}x${video.videoHeight}`);
+
+            // Set the main canvas size to match video's native resolution
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Set the overlay canvas size to match video's native resolution
+            if (overlay) {
+                // Always use the original video dimensions for the canvas size
+                overlay.width = video.videoWidth;
+                overlay.height = video.videoHeight;
+
+                console.log(`Overlay canvas set to: ${overlay.width}x${overlay.height}`);
+            }
+        }
+    }, []);
+
+    // Improved video loading with better error handling
+    useEffect(() => {
+        const video = videoRef.current;
+
+        if (!video || !videoUrl) return;
+
         console.log('Setting up video with URL:', videoUrl);
 
-        // Сбрасываем состояние ошибки
+        // Reset state for new video
+        setIsVideoReady(false);
         setVideoError(null);
         videoLoadAttempts.current = 0;
+        playbackErrorCount.current = 0;
+        seekRequested.current = false;
+        manualPlayRequest.current = false;
 
-        // Настраиваем элемент видео
-        video.crossOrigin = "anonymous"; // Включаем CORS
-        video.preload = "auto";
-        video.playsInline = true;
-        video.muted = true; // Отключаем звук для разрешения автовоспроизведения
+        // Корректируем URL для API
+        const correctedUrl = videoUrl.startsWith('/api') ? videoUrl : `/api${videoUrl}`;
+        console.log('VideoAnalyzer: Using corrected URL:', correctedUrl);
 
-        // Настраиваем обработку ошибок
-        const handleError = (error) => {
-            console.error('Video error:', error);
-            setVideoError(error);
+        // Проверяем доступность видео перед загрузкой
+        fetch(correctedUrl, { method: 'HEAD' })
+            .then(response => {
+                console.log('VideoAnalyzer: Video file check:', {
+                    status: response.status,
+                    ok: response.ok,
+                    contentType: response.headers.get('content-type'),
+                    contentLength: response.headers.get('content-length')
+                });
 
-            // Пытаемся восстановиться
-            if (videoLoadAttempts.current < 3) {
-                videoLoadAttempts.current++;
-                console.log(`Повтор загрузки видео (попытка ${videoLoadAttempts.current})`);
-                setTimeout(() => {
-                    video.load();
-                }, 1000 * videoLoadAttempts.current);
-            }
-        };
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-        // Настраиваем обработку загрузки
-        const handleLoad = () => {
-            console.log('VideoAnalyzer: Видео успешно загружено');
+                // Если проверка успешна, устанавливаем источник видео
+                video.src = correctedUrl;
+
+                // Set optimal video attributes for long videos
+                video.preload = 'auto';  // Ensure video data is preloaded
+                video.crossOrigin = 'anonymous'; // Help with CORS issues
+
+                // Force video to reload
+                video.load();
+            })
+            .catch(error => {
+                console.error('VideoAnalyzer: Error checking video file:', error);
+                setVideoError(`Ошибка доступа к файлу видео: ${error.message}`);
+            });
+
+        const handleVideoReady = () => {
+            console.log('VideoAnalyzer: Video ready state:', {
+                readyState: video.readyState,
+                networkState: video.networkState,
+                duration: video.duration,
+                videoWidth: video.videoWidth,
+                videoHeight: video.videoHeight,
+                currentSrc: video.currentSrc
+            });
+
             setIsVideoReady(true);
+            setupCanvases();
+            setVideoError(null);
+
+            // Optimize video playback for long videos
+            if (video.duration > 180) {
+                try {
+                    if (video.getVideoPlaybackQuality) {
+                        video.autoquality = false;
+                    }
+                    if (typeof video.bufferSize !== "undefined") {
+                        video.bufferSize = Math.min(30, Math.floor(video.duration / 60) * 5);
+                    }
+                } catch (e) {
+                    console.warn('VideoAnalyzer: Cannot apply video optimizations:', e);
+                }
+            }
+
             if (onVideoLoaded) {
                 onVideoLoaded(video);
             }
         };
 
-        // Добавляем слушатели событий
-        video.addEventListener('error', handleError);
-        video.addEventListener('loadeddata', handleLoad);
-        video.addEventListener('canplay', handleLoad);
+        const handleVideoError = (error) => {
+            console.error('VideoAnalyzer: Error loading video:', {
+                error,
+                videoError: video.error,
+                networkState: video.networkState,
+                readyState: video.readyState,
+                currentSrc: video.currentSrc
+            });
 
-        // Загружаем видео
-        video.src = videoUrl;
-        video.load();
+            videoLoadAttempts.current += 1;
+            playbackErrorCount.current += 1;
 
-        // Очистка
+            if (videoLoadAttempts.current <= 3) {
+                console.log(`Retry loading video (attempt ${videoLoadAttempts.current})`);
+                setTimeout(() => {
+                    if (videoLoadAttempts.current === 1) {
+                        video.src = correctedUrl;
+                        video.load();
+                    } else if (videoLoadAttempts.current === 2) {
+                        video.preload = 'none';
+                        video.src = correctedUrl;
+                        video.load();
+                        setTimeout(() => {
+                            video.preload = 'auto';
+                        }, 1000);
+                    } else {
+                        video.preload = 'metadata';
+                        video.src = correctedUrl;
+                        video.load();
+                        setTimeout(() => {
+                            video.preload = 'auto';
+                        }, 2000);
+                    }
+                }, 1000 * videoLoadAttempts.current);
+            } else {
+                setVideoError('Не удалось загрузить видео после нескольких попыток. Проверьте доступность файла.');
+                setIsVideoReady(false);
+            }
+        };
+
+        // Handle stalled playback
+        const handleVideoStalled = () => {
+            console.warn('Video playback stalled');
+            if (playbackErrorCount.current < 5) {
+                playbackErrorCount.current++;
+                // If we were playing, try to resume after a short delay
+                if (!video.paused) {
+                    setTimeout(() => {
+                        if (videoRef.current && !videoRef.current.paused) {
+                            console.log('Attempting to resume stalled video');
+                            videoRef.current.play().catch(e => console.error('Failed to resume:', e));
+                        }
+                    }, 1000);
+                }
+            } else {
+                // Too many errors, show error to user
+                setVideoError('Проблемы с воспроизведением видео. Попробуйте изменить качество или перезагрузить.');
+            }
+        };
+
+        // Handle timeupdate events to reset error counter when playback is working
+        const handleTimeUpdate = () => {
+            // Reset error counter as playback is working
+            if (video.currentTime > 0 && !video.paused) {
+                playbackErrorCount.current = 0;
+            }
+
+            // Handle seek request if time is set externally
+            if (seekRequested.current && typeof currentTime === 'number') {
+                seekRequested.current = false;
+
+                try {
+                    // Only seek if difference is significant
+                    if (Math.abs(video.currentTime - currentTime) > 0.5) {
+                        video.currentTime = currentTime;
+                    }
+                } catch (err) {
+                    console.error('Error during seek:', err);
+                }
+            }
+
+            // Handle play request if set externally
+            if (manualPlayRequest.current) {
+                manualPlayRequest.current = false;
+                if (video.paused) {
+                    video.play().catch(e => console.error('Play request failed:', e));
+                }
+            }
+        };
+
+        // Clear any previous event listeners
+        video.removeEventListener('loadeddata', handleVideoReady);
+        video.removeEventListener('canplay', handleVideoReady);
+        video.removeEventListener('error', handleVideoError);
+        video.removeEventListener('stalled', handleVideoStalled);
+        video.removeEventListener('timeupdate', handleTimeUpdate);
+
+        // Set new event listeners
+        video.addEventListener('loadeddata', handleVideoReady);
+        video.addEventListener('canplay', handleVideoReady);
+        video.addEventListener('error', handleVideoError);
+        video.addEventListener('stalled', handleVideoStalled);
+        video.addEventListener('timeupdate', handleTimeUpdate);
+
         return () => {
-            video.removeEventListener('error', handleError);
-            video.removeEventListener('loadeddata', handleLoad);
-            video.removeEventListener('canplay', handleLoad);
+            video.removeEventListener('loadeddata', handleVideoReady);
+            video.removeEventListener('canplay', handleVideoReady);
+            video.removeEventListener('error', handleVideoError);
+            video.removeEventListener('stalled', handleVideoStalled);
+            video.removeEventListener('timeupdate', handleTimeUpdate);
+
+            // Clear video source on cleanup
             video.src = '';
             video.load();
         };
-    }, [videoUrl, onVideoLoaded]);
+    }, [videoUrl, setupCanvases, onVideoLoaded, currentTime]);
 
-    // Реагируем на внешние элементы управления воспроизведением
+    // Respond to external playback controls
     useEffect(() => {
         const video = videoRef.current;
         if (!video || !isVideoReady) return;
 
-        // Синхронизируем состояние воспроизведения при необходимости
+        // Synchronize playback state if needed
         if (typeof isPlaying === 'boolean') {
             if (isPlaying && video.paused) {
-                console.log('VideoAnalyzer: Получена внешняя команда воспроизведения');
+                console.log('VideoAnalyzer: External play command received');
                 manualPlayRequest.current = true;
                 video.play().catch(e => {
-                    console.error('Не удалось воспроизвести видео:', e);
+                    console.error('Failed to play video:', e);
                     manualPlayRequest.current = false;
                 });
             } else if (!isPlaying && !video.paused) {
-                console.log('VideoAnalyzer: Получена внешняя команда паузы');
+                console.log('VideoAnalyzer: External pause command received');
                 video.pause();
-
-                // Если в режиме выбора танцора, make sure canvas is ready for frame capture
-                if (isDancerSelectionMode) {
-                    console.log('Видео поставлено на паузу извне в режиме выбора танцора, подготавливаем canvas');
-                    setTimeout(() => {
-                        setupCanvases();
-                    }, 50); // Small delay to ensure the video is fully paused
-                }
             }
         }
 
-        // Синхронизируем позицию времени при необходимости
+        // Synchronize time position if needed
         if (typeof currentTime === 'number' && Math.abs(video.currentTime - currentTime) > 0.5) {
-            console.log(`VideoAnalyzer: Получена внешняя команда перемотки на ${currentTime}с`);
+            console.log(`VideoAnalyzer: External seek command received to ${currentTime}s`);
             seekRequested.current = true;
 
-            // Если видео уже достаточно загружено, перематываем немедленно
+            // If the video is already loaded enough, seek immediately
             if (video.readyState >= 3) {
                 try {
                     video.currentTime = currentTime;
-
-                    // Если в режиме выбора танцора и видео на паузе, ensure canvas is ready after seek
-                    if (isDancerSelectionMode && video.paused) {
-                        console.log('Видео перемотано извне в режиме выбора танцора, подготавливаем canvas');
-                        setTimeout(() => {
-                            setupCanvases();
-                        }, 100); // Longer delay after seek to ensure video frame is loaded
-                    }
-
                     seekRequested.current = false;
                 } catch (err) {
-                    console.error('Ошибка при немедленной перемотке:', err);
+                    console.error('Error during immediate seek:', err);
                 }
             }
             // Otherwise the timeupdate handler will handle it
         }
-    }, [isPlaying, currentTime, isVideoReady, isDancerSelectionMode, setupCanvases]);
+    }, [isPlaying, currentTime, isVideoReady]);
 
-    // Обновляем выбранного человека из внешних props
+    // Update selected person from external props
     useEffect(() => {
         if (externalSelectedPerson !== undefined) {
             setSelectedPerson(externalSelectedPerson);
         }
     }, [externalSelectedPerson]);
 
-    // Проверяем, есть ли у компонента метод для правильного уведомления, когда видео загружено
+    // Check if the component has a method to properly notify when video is loaded
     useEffect(() => {
         if (videoRef.current) {
-            // Добавляем слушатель события 'loadeddata', чтобы знать, когда видео полностью загружено
+            // Add event listener for 'loadeddata' event to know when video is fully loaded
             const videoElement = videoRef.current;
 
             const handleVideoLoaded = () => {
-                console.log('VideoAnalyzer: Видео успешно загружено');
+                console.log('VideoAnalyzer: Video loaded successfully');
                 if (onVideoLoaded) {
                     onVideoLoaded(videoRef.current);
                 }
@@ -1154,7 +1230,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
 
             videoElement.addEventListener('loadeddata', handleVideoLoaded);
 
-            // Также добавляем событие canplay в качестве резервного варианта
+            // Also add canplay event as a fallback
             videoElement.addEventListener('canplay', handleVideoLoaded);
 
             return () => {
@@ -1164,47 +1240,47 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }
     }, [videoRef, onVideoLoaded]);
 
-    // Обрабатываем изменения качества видео
+    // Handle video quality changes
     useEffect(() => {
         if (videoRef.current) {
             const videoElement = videoRef.current;
 
-            // Устанавливаем качество видео на основе prop
+            // Set video quality based on the prop
             if (videoQuality === 'high') {
                 videoElement.setAttribute('controls', '');
                 videoElement.style.objectFit = 'contain';
 
-                // Для высококачественного воспроизведения длинных видео
-                if (videoElement.duration > 180) { // длиннее 3 минут
-                    // Понижаем настройки буфера для высокого качества, чтобы избежать проблем с памятью
+                // For high quality playback of long videos
+                if (videoElement.duration > 180) { // longer than 3 minutes
+                    // Lower buffer settings for high quality to avoid memory issues
                     videoElement.preload = 'auto';
                 } else {
-                    // Обычные настройки для коротких видео
+                    // Regular settings for shorter videos
                     videoElement.preload = 'auto';
                 }
             } else {
-                // Для низкого качества уменьшаем разрешение и убираем элементы управления
+                // For low quality, reduce resolution and remove controls
                 videoElement.removeAttribute('controls');
                 videoElement.style.objectFit = 'cover';
 
-                // Устанавливаем более низкое разрешение для производительности
+                // Set lower resolution for performance
                 if (videoElement.videoWidth > 640) {
                     videoElement.style.width = '640px';
                 }
 
-                // Используем другую стратегию буферизации для длинных видео в режиме низкого качества
+                // Use different buffer strategy for long videos in low quality mode
                 if (videoElement.duration > 180) {
                     videoElement.preload = 'auto';
                 }
             }
 
-            console.log('VideoAnalyzer: Качество видео установлено на', videoQuality);
+            console.log('VideoAnalyzer: Video quality set to', videoQuality);
         }
     }, [videoQuality, videoRef]);
 
     return (
         <div className="video-analyzer" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
-            {/* Элемент видео с оптимизированными настройками для длинных видео */}
+            {/* Video element with optimized settings for long videos */}
             <video
                 ref={videoRef}
                 src={videoUrl}
@@ -1219,21 +1295,19 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     maxWidth: '100%',
                     maxHeight: '100%',
                     objectFit: 'contain',
-                    pointerEvents: isDancerSelectionMode ? 'none' : 'auto',
-                    display: videoError ? 'none' : 'block'
+                    pointerEvents: isDancerSelectionMode ? 'none' : 'auto'
                 }}
-                // Атрибуты оптимизации производительности для длинных видео
+                // Performance optimization attributes for long videos
                 playsInline
                 preload="auto"
                 controlsList="nodownload"
                 onContextMenu={(e) => e.preventDefault()}
-                // Добавляем важные атрибуты для оптимизированного воспроизведения видео
+                // Add important attributes for optimized video playback
                 disablePictureInPicture
                 disableRemotePlayback
-                muted
             />
 
-            {/* Показываем сообщение об ошибке, если видео не удалось загрузить */}
+            {/* Show error message if video fails to load */}
             {videoError && (
                 <div style={{
                     position: 'absolute',
@@ -1272,13 +1346,13 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 </div>
             )}
 
-            {/* Скрытый canvas для обработки кадров */}
+            {/* Hidden canvas for processing frames */}
             <canvas
                 ref={canvasRef}
                 style={{ display: 'none' }}
             />
 
-            {/* Оверлейный canvas для отображения обнаружения поз */}
+            {/* Overlay canvas for displaying pose detection */}
             <canvas
                 ref={overlayCanvasRef}
                 onClick={handleCanvasClick}
@@ -1296,7 +1370,7 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                 }}
             />
 
-            {/* Оверлей с инструкциями в режиме выбора танцора */}
+            {/* Instruction overlay in dancer selection mode */}
             {isDancerSelectionMode && (
                 <div
                     style={{
@@ -1313,11 +1387,11 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                         zIndex: 10
                     }}
                 >
-                    Нажмите на танцора, чтобы выбрать его
+                    Click on a dancer to select them
                 </div>
             )}
 
-            {/* Сообщение о обработке или ошибке */}
+            {/* Processing or error message */}
             {showMessage && (
                 <div
                     style={{
@@ -1334,8 +1408,8 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     }}
                 >
                     {isProcessing ?
-                        'Обработка...' :
-                        currentPoses.length ? 'Танцор не найден в месте клика' : 'Танцоры не обнаружены'}
+                        'Processing...' :
+                        currentPoses.length ? 'No dancer found at click position' : 'No dancers detected'}
                 </div>
             )}
         </div>

@@ -2985,9 +2985,6 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
                     </Box>
                 </DialogContent>
             </Dialog>
-
-            {/* Другие существующие диалоги */}
-            {/* ... существующий код для диалогов ... */}
         </div>
     );
 };

@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -22,15 +23,17 @@ var (
 
 // AuthService handles authentication logic
 type AuthService struct {
-	userRepo  repositories.UserRepositoryInterface
-	jwtSecret string
+	userRepo       repositories.UserRepositoryInterface
+	projectService ProjectService
+	jwtSecret      string
 }
 
 // NewAuthService creates a new auth service
-func NewAuthService(userRepo repositories.UserRepositoryInterface, jwtSecret string) *AuthService {
+func NewAuthService(userRepo repositories.UserRepositoryInterface, projectService ProjectService, jwtSecret string) *AuthService {
 	return &AuthService{
-		userRepo:  userRepo,
-		jwtSecret: jwtSecret,
+		userRepo:       userRepo,
+		projectService: projectService,
+		jwtSecret:      jwtSecret,
 	}
 }
 
@@ -70,7 +73,19 @@ func (s *AuthService) Register(username, email, password string) (*models.User, 
 	}
 
 	// Save user
-	return s.userRepo.Create(user)
+	createdUser, err := s.userRepo.Create(user)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create default projects for the new user
+	err = s.projectService.CreateDefaultProjects(createdUser.ID.Hex())
+	if err != nil {
+		// Log the error but don't fail the registration
+		log.Printf("Failed to create default projects for user %s: %v", createdUser.ID.Hex(), err)
+	}
+
+	return createdUser, nil
 }
 
 // Login authenticates a user and returns a token

@@ -153,11 +153,12 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
         try {
             setLoading(true);
             const data = await projectService.getProjects();
-            setProjects(data);
+            setProjects(Array.isArray(data) ? data : []);
             setError(null);
         } catch (err) {
             console.error('Error fetching projects:', err);
             setError('Failed to load projects');
+            setProjects([]);
         } finally {
             setLoading(false);
         }
@@ -367,7 +368,7 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                     <ErrorOutline sx={{ fontSize: 40, mb: 2, color: 'error.main' }} />
                     <Typography color="error">{error}</Typography>
                 </Box>
-            ) : projects.length === 0 ? (
+            ) : !Array.isArray(projects) || projects.length === 0 ? (
                 <Box sx={styles.statusContainer}>
                     <FolderOpen sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
                     <Typography variant="h6">Нет доступных проектов</Typography>
@@ -379,17 +380,17 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                 <Box sx={styles.projectsGrid}>
                     {projects.map(project => (
                         <Box
-                            key={project.id}
+                            key={project?.id || project?._id || 'unknown'}
                             sx={{
                                 ...styles.projectCard,
                                 ...styles.projectCardWithActions
                             }}
-                            onClick={() => handleProjectSelect(project.id)}
+                            onClick={() => handleProjectSelect(project)}
                         >
                             <Typography sx={styles.projectTitle}>
-                                {project.name || 'Без названия'}
+                                {project?.name || 'Без названия'}
                             </Typography>
-                            {project.description && (
+                            {project?.description && (
                                 <Box sx={styles.projectDescription}>
                                     <Description sx={{ fontSize: 14, mr: 0.5, opacity: 0.7, verticalAlign: 'middle' }} />
                                     {project.description}
@@ -398,12 +399,12 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                             <Box sx={styles.projectInfo}>
                                 <Chip
                                     size="small"
-                                    label={project.elements ? `${project.elements.length} элементов` : '0 элементов'}
+                                    label={project?.elements ? `${project.elements.length} элементов` : '0 элементов'}
                                     color="primary"
                                     variant="outlined"
                                     sx={{ mr: 1, fontSize: '0.75rem' }}
                                 />
-                                {project.videoUrl && (
+                                {project?.videoUrl && (
                                     <Chip
                                         size="small"
                                         label="Видео"
@@ -415,7 +416,7 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
                             </Box>
                             <Box sx={styles.projectDate}>
                                 <AccessTime sx={{ fontSize: 14, mr: 0.5, opacity: 0.7 }} />
-                                {formatDate(project.updatedAt || project.createdAt)}
+                                {formatDate(project?.updatedAt || project?.createdAt)}
                             </Box>
                             <Box className="project-actions" sx={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: '4px' }}>
                                 <Tooltip title="Редактировать">

@@ -14,12 +14,13 @@ import (
 	"github.com/kktjss/dance-flow/config"
 	"github.com/kktjss/dance-flow/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// JWTMiddleware проверяет JWT токен и устанавливает ID пользователя в контексте
+// JWTMiddleware verifies the JWT token and sets user ID in context
 func JWTMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Получаем заголовок авторизации
+		// Get authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
@@ -27,7 +28,7 @@ func JWTMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// Проверяем, имеет ли заголовок формат "Bearer {токен}"
+		// Check if the header has the format "Bearer {token}"
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header format must be Bearer {token}"})
@@ -35,13 +36,13 @@ func JWTMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// Извлекаем токен
+		// Extract token
 		tokenString := parts[1]
 		claims := jwt.MapClaims{}
 
-		// Разбираем и проверяем токен
+		// Parse and validate token
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			// Проверяем метод подписи
+			// Validate signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
@@ -60,7 +61,7 @@ func JWTMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// Проверяем срок действия токена
+		// Check token expiration
 		exp, ok := claims["exp"].(float64)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
@@ -74,7 +75,7 @@ func JWTMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// Извлекаем ID пользователя
+		// Extract user ID
 		userID, ok := claims["id"].(string)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
@@ -82,7 +83,7 @@ func JWTMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// Устанавливаем ID пользователя в контексте для дальнейшего использования
+		// Set user ID in context for later use
 		c.Set("userID", userID)
 		c.Next()
 	}
@@ -91,41 +92,46 @@ func JWTMiddleware(cfg *config.Config) gin.HandlerFunc {
 // AuthMiddleware - псевдоним для JWTMiddleware для обратной совместимости
 var AuthMiddleware = JWTMiddleware
 
-// GetUserID извлекает ID пользователя из контекста
-func GetUserID(c *gin.Context) (string, error) {
-	userID, exists := c.Get("userID")
+// GetUserID extracts the user ID from the context
+func GetUserID(c *gin.Context) (primitive.ObjectID, error) {
+	userIDStr, exists := c.Get("userID")
 	if !exists {
-		return "", errors.New("user ID not found in context")
+		return primitive.ObjectID{}, errors.New("user ID not found in context")
 	}
 
-	return userID.(string), nil
+	userID, err := primitive.ObjectIDFromHex(userIDStr.(string))
+	if err != nil {
+		return primitive.ObjectID{}, errors.New("invalid user ID format")
+	}
+
+	return userID, nil
 }
 
-// GenerateToken генерирует JWT токен для пользователя
-func GenerateToken(userID string, cfg *config.Config) (string, error) {
-	// Разбираем срок действия
+// GenerateToken generates a JWT token for a user
+func GenerateToken(userID primitive.ObjectID, cfg *config.Config) (string, error) {
+	// Parse expiration time
 	expDuration, err := time.ParseDuration(cfg.JWTExpiration)
 	if err != nil {
 		log.Printf("Invalid JWT expiration duration: %v, using default 24h", err)
-		expDuration = 24 * time.Hour // По умолчанию 24 часа
+		expDuration = 24 * time.Hour // Default to 24 hours
 	}
 
-	// Проверяем, установлен ли секретный ключ JWT
+	// Check if JWT secret is set
 	if cfg.JWTSecret == "" {
 		log.Println("WARNING: JWT secret is empty!")
 	}
 
-	// Создаем токен с ID пользователя и именем пользователя в claims
+	// Create token with user ID and username in claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":       userID,
+		"id":       userID.Hex(),
 		"exp":      time.Now().Add(expDuration).Unix(),
 	})
 
-	// Логируем claims токена для отладки
+	// Log token claims for debugging
 	log.Printf("Creating token for user ID: %s with expiration: %v", 
-		userID, time.Now().Add(expDuration))
+		userID.Hex(), time.Now().Add(expDuration))
 
-	// Подписываем токен секретным ключом
+	// Sign token with secret
 	tokenString, err := token.SignedString([]byte(cfg.JWTSecret))
 	if err != nil {
 		log.Printf("Token signing error: %v", err)
@@ -135,7 +141,7 @@ func GenerateToken(userID string, cfg *config.Config) (string, error) {
 	return tokenString, nil
 }
 
-// CheckProjectIsPrivate проверяет, является ли проект приватным и проверяет доступ пользователя
+// CheckProjectIsPrivate checks if a project is private and verifies user access
 func CheckProjectIsPrivate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		projectID := c.Param("id")
@@ -146,30 +152,57 @@ func CheckProjectIsPrivate() gin.HandlerFunc {
 			return
 		}
 
-		// Получаем проект
+		// Convert project ID to ObjectID
+		projectObjID, err := primitive.ObjectIDFromHex(projectID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID format"})
+			c.Abort()
+			return
+		}
+
+		// Get project
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		var project models.Project
-		err = config.GetCollection("projects").FindOne(ctx, bson.M{"_id": projectID}).Decode(&project)
+		err = config.GetCollection("projects").FindOne(ctx, bson.M{"_id": projectObjID}).Decode(&project)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Project not found"})
 			c.Abort()
 			return
 		}
 
-		// Проверяем, является ли проект публичным или пользователь имеет доступ
+		// Check if project is public or user has access
 		if !project.IsPrivate {
-			// Публичный проект, разрешаем доступ
+			// Public project, allow access
 			c.Next()
 			return
 		}
 
-		// Приватный проект, проверяем, является ли пользователь владельцем
-		if project.UserID == userID {
-			// Пользователь является владельцем
+		// Private project, check if user is owner or team member
+		if project.Owner == userID {
+			// User is the owner
 			c.Next()
 			return
+		}
+
+		// Check if user is a member of the project's team
+		if !project.TeamID.IsZero() {
+			var team models.Team
+			err = config.GetCollection("teams").FindOne(ctx, bson.M{
+				"_id": project.TeamID,
+				"members": bson.M{
+					"$elemMatch": bson.M{
+						"userId": userID,
+					},
+				},
+			}).Decode(&team)
+
+			if err == nil {
+				// User is a team member
+				c.Next()
+				return
+			}
 		}
 
 		// User doesn't have access

@@ -1,0 +1,12 @@
+{
+    "extraPaths": [
+        "./server/python"
+    ],
+    "pythonVersion": "3.12",
+    "typeCheckingMode": "basic",
+    "reportMissingImports": "warning",
+    "reportAttributeAccessIssue": "warning",
+    "reportUnknownMemberType": "none",
+    "reportUnknownVariableType": "none",
+    "reportUnknownArgumentType": "none"
+}
