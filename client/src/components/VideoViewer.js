@@ -2,6 +2,64 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Button, IconButton, Tooltip, Paper, Alert, Fade, CircularProgress, Menu, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import { PersonSearch, Close, VideoLibrary, Videocam, HighQuality, SettingsInputSvideo, Refresh, Settings } from '@mui/icons-material';
 import VideoAnalyzer from './VideoAnalyzer.js';
+import { styled } from '@mui/material/styles';
+import { COLORS } from '../constants/colors';
+
+// Стилизованный Alert для уведомлений об ошибках
+const StyledErrorAlert = styled(Alert)(({ theme }) => ({
+    borderRadius: '12px',
+    backgroundColor: 'rgba(17, 21, 54, 0.95)',
+    color: '#FFFFFF',
+    border: '1px solid rgba(244, 67, 54, 0.3)',
+    boxShadow: '0 8px 25px rgba(244, 67, 54, 0.2)',
+    backdropFilter: 'blur(10px)',
+    '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '3px',
+        background: 'linear-gradient(90deg, #f44336, #ff5722)',
+        borderRadius: '12px 12px 0 0',
+    },
+    '& .MuiAlert-icon': {
+        color: '#ff867c',
+        fontSize: '22px'
+    },
+    '& .MuiAlert-message': {
+        color: 'rgba(255, 255, 255, 0.9)',
+        fontWeight: 500
+    }
+}));
+
+// Стилизованный Alert для информационных уведомлений
+const StyledInfoAlert = styled(Alert)(({ theme }) => ({
+    borderRadius: '12px',
+    backgroundColor: 'rgba(17, 21, 54, 0.95)',
+    color: '#FFFFFF',
+    border: `1px solid ${COLORS.secondary}30`,
+    boxShadow: `0 8px 25px ${COLORS.secondary}20`,
+    backdropFilter: 'blur(10px)',
+    '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '3px',
+        background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+        borderRadius: '12px 12px 0 0',
+    },
+    '& .MuiAlert-icon': {
+        color: COLORS.secondary,
+        fontSize: '22px'
+    },
+    '& .MuiAlert-message': {
+        color: 'rgba(255, 255, 255, 0.9)',
+        fontWeight: 500
+    }
+}));
 
 const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTime = 0, isPlaying = false }) => {
     console.log('VideoViewer: Инициализация компонента', {
@@ -609,20 +667,15 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                                 zIndex: 5,
                                 backdropFilter: 'blur(5px)',
                             }}>
-                                <Alert
+                                <StyledErrorAlert
                                     severity="error"
                                     sx={{
                                         width: '70%',
-                                        mb: 2,
-                                        backgroundColor: 'rgba(211, 47, 47, 0.15)',
-                                        color: '#ff867c',
-                                        '& .MuiAlert-icon': {
-                                            color: '#ff867c'
-                                        }
+                                        mb: 2
                                     }}
                                 >
                                     {loadError}
-                                </Alert>
+                                </StyledErrorAlert>
                                 <Typography variant="body2" sx={{ color: 'white', mb: 2 }}>
                                     Попробуйте изменить режим воспроизведения или качество видео
                                 </Typography>
@@ -729,19 +782,11 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
                                 Для анализа движений и синхронизации хореографии загрузите видео через основной интерфейс конструктора
                             </Typography>
 
-                            <Alert
+                            <StyledInfoAlert
                                 severity="info"
-                                sx={{
-                                    backgroundColor: 'rgba(3, 169, 244, 0.1)',
-                                    border: '1px solid rgba(3, 169, 244, 0.2)',
-                                    color: 'rgba(255, 255, 255, 0.8)',
-                                    '& .MuiAlert-icon': {
-                                        color: '#33D2FF'
-                                    }
-                                }}
                             >
                                 Поддерживаются видео форматов MP4 и WebM длительностью до 1 часа
-                            </Alert>
+                            </StyledInfoAlert>
                         </Box>
                     </Box>
                 )}

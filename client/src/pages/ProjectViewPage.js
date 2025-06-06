@@ -868,7 +868,7 @@ const ProjectViewPage = () => {
                             />
 
                             {/* Вывод отладочной информации для разработки - сделать видимым */}
-                            {process.env.NODE_ENV !== 'production' && (
+                            {/* {process.env.NODE_ENV !== 'production' && (
                                 <div style={{
                                     position: 'fixed',
                                     bottom: '10px',
@@ -898,7 +898,7 @@ const ProjectViewPage = () => {
                                         }, null, 2)}
                                     </pre>
                                 </div>
-                            )}
+                            )} */}
                         </>
                     )}
                 </Container>

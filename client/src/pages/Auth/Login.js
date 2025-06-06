@@ -320,8 +320,30 @@ function Login() {
                                     mt: 2,
                                     mb: 2,
                                     borderRadius: '12px',
+                                    backgroundColor: 'rgba(17, 21, 54, 0.95)',
+                                    color: '#FFFFFF',
+                                    border: '1px solid rgba(244, 67, 54, 0.3)',
+                                    boxShadow: '0 8px 25px rgba(244, 67, 54, 0.2)',
+                                    backdropFilter: 'blur(10px)',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    '&::before': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: '3px',
+                                        background: 'linear-gradient(90deg, #f44336, #ff5722)',
+                                        borderRadius: '12px 12px 0 0',
+                                    },
                                     '& .MuiAlert-icon': {
-                                        color: COLORS.tertiary
+                                        color: '#ff867c',
+                                        fontSize: '22px'
+                                    },
+                                    '& .MuiAlert-message': {
+                                        color: 'rgba(255, 255, 255, 0.9)',
+                                        fontWeight: 500
                                     }
                                 }}
                             >

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Container, Grid, Paper, Tab, Tabs, Typography, IconButton, TextField, InputAdornment, Menu, MenuItem, Snackbar, Alert, List, ListItem, ListItemIcon, ListItemText, ButtonGroup, useTheme } from '@mui/material';
+import { styled, keyframes } from '@mui/material/styles';
 import { Save, FolderOpen, Upload as UploadIcon, AccessTime, ContentCopy, VideoLibrary, Delete as DeleteIcon, MusicNote as MusicNoteIcon, CloudUpload, Close, Edit } from '@mui/icons-material';
 import ThreeDRotation from '@mui/icons-material/ThreeDRotation';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { styled } from '@mui/material/styles';
 import { COLORS } from '../constants/colors';
 
 // Import components
@@ -19,6 +19,8 @@ import ModelViewer from '../components/ModelViewer';
 import CombinedViewer from '../components/CombinedViewer';
 import VideoViewer from '../components/VideoViewer';
 import ProjectDialog from '../components/ProjectDialog';
+import CanvasViewer from '../components/CanvasViewer';
+import { StyledConstructorAlert, StyledConstructorSnackbar } from '../components/StyledNotifications';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -120,6 +122,12 @@ const StyledHistoryItem = styled(ListItem)(({ theme }) => ({
             : 'rgba(0, 0, 0, 0.03)',
     }
 }));
+
+// Анимация для уведомлений
+const slideInFromRight = keyframes`
+  0% { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+`;
 
 const ConstructorPage = () => {
     const theme = useTheme();
@@ -2234,21 +2242,25 @@ See console for complete details.`);
                 </Grid>
 
                 {/* Custom notification */}
-                <Snackbar
+                <StyledConstructorSnackbar
                     open={notification.open}
                     autoHideDuration={6000}
                     onClose={handleCloseNotification}
                     anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
                 >
-                    <Alert
+                    <StyledConstructorAlert
                         onClose={handleCloseNotification}
                         severity={notification.severity}
                         variant="filled"
-                        sx={{ width: '100%' }}
+                        sx={{
+                            width: '100%',
+                            minWidth: '350px',
+                            maxWidth: '500px'
+                        }}
                     >
                         {notification.message}
-                    </Alert>
-                </Snackbar>
+                    </StyledConstructorAlert>
+                </StyledConstructorSnackbar>
             </Container>
 
             {showCombinedViewer && (

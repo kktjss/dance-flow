@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, IconButton, Snackbar, Alert, TextField, Typography, Box, Tooltip, Chip, CircularProgress, Paper } from '@mui/material';
 import { Delete, Edit, AccessTime, FolderOpen, Description, ErrorOutline, ArrowBack } from '@mui/icons-material';
 import { projectService } from '../services/api';
+import { StyledProjectAlert, StyledProjectSnackbar } from './StyledNotifications';
 
 // Стили компонента
 const styles = {
@@ -524,20 +525,23 @@ const ProjectsList = ({ onSelectProject, setShowProjects, isDialog = false }) =>
             </Dialog>
 
             {/* Снэкбар уведомлений */}
-            <Snackbar
+            <StyledProjectSnackbar
                 open={notification.open}
                 autoHideDuration={6000}
                 onClose={handleCloseNotification}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
             >
-                <Alert
+                <StyledProjectAlert
                     onClose={handleCloseNotification}
                     severity={notification.severity}
-                    sx={{ width: '100%' }}
+                    sx={{
+                        width: '100%',
+                        minWidth: '320px'
+                    }}
                 >
                     {notification.message}
-                </Alert>
-            </Snackbar>
+                </StyledProjectAlert>
+            </StyledProjectSnackbar>
         </Paper>
     );
 };
