@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Team model
+// Модель команды
 type Team struct {
 	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Name        string             `json:"name" bson:"name"`
@@ -18,7 +18,7 @@ type Team struct {
 	UpdatedAt   time.Time          `json:"updatedAt" bson:"updatedAt"`
 }
 
-// Member represents a team member
+// Member представляет участника команды
 type Member struct {
 	UserID primitive.ObjectID `json:"userId" bson:"userId"`
 	Role   string             `json:"role" bson:"role"`
@@ -26,19 +26,19 @@ type Member struct {
 	Email  string             `json:"email,omitempty" bson:"email,omitempty"`
 }
 
-// TeamCreateInput is the input for creating a team
+// TeamCreateInput представляет входные данные для создания команды
 type TeamCreateInput struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 }
 
-// TeamUpdateInput is the input for updating a team
+// TeamUpdateInput представляет входные данные для обновления команды
 type TeamUpdateInput struct {
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
-// TeamAddMemberInput is the input for adding a member to a team
+// TeamAddMemberInput представляет входные данные для добавления участника в команду
 type TeamAddMemberInput struct {
 	UserID string `json:"userId" binding:"required"`
 	Role   string `json:"role" binding:"required"`

@@ -149,9 +149,12 @@ const ConstructorPage = () => {
     });
     const [showProjectDialog, setShowProjectDialog] = useState(false);
     const [isEditingProjectInfo, setIsEditingProjectInfo] = useState(false);
-    const { id } = useParams();
+    const { id, projectId, teamId } = useParams();
     const navigate = useNavigate();
     const [showCombinedViewer, setShowCombinedViewer] = useState(false);
+
+    // Получаем корректный ID проекта из параметров URL
+    const currentProjectId = projectId || id; // projectId для команд, id для обычных проектов
 
     // Экспортируем функцию сохранения проекта в глобальную область видимости
     // для доступа из других компонентов
@@ -187,26 +190,25 @@ const ConstructorPage = () => {
     // Инициализация проекта
     useEffect(() => {
         console.log('ConstructorPage: Initializing project');
+        console.log('URL params:', { id, projectId, teamId, currentProjectId });
 
         // Проверяем наличие ID в URL
-        const projectId = id;
-        if (projectId) {
-            console.log('ConstructorPage: Found project ID in URL:', projectId);
-            handleSelectProject(projectId);
+        if (currentProjectId) {
+            console.log('ConstructorPage: Found project ID in URL:', currentProjectId);
+            handleSelectProject(currentProjectId);
         } else {
             console.log('ConstructorPage: No project ID in URL, showing project dialog');
             setShowProjectDialog(true);
         }
-    }, [id]);
+    }, [currentProjectId]);
 
     // Загружаем проект при монтировании, если есть projectId в URL
     useEffect(() => {
-        const projectId = id;
-        if (projectId && !project.id) {
-            console.log('Loading project from URL parameter:', projectId);
-            handleSelectProject(projectId);
+        if (currentProjectId && !project.id) {
+            console.log('Loading project from URL parameter:', currentProjectId);
+            handleSelectProject(currentProjectId);
         }
-    }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [currentProjectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Экспортируем функцию jumpToTime в объект window для навигации по ключевым кадрам из PropertyPanel
     useEffect(() => {

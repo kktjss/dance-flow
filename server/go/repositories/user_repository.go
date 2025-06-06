@@ -11,12 +11,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Errors
+// Ошибки
 var (
 	ErrUserNotFound = errors.New("user not found")
 )
 
-// UserRepositoryInterface defines the methods for user repository
+// UserRepositoryInterface определяет методы для репозитория пользователей
 type UserRepositoryInterface interface {
 	FindByID(id string) (*models.User, error)
 	FindByEmail(email string) (*models.User, error)
@@ -27,19 +27,19 @@ type UserRepositoryInterface interface {
 	SearchUsers(query string) ([]models.User, error)
 }
 
-// UserRepository implements UserRepositoryInterface
+// UserRepository реализует UserRepositoryInterface
 type UserRepository struct {
 	db *mongo.Database
 }
 
-// NewUserRepository creates a new user repository
+// NewUserRepository создает новый репозиторий пользователей
 func NewUserRepository(db *mongo.Database) UserRepositoryInterface {
 	return &UserRepository{
 		db: db,
 	}
 }
 
-// FindByID finds a user by ID
+// FindByID находит пользователя по ID
 func (r *UserRepository) FindByID(id string) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -61,7 +61,7 @@ func (r *UserRepository) FindByID(id string) (*models.User, error) {
 	return &user, nil
 }
 
-// FindByEmail finds a user by email
+// FindByEmail находит пользователя по email
 func (r *UserRepository) FindByEmail(email string) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -78,7 +78,7 @@ func (r *UserRepository) FindByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
-// FindByUsername finds a user by username
+// FindByUsername находит пользователя по имени пользователя
 func (r *UserRepository) FindByUsername(username string) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -95,12 +95,12 @@ func (r *UserRepository) FindByUsername(username string) (*models.User, error) {
 	return &user, nil
 }
 
-// Create creates a new user
+// Create создает нового пользователя
 func (r *UserRepository) Create(user *models.User) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Set ID if not set
+	// Устанавливаем ID, если он не установлен
 	if user.ID.IsZero() {
 		user.ID = primitive.NewObjectID()
 	}
@@ -110,7 +110,7 @@ func (r *UserRepository) Create(user *models.User) (*models.User, error) {
 		return nil, err
 	}
 
-	// Get the created user
+	// Получаем созданного пользователя
 	var createdUser models.User
 	err = r.db.Collection("users").FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(&createdUser)
 	if err != nil {
@@ -120,7 +120,7 @@ func (r *UserRepository) Create(user *models.User) (*models.User, error) {
 	return &createdUser, nil
 }
 
-// Update updates a user
+// Update обновляет пользователя
 func (r *UserRepository) Update(id string, updates map[string]interface{}) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -144,7 +144,7 @@ func (r *UserRepository) Update(id string, updates map[string]interface{}) (*mod
 		return nil, ErrUserNotFound
 	}
 
-	// Get the updated user
+	// Получаем обновленного пользователя
 	var updatedUser models.User
 	err = r.db.Collection("users").FindOne(ctx, bson.M{"_id": objID}).Decode(&updatedUser)
 	if err != nil {
@@ -154,7 +154,7 @@ func (r *UserRepository) Update(id string, updates map[string]interface{}) (*mod
 	return &updatedUser, nil
 }
 
-// Delete deletes a user
+// Delete удаляет пользователя
 func (r *UserRepository) Delete(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -176,7 +176,7 @@ func (r *UserRepository) Delete(id string) error {
 	return nil
 }
 
-// SearchUsers searches for users
+// SearchUsers выполняет поиск пользователей
 func (r *UserRepository) SearchUsers(query string) ([]models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

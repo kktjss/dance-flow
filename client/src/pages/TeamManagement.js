@@ -1156,6 +1156,10 @@ function TeamManagement() {
                 // Проверка данных команды перед установкой в state
                 const teamData = { ...response.data };
 
+                console.log('Initial team data:', teamData);
+                console.log('Owner data:', teamData.owner);
+                console.log('Members data:', teamData.members);
+
                 // Убедимся, что у команды есть _id (копируем из id если нужно)
                 if (!teamData._id && teamData.id) {
                     teamData._id = teamData.id;
@@ -1168,16 +1172,110 @@ function TeamManagement() {
                     return;
                 }
 
+                // Получаем данные владельца команды
+                if (teamData.owner) {
+                    console.log('Initial owner data:', teamData.owner);
+                    const ownerId = typeof teamData.owner === 'object' ?
+                        (teamData.owner._id || teamData.owner.id) :
+                        teamData.owner;
+                    console.log('Owner ID to fetch:', ownerId);
+
+                    try {
+                        const ownerResponse = await axios.get(`${API_BASE_URL}/api/users/${ownerId}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        console.log('Owner API response:', ownerResponse.data);
+
+                        // Проверяем и сохраняем данные владельца
+                        if (ownerResponse.data && ownerResponse.data.username) {
+                            teamData.owner = ownerResponse.data;
+                            console.log('Updated owner data:', teamData.owner);
+                        } else {
+                            console.error('Owner data from API missing username:', ownerResponse.data);
+
+                            // Ищем в списке участников
+                            if (Array.isArray(teamData.members)) {
+                                const ownerMember = teamData.members.find(m => {
+                                    const memberId = typeof m.userId === 'object' ?
+                                        (m.userId._id || m.userId.id) :
+                                        m.userId;
+                                    return memberId === ownerId;
+                                });
+
+                                if (ownerMember && ownerMember.userId && ownerMember.userId.username) {
+                                    teamData.owner = ownerMember.userId;
+                                    console.log('Found owner in members:', teamData.owner);
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Failed to fetch owner data:', err);
+                    }
+
+                    // Проверяем финальные данные владельца
+                    if (!teamData.owner || !teamData.owner.username) {
+                        console.error('Owner data still missing username after all attempts:', teamData.owner);
+                    }
+                }
+
+                // Убедимся, что у владельца есть username
+                if (typeof teamData.owner === 'object' && !teamData.owner.username) {
+                    console.error('Owner missing username after fetch:', teamData.owner);
+                }
+
+                // Получаем данные всех участников
+                if (Array.isArray(teamData.members)) {
+                    console.log('Processing members:', teamData.members);
+                    const updatedMembers = await Promise.all(
+                        teamData.members.map(async (member) => {
+                            console.log('Processing member:', member);
+                            if (!member.userId) {
+                                console.log('Member has no userId:', member);
+                                return member;
+                            }
+
+                            const userId = typeof member.userId === 'object' ?
+                                (member.userId._id || member.userId.id) :
+                                member.userId;
+
+                            console.log('Fetching data for user:', userId);
+                            try {
+                                const userResponse = await axios.get(`${API_BASE_URL}/api/users/${userId}`, {
+                                    headers: { Authorization: `Bearer ${token}` }
+                                });
+                                console.log('User response:', userResponse.data);
+                                return {
+                                    ...member,
+                                    userId: userResponse.data
+                                };
+                            } catch (err) {
+                                console.error(`Failed to fetch user data for ${userId}:`, err);
+                                return member;
+                            }
+                        })
+                    );
+                    console.log('Updated members:', updatedMembers);
+                    teamData.members = updatedMembers;
+                }
+
+                console.log('Final team data:', teamData);
+
                 // Убедимся, что members существует и является массивом
                 if (!teamData.members) {
                     teamData.members = [];
                 }
 
-                // Проверяем существование массива проектов и правильно обрабатываем его
+                // Обработка проектов команды
                 if (Array.isArray(teamData.projectObjects)) {
                     console.log('Using projectObjects from API response:', teamData.projectObjects);
                     // Используем полные объекты проектов напрямую из ответа API
-                    teamData.projects = teamData.projectObjects;
+                    teamData.projects = teamData.projectObjects.map(project => {
+                        // Убеждаемся, что у каждого проекта есть корректный ID
+                        if (!project._id && project.id) {
+                            project._id = project.id;
+                        }
+                        return project;
+                    });
                 } else if (!teamData.projects) {
                     teamData.projects = [];
                     console.log('No projects in team data, using empty array');
@@ -1191,24 +1289,51 @@ function TeamManagement() {
                             typeof project === 'string' ? project : (project?._id || project?.id)
                         ).filter(Boolean);
 
-                        // Находим полные объекты проектов из списка проектов
-                        const fullProjects = projects.filter(project =>
-                            teamProjectIds.includes(project._id)
-                        );
+                        console.log('Team project IDs:', teamProjectIds);
 
-                        // Если мы нашли все проекты, используем их
-                        if (fullProjects.length === teamProjectIds.length) {
-                            console.log('Found all projects in projects list:', fullProjects);
-                            teamData.projects = fullProjects;
+                        // Если у нас есть список проектов, пытаемся найти полные объекты
+                        if (projects && projects.length > 0) {
+                            // Находим полные объекты проектов из списка проектов
+                            const fullProjects = projects.filter(project =>
+                                teamProjectIds.includes(project._id || project.id)
+                            );
+
+                            console.log('Found full projects:', fullProjects);
+
+                            // Если мы нашли все проекты, используем их
+                            if (fullProjects.length === teamProjectIds.length) {
+                                console.log('Found all projects in projects list:', fullProjects);
+                                teamData.projects = fullProjects;
+                            } else {
+                                // Для любых отсутствующих проектов создаем минимальные объекты
+                                const processedProjects = teamProjectIds.map(projectId => {
+                                    const fullProject = projects.find(p => (p._id || p.id) === projectId);
+                                    if (fullProject) {
+                                        return fullProject;
+                                    } else {
+                                        // Создаем минимальный объект проекта с ID
+                                        console.warn(`Project ${projectId} not found in projects list, creating placeholder`);
+                                        return {
+                                            _id: projectId,
+                                            id: projectId,
+                                            name: `Проект ${projectId.substring(0, 8)}...`,
+                                            description: 'Загружается...'
+                                        };
+                                    }
+                                });
+
+                                console.log('Processed projects:', processedProjects);
+                                teamData.projects = processedProjects;
+                            }
                         } else {
-                            // Для любых отсутствующих проектов создаем минимальные объекты
-                            const processedProjects = teamProjectIds.map(projectId => {
-                                const fullProject = projects.find(p => p._id === projectId);
-                                return fullProject || null;
-                            }).filter(Boolean);
-
-                            console.log('Processed projects:', processedProjects);
-                            teamData.projects = processedProjects;
+                            // Если нет списка проектов, создаем минимальные объекты из ID
+                            console.log('No projects list available, creating placeholders');
+                            teamData.projects = teamProjectIds.map(projectId => ({
+                                _id: projectId,
+                                id: projectId,
+                                name: `Проект ${projectId.substring(0, 8)}...`,
+                                description: 'Загружается...'
+                            }));
                         }
                     }
                 }
@@ -1269,31 +1394,60 @@ function TeamManagement() {
                         if (Array.isArray(teamData.projectObjects)) {
                             console.log('Using projectObjects from test API response:', teamData.projectObjects);
                             // Используем полные объекты проектов напрямую из ответа API
-                            teamData.projects = teamData.projectObjects;
+                            teamData.projects = teamData.projectObjects.map(project => {
+                                // Убеждаемся, что у каждого проекта есть корректный ID
+                                if (!project._id && project.id) {
+                                    project._id = project.id;
+                                }
+                                return project;
+                            });
                         } else if (!teamData.projects) {
                             teamData.projects = [];
                         } else if (Array.isArray(teamData.projects)) {
                             // Получаем все ID проектов из команды
-                            const teamProjectIds = teamData.projects.map(project =>
+                            const testTeamProjectIds = teamData.projects.map(project =>
                                 typeof project === 'string' ? project : (project?._id || project?.id)
                             ).filter(Boolean);
 
-                            // Находим полные объекты проектов из списка проектов
-                            const fullProjects = projects.filter(project =>
-                                teamProjectIds.includes(project._id)
-                            );
+                            // Если у нас есть список проектов, пытаемся найти полные объекты
+                            if (projects && projects.length > 0) {
+                                // Находим полные объекты проектов из списка проектов
+                                const testFullProjects = projects.filter(project =>
+                                    testTeamProjectIds.includes(project._id || project.id)
+                                );
 
-                            // Если мы нашли все проекты, используем их
-                            if (fullProjects.length === teamProjectIds.length) {
-                                teamData.projects = fullProjects;
+                                // Если мы нашли все проекты, используем их
+                                if (testFullProjects.length === testTeamProjectIds.length) {
+                                    teamData.projects = testFullProjects;
+                                } else {
+                                    // Для любых отсутствующих проектов создаем минимальные объекты
+                                    const testProcessedProjects = testTeamProjectIds.map(projectId => {
+                                        const testFullProject = projects.find(p => (p._id || p.id) === projectId);
+                                        if (testFullProject) {
+                                            return testFullProject;
+                                        } else {
+                                            // Создаем минимальный объект проекта с ID
+                                            console.warn(`Project ${projectId} not found in projects list, creating placeholder`);
+                                            return {
+                                                _id: projectId,
+                                                id: projectId,
+                                                name: `Проект ${projectId.substring(0, 8)}...`,
+                                                description: 'Загружается...'
+                                            };
+                                        }
+                                    });
+
+                                    teamData.projects = testProcessedProjects;
+                                }
                             } else {
-                                // Для любых отсутствующих проектов создаем минимальные объекты
-                                const processedProjects = teamProjectIds.map(projectId => {
-                                    const fullProject = projects.find(p => p._id === projectId);
-                                    return fullProject || null;
-                                }).filter(Boolean);
-
-                                teamData.projects = processedProjects;
+                                // Если нет списка проектов, создаем минимальные объекты из ID
+                                console.log('No projects list available, creating placeholders');
+                                teamData.projects = testTeamProjectIds.map(projectId => ({
+                                    _id: projectId,
+                                    id: projectId,
+                                    name: `Проект ${projectId.substring(0, 8)}...`,
+                                    description: 'Загружается...'
+                                }));
                             }
                         } else {
                             teamData.projects = [];
@@ -1446,11 +1600,57 @@ function TeamManagement() {
                 return;
             }
 
-            // Проверка данных проекта
-            const projectId = project._id || project.id;
+            // Подробная проверка данных проекта
+            console.log('Project data structure:', {
+                project,
+                projectType: typeof project,
+                hasId: Boolean(project?.id),
+                has_id: Boolean(project?._id),
+                projectKeys: project && typeof project === 'object' ? Object.keys(project) : 'not an object'
+            });
+
+            // Получаем ID проекта - обрабатываем как строку, так и объект
+            let projectId;
+            let projectName;
+
+            if (typeof project === 'string') {
+                // Если проект передан как строка (ID)
+                projectId = project;
+                console.log('Project passed as string ID:', projectId);
+
+                // Попытаемся найти полные данные проекта в списке команды
+                if (selectedTeam.projects && Array.isArray(selectedTeam.projects)) {
+                    const fullProjectObject = selectedTeam.projects.find(p =>
+                        (p._id === projectId || p.id === projectId)
+                    );
+                    if (fullProjectObject) {
+                        projectName = fullProjectObject.name;
+                        console.log('Found full project object in team:', fullProjectObject);
+                    } else {
+                        console.log('Project object not found in team projects');
+                        projectName = `Проект ${projectId.substring(0, 8)}...`;
+                    }
+                } else {
+                    projectName = `Проект ${projectId.substring(0, 8)}...`;
+                }
+            } else if (project && typeof project === 'object') {
+                // Если проект передан как объект
+                projectId = project._id || project.id;
+                projectName = project.name || 'Без названия';
+                console.log('Project passed as object, ID:', projectId);
+            } else {
+                console.error('Invalid project data format:', project);
+                setError(`Ошибка: некорректный формат данных проекта: ${JSON.stringify(project)}`);
+                return;
+            }
+
             if (!projectId) {
-                console.error('Project ID is missing', project);
-                setError('Ошибка: отсутствует ID проекта');
+                console.error('Project ID is missing after processing', {
+                    originalProject: project,
+                    processedProjectId: projectId,
+                    projectType: typeof project
+                });
+                setError(`Ошибка: не удалось получить ID проекта из данных: ${JSON.stringify(project)}`);
                 return;
             }
 
@@ -1484,16 +1684,23 @@ function TeamManagement() {
                 return;
             }
 
-            // Определяем маршрут в зависимости от роли
-            const route = (userRole === 'owner' || userRole === 'admin' || userRole === 'editor')
-                ? `/teams/${selectedTeam._id}/projects/${projectId}/constructor`
-                : `/teams/${selectedTeam._id}/projects/${projectId}/viewer`;
+            // Получаем ID команды для маршрута
+            const teamId = selectedTeam._id || selectedTeam.id;
+            if (!teamId) {
+                console.error('Team ID is missing', selectedTeam);
+                setError('Ошибка: отсутствует ID команды');
+                return;
+            }
 
-            console.log('Navigating to:', route);
+            // Теперь всегда переходим на страницу выбора действия
+            const route = `/teams/${teamId}/projects/${projectId}/dialog`;
+
+            console.log('Navigating to project choice dialog:', route);
+            console.log('Project details:', { projectId, projectName, userRole });
             navigate(route);
         } catch (error) {
             console.error('Error in handleProjectClick:', error);
-            setError('Произошла ошибка при открытии проекта');
+            setError(`Произошла ошибка при открытии проекта: ${error.message}`);
         }
     };
 
@@ -1662,7 +1869,7 @@ function TeamManagement() {
                                                             variant="body2"
                                                             sx={{ color: 'rgba(255, 255, 255, 0.6)' }}
                                                         >
-                                                            {team.members?.length || 0} участников
+                                                            {(team.members?.length || 0) + 1} участников
                                                         </Typography>
                                                     }
                                                 />
@@ -1780,33 +1987,19 @@ function TeamManagement() {
                                                             {/* Отображение владельца команды */}
                                                             {selectedTeam.owner && (
                                                                 (() => {
-                                                                    const ownerData = typeof selectedTeam.owner === 'object' ?
-                                                                        selectedTeam.owner :
-                                                                        selectedTeam.members?.find(m => {
-                                                                            const memberId = typeof m.userId === 'object' ?
-                                                                                (m.userId._id || m.userId.id) : m.userId;
-                                                                            const ownerId = typeof selectedTeam.owner === 'object' ?
-                                                                                (selectedTeam.owner._id || selectedTeam.owner.id) : selectedTeam.owner;
-                                                                            return memberId === ownerId;
-                                                                        })?.userId;
+                                                                    console.log('Rendering owner section. Full team data:', selectedTeam);
 
-                                                                    const ownerId = typeof ownerData === 'object' ?
-                                                                        (ownerData._id || ownerData.id) : selectedTeam.owner;
-
-                                                                    const ownerUsername = typeof ownerData === 'object' ?
-                                                                        ownerData.username : 'Владелец';
+                                                                    // Получаем username владельца напрямую из объекта owner
+                                                                    const ownerUsername = selectedTeam.owner.username;
+                                                                    console.log('Owner username:', ownerUsername);
 
                                                                     return (
                                                                         <ListItem
-                                                                            key={`owner-${ownerId}`}
-                                                                            button
-                                                                            onClick={() => handleUserSelect({ _id: ownerId, username: ownerUsername })}
-                                                                            selected={selectedUserId === ownerId}
+                                                                            key={`owner-${selectedTeam.owner._id}`}
                                                                             sx={{
                                                                                 borderRadius: 1,
                                                                                 m: 0.5,
                                                                                 '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.07)' },
-                                                                                backgroundColor: selectedUserId === ownerId ? alpha(COLORS.primary, 0.2) : 'transparent',
                                                                                 transition: 'all 0.2s'
                                                                             }}
                                                                         >
@@ -1817,7 +2010,7 @@ function TeamManagement() {
                                                                                     color: COLORS.primary
                                                                                 }}
                                                                             >
-                                                                                {ownerUsername?.charAt(0).toUpperCase()}
+                                                                                {ownerUsername.charAt(0).toUpperCase()}
                                                                             </Avatar>
                                                                             <ListItemText
                                                                                 primary={
@@ -1830,18 +2023,13 @@ function TeamManagement() {
                                                                                             label="Владелец"
                                                                                             sx={{
                                                                                                 ml: 1,
-                                                                                                backgroundColor: `${COLORS.primary}30`,
-                                                                                                color: COLORS.primary,
+                                                                                                backgroundColor: `${COLORS.tertiary}30`,
+                                                                                                color: COLORS.tertiary,
                                                                                                 fontSize: '0.7rem',
                                                                                                 height: 20
                                                                                             }}
                                                                                         />
                                                                                     </Box>
-                                                                                }
-                                                                                secondary={
-                                                                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                                                                                        {ownerId}
-                                                                                    </Typography>
                                                                                 }
                                                                             />
                                                                         </ListItem>
@@ -1865,10 +2053,9 @@ function TeamManagement() {
                                                                     const userId = typeof member.userId === 'object' ?
                                                                         (member.userId._id || member.userId.id) : member.userId;
 
-                                                                    const username = typeof member.userId === 'object' ?
-                                                                        (member.userId.username) : '';
-
-                                                                    const role = member.role;
+                                                                    const username = (member.username || member.name) ||
+                                                                        (typeof member.userId === 'object' && (member.userId.username || member.userId.name)) ||
+                                                                        'Неизвестный пользователь';
 
                                                                     return (
                                                                         <ListItem
@@ -1891,33 +2078,15 @@ function TeamManagement() {
                                                                                     color: COLORS.tertiary
                                                                                 }}
                                                                             >
-                                                                                {username?.charAt(0).toUpperCase()}
+                                                                                {username.charAt(0).toUpperCase()}
                                                                             </Avatar>
                                                                             <ListItemText
                                                                                 primary={
                                                                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                                        <Typography variant="body1" sx={{ color: '#FFFFFF' }}>
+                                                                                        <Typography variant="body1" sx={{ color: 'white' }}>
                                                                                             {username}
                                                                                         </Typography>
-                                                                                        {role === 'admin' && (
-                                                                                            <Chip
-                                                                                                size="small"
-                                                                                                label="Админ"
-                                                                                                sx={{
-                                                                                                    ml: 1,
-                                                                                                    backgroundColor: `${COLORS.tertiary}30`,
-                                                                                                    color: COLORS.tertiary,
-                                                                                                    fontSize: '0.7rem',
-                                                                                                    height: 20
-                                                                                                }}
-                                                                                            />
-                                                                                        )}
                                                                                     </Box>
-                                                                                }
-                                                                                secondary={
-                                                                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                                                                                        {userId}
-                                                                                    </Typography>
                                                                                 }
                                                                             />
                                                                         </ListItem>
@@ -2000,7 +2169,7 @@ function TeamManagement() {
                                                                     }
                                                                     secondary={
                                                                         <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                                                                            {project._id}
+                                                                            {project.description || 'Нет описания'}
                                                                         </Typography>
                                                                     }
                                                                 />

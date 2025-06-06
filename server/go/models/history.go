@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Available history actions
+// Доступные действия истории
 const (
 	ActionProjectCreated    = "PROJECT_CREATED"
 	ActionProjectUpdated    = "PROJECT_UPDATED"
@@ -15,7 +15,7 @@ const (
 	ActionTeamProjectUpdated = "TEAM_PROJECT_UPDATED"
 )
 
-// History represents a user action history entry
+// History представляет запись в истории действий пользователя
 type History struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	UserID      primitive.ObjectID `bson:"userId" json:"userId"`
@@ -25,7 +25,7 @@ type History struct {
 	Timestamp   time.Time          `bson:"timestamp" json:"timestamp"`
 }
 
-// CreateHistory creates a new history record with current timestamp
+// CreateHistory создает новую запись в истории с текущей временной меткой
 func CreateHistory(userID, projectID primitive.ObjectID, action, description string) History {
 	return History{
 		UserID:      userID,

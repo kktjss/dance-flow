@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Project model
+// Модель проекта
 type Project struct {
 	ID            primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Name          string             `json:"name" bson:"name"`
@@ -30,7 +30,7 @@ type Project struct {
 	GlbAnimations []GlbAnimation     `json:"glbAnimations,omitempty" bson:"glbAnimations,omitempty"`
 }
 
-// GlbAnimation represents a GLB animation file
+// GlbAnimation представляет файл анимации GLB
 type GlbAnimation struct {
 	ID          string `json:"id" bson:"id"`
 	URL         string `json:"url" bson:"url"`
@@ -38,7 +38,7 @@ type GlbAnimation struct {
 	Description string `json:"description,omitempty" bson:"description,omitempty"`
 }
 
-// Element represents a project element
+// Element представляет элемент проекта
 type Element struct {
 	ID       string     `json:"id"`
 	Type     string     `json:"type"`
@@ -49,19 +49,19 @@ type Element struct {
 	Keyframes []interface{} `json:"keyframes"`
 }
 
-// Position represents the position of an element
+// Position представляет позицию элемента
 type Position struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
 }
 
-// Size represents the size of an element
+// Size представляет размер элемента
 type Size struct {
 	Width  float64 `json:"width"`
 	Height float64 `json:"height"`
 }
 
-// Style represents the style of an element
+// Style представляет стиль элемента
 type Style struct {
 	Color           string  `json:"color"`
 	BackgroundColor string  `json:"backgroundColor"`
@@ -71,113 +71,117 @@ type Style struct {
 	ZIndex          float64 `json:"zIndex"`
 }
 
-// NormalizeElements ensures all elements have the required fields
+// NormalizeElements обеспечивает наличие всех необходимых полей у элементов
 func (p *Project) NormalizeElements() {
 	if p.Elements == nil {
-		p.Elements = []interface{}{}
+		p.Elements = make([]interface{}, 0)
 		return
 	}
 
-	normalizedElements := []interface{}{}
+	normalizedElements := make([]interface{}, 0)
 	idCounter := 1
 
 	for _, elem := range p.Elements {
-		// Convert to map for easy access
+		if elem == nil {
+			continue
+		}
+
+		// Преобразуем в map для удобного доступа
 		var elemMap map[string]interface{}
 		
-		// Try to convert directly if it's already a map
+		// Пробуем преобразовать напрямую, если это уже map
 		if em, ok := elem.(map[string]interface{}); ok {
 			elemMap = em
 		} else if elemArray, ok := elem.([]interface{}); ok {
-			// If element is an array, process each item in the array
+			// Если элемент является массивом, обрабатываем каждый элемент массива
 			for _, arrayItem := range elemArray {
 				if itemMap, ok := arrayItem.(map[string]interface{}); ok {
-					// Process this map item and add to normalized elements
+					// Обрабатываем этот элемент map и добавляем в нормализованные элементы
 					normalizedItem := normalizeElement(itemMap, &idCounter)
 					if normalizedItem != nil {
 						normalizedElements = append(normalizedElements, normalizedItem)
 					}
 				}
 			}
-			// Skip further processing of this element since we handled the array
+			// Пропускаем дальнейшую обработку этого элемента, так как мы обработали массив
 			continue
 		} else if elemArray, ok := elem.(primitive.A); ok {
-			// Handle BSON array type
+			// Обрабатываем тип массива BSON
 			for _, arrayItem := range elemArray {
 				if itemMap, ok := arrayItem.(map[string]interface{}); ok {
-					// Process this map item and add to normalized elements
+					// Обрабатываем этот элемент map и добавляем в нормализованные элементы
 					normalizedItem := normalizeElement(itemMap, &idCounter)
 					if normalizedItem != nil {
 						normalizedElements = append(normalizedElements, normalizedItem)
 					}
 				}
 			}
-			// Skip further processing of this element since we handled the array
+			// Пропускаем дальнейшую обработку этого элемента, так как мы обработали массив
 			continue
 		} else {
-			// Try to marshal and unmarshal to convert to map
+			// Пробуем выполнить marshal и unmarshal для преобразования в map
 			bytes, err := json.Marshal(elem)
 			if err != nil {
-				fmt.Printf("Error marshaling element: %v\n", err)
+				fmt.Printf("Ошибка при маршалинге элемента: %v\n", err)
 				continue
 			}
 			
 			err = json.Unmarshal(bytes, &elemMap)
 			if err != nil {
-				fmt.Printf("Error unmarshaling element: %v\n", err)
+				fmt.Printf("Ошибка при анмаршалинге элемента: %v\n", err)
 				continue
 			}
 		}
 
-		// Process the element map
+		// Обрабатываем map элемента
 		normalizedElem := normalizeElement(elemMap, &idCounter)
 		if normalizedElem != nil {
 			normalizedElements = append(normalizedElements, normalizedElem)
 		}
 	}
 
-	// Replace original elements with normalized ones
+	// Заменяем оригинальные элементы нормализованными
 	p.Elements = normalizedElements
 }
 
-// Helper function to normalize a single element
+// Вспомогательная функция для нормализации одного элемента
 func normalizeElement(elemMap map[string]interface{}, idCounter *int) map[string]interface{} {
 	if elemMap == nil {
 		return nil
 	}
 
-	// Generate ID if not present
+	// Генерируем ID, если его нет
 	elementID, hasID := elemMap["id"].(string)
 	if !hasID || elementID == "" {
-		// Check for _id
+		// Проверяем наличие _id
 		if id, hasAltID := elemMap["_id"].(string); hasAltID && id != "" {
 			elementID = id
 			elemMap["id"] = elementID
-			fmt.Printf("Used _id as id for element: %s\n", elementID)
+			fmt.Printf("Использован _id в качестве id для элемента: %s\n", elementID)
 		} else {
 			elementID = fmt.Sprintf("generated-%d", *idCounter)
 			elemMap["id"] = elementID
 			*idCounter++
-			fmt.Printf("Generated new id for element: %s\n", elementID)
+			fmt.Printf("Сгенерирован новый id для элемента: %s\n", elementID)
 		}
 	}
 
-	// Ensure type is present
+	// Проверяем наличие типа
 	elementType, hasType := elemMap["type"].(string)
 	if !hasType || elementType == "" {
-		// Check for originalType
+		// Проверяем наличие originalType
 		if origType, hasOrigType := elemMap["originalType"].(string); hasOrigType && origType != "" {
 			elementType = origType
 			elemMap["type"] = elementType
-			fmt.Printf("Used originalType as type for element: %s\n", elementType)
+			fmt.Printf("Использован originalType в качестве type для элемента: %s\n", elementType)
 		} else {
-			elementType = "rectangle" // Default type
+			elementType = "rectangle" // Тип по умолчанию
 			elemMap["type"] = elementType
-			fmt.Printf("Used default type for element: %s\n", elementID)
+			fmt.Printf("Использован тип по умолчанию для элемента: %s\n", elementID)
 		}
 	}
 
-	// Ensure position is present and valid
+	// Проверяем наличие и корректность позиции
 	position, hasPosition := elemMap["position"].(map[string]interface{})
 	if !hasPosition {
 		elemMap["position"] = map[string]interface{}{
@@ -185,7 +189,7 @@ func normalizeElement(elemMap map[string]interface{}, idCounter *int) map[string
 			"y": float64(100),
 		}
 	} else {
-		// Convert position values to float64
+		// Преобразуем значения позиции в float64
 		if x, ok := position["x"]; ok {
 			position["x"] = convertToFloat64(x, 100)
 		} else {
@@ -199,7 +203,7 @@ func normalizeElement(elemMap map[string]interface{}, idCounter *int) map[string
 		}
 	}
 
-	// Ensure size is present and valid
+	// Проверяем наличие и корректность размера
 	size, hasSize := elemMap["size"].(map[string]interface{})
 	if !hasSize {
 		elemMap["size"] = map[string]interface{}{
@@ -207,7 +211,7 @@ func normalizeElement(elemMap map[string]interface{}, idCounter *int) map[string
 			"height": float64(100),
 		}
 	} else {
-		// Convert size values to float64
+		// Преобразуем значения размера в float64
 		if width, ok := size["width"]; ok {
 			size["width"] = convertToFloat64(width, 100)
 		} else {
@@ -221,7 +225,7 @@ func normalizeElement(elemMap map[string]interface{}, idCounter *int) map[string
 		}
 	}
 
-	// Ensure style is present
+	// Проверяем наличие стиля
 	style, hasStyle := elemMap["style"].(map[string]interface{})
 	if !hasStyle {
 		elemMap["style"] = map[string]interface{}{
@@ -233,7 +237,7 @@ func normalizeElement(elemMap map[string]interface{}, idCounter *int) map[string
 			"zIndex":          float64(0),
 		}
 	} else {
-		// Ensure style has required fields
+		// Проверяем наличие необходимых полей стиля
 		if _, ok := style["color"]; !ok {
 			style["color"] = "#000000"
 		}
@@ -292,14 +296,14 @@ func convertToFloat64(value interface{}, defaultValue float64) float64 {
 	return defaultValue
 }
 
-// KeyframeRef represents a keyframe reference in Project model
+// KeyframeRef представляет ссылку на ключевой кадр
 type KeyframeRef struct {
 	KeyframeID primitive.ObjectID `json:"keyframeId" bson:"keyframeId"`
 	Timestamp  float64            `json:"timestamp" bson:"timestamp"`
 	Label      string             `json:"label,omitempty" bson:"label,omitempty"`
 }
 
-// ProjectCreateInput is the input for creating a project
+// ProjectCreateInput представляет входные данные для создания проекта
 type ProjectCreateInput struct {
 	Name          string         `json:"name" binding:"required"`
 	Description   string         `json:"description"`
@@ -314,7 +318,7 @@ type ProjectCreateInput struct {
 	GlbAnimations []GlbAnimation `json:"glbAnimations,omitempty"`
 }
 
-// ProjectUpdateInput is the input for updating a project
+// ProjectUpdateInput представляет входные данные для обновления проекта
 type ProjectUpdateInput struct {
 	Name          string         `json:"name,omitempty"`
 	Description   string         `json:"description,omitempty"`

@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Keyframe model
+// Модель ключевого кадра
 type Keyframe struct {
 	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	ProjectID   primitive.ObjectID `json:"projectId" bson:"projectId"`
@@ -19,7 +19,7 @@ type Keyframe struct {
 	UpdatedAt   time.Time          `json:"updatedAt" bson:"updatedAt"`
 }
 
-// KeyframeCreateInput is the input for creating a keyframe
+// KeyframeCreateInput представляет входные данные для создания ключевого кадра
 type KeyframeCreateInput struct {
 	ProjectID string      `json:"projectId" binding:"required"`
 	Timestamp float64     `json:"timestamp" binding:"required"`
@@ -28,7 +28,7 @@ type KeyframeCreateInput struct {
 	ImageData string      `json:"imageData,omitempty"`
 }
 
-// KeyframeUpdateInput is the input for updating a keyframe
+// KeyframeUpdateInput представляет входные данные для обновления ключевого кадра
 type KeyframeUpdateInput struct {
 	Label     string      `json:"label,omitempty"`
 	PoseData  interface{} `json:"poseData,omitempty"`

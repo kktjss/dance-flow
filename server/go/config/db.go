@@ -11,10 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-// Database instance
+// Экземпляр базы данных
 var DB *mongo.Database
 
-// Collections
+// Коллекции
 var (
 	UsersCollection      *mongo.Collection
 	ProjectsCollection   *mongo.Collection
@@ -23,29 +23,29 @@ var (
 	HistoryCollection    *mongo.Collection
 )
 
-// Connect establishes connection to MongoDB
+// Connect устанавливает соединение с MongoDB
 func Connect(mongoURI string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Connect to MongoDB
+	// Подключение к MongoDB
 	clientOptions := options.Client().ApplyURI(mongoURI)
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Printf("Failed to connect to MongoDB: %v", err)
-		return fmt.Errorf("failed to connect to MongoDB: %w", err)
+		log.Printf("Не удалось подключиться к MongoDB: %v", err)
+		return fmt.Errorf("не удалось подключиться к MongoDB: %w", err)
 	}
 
-	// Ping the database
+	// Пинг базы данных
 	err = client.Ping(ctx, readpref.Primary())
 	if err != nil {
-		log.Printf("Failed to ping MongoDB: %v", err)
-		return fmt.Errorf("failed to ping MongoDB: %w", err)
+		log.Printf("Не удалось выполнить пинг MongoDB: %v", err)
+		return fmt.Errorf("не удалось выполнить пинг MongoDB: %w", err)
 	}
 
-	log.Println("Connected to MongoDB")
+	log.Println("Подключено к MongoDB")
 
-	// Set database and collections
+	// Установка базы данных и коллекций
 	DB = client.Database("dance-platform")
 	UsersCollection = DB.Collection("users")
 	ProjectsCollection = DB.Collection("projects")
@@ -56,19 +56,19 @@ func Connect(mongoURI string) error {
 	return nil
 }
 
-// Close closes the MongoDB connection
+// Close закрывает соединение с MongoDB
 func Close() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if DB != nil {
 		if err := DB.Client().Disconnect(ctx); err != nil {
-			log.Printf("Failed to disconnect from MongoDB: %v", err)
+			log.Printf("Не удалось отключиться от MongoDB: %v", err)
 		}
 	}
 }
 
-// GetCollection returns a MongoDB collection by name
+// GetCollection возвращает коллекцию MongoDB по имени
 func GetCollection(name string) *mongo.Collection {
 	return DB.Collection(name)
 } 

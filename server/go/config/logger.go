@@ -10,65 +10,65 @@ import (
 )
 
 var (
-	// Logger is the global logger instance
+	// Logger является глобальным экземпляром логгера
 	Logger *log.Logger
-	// LogFile is the file handler for logging
+	// LogFile является обработчиком файла для логирования
 	LogFile *os.File
 )
 
-// InitLogger initializes the file logging system
+// InitLogger инициализирует систему файлового логирования
 func InitLogger() error {
-	// Create logs directory if it doesn't exist
+	// Создаем директорию для логов, если она не существует
 	logsDir := "./logs"
 	if err := os.MkdirAll(logsDir, 0755); err != nil {
-		return fmt.Errorf("failed to create logs directory: %w", err)
+		return fmt.Errorf("не удалось создать директорию для логов: %w", err)
 	}
 
-	// Create log file with timestamp in name
+	// Создаем файл лога с временной меткой в имени
 	timestamp := time.Now().Format("2006-01-02")
 	logFilePath := filepath.Join(logsDir, fmt.Sprintf("server-%s.log", timestamp))
 	
-	// Open log file with append mode
+	// Открываем файл лога в режиме добавления
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to open log file: %w", err)
+		return fmt.Errorf("не удалось открыть файл лога: %w", err)
 	}
 	
-	// Create a multi-writer to write to both console and file
+	// Создаем мульти-писатель для записи как в консоль, так и в файл
 	multiWriter := io.MultiWriter(os.Stdout, file)
 	
-	// Set the log output to our multi-writer
+	// Устанавливаем вывод лога в наш мульти-писатель
 	Logger = log.New(multiWriter, "", log.LstdFlags|log.Lshortfile)
 	
-	// Store file handle for later closing
+	// Сохраняем дескриптор файла для последующего закрытия
 	LogFile = file
 	
-	Logger.Printf("Logger initialized, writing to %s\n", logFilePath)
+	Logger.Printf("Логгер инициализирован, запись в %s\n", logFilePath)
 	return nil
 }
 
-// CloseLogger closes the log file
+// CloseLogger закрывает файл лога
 func CloseLogger() {
 	if LogFile != nil {
-		Logger.Println("Closing logger")
+		Logger.Println("Закрытие логгера")
 		LogFile.Close()
 	}
 }
 
-// Log formats and logs a message with timestamp prefix
+// Log форматирует и записывает сообщение с временным префиксом
 func Log(tag, format string, v ...interface{}) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
 	message := fmt.Sprintf(format, v...)
 	Logger.Printf("[%s] [%s] %s", timestamp, tag, message)
 }
 
-// LogError logs an error with timestamp prefix
+// LogError записывает ошибку с временным префиксом
 func LogError(tag string, err error) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
-	Logger.Printf("[%s] [%s] ERROR: %v", timestamp, tag, err)
+	Logger.Printf("[%s] [%s] ОШИБКА: %v", timestamp, tag, err)
 }
 
-// LogRequest logs an HTTP request
+// LogRequest записывает HTTP запрос
 func LogRequest(method, path, clientIP string, statusCode int, duration time.Duration) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
 	Logger.Printf("[%s] [REQ] %s %s - %s - %d (%s)", 

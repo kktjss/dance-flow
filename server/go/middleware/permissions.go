@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// CheckProjectAccess checks if the user has access to the project
+// CheckProjectAccess проверяет, есть ли у пользователя доступ к проекту
 func CheckProjectAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		projectID := c.Param("id")
@@ -21,7 +21,7 @@ func CheckProjectAccess() gin.HandlerFunc {
 			return
 		}
 
-		// Get user ID from context
+		// Получаем ID пользователя из контекста
 		userID, err := GetUserID(c)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -29,7 +29,7 @@ func CheckProjectAccess() gin.HandlerFunc {
 			return
 		}
 
-		// Convert project ID to ObjectID
+		// Преобразуем ID проекта в ObjectID
 		projectObjID, err := primitive.ObjectIDFromHex(projectID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID format"})
@@ -37,11 +37,11 @@ func CheckProjectAccess() gin.HandlerFunc {
 			return
 		}
 
-		// Create context with timeout
+		// Создаем контекст с таймаутом
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// First check if user is the project owner (most common case)
+		// Сначала проверяем, является ли пользователь владельцем проекта (наиболее частый случай)
 		var projectCount int64
 		projectCount, err = config.ProjectsCollection.CountDocuments(ctx, bson.M{
 			"_id": projectObjID,
@@ -49,12 +49,12 @@ func CheckProjectAccess() gin.HandlerFunc {
 		})
 		
 		if err == nil && projectCount > 0 {
-			// User is the project owner, allow access
+			// Пользователь является владельцем проекта, разрешаем доступ
 			c.Next()
 			return
 		}
 
-		// If not the owner, then check if it's a team project and if user is in that team
+		// Если не владелец, проверяем, является ли это командным проектом и входит ли пользователь в эту команду
 		var project bson.M
 		err = config.ProjectsCollection.FindOne(ctx, bson.M{
 			"_id": projectObjID,
@@ -66,33 +66,33 @@ func CheckProjectAccess() gin.HandlerFunc {
 			return
 		}
 
-		// If project has a team ID, check if user is a member of that team
+		// Если у проекта есть ID команды, проверяем, является ли пользователь членом этой команды
 		if teamIDValue, hasTeamID := project["teamId"]; hasTeamID && !teamIDValue.(primitive.ObjectID).IsZero() {
 			teamID := teamIDValue.(primitive.ObjectID)
 			
-			// Check if user is a member of the team
+			// Проверяем, является ли пользователь членом команды
 			teamCount, teamErr := config.TeamsCollection.CountDocuments(ctx, bson.M{
 				"_id": teamID,
 				"$or": []bson.M{
-					{"owner": userID},          // User is team owner
-					{"members.userId": userID}, // User is team member
+					{"owner": userID},          // Пользователь является владельцем команды
+					{"members.userId": userID}, // Пользователь является членом команды
 				},
 			})
 			
 			if teamErr == nil && teamCount > 0 {
-				// User is part of the team, allow access
+				// Пользователь входит в команду, разрешаем доступ
 				c.Next()
 				return
 			}
 		}
 
-		// If we get here, user doesn't have access
+		// Если мы дошли до этого места, у пользователя нет доступа
 		c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to this project"})
 		c.Abort()
 	}
 }
 
-// CheckTeamAccess checks if the user has access to the team
+// CheckTeamAccess проверяет, есть ли у пользователя доступ к команде
 func CheckTeamAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		teamID := c.Param("id")
@@ -102,7 +102,7 @@ func CheckTeamAccess() gin.HandlerFunc {
 			return
 		}
 
-		// Get user ID from context
+		// Получаем ID пользователя из контекста
 		userID, err := GetUserID(c)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -110,7 +110,7 @@ func CheckTeamAccess() gin.HandlerFunc {
 			return
 		}
 
-		// Convert team ID to ObjectID
+		// Преобразуем ID команды в ObjectID
 		teamObjID, err := primitive.ObjectIDFromHex(teamID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
@@ -118,28 +118,28 @@ func CheckTeamAccess() gin.HandlerFunc {
 			return
 		}
 
-		// Create context with timeout
+		// Создаем контекст с таймаутом
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Check if team exists and user has access
+		// Проверяем, существует ли команда и есть ли у пользователя доступ
 		var result bson.M
 		err = config.TeamsCollection.FindOne(ctx, bson.M{
 			"_id": teamObjID,
 			"$or": []bson.M{
-				{"owner": userID},          // User is owner
-				{"members.userId": userID}, // User is member
+				{"owner": userID},          // Пользователь является владельцем
+				{"members.userId": userID}, // Пользователь является участником
 			},
 		}).Decode(&result)
 
 		if err != nil {
-			// If team not found or user doesn't have access
+			// Если команда не найдена или у пользователя нет доступа
 			c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to this team"})
 			c.Abort()
 			return
 		}
 
-		// Team access granted
+		// Доступ к команде разрешен
 		c.Next()
 	}
 } 

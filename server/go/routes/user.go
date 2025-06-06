@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +27,7 @@ func RegisterUserRoutes(router *gin.RouterGroup, cfg *config.Config) {
 		users.GET("/:id", getUserByID)
 		users.PUT("/me", updateCurrentUser)
 		users.GET("/me", getCurrentUser)
+		users.DELETE("/me", deleteCurrentUser)
 		
 		// Add a test endpoint
 		users.GET("/test", func(c *gin.Context) {
@@ -243,4 +246,98 @@ func updateCurrentUser(c *gin.Context) {
 	// Convert to safe response object
 	userResponse := user.ToResponse()
 	c.JSON(http.StatusOK, userResponse)
+}
+
+// deleteCurrentUser deletes the current authenticated user and all associated data
+func deleteCurrentUser(c *gin.Context) {
+	// Get user ID from context
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// 1. Remove user from all teams they are a member of
+	_, err = config.TeamsCollection.UpdateMany(
+		ctx,
+		bson.M{"members.userId": userID},
+		bson.M{"$pull": bson.M{"members": bson.M{"userId": userID}}},
+	)
+	if err != nil {
+		config.LogError("USERS", fmt.Errorf("failed to remove user from teams: %w", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
+		return
+	}
+
+	// 2. Delete all user's models
+	// First, get all user's models to delete files
+	cursor, err := config.GetCollection("models").Find(ctx, bson.M{"userId": userID})
+	if err != nil {
+		config.LogError("USERS", fmt.Errorf("failed to find user's models: %w", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var models []models.Model
+	if err := cursor.All(ctx, &models); err != nil {
+		config.LogError("USERS", fmt.Errorf("failed to decode user's models: %w", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
+		return
+	}
+
+	// Delete model files
+	for _, model := range models {
+		filePath := filepath.Join("uploads/models", model.Filename)
+		if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+			config.LogError("USERS", fmt.Errorf("failed to delete model file %s: %w", filePath, err))
+			// Continue with deletion even if file removal fails
+		}
+	}
+
+	// Delete model records
+	_, err = config.GetCollection("models").DeleteMany(ctx, bson.M{"userId": userID})
+	if err != nil {
+		config.LogError("USERS", fmt.Errorf("failed to delete user's models: %w", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
+		return
+	}
+
+	// 3. Delete all user's projects
+	_, err = config.ProjectsCollection.DeleteMany(ctx, bson.M{"owner": userID})
+	if err != nil {
+		config.LogError("USERS", fmt.Errorf("failed to delete user's projects: %w", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
+		return
+	}
+
+	// 4. Delete user's history records
+	_, err = config.GetCollection("history").DeleteMany(ctx, bson.M{"userId": userID})
+	if err != nil {
+		config.LogError("USERS", fmt.Errorf("failed to delete user's history: %w", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
+		return
+	}
+
+	// 5. Delete teams where user is the owner
+	_, err = config.TeamsCollection.DeleteMany(ctx, bson.M{"owner": userID})
+	if err != nil {
+		config.LogError("USERS", fmt.Errorf("failed to delete user's teams: %w", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
+		return
+	}
+
+	// 6. Finally, delete the user
+	_, err = config.UsersCollection.DeleteOne(ctx, bson.M{"_id": userID})
+	if err != nil {
+		config.LogError("USERS", fmt.Errorf("failed to delete user: %w", err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Account deleted successfully"})
 } 

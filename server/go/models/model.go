@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Model represents a 3D model in the system
+// Model представляет 3D модель в системе
 type Model struct {
 	ID           primitive.ObjectID `json:"id" bson:"_id"`
 	Name         string             `json:"name" bson:"name"`
@@ -15,5 +15,5 @@ type Model struct {
 	Size         int64              `json:"size" bson:"size"`
 	UserID       primitive.ObjectID `json:"userId" bson:"userId"`
 	CreatedAt    time.Time          `json:"createdAt" bson:"createdAt"`
-	URL          string             `json:"url" bson:"-"` // URL is not stored in the database
+	URL          string             `json:"url" bson:"-"` // URL не хранится в базе данных
 } 

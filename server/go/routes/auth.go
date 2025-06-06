@@ -258,31 +258,24 @@ func createPreviewProjects(ctx context.Context, userID primitive.ObjectID) {
 	if err1 != nil {
 		log.Printf("Preview project 1 not found, creating new one with ID: %s", preview1ID.Hex())
 		
-		// Preview project 1: Basic Dance Routine
+		// Preview project 1: Basic usage
 		previewProject1 = models.Project{
 			ID:          preview1ID,
-			Name:        "Базовая танцевальная рутина",
-			Description: "Пример простой танцевальной рутины с базовыми движениями",
+			Name:        "Preview - Basic usage",
+			Description: "-",
 			Owner:       userID, // First user becomes the owner
-			Tags:        []string{"пример", "начинающий", "базовый"},
+			// Tags:        []string{"-"},
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 			IsPrivate:   false,
-			Title:       "Мой первый танец",
+			Title:       "Preview - Basic usage",
 			Duration:    60,
 			Elements: []interface{}{
 				map[string]interface{}{
 					"id":       "element-1",
 					"type":     "text",
-					"content":  "Базовый шаг",
+					"content":  "test",
 					"position": map[string]float64{"x": 100, "y": 100},
-					"size":     map[string]float64{"width": 200, "height": 50},
-				},
-				map[string]interface{}{
-					"id":       "element-2",
-					"type":     "text",
-					"content":  "Поворот",
-					"position": map[string]float64{"x": 100, "y": 200},
 					"size":     map[string]float64{"width": 200, "height": 50},
 				},
 			},
@@ -302,38 +295,24 @@ func createPreviewProjects(ctx context.Context, userID primitive.ObjectID) {
 	if err2 != nil {
 		log.Printf("Preview project 2 not found, creating new one with ID: %s", preview2ID.Hex())
 		
-		// Preview project 2: Advanced Choreography
+		// Preview project 2: 3D
 		previewProject2 = models.Project{
 			ID:          preview2ID,
-			Name:        "Продвинутая хореография",
-			Description: "Пример сложной хореографии с комбинацией движений",
+			Name:        "Preview - 3D",
+			Description: "-",
 			Owner:       userID, // First user becomes the owner
-			Tags:        []string{"пример", "продвинутый", "хореография"},
+			//Tags:        []string{"-"},
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 			IsPrivate:   false,
-			Title:       "Моя хореография",
+			Title:       "Preview - 3D",
 			Duration:    120,
 			Elements: []interface{}{
 				map[string]interface{}{
 					"id":       "element-1",
 					"type":     "text",
-					"content":  "Вступление",
+					"content":  "test",
 					"position": map[string]float64{"x": 50, "y": 50},
-					"size":     map[string]float64{"width": 200, "height": 50},
-				},
-				map[string]interface{}{
-					"id":       "element-2",
-					"type":     "text",
-					"content":  "Основная часть",
-					"position": map[string]float64{"x": 50, "y": 150},
-					"size":     map[string]float64{"width": 200, "height": 50},
-				},
-				map[string]interface{}{
-					"id":       "element-3",
-					"type":     "text",
-					"content":  "Финал",
-					"position": map[string]float64{"x": 50, "y": 250},
 					"size":     map[string]float64{"width": 200, "height": 50},
 				},
 			},

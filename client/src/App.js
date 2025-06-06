@@ -13,6 +13,7 @@ import ProjectViewPage from './pages/ProjectViewPage';
 import ProjectsPage from './pages/ProjectsPage';
 import DebugPage from './pages/DebugPage';
 import ModelDebugPage from './pages/ModelDebugPage';
+import ProjectChoicePage from './pages/ProjectChoicePage';
 import { COLORS } from './constants/colors';
 
 // Добавление пользовательского третичного цвета в тему Material UI
@@ -178,6 +179,22 @@ function App() {
                         element={
                             <ProtectedRoute>
                                 <ProjectViewPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/teams/:teamId/projects/:projectId/constructor"
+                        element={
+                            <ProtectedRoute>
+                                <ConstructorPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/teams/:teamId/projects/:projectId/dialog"
+                        element={
+                            <ProtectedRoute>
+                                <ProjectChoicePage />
                             </ProtectedRoute>
                         }
                     />

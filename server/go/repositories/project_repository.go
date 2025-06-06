@@ -11,12 +11,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Errors
+// Ошибки
 var (
 	ErrProjectNotFound = errors.New("project not found")
 )
 
-// ProjectRepository defines the interface for project data access
+// ProjectRepository определяет интерфейс для доступа к данным проектов
 type ProjectRepository interface {
 	FindAll(userID string) ([]models.Project, error)
 	FindByUserID(userID string) ([]models.Project, error)
@@ -26,24 +26,24 @@ type ProjectRepository interface {
 	Delete(projectID string) error
 }
 
-// projectRepository implements ProjectRepository
+// projectRepository реализует ProjectRepository
 type projectRepository struct {
 	db *mongo.Database
 }
 
-// NewProjectRepository creates a new project repository
+// NewProjectRepository создает новый репозиторий проектов
 func NewProjectRepository(db *mongo.Database) ProjectRepository {
 	return &projectRepository{
 		db: db,
 	}
 }
 
-// FindAll returns all projects for a user (including public projects)
+// FindAll возвращает все проекты пользователя (включая публичные проекты)
 func (r *projectRepository) FindAll(userID string) ([]models.Project, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Find projects that are either owned by the user or are public
+	// Находим проекты, которые либо принадлежат пользователю, либо являются публичными
 	filter := bson.M{
 		"$or": []bson.M{
 			{"userId": userID},
@@ -65,7 +65,7 @@ func (r *projectRepository) FindAll(userID string) ([]models.Project, error) {
 	return projects, nil
 }
 
-// FindByUserID returns all projects owned by a user
+// FindByUserID возвращает все проекты, принадлежащие пользователю
 func (r *projectRepository) FindByUserID(userID string) ([]models.Project, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -84,7 +84,7 @@ func (r *projectRepository) FindByUserID(userID string) ([]models.Project, error
 	return projects, nil
 }
 
-// FindByID returns a project by ID
+// FindByID возвращает проект по ID
 func (r *projectRepository) FindByID(projectID string) (*models.Project, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -106,12 +106,12 @@ func (r *projectRepository) FindByID(projectID string) (*models.Project, error) 
 	return &project, nil
 }
 
-// Create creates a new project
+// Create создает новый проект
 func (r *projectRepository) Create(project *models.Project) (*models.Project, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Set ID if not set
+	// Устанавливаем ID, если он не установлен
 	if project.ID == "" {
 		project.ID = primitive.NewObjectID().Hex()
 	}
@@ -121,7 +121,7 @@ func (r *projectRepository) Create(project *models.Project) (*models.Project, er
 		return nil, err
 	}
 
-	// Get the created project
+	// Получаем созданный проект
 	var createdProject models.Project
 	err = r.db.Collection("projects").FindOne(ctx, bson.M{"_id": result.InsertedID}).Decode(&createdProject)
 	if err != nil {
@@ -131,7 +131,7 @@ func (r *projectRepository) Create(project *models.Project) (*models.Project, er
 	return &createdProject, nil
 }
 
-// Update updates an existing project
+// Update обновляет существующий проект
 func (r *projectRepository) Update(projectID string, updates map[string]interface{}) (*models.Project, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -141,7 +141,7 @@ func (r *projectRepository) Update(projectID string, updates map[string]interfac
 		return nil, err
 	}
 
-	// Add updated timestamp
+	// Добавляем временную метку обновления
 	updates["updatedAt"] = time.Now()
 
 	result, err := r.db.Collection("projects").UpdateOne(
@@ -158,7 +158,7 @@ func (r *projectRepository) Update(projectID string, updates map[string]interfac
 		return nil, ErrProjectNotFound
 	}
 
-	// Get the updated project
+	// Получаем обновленный проект
 	var updatedProject models.Project
 	err = r.db.Collection("projects").FindOne(ctx, bson.M{"_id": objID}).Decode(&updatedProject)
 	if err != nil {
@@ -168,7 +168,7 @@ func (r *projectRepository) Update(projectID string, updates map[string]interfac
 	return &updatedProject, nil
 }
 
-// Delete deletes a project
+// Delete удаляет проект
 func (r *projectRepository) Delete(projectID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
