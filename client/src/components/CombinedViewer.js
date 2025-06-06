@@ -539,10 +539,7 @@ const CombinedViewer = ({
                         embedded={true}
                         onSaveAnimations={handleSaveAnimations}
                         glbAnimationUrl={(() => {
-                            // ИСПРАВЛЕНО: Используем оригинальный modelUrl напрямую без модификаций
-                            // Это гарантирует сохранение структуры URL сервера
-
-                            // Первый приоритет: использовать прямой URL модели, если он существует
+                            // Используем только оригинальный modelUrl, без запасного варианта
                             if (modelUrl) {
                                 console.log('CombinedViewer: Using original modelUrl directly:', modelUrl);
                                 return modelUrl;
@@ -554,9 +551,9 @@ const CombinedViewer = ({
                                 return selectedGlbAnimation.url;
                             }
 
-                            // Запасной вариант - стандартная модель с правильным путем для Go-сервера
-                            console.log('CombinedViewer: Using fallback model URL with correct server path');
-                            return '/api/uploads/models/197feac0-7b6d-49b8-a53d-4f410a61799d.glb';
+                            // Если нет URL модели, возвращаем null
+                            console.log('CombinedViewer: No model URL available');
+                            return null;
                         })()}
                     />
                 </MuiBox>

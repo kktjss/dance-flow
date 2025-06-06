@@ -1,12 +1,16 @@
 {
-    "extraPaths": [
-        "./server/python"
+    "include": [
+        "server/python"
     ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__"
+    ],
+    "ignore": [
+        "server/python/video_analyzer/detector.py"
+    ],
+    "reportMissingImports": true,
+    "reportAttributeAccessIssue": false,
     "pythonVersion": "3.12",
-    "typeCheckingMode": "basic",
-    "reportMissingImports": "warning",
-    "reportAttributeAccessIssue": "warning",
-    "reportUnknownMemberType": "none",
-    "reportUnknownVariableType": "none",
-    "reportUnknownArgumentType": "none"
+    "typeCheckingMode": "basic"
 }

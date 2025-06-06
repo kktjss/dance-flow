@@ -265,9 +265,6 @@ const VideoViewer = ({ isVisible, onClose, videoUrl, embedded = false, currentTi
         const newMode = !isDancerSelectionMode;
         console.log('VideoViewer: Новый режим будет:', newMode);
         setIsDancerSelectionMode(newMode);
-        if (!isDancerSelectionMode) {
-            setSelectedDancer(null);
-        }
     };
 
     const toggleVideoQuality = () => {

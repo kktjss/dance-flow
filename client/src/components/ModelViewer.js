@@ -2501,71 +2501,31 @@ const ModelViewer = ({ isVisible, onClose, playerDuration, currentTime: initialT
             selectedModelUrl: selectedModel ? selectedModel.url : 'none',
             effectiveModelUrl: effectiveModelUrl || 'none'
         });
-        // ПЕРЕОПРЕДЕЛЕНИЕ: Для автономного просмотра 3D-модели, если у нас есть URL модели (effectiveModelUrl),
-        // всегда отображать модель независимо от других условий
-        if (effectiveModelUrl) {
-            console.log('ModelViewer: Forcing model display because effectiveModelUrl exists:', effectiveModelUrl);
-            return true;
-        }
 
-        // Если есть elementId, ищем модель в ключевых кадрах
-        if (elementId && elementKeyframes && elementKeyframes.length > 0) {
-            console.log(`ModelViewer: Looking for model in keyframes for element ${elementId}`);
-
-            // Ищем первый ключевой кадр с modelPath или любой URL
-            const keyframeWithModel = elementKeyframes.find(kf =>
-                kf.modelPath || kf.modelUrl || kf.glbUrl || kf.model3dUrl
-            );
-
-            if (keyframeWithModel) {
-                console.log(`ModelViewer: Found keyframe with model URL:`, keyframeWithModel);
-                return true;
-            }
-
-            // Если не нашли в ключевых кадрах, ищем в элементе
-            const element = elementKeyframes.find(kf => kf.id === elementId || kf.elementId === elementId);
-            if (element) {
-                console.log(`ModelViewer: Found element in keyframes with ID: ${elementId}`, {
-                    hasModelPath: !!element.modelPath,
-                    modelPath: element.modelPath || 'none',
-                    hasModelUrl: !!element.modelUrl,
-                    modelUrl: element.modelUrl || 'none'
-                });
-            }
-
-            // Показываем модель, если у элемента есть modelPath или modelUrl
-            if (element && (element.modelPath || element.modelUrl || element.glbUrl || element.model3dUrl)) {
-                console.log(`ModelViewer: Element ${elementId} has a model URL`);
-                return true;
-            }
-
-            console.log(`ModelViewer: Element ${elementId} does not have any model URL`);
-            // В любом случае вернуть true, если у нас есть glbAnimationUrl
-            if (glbAnimationUrl) {
-                console.log(`ModelViewer: But we have glbAnimationUrl, so showing model anyway:`, glbAnimationUrl);
-                return true;
-            }
-
+        // Если нет URL модели, не показываем модель
+        if (!effectiveModelUrl) {
+            console.log('ModelViewer: No effectiveModelUrl, not showing model');
             return false;
         }
 
-        // Если нет elementId, показываем модель только если явно предоставлен URL
-        if (!elementId) {
-            const shouldShow = !!(glbAnimationUrl || (selectedModel && selectedModel.url));
-            console.log(`ModelViewer: No elementId, will ${shouldShow ? 'show' : 'not show'} model`);
-            return shouldShow;
+        // Если есть elementId, проверяем, что модель принадлежит этому элементу
+        if (elementId) {
+            // Проверяем в ключевых кадрах
+            if (elementKeyframes && elementKeyframes.length > 0) {
+                const keyframeWithModel = elementKeyframes.find(kf =>
+                    kf.modelPath === effectiveModelUrl || kf.modelUrl === effectiveModelUrl
+                );
+
+                if (!keyframeWithModel) {
+                    console.log(`ModelViewer: Model URL ${effectiveModelUrl} not found in keyframes for element ${elementId}`);
+                    return false;
+                }
+            }
         }
 
-        // Если есть URL модели в props или выбранная модель, но нет elementId,
-        // показываем модель (для общего просмотра)
-        if (!elementId && (glbAnimationUrl || (selectedModel && selectedModel.url))) {
-            console.log('ModelViewer: No elementId but has model URL, showing model');
-            return true;
-        }
-
-        // По умолчанию не показываем модель
-        console.log('ModelViewer: Default case - not showing model');
-        return false;
+        // Если все проверки пройдены, показываем модель
+        console.log('ModelViewer: All checks passed, showing model:', effectiveModelUrl);
+        return true;
     };
 
     // Рендерить модель, только если мы должны ее отображать

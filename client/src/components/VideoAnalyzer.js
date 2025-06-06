@@ -339,87 +339,145 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }));
     };
 
+    // React to changes in dancer selection mode
+    useEffect(() => {
+        if (!videoRef.current) return;
+
+        console.log('Dancer selection mode changed:', isDancerSelectionMode);
+
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+
+        if (isDancerSelectionMode) {
+            console.log('Entering dancer selection mode, video dimensions:', {
+                videoWidth: video.videoWidth,
+                videoHeight: video.videoHeight,
+                hasCanvas: !!canvas,
+                videoReady: isVideoReady
+            });
+
+            // Entering dancer selection mode
+            if (!video.paused) {
+                video.pause();
+                pausedForSelectionRef.current = true;
+            }
+
+            // Отрисовываем текущий кадр на канвас
+            if (canvas && video.videoWidth && video.videoHeight) {
+                // Устанавливаем размеры канваса равными размерам видео
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                // Получаем контекст и настраиваем его
+                const ctx = canvas.getContext('2d', { alpha: false });
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                // Очищаем канвас
+                ctx.fillStyle = 'rgb(0,0,0)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Рисуем кадр
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                console.log('Drew frame to canvas:', {
+                    canvasWidth: canvas.width,
+                    canvasHeight: canvas.height,
+                    style: canvas.style.display
+                });
+            } else {
+                console.warn('Cannot draw frame: canvas or video dimensions not ready', {
+                    hasCanvas: !!canvas,
+                    videoWidth: video.videoWidth,
+                    videoHeight: video.videoHeight
+                });
+            }
+
+            // Останавливаем любую текущую обработку
+            isProcessingRef.current = false;
+            setIsProcessing(false);
+
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+
+            setShowMessage(true);
+            setTimeout(() => setShowMessage(false), 5000);
+        } else {
+            // Exiting dancer selection mode
+            isProcessingRef.current = false;
+            setIsProcessing(false);
+
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+
+            // Reset pause flag
+            pausedForSelectionRef.current = false;
+        }
+    }, [isDancerSelectionMode, isVideoReady]);
+
     // Capture video frame at original resolution
     const captureVideoFrame = useCallback((video) => {
         if (!video) return null;
 
-        // Always use the video's native dimensions
         const width = video.videoWidth;
         const height = video.videoHeight;
 
-        // Create canvas if needed
-        if (!offscreenCanvasRef.current) {
-            offscreenCanvasRef.current = document.createElement('canvas');
+        // Используем основной канвас для отображения кадра
+        const canvas = canvasRef.current;
+        if (!canvas) return null;
+
+        // Устанавливаем размеры канваса, если они изменились
+        if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = width;
+            canvas.height = height;
         }
 
-        const canvas = offscreenCanvasRef.current;
-
-        // Set canvas to match video dimensions exactly
-        canvas.width = width;
-        canvas.height = height;
-
-        // Get context and draw the video frame
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const ctx = canvas.getContext('2d', { alpha: false });
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        // Очищаем канвас перед рисованием
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Fill with black background first to ensure no transparency
+        // Очищаем канвас и рисуем новый кадр
+        ctx.clearRect(0, 0, width, height);
         ctx.fillStyle = 'rgb(0,0,0)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Рисуем видео на канвас, гарантируя непрозрачность
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(video, 0, 0, width, height);
 
         // Return as blob with optimized quality settings
         return new Promise(resolve => {
-            // Use lower quality when processing frames for performance
-            // Only use high quality for the actual dancer selection
-            const quality = isDancerSelectionMode && video.paused ? 0.9 : 0.7;
+            const quality = isDancerSelectionMode ? 0.9 : 0.7;
             canvas.toBlob(resolve, 'image/jpeg', quality);
         });
     }, [isDancerSelectionMode]);
 
     // Process video frame with optimized scheduling
     const processFrame = useCallback(async (timestamp) => {
-        if (!isProcessingRef.current || !isVideoReady || !videoRef.current) {
+        // Не обрабатываем кадры, если:
+        // 1. Обработка отключена
+        // 2. Видео не готово
+        // 3. Нет ссылки на видео
+        // 4. Не в режиме выбора танцора И нет выбранного танцора
+        if (!isProcessingRef.current ||
+            !isVideoReady ||
+            !videoRef.current ||
+            (!isDancerSelectionMode && selectedPerson === null)) {
             return;
         }
 
-        // ========== ОПТИМИЗИРОВАННАЯ ЛОГИКА ОБРАБОТКИ КАДРОВ ==========
-        // 1. Не обрабатывать кадры, если видео воспроизводится и мы не в режиме выбора танцора
-        if (!isDancerSelectionMode && !videoRef.current.paused) {
-            animationFrameRef.current = requestAnimationFrame(processFrame);
-            return;
-        }
-
-        // 2. Применить адаптивный интервал кадров
-        const targetInterval = computedSettings.frameInterval *
-            (isDancerSelectionMode ? 1 : 3); // Реже обрабатывать в обычном режиме
-
+        // Применить адаптивный интервал кадров
+        const targetInterval = computedSettings.frameInterval;
         if (timestamp - lastProcessTime.current < targetInterval) {
             animationFrameRef.current = requestAnimationFrame(processFrame);
             return;
         }
 
-        // 3. Пропустить, если уже обрабатывается кадр
+        // Пропустить, если уже обрабатывается кадр
         if (processingInProgress.current) {
             animationFrameRef.current = requestAnimationFrame(processFrame);
             return;
-        }
-
-        // 4. Умная логика пропуска кадров
-        if (settings.smartSkipping) {
-            // Пропустить больше кадров, если видео воспроизводится
-            const skipFrames = !videoRef.current.paused ? 3 : 1;
-            if (framesToSkip.current > 0) {
-                framesToSkip.current--;
-                animationFrameRef.current = requestAnimationFrame(processFrame);
-                return;
-            }
-            framesToSkip.current = skipFrames;
         }
 
         lastProcessTime.current = timestamp;
@@ -427,14 +485,13 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         // Get video element
         const video = videoRef.current;
 
-        // Only process if we need to (dancer selection mode or video paused)
-        if (isDancerSelectionMode || video.paused) {
+        // Обрабатываем кадр только если:
+        // 1. Режим выбора танцора активен
+        // 2. ИЛИ есть выбранный танцор И видео на паузе
+        if (isDancerSelectionMode || (selectedPerson !== null && video.paused)) {
             try {
-                // Capture frame
                 const blob = await captureVideoFrame(video);
-
-                // Process only if in selection mode or if paused
-                if (blob && (isDancerSelectionMode || video.paused)) {
+                if (blob) {
                     await processBlob(blob);
                 }
             } catch (err) {
@@ -442,9 +499,11 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
             }
         }
 
-        // Continue the animation loop
-        animationFrameRef.current = requestAnimationFrame(processFrame);
-    }, [isVideoReady, captureVideoFrame, computedSettings, settings, isDancerSelectionMode]);
+        // Continue the animation loop only if we're still in selection mode or have a selected dancer
+        if (isDancerSelectionMode || selectedPerson !== null) {
+            animationFrameRef.current = requestAnimationFrame(processFrame);
+        }
+    }, [isVideoReady, captureVideoFrame, computedSettings, isDancerSelectionMode, selectedPerson]);
 
     // Optimized blob processing with better error handling and throttling
     const processBlob = async (blob) => {
@@ -524,20 +583,22 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     // Create image from response
                     const img = new Image();
                     img.onload = () => {
-                        // Only draw if we're still in dancer selection mode
-                        if (!isDancerSelectionMode && !videoRef.current.paused) return;
-
+                        // Всегда отображаем выбранного танцора, независимо от режима
                         const overlay = overlayCanvasRef.current;
                         if (!overlay) return;
 
                         const ctx = overlay.getContext('2d');
-                        ctx.clearRect(0, 0, overlay.width, overlay.height);
-                        ctx.drawImage(img, 0, 0, overlay.width, overlay.height);
+
+                        // Если это новый выбор (в режиме выбора) или первый выбор, очищаем и рисуем
+                        if (isDancerSelectionMode) {
+                            ctx.clearRect(0, 0, overlay.width, overlay.height);
+                            ctx.drawImage(img, 0, 0, overlay.width, overlay.height);
+                        }
                     };
 
                     // Set image source with error handling
                     img.onerror = (err) => {
-                        console.error("Failed to load image:", err);
+                        console.error("Failed to load pose overlay image:", err);
                     };
 
                     img.src = result.image;
@@ -718,69 +779,6 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         };
     }, [isVideoReady, isDancerSelectionMode]);
 
-    // React to changes in dancer selection mode
-    useEffect(() => {
-        if (!videoRef.current) return;
-
-        console.log('Dancer selection mode changed:', isDancerSelectionMode);
-
-        const video = videoRef.current;
-
-        if (isDancerSelectionMode) {
-            // Entering dancer selection mode
-
-            // If video is playing, pause it
-            if (!video.paused) {
-                video.pause();
-                pausedForSelectionRef.current = true;
-            }
-
-            // ВАЖНО: Не начинаем автоматическую обработку кадров в режиме выбора танцора
-            // Обработка будет запускаться ТОЛЬКО по клику пользователя
-
-            // Останавливаем любую текущую обработку
-            isProcessingRef.current = false;
-            setIsProcessing(false);
-
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-                animationFrameRef.current = null;
-            }
-
-            // Очищаем оверлей перед началом выбора танцора
-            if (overlayCanvasRef.current) {
-                const ctx = overlayCanvasRef.current.getContext('2d');
-                ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-            }
-
-            setShowMessage(true);
-            setTimeout(() => setShowMessage(false), 5000);
-        } else {
-            // Exiting dancer selection mode
-
-            // Stop processing to save resources
-            isProcessingRef.current = false;
-            setIsProcessing(false);
-
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current);
-                animationFrameRef.current = null;
-            }
-
-            // Reset pause flag
-            pausedForSelectionRef.current = false;
-
-            // ВАЖНО: Явно очищаем оверлей при выходе из режима выбора танцора
-            if (overlayCanvasRef.current) {
-                const ctx = overlayCanvasRef.current.getContext('2d');
-                ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-            }
-
-            // Сбрасываем состояние выбора
-            setCurrentPoses([]);
-        }
-    }, [isDancerSelectionMode]);
-
     // Обработчик клика по canvas - ТОЛЬКО здесь запускаем обработку кадра для выбора танцора
     const handleCanvasClick = useCallback(async (event) => {
         // Only process clicks in dancer selection mode and when video is paused
@@ -910,8 +908,12 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                         img.onload = () => {
                             if (!overlayCanvasRef.current) return;
                             const ctx = overlayCanvasRef.current.getContext('2d');
-                            ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-                            ctx.drawImage(img, 0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+
+                            // Всегда отображаем выбранного танцора, независимо от режима
+                            if (isDancerSelectionMode) {
+                                ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+                                ctx.drawImage(img, 0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+                            }
                         };
                         img.onerror = (err) => {
                             console.error("Failed to load pose overlay image:", err);
@@ -956,16 +958,34 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         if (canvas && video.videoWidth && video.videoHeight) {
             console.log(`Setting up canvases for native video resolution: ${video.videoWidth}x${video.videoHeight}`);
 
-            // Set the main canvas size to match video's native resolution
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            // Устанавливаем размеры канваса только если они изменились
+            if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                // Оптимизация производительности для канваса
+                const ctx = canvas.getContext('2d', {
+                    alpha: false, // Отключаем прозрачность для улучшения производительности
+                    willReadFrequently: true
+                });
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+            }
 
             // Set the overlay canvas size to match video's native resolution
             if (overlay) {
-                // Always use the original video dimensions for the canvas size
-                overlay.width = video.videoWidth;
-                overlay.height = video.videoHeight;
+                if (overlay.width !== video.videoWidth || overlay.height !== video.videoHeight) {
+                    overlay.width = video.videoWidth;
+                    overlay.height = video.videoHeight;
 
+                    // Оптимизация производительности для оверлея
+                    const overlayCtx = overlay.getContext('2d', {
+                        alpha: true,
+                        willReadFrequently: false
+                    });
+                    overlayCtx.imageSmoothingEnabled = true;
+                    overlayCtx.imageSmoothingQuality = 'high';
+                }
                 console.log(`Overlay canvas set to: ${overlay.width}x${overlay.height}`);
             }
         }
@@ -1278,9 +1298,48 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
         }
     }, [videoQuality, videoRef]);
 
+    // Обработчик события play для видео
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const handlePlay = () => {
+            // Убираем очистку оверлея при воспроизведении
+            // Только останавливаем обработку кадров
+            isProcessingRef.current = false;
+            setIsProcessing(false);
+
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+
+            // If in dancer selection mode, pause the video
+            if (isDancerSelectionMode && !video.paused) {
+                video.pause();
+                pausedForSelectionRef.current = true;
+                setShowMessage(true);
+                setTimeout(() => setShowMessage(false), 5000);
+            }
+        };
+
+        const handlePause = () => {
+            // Не очищаем оверлей при паузе
+            console.log('Video paused');
+        };
+
+        video.addEventListener('play', handlePlay);
+        video.addEventListener('pause', handlePause);
+
+        return () => {
+            video.removeEventListener('play', handlePlay);
+            video.removeEventListener('pause', handlePause);
+        };
+    }, [isDancerSelectionMode]);
+
     return (
         <div className="video-analyzer" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
-            {/* Video element with optimized settings for long videos */}
+            {/* Video element - скрыт в режиме выбора танцора */}
             <video
                 ref={videoRef}
                 src={videoUrl}
@@ -1295,64 +1354,37 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     maxWidth: '100%',
                     maxHeight: '100%',
                     objectFit: 'contain',
-                    pointerEvents: isDancerSelectionMode ? 'none' : 'auto'
+                    visibility: isDancerSelectionMode ? 'hidden' : 'visible',
+                    pointerEvents: isDancerSelectionMode ? 'none' : 'auto',
                 }}
-                // Performance optimization attributes for long videos
                 playsInline
                 preload="auto"
                 controlsList="nodownload"
                 onContextMenu={(e) => e.preventDefault()}
-                // Add important attributes for optimized video playback
                 disablePictureInPicture
                 disableRemotePlayback
             />
 
-            {/* Show error message if video fails to load */}
-            {videoError && (
-                <div style={{
+            {/* Canvas для отображения текущего кадра в режиме выбора танцора */}
+            <canvas
+                ref={canvasRef}
+                style={{
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    color: 'white',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    textAlign: 'center',
-                    maxWidth: '80%',
-                    zIndex: 10
-                }}>
-                    <p>{videoError}</p>
-                    <button
-                        style={{
-                            padding: '8px 15px',
-                            backgroundColor: '#33D2FF',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            marginTop: '10px'
-                        }}
-                        onClick={() => {
-                            setVideoError(null);
-                            videoLoadAttempts.current = 0;
-                            playbackErrorCount.current = 0;
-                            if (videoRef.current) {
-                                videoRef.current.load();
-                            }
-                        }}
-                    >
-                        Повторить
-                    </button>
-                </div>
-            )}
-
-            {/* Hidden canvas for processing frames */}
-            <canvas
-                ref={canvasRef}
-                style={{ display: 'none' }}
+                    width: isDancerSelectionMode ? '100%' : 'auto',
+                    height: isDancerSelectionMode ? '100%' : 'auto',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    display: isDancerSelectionMode ? 'block' : 'none',
+                    backgroundColor: isDancerSelectionMode ? 'rgb(0,0,0)' : 'transparent',
+                    zIndex: 1
+                }}
             />
 
-            {/* Overlay canvas for displaying pose detection */}
+            {/* Overlay canvas для отображения поз */}
             <canvas
                 ref={overlayCanvasRef}
                 onClick={handleCanvasClick}
@@ -1361,12 +1393,14 @@ const VideoAnalyzer = ({ videoUrl, onPersonSelected, selectedPerson: externalSel
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    width: 'auto',
-                    height: 'auto',
+                    width: isDancerSelectionMode ? '100%' : 'auto',
+                    height: isDancerSelectionMode ? '100%' : 'auto',
                     maxWidth: '100%',
                     maxHeight: '100%',
+                    objectFit: 'contain',
                     pointerEvents: isDancerSelectionMode ? 'auto' : 'none',
-                    cursor: isDancerSelectionMode ? 'crosshair' : 'default'
+                    cursor: isDancerSelectionMode ? 'crosshair' : 'default',
+                    zIndex: 2
                 }}
             />
 

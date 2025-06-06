@@ -1610,8 +1610,8 @@ const Canvas = ({
         // Только если инициализирован canvas и есть контейнер для кнопок
         if (!initialized || !buttonContainerRef.current) return null;
 
-        // Кнопка должна быть видна только при выборе элемента с 3D моделью
-        if (!selectedElement || !(selectedElement.modelPath || selectedElement.has3DModel)) return null;
+        // Кнопка должна быть видна только при выборе элемента
+        if (!selectedElement) return null;
 
         const videoUrl = getVideoUrl();
         console.log('Canvas: Video URL for combined viewer button:', videoUrl);
