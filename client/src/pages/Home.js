@@ -384,7 +384,7 @@ const HeroTitle = styled(Typography)(({ theme, inView }) => ({
     '&::after': {
         content: '""',
         position: 'absolute',
-        bottom: '-10px',
+        bottom: '-20px',
         left: '0',
         width: '0%',
         height: '3px',
@@ -1235,20 +1235,7 @@ function Home() {
                             transition: 'opacity 0.6s ease, transform 0.6s ease',
                             transitionDelay: '0.2s',
                             position: 'relative',
-                            '&.visible::after': {
-                                width: '100%',
-                            },
-                            '&::after': {
-                                content: '""',
-                                position: 'absolute',
-                                bottom: '-10px',
-                                left: '0',
-                                width: '0%',
-                                height: '3px',
-                                background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
-                                transition: 'width 1s ease-out',
-                                transitionDelay: '0.8s',
-                            }
+                            mb: 4,
                         }}>
                             <LogoDanceFlow
                                 variant="h1"
@@ -1265,8 +1252,22 @@ function Home() {
                             />
                         </Box>
 
-                        <HeroSubtitle variant="h4" paragraph inView={heroInView}>
-                            Создавайте, визуализируйте и совершенствуйте танцевальные постановки с силой и динамикой
+                        <HeroSubtitle variant="h4" paragraph inView={heroInView} sx={{
+                            background: `linear-gradient(135deg, ${COLORS.secondary}15, ${COLORS.tertiary}15)`,
+                            padding: '20px 30px',
+                            borderRadius: '15px',
+                            backdropFilter: 'blur(8px)',
+                            border: `1px solid ${COLORS.secondary}15`,
+                            boxShadow: `0 10px 30px -10px ${COLORS.secondary}20`,
+                            maxWidth: '900px',
+                            mx: 'auto',
+                            fontSize: { xs: '1.4rem', md: '1.8rem' },
+                            fontWeight: 500,
+                            letterSpacing: '0.02em',
+                            mb: 5,
+                            color: 'rgba(255, 255, 255, 0.9)',
+                        }}>
+                            Расставь. Просмотри. Танцуй в 3D
                         </HeroSubtitle>
                         <GlowingButton
                             variant="contained"
@@ -1274,38 +1275,16 @@ function Home() {
                             onClick={() => navigate('/constructor')}
                             sx={{
                                 mt: 2,
-                                fontSize: '1.1rem',
-                                py: 1.5,
-                                px: 5,
-                                borderRadius: '12px',
                                 background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
-                                color: COLORS.white,
-                                fontWeight: 600,
+                                borderRadius: '12px',
                                 textTransform: 'none',
-                                fontFamily: '"Inter", "Golos Text", sans-serif',
-                                boxShadow: `0 10px 25px rgba(30, 144, 255, 0.5)`,
-                                transition: 'all 0.3s ease',
-                                position: 'relative',
-                                overflow: 'hidden',
-                                opacity: heroInView ? 1 : 0,
-                                transform: heroInView ? 'translateY(0)' : 'translateY(30px)',
-                                transitionDelay: '0.6s',
-                                '&::after': {
-                                    content: '""',
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: '-100%',
-                                    width: '100%',
-                                    height: '100%',
-                                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-                                    transition: 'all 0.5s ease',
-                                },
+                                fontSize: '1.1rem',
+                                fontWeight: 600,
+                                padding: '12px 30px',
                                 '&:hover': {
-                                    boxShadow: `0 15px 30px rgba(30, 144, 255, 0.7)`,
-                                    transform: 'translateY(-3px)',
-                                    '&::after': {
-                                        left: '100%',
-                                    }
+                                    background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: `0 8px 20px rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.4)`,
                                 }
                             }}
                         >
@@ -1325,7 +1304,7 @@ function Home() {
                                     component="h2"
                                     inView={animatedSectionInView}
                                 >
-                                    Революция в создании хореографии
+                                    Революция в создании хореографий
                                 </SectionTitle>
                                 <Typography
                                     variant="h6"
@@ -1341,7 +1320,7 @@ function Home() {
                                         transitionDelay: '0.3s',
                                     }}
                                 >
-                                    Профессиональные инструменты для создания и визуализации танцевальных постановок
+                                    Профессиональные инструменты для создания и визуализации хореографий
                                 </Typography>
                             </Box>
 
@@ -1488,7 +1467,7 @@ function Home() {
                                 <Grid container spacing={4} alignItems="center">
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="h4" sx={{ color: COLORS.white, mb: 3, fontWeight: 700 }}>
-                                            Почему хореографы выбирают DanceFlow?
+                                            Почему вам стоит выбрать DanceFlow?
                                         </Typography>
                                         <Box sx={{ mb: 3 }}>
                                             <Typography sx={{
@@ -1505,7 +1484,7 @@ function Home() {
                                                     marginRight: '12px',
                                                 }
                                             }}>
-                                                Экономия времени на 70% при создании и визуализации постановок
+                                                Удобный редактор для визуализации положения танцоров на сцене
                                             </Typography>
                                             <Typography sx={{
                                                 color: 'rgba(255, 255, 255, 0.9)',
@@ -1521,7 +1500,7 @@ function Home() {
                                                     marginRight: '12px',
                                                 }
                                             }}>
-                                                Улучшение качества постановок благодаря 3D-предпросмотру
+                                                Улучшение качества хореографий и экономия времени на повторение движений в зале благодаря 3D-визуализации
                                             </Typography>
                                             <Typography sx={{
                                                 color: 'rgba(255, 255, 255, 0.9)',
@@ -1536,7 +1515,7 @@ function Home() {
                                                     marginRight: '12px',
                                                 }
                                             }}>
-                                                Эффективная коммуникация с командой в одном приложении
+                                                Командный доступ к проектам
                                             </Typography>
                                         </Box>
                                         <Button
