@@ -18,7 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// RegisterProjectRoutes registers all project routes
+// Регистрирует все маршруты проектов
 func RegisterProjectRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	projects := router.Group("/projects")
 	projects.Use(middleware.JWTMiddleware(cfg))
@@ -31,15 +31,15 @@ func RegisterProjectRoutes(router *gin.RouterGroup, cfg *config.Config) {
 		projects.PUT("/:id", middleware.CheckProjectAccess(), updateProject)
 		projects.DELETE("/:id", middleware.CheckProjectAccess(), deleteProject)
 		
-		// Register a test endpoint that doesn't check team memberships
+		// Регистрируем тестовый эндпоинт, который не проверяет членство в командах
 		projects.GET("/test", getProjectsTest)
 		router.GET("/projects-test", middleware.JWTMiddleware(cfg), getProjectsTest)
 	}
 }
 
-// getProjects returns all projects accessible by the authenticated user
+// Возвращает все проекты, доступные аутентифицированному пользователю
 func getProjects(c *gin.Context) {
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -48,7 +48,7 @@ func getProjects(c *gin.Context) {
 
 	log.Printf("[PROJECT] Fetching projects for user: %s", userID.Hex())
 
-	// Get user's team memberships to find team projects
+	// Получаем членство пользователя в командах для поиска проектов команд
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -59,13 +59,13 @@ func getProjects(c *gin.Context) {
 		return
 	}
 
-	// Create a list of team IDs the user is a member of
+	// Создаем список ID команд, в которых состоит пользователь
 	var teamIDs []primitive.ObjectID
 	for _, team := range user.Teams {
 		teamIDs = append(teamIDs, team)
 	}
 
-	// Query filter: user's own projects OR projects from teams they belong to OR public projects
+	// Фильтр запроса: собственные проекты пользователя ИЛИ проекты из команд, в которых он состоит, ИЛИ публичные проекты
 	filter := bson.M{
 		"$or": []bson.M{
 			{"owner": userID},
@@ -73,12 +73,12 @@ func getProjects(c *gin.Context) {
 		},
 	}
 
-	// Add team projects if the user belongs to any teams
+	// Добавляем проекты команд, если пользователь состоит в каких-либо командах
 	if len(teamIDs) > 0 {
 		filter["$or"] = append(filter["$or"].([]bson.M), bson.M{"teamId": bson.M{"$in": teamIDs}})
 	}
 
-	// Get all matching projects as raw BSON documents first
+	// Сначала получаем все подходящие проекты как сырые BSON документы
 	findOptions := options.Find().SetSort(bson.M{"updatedAt": -1})
 	cursor, err := config.ProjectsCollection.Find(ctx, filter, findOptions)
 	if err != nil {
@@ -88,7 +88,7 @@ func getProjects(c *gin.Context) {
 	}
 	defer cursor.Close(ctx)
 
-	// Process each project individually to handle elements properly
+	// Обрабатываем каждый проект индивидуально для правильной обработки элементов
 	var projects []models.Project
 	var rawProjects []bson.M
 	if err := cursor.All(ctx, &rawProjects); err != nil {
@@ -97,13 +97,13 @@ func getProjects(c *gin.Context) {
 		return
 	}
 
-	// Process each raw project
+	// Обрабатываем каждый сырой проект
 	for _, rawProject := range rawProjects {
-		// Remove elements from raw data to avoid unmarshaling errors
+		// Удаляем элементы из сырых данных, чтобы избежать ошибок при десериализации
 		elementsRaw, hasElements := rawProject["elements"]
 		delete(rawProject, "elements")
 		
-		// Convert the remaining fields to Project struct
+		// Преобразуем оставшиеся поля в структуру Project
 		var project models.Project
 		projectBytes, err := bson.Marshal(rawProject)
 		if err != nil {
@@ -116,22 +116,22 @@ func getProjects(c *gin.Context) {
 			continue
 		}
 		
-		// Handle elements separately - store as raw interface{}
+		// Обрабатываем элементы отдельно - сохраняем как сырой interface{}
 		if hasElements {
 			project.Elements = []interface{}{}
 			
-			// Check if elements is an array
+			// Проверяем, является ли elements массивом
 			if elemArray, ok := elementsRaw.(primitive.A); ok {
 				for _, elem := range elemArray {
 					project.Elements = append(project.Elements, elem)
 				}
 			} else {
-				// If not an array, add as a single element
+				// Если не массив, добавляем как одиночный элемент
 				project.Elements = append(project.Elements, elementsRaw)
 			}
 		}
 		
-		// Normalize elements to ensure they have all required fields
+		// Нормализуем элементы, чтобы убедиться, что они имеют все необходимые поля
 		project.NormalizeElements()
 		
 		projects = append(projects, project)
@@ -141,9 +141,9 @@ func getProjects(c *gin.Context) {
 	c.JSON(http.StatusOK, projects)
 }
 
-// getProject returns a single project by ID if the user has access
+// Возвращает один проект по ID, если у пользователя есть доступ
 func getProject(c *gin.Context) {
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -152,7 +152,7 @@ func getProject(c *gin.Context) {
 	
 	projectID := c.Param("id")
 	
-	// Add debug logging
+	// Добавляем отладочное логирование
 	log.Printf("[PROJECT] getProject called with ID: '%s' for user: %s", projectID, userID.Hex())
 	
 	if projectID == "" || projectID == "undefined" || projectID == "null" {
@@ -170,7 +170,7 @@ func getProject(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Use a raw bson.M to retrieve the project first
+	// Используем bson.M для первоначального получения проекта
 	var rawProject bson.M
 	err = config.ProjectsCollection.FindOne(ctx, bson.M{"_id": projectObjID}).Decode(&rawProject)
 	if err != nil {
@@ -179,14 +179,14 @@ func getProject(c *gin.Context) {
 		return
 	}
 	
-	// Convert to a Project struct, but handle elements separately
+	// Преобразуем в структуру Project, но обрабатываем элементы отдельно
 	var project models.Project
 	
-	// Remove elements from raw data to avoid unmarshaling errors
+	// Удаляем элементы из сырых данных, чтобы избежать ошибок при десериализации
 	elementsRaw, hasElements := rawProject["elements"]
 	delete(rawProject, "elements")
 	
-	// Convert the remaining fields to Project struct
+	// Преобразуем оставшиеся поля в структуру Project
 	projectBytes, err := bson.Marshal(rawProject)
 	if err != nil {
 		log.Printf("[PROJECT] Error marshaling project data: %v", err)
@@ -200,40 +200,40 @@ func getProject(c *gin.Context) {
 		return
 	}
 	
-	// Handle elements separately - store as raw interface{}
+	// Обрабатываем элементы отдельно - сохраняем как сырой interface{}
 	if hasElements {
 		project.Elements = []interface{}{}
 		
-		// Check if elements is an array
+		// Проверяем, является ли elements массивом
 		if elemArray, ok := elementsRaw.(primitive.A); ok {
 			for _, elem := range elemArray {
 				project.Elements = append(project.Elements, elem)
 			}
 		} else {
-			// If not an array, add as a single element
+			// Если не массив, добавляем как одиночный элемент
 			project.Elements = append(project.Elements, elementsRaw)
 		}
 	}
 
-	// Check if user is the project owner
+	// Проверяем, является ли пользователь владельцем проекта
 	if project.Owner == userID {
 		log.Printf("[PROJECT] User %s is the owner of project %s, granting access", userID.Hex(), projectID)
 		
-		// Normalize elements to ensure they have all required fields
+		// Нормализуем элементы, чтобы убедиться, что они имеют все необходимые поля
 		project.NormalizeElements()
 		
 		c.JSON(http.StatusOK, project)
 		return
 	}
 
-	// Check if project is in a team where user is a member
+	// Проверяем, находится ли проект в команде, где пользователь является участником
 	if !project.TeamID.IsZero() {
-		// Check if user is a member of the team
+		// Проверяем, является ли пользователь участником команды
 		teamCount, teamErr := config.TeamsCollection.CountDocuments(ctx, bson.M{
 			"_id": project.TeamID,
 			"$or": []bson.M{
-				{"owner": userID},          // User is team owner
-				{"members.userId": userID}, // User is team member
+				{"owner": userID},          // Пользователь является владельцем команды
+				{"members.userId": userID}, // Пользователь является участником команды
 			},
 		})
 		
@@ -241,7 +241,7 @@ func getProject(c *gin.Context) {
 			log.Printf("[PROJECT] User %s is a member of team %s that contains project %s, granting access", 
 				userID.Hex(), project.TeamID.Hex(), projectID)
 			
-			// Normalize elements to ensure they have all required fields
+			// Нормализуем элементы, чтобы убедиться, что они имеют все необходимые поля
 			project.NormalizeElements()
 			
 			c.JSON(http.StatusOK, project)
@@ -249,7 +249,7 @@ func getProject(c *gin.Context) {
 		}
 	}
 
-	// If project is private and user is not owner or team member
+	// Если проект приватный и пользователь не является владельцем или участником команды
 	if project.IsPrivate {
 		log.Printf("[PROJECT] Access denied to project %s for user %s: project is private", 
 			projectID, userID.Hex())
@@ -257,16 +257,16 @@ func getProject(c *gin.Context) {
 		return
 	}
 
-	// If project is public
+	// Если проект публичный
 	log.Printf("[PROJECT] Access granted to public project %s for user %s", projectID, userID.Hex())
 	
-	// Normalize elements to ensure they have all required fields
+	// Нормализуем элементы, чтобы убедиться, что они имеют все необходимые поля
 	project.NormalizeElements()
 	
 	c.JSON(http.StatusOK, project)
 }
 
-// createProject creates a new project for the authenticated user
+// Создает новый проект для аутентифицированного пользователя
 func createProject(c *gin.Context) {
 	var input models.ProjectCreateInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -274,14 +274,14 @@ func createProject(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Create project
+	// Создаем проект
 	project := models.Project{
 		ID:           primitive.NewObjectID(),
 		Name:         input.Name,
@@ -299,7 +299,7 @@ func createProject(c *gin.Context) {
 		GlbAnimations: input.GlbAnimations,
 	}
 
-	// Add team ID if provided
+	// Добавляем ID команды, если предоставлен
 	if input.TeamID != "" {
 		teamObjID, err := primitive.ObjectIDFromHex(input.TeamID)
 		if err != nil {
@@ -309,7 +309,7 @@ func createProject(c *gin.Context) {
 		project.TeamID = teamObjID
 	}
 
-	// Insert project into database
+	// Вставляем проект в базу данных
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -319,7 +319,7 @@ func createProject(c *gin.Context) {
 		return
 	}
 
-	// Add history entry for project creation
+	// Добавляем запись в историю о создании проекта
 	historyEntry := models.CreateHistory(
 		userID,
 		project.ID,
@@ -330,14 +330,14 @@ func createProject(c *gin.Context) {
 	historyCollection := config.GetCollection("histories")
 	_, err = historyCollection.InsertOne(ctx, historyEntry)
 	if err != nil {
-		// Log the error but don't fail the request
+		// Логируем ошибку, но не прерываем запрос
 		config.LogError("PROJECT", fmt.Errorf("failed to create history entry: %w", err))
 	}
 
 	c.JSON(http.StatusCreated, project)
 }
 
-// updateProject updates a project if the user has access
+// Обновляет проект, если у пользователя есть доступ
 func updateProject(c *gin.Context) {
 	projectID := c.Param("id")
 	if projectID == "" || projectID == "undefined" || projectID == "null" {
@@ -357,14 +357,14 @@ func updateProject(c *gin.Context) {
 		return
 	}
 
-	// Build update document
+	// Создаем документ обновления
 	update := bson.M{
 		"$set": bson.M{
 			"updatedAt": time.Now(),
 		},
 	}
 
-	// Add optional fields if provided
+	// Добавляем опциональные поля, если они предоставлены
 	if input.Name != "" {
 		update["$set"].(bson.M)["name"] = input.Name
 	}
@@ -391,15 +391,15 @@ func updateProject(c *gin.Context) {
 		}
 		update["$set"].(bson.M)["teamId"] = teamObjID
 	}
-	// Handle new fields
+	// Обрабатываем новые поля
 	if input.Elements != nil {
 		update["$set"].(bson.M)["elements"] = input.Elements
 		
-		// Also extract keyframes for each element and store in keyframesJson
+		// Также извлекаем ключевые кадры для каждого элемента и сохраняем в keyframesJson
 		keyframesData := make(map[string]interface{})
 		
 		for _, element := range input.Elements {
-			// Access element as a map to extract ID and keyframes
+			// Получаем доступ к элементу как к карте для извлечения ID и ключевых кадров
 			if elem, ok := element.(map[string]interface{}); ok {
 				if elemID, hasID := elem["id"].(string); hasID {
 					if keyframes, hasKeyframes := elem["keyframes"]; hasKeyframes {
@@ -409,7 +409,7 @@ func updateProject(c *gin.Context) {
 			}
 		}
 		
-		// If we have keyframes, serialize to JSON and store
+		// Если у нас есть ключевые кадры, сериализуем в JSON и сохраняем
 		if len(keyframesData) > 0 {
 			keyframesJSON, err := json.Marshal(keyframesData)
 			if err == nil {
@@ -418,20 +418,20 @@ func updateProject(c *gin.Context) {
 		}
 	}
 	
-	// Always save duration even if it's 0
+	// Всегда сохраняем длительность, даже если она равна 0
 	if input.Duration != nil {
 		update["$set"].(bson.M)["duration"] = *input.Duration
 	}
 	
-	// Always save audioUrl even if empty to allow removing audio
+	// Всегда сохраняем audioUrl, даже если пустой, чтобы можно было удалить аудио
 	update["$set"].(bson.M)["audioUrl"] = input.AudioURL
 	
-	// Handle GLB animations
+	// Обрабатываем GLB анимации
 	if input.GlbAnimations != nil {
 		update["$set"].(bson.M)["glbAnimations"] = input.GlbAnimations
 	}
 
-	// Update project
+	// Обновляем проект
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -451,7 +451,7 @@ func updateProject(c *gin.Context) {
 		return
 	}
 
-	// Get updated project
+	// Получаем обновленный проект
 	var updatedProject models.Project
 	err = config.ProjectsCollection.FindOne(ctx, bson.M{"_id": projectObjID}).Decode(&updatedProject)
 	if err != nil {
@@ -462,7 +462,7 @@ func updateProject(c *gin.Context) {
 	c.JSON(http.StatusOK, updatedProject)
 }
 
-// deleteProject deletes a project if the user has access
+// Удаляет проект, если у пользователя есть доступ
 func deleteProject(c *gin.Context) {
 	projectID := c.Param("id")
 	if projectID == "" || projectID == "undefined" || projectID == "null" {
@@ -493,26 +493,26 @@ func deleteProject(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Project deleted successfully"})
 }
 
-// getProjectsTest returns all projects without checking team memberships
-// This is a fallback endpoint for testing and debugging
+// Возвращает все проекты без проверки членства в командах
+// Это резервный эндпоинт для тестирования и отладки
 func getProjectsTest(c *gin.Context) {
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Log for debugging
+	// Логируем для отладки
 	log.Printf("[PROJECT] getProjectsTest called by user: %s", userID.Hex())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Simple query filter: just get user's own projects
+	// Простой фильтр запроса: просто получаем собственные проекты пользователя
 	filter := bson.M{"owner": userID}
 
-	// Get all matching projects
+	// Получаем все подходящие проекты
 	findOptions := options.Find().SetSort(bson.M{"updatedAt": -1})
 	cursor, err := config.ProjectsCollection.Find(ctx, filter, findOptions)
 	if err != nil {
@@ -522,7 +522,7 @@ func getProjectsTest(c *gin.Context) {
 	}
 	defer cursor.Close(ctx)
 
-	// Decode projects
+	// Декодируем проекты
 	var projects []models.Project
 	if err := cursor.All(ctx, &projects); err != nil {
 		log.Printf("[PROJECT] Error decoding projects: %v", err)
@@ -530,7 +530,7 @@ func getProjectsTest(c *gin.Context) {
 		return
 	}
 
-	// Normalize elements in each project
+	// Нормализуем элементы в каждом проекте
 	for i := range projects {
 		projects[i].NormalizeElements()
 	}
@@ -539,11 +539,11 @@ func getProjectsTest(c *gin.Context) {
 	c.JSON(http.StatusOK, projects)
 }
 
-// getProjectDebug returns debug information about a project
+// Возвращает отладочную информацию о проекте
 func getProjectDebug(c *gin.Context) {
 	projectID := c.Param("id")
 	
-	// Add debug logging
+	// Добавляем отладочное логирование
 	log.Printf("[DEBUG ROUTE] GET request received for project ID: %s", projectID)
 	
 	if projectID == "" || projectID == "undefined" || projectID == "null" {
@@ -569,10 +569,10 @@ func getProjectDebug(c *gin.Context) {
 		return
 	}
 
-	// Normalize elements to ensure they have all required fields
+	// Нормализуем элементы, чтобы убедиться, что они имеют все необходимые поля
 	project.NormalizeElements()
 
-	// Basic debug info
+	// Базовая отладочная информация
 	debugInfo := gin.H{
 		"projectId":          project.ID.Hex(),
 		"projectName":        project.Name,
@@ -582,7 +582,7 @@ func getProjectDebug(c *gin.Context) {
 		"lastUpdated":        project.UpdatedAt,
 	}
 
-	// Analyze keyframes data
+	// Анализируем данные ключевых кадров
 	if project.KeyframesJSON != "" && project.KeyframesJSON != "{}" {
 		var keyframesData map[string]interface{}
 		err = json.Unmarshal([]byte(project.KeyframesJSON), &keyframesData)
@@ -601,14 +601,14 @@ func getProjectDebug(c *gin.Context) {
 			log.Printf("[DEBUG ROUTE] keyframesJson is valid JSON with %d element entries", len(elementIDs))
 			log.Printf("[DEBUG ROUTE] Total keyframes in keyframesJson: %d", totalKeyframes)
 			
-			// Add keyframe details to debug info
+			// Добавляем детали ключевых кадров в отладочную информацию
 			debugInfo["keyframeData"] = gin.H{
 				"elementCount":  len(elementIDs),
 				"elementIds":    elementIDs,
 				"totalKeyframes": totalKeyframes,
 			}
 			
-			// Element-by-element analysis
+			// Анализ по каждому элементу
 			elements := make([]gin.H, 0)
 			for _, element := range project.Elements {
 				if elemMap, ok := element.(map[string]interface{}); ok {
@@ -646,19 +646,19 @@ func getProjectDebug(c *gin.Context) {
 	c.JSON(http.StatusOK, debugInfo)
 }
 
-// postProjectDebug analyzes a project object sent by the client
+// Анализирует объект проекта, отправленный клиентом
 func postProjectDebug(c *gin.Context) {
 	projectID := c.Param("id")
 	log.Printf("[DEBUG ROUTE] POST request received for project ID: %s", projectID)
 
-	// Get project data from request body
+	// Получаем данные проекта из тела запроса
 	var projectData map[string]interface{}
 	if err := c.ShouldBindJSON(&projectData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Create detailed diagnostic info about the received project
+	// Создаем подробную диагностическую информацию о полученном проекте
 	diagnostics := gin.H{
 		"projectId":            projectID,
 		"hasElements":          projectData["elements"] != nil,
@@ -669,7 +669,7 @@ func postProjectDebug(c *gin.Context) {
 		"keyframesSample":      nil,
 	}
 
-	// Analyze elements and keyframes
+	// Анализируем элементы и ключевые кадры
 	if elements, hasElements := projectData["elements"].([]interface{}); hasElements && len(elements) > 0 {
 		diagnostics["elementCount"] = len(elements)
 		elementDetails := make([]gin.H, 0)
@@ -698,7 +698,7 @@ func postProjectDebug(c *gin.Context) {
 							diagnostics["elementsWithKeyframes"] = diagnostics["elementsWithKeyframes"].(int) + 1
 							diagnostics["totalKeyframes"] = diagnostics["totalKeyframes"].(int) + len(keyframesArray)
 
-							// Save a sample of the first keyframe we find
+							// Сохраняем образец первого найденного ключевого кадра
 							if diagnostics["keyframesSample"] == nil {
 								diagnostics["keyframesSample"] = keyframesArray[0]
 							}
@@ -713,8 +713,8 @@ func postProjectDebug(c *gin.Context) {
 		diagnostics["elementDetails"] = elementDetails
 	}
 
-	// Now process as the real save would, but just for diagnostics
-	// Extract and validate keyframes from all elements
+	// Теперь обрабатываем как реальное сохранение, но только для диагностики
+	// Извлекаем и проверяем ключевые кадры из всех элементов
 	keyframesData := make(map[string]interface{})
 	totalKeyframes := 0
 
@@ -725,13 +725,13 @@ func postProjectDebug(c *gin.Context) {
 					if keyframes, hasKeyframes := elemMap["keyframes"]; hasKeyframes {
 						log.Printf("[DEBUG ROUTE] Processing keyframes for element %s", elemID)
 
-						// Filter valid keyframes
+						// Фильтруем действительные ключевые кадры
 						if keyframesArray, ok := keyframes.([]interface{}); ok {
 							validKeyframes := make([]interface{}, 0)
 
 							for _, kf := range keyframesArray {
 								if kfMap, ok := kf.(map[string]interface{}); ok {
-									// Check if keyframe is valid
+									// Проверяем, является ли ключевой кадр действительным
 									if time, hasTime := kfMap["time"].(float64); hasTime && !math.IsNaN(time) {
 										if position, hasPosition := kfMap["position"].(map[string]interface{}); hasPosition {
 											if x, hasX := position["x"].(float64); hasX && !math.IsNaN(x) {
@@ -758,7 +758,7 @@ func postProjectDebug(c *gin.Context) {
 		}
 	}
 
-	// Convert to JSON string (just like the real save would)
+	// Преобразуем в JSON строку (как при реальном сохранении)
 	var keyframesJSON string
 	if totalKeyframes > 0 {
 		keyframesJSONBytes, err := json.Marshal(keyframesData)
@@ -774,7 +774,7 @@ func postProjectDebug(c *gin.Context) {
 		log.Printf("[DEBUG ROUTE] No valid keyframes to serialize, using empty object")
 	}
 
-	// Add results to diagnostics
+	// Добавляем результаты в диагностику
 	diagnostics["extractedKeyframesData"] = gin.H{
 		"elementCount":       len(keyframesData),
 		"totalKeyframes":     totalKeyframes,
@@ -782,7 +782,7 @@ func postProjectDebug(c *gin.Context) {
 		"keyframesJsonLength": len(keyframesJSON),
 	}
 
-	// Add sample element ID if available
+	// Добавляем пример ID элемента, если доступен
 	for elemID := range keyframesData {
 		diagnostics["extractedKeyframesData"].(gin.H)["sampleElementId"] = elemID
 		break

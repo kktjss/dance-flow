@@ -15,38 +15,38 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// RegisterAuthRoutes registers all authentication routes
+// Регистрирует все маршруты аутентификации
 func RegisterAuthRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	auth := router.Group("/auth")
 	{
 		auth.POST("/register", register(cfg))
 		auth.POST("/login", login(cfg))
 		
-		// Add a test endpoint to verify auth routes are accessible
+		// Добавляем тестовый эндпоинт для проверки доступности маршрутов аутентификации
 		auth.GET("/test", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"message": "Auth routes are working"})
 		})
 		
-		// Test endpoint for password hashing
+		// Тестовый эндпоинт для хеширования паролей
 		auth.GET("/test-password", func(c *gin.Context) {
 			password := c.Query("password")
 			if password == "" {
 				password = "test123"
 			}
 			
-			// Create a test user with the password
+			// Создаем тестового пользователя с паролем
 			user := models.User{
 				Password: password,
 			}
 			
-			// Hash the password
+			// Хешируем пароль
 			err := user.HashPassword()
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 				return
 			}
 			
-			// Test password comparison
+			// Проверяем сравнение паролей
 			match := user.ComparePassword(password)
 			
 			c.JSON(http.StatusOK, gin.H{
@@ -58,7 +58,7 @@ func RegisterAuthRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	}
 }
 
-// register handles user registration
+// Обрабатывает регистрацию пользователя
 func register(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Println("Registration attempt received")
@@ -83,7 +83,7 @@ func register(cfg *config.Config) gin.HandlerFunc {
 			input.Name = input.Username
 		}
 
-		// Check if email or username already exists
+		// Проверяем, существует ли уже email или имя пользователя
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -95,27 +95,27 @@ func register(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// Create new user
+		// Создаем нового пользователя
 		user := models.User{
 			ID:        primitive.NewObjectID(),
 			Username:  input.Username,
 			Name:      input.Name,
 			Email:     input.Email,
 			Password:  input.Password,
-			Role:      "user", // Default role
+			Role:      "user", // Роль по умолчанию
 			Teams:     []primitive.ObjectID{},
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
 
-		// Hash password
+		// Хешируем пароль
 		if err := user.HashPassword(); err != nil {
 			log.Printf("Registration failed: Failed to hash password - %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 			return
 		}
 
-		// Insert user into database
+		// Вставляем пользователя в базу данных
 		_, err = config.UsersCollection.InsertOne(ctx, user)
 		if err != nil {
 			log.Printf("Registration failed: Failed to create user - %v", err)
@@ -125,7 +125,7 @@ func register(cfg *config.Config) gin.HandlerFunc {
 
 		log.Printf("User created successfully: %s (%s)", user.Username, user.ID.Hex())
 
-		// Generate JWT token
+		// Генерируем JWT токен
 		token, err := middleware.GenerateToken(user.ID, cfg)
 		if err != nil {
 			log.Printf("Failed to generate token: %v", err)
@@ -135,20 +135,20 @@ func register(cfg *config.Config) gin.HandlerFunc {
 		
 		log.Printf("Token generated successfully for user: %s", user.Username)
 		
-		// Return user and token
+		// Возвращаем пользователя и токен
 		c.JSON(http.StatusCreated, gin.H{
 			"user":  user.ToResponse(),
 			"token": token,
 		})
 		
-		// Create preview projects for the new user (после отправки ответа клиенту)
+		// Создаем демонстрационные проекты для нового пользователя (после отправки ответа клиенту)
 		go createPreviewProjects(context.Background(), user.ID)
 		
 		log.Printf("Registration successful for user: %s", user.Username)
 	}
 }
 
-// login handles user login
+// Обрабатывает вход пользователя в систему
 func login(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Println("Login attempt received")
@@ -166,11 +166,11 @@ func login(cfg *config.Config) gin.HandlerFunc {
 		
 		log.Printf("Login attempt for username: %s, password: %s", input.Username, input.Password)
 
-		// Find user by username
+		// Ищем пользователя по имени пользователя
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Verify MongoDB connection
+		// Проверяем подключение к MongoDB
 		if config.DB == nil {
 			log.Println("ERROR: MongoDB connection is nil")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection not established"})
@@ -197,7 +197,7 @@ func login(cfg *config.Config) gin.HandlerFunc {
 		log.Printf("User found: ID=%s, Username=%s, Password hash=%s", 
 			user.ID.Hex(), user.Username, user.Password)
 
-		// Verify password
+		// Проверяем пароль
 		log.Printf("Comparing provided password with stored hash")
 		log.Printf("Password from request: '%s'", input.Password)
 		log.Printf("Password hash from database: '%s'", user.Password)
@@ -210,7 +210,7 @@ func login(cfg *config.Config) gin.HandlerFunc {
 		
 		log.Println("Password verified successfully")
 
-		// Generate JWT token
+		// Генерируем JWT токен
 		token, err := middleware.GenerateToken(user.ID, cfg)
 		if err != nil {
 			log.Printf("Failed to generate token: %v", err)
@@ -220,7 +220,7 @@ func login(cfg *config.Config) gin.HandlerFunc {
 		
 		log.Println("Token generated successfully")
 
-		// Return user and token
+		// Возвращаем пользователя и токен
 		c.JSON(http.StatusOK, gin.H{
 			"user":  user.ToResponse(),
 			"token": token,
@@ -230,11 +230,11 @@ func login(cfg *config.Config) gin.HandlerFunc {
 	}
 }
 
-// createPreviewProjects creates references to example projects for a new user
+// Создает демонстрационные проекты для нового пользователя
 func createPreviewProjects(ctx context.Context, userID primitive.ObjectID) {
 	log.Printf("Creating preview projects for user: %s", userID.Hex())
 	
-	// Use fixed IDs for preview projects - must be valid 24-character hex strings
+	// Используем фиксированные ID для демонстрационных проектов - должны быть допустимыми 24-символьными шестнадцатеричными строками
 	preview1ID, err1 := primitive.ObjectIDFromHex("507f1f77bcf86cd799439011")
 	if err1 != nil {
 		log.Printf("Error creating preview1ID: %v", err1)
@@ -247,23 +247,23 @@ func createPreviewProjects(ctx context.Context, userID primitive.ObjectID) {
 		preview2ID = primitive.NewObjectID()
 	}
 
-	// Check if preview projects already exist
+	// Проверяем, существуют ли уже демонстрационные проекты
 	var previewProject1 models.Project
 	err1 = config.ProjectsCollection.FindOne(ctx, bson.M{"_id": preview1ID}).Decode(&previewProject1)
 	
 	var previewProject2 models.Project
 	err2 = config.ProjectsCollection.FindOne(ctx, bson.M{"_id": preview2ID}).Decode(&previewProject2)
 
-	// Create preview projects if they don't exist
+	// Создаем демонстрационные проекты, если они не существуют
 	if err1 != nil {
 		log.Printf("Preview project 1 not found, creating new one with ID: %s", preview1ID.Hex())
 		
-		// Preview project 1: Basic usage
+		// Демонстрационный проект 1: Базовое использование
 		previewProject1 = models.Project{
 			ID:          preview1ID,
 			Name:        "Preview - Basic usage",
 			Description: "-",
-			Owner:       userID, // First user becomes the owner
+			Owner:       userID, // Первый пользователь становится владельцем
 			// Tags:        []string{"-"},
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
@@ -281,7 +281,7 @@ func createPreviewProjects(ctx context.Context, userID primitive.ObjectID) {
 			},
 		}
 
-		// Insert project into database
+		// Вставляем проект в базу данных
 		_, insertErr := config.ProjectsCollection.InsertOne(ctx, previewProject1)
 		if insertErr != nil {
 			log.Printf("Failed to create preview project 1: %v", insertErr)
@@ -295,12 +295,12 @@ func createPreviewProjects(ctx context.Context, userID primitive.ObjectID) {
 	if err2 != nil {
 		log.Printf("Preview project 2 not found, creating new one with ID: %s", preview2ID.Hex())
 		
-		// Preview project 2: 3D
+		// Демонстрационный проект 2: 3D
 		previewProject2 = models.Project{
 			ID:          preview2ID,
 			Name:        "Preview - 3D",
 			Description: "-",
-			Owner:       userID, // First user becomes the owner
+			Owner:       userID, // Первый пользователь становится владельцем
 			//Tags:        []string{"-"},
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
@@ -318,7 +318,7 @@ func createPreviewProjects(ctx context.Context, userID primitive.ObjectID) {
 			},
 		}
 
-		// Insert project into database
+		// Вставляем проект в базу данных
 		_, insertErr := config.ProjectsCollection.InsertOne(ctx, previewProject2)
 		if insertErr != nil {
 			log.Printf("Failed to create preview project 2: %v", insertErr)
@@ -329,7 +329,7 @@ func createPreviewProjects(ctx context.Context, userID primitive.ObjectID) {
 		log.Printf("Preview project 2 already exists with ID: %s", preview2ID.Hex())
 	}
 
-	// Create history entries for project access
+	// Создаем записи в истории для доступа к проектам
 	historyEntry1 := models.CreateHistory(
 		userID,
 		preview1ID,

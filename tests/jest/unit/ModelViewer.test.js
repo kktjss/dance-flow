@@ -7,7 +7,7 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import ModelViewer from '../../../client/src/components/ModelViewer';
 
-// Mock Three.js and related dependencies
+// Мокаем Three.js и связанные зависимости
 jest.mock('three', () => {
     const actualThree = jest.requireActual('three');
     return {
@@ -51,11 +51,11 @@ jest.mock('three', () => {
     };
 });
 
-// Mock GLTFLoader and animation mixer
+// Мокаем GLTFLoader и миксер анимаций
 jest.mock('three/examples/jsm/loaders/GLTFLoader', () => ({
     GLTFLoader: jest.fn().mockImplementation(() => ({
         load: jest.fn((path, onLoad) => {
-            // Simulate loading a model
+            // Имитируем загрузку модели
             const mockScene = { scene: {}, animations: [] };
             setTimeout(() => onLoad(mockScene), 100);
         })
@@ -71,7 +71,7 @@ jest.mock('three/examples/jsm/controls/OrbitControls', () => ({
     }))
 }));
 
-// Mock services
+// Мокаем сервисы
 jest.mock('../../../client/src/services/modelService', () => ({
     getModels: jest.fn().mockResolvedValue({
         data: [
@@ -84,14 +84,14 @@ jest.mock('../../../client/src/services/modelService', () => ({
     })
 }));
 
-// Configure mock store
+// Настраиваем мок-стор
 const middlewares = [thunk];
 const mockStore = configureStore(middlewares);
 
 describe('ModelViewer Component', () => {
     let store;
 
-    // Mock window methods required for Three.js
+    // Мокаем методы window, необходимые для Three.js
     const originalRequestAnimationFrame = window.requestAnimationFrame;
     const originalCancelAnimationFrame = window.cancelAnimationFrame;
 
@@ -110,11 +110,11 @@ describe('ModelViewer Component', () => {
             }
         });
 
-        // Mock requestAnimationFrame and cancelAnimationFrame
+        // Мокаем requestAnimationFrame и cancelAnimationFrame
         window.requestAnimationFrame = jest.fn().mockReturnValue(1);
         window.cancelAnimationFrame = jest.fn();
 
-        // Mock Element.getBoundingClientRect to return dimensions
+        // Мокаем Element.getBoundingClientRect для возврата размеров
         Element.prototype.getBoundingClientRect = jest.fn().mockReturnValue({
             width: 800,
             height: 600,
@@ -124,7 +124,7 @@ describe('ModelViewer Component', () => {
             right: 800
         });
 
-        // Mock ResizeObserver
+        // Мокаем ResizeObserver
         global.ResizeObserver = jest.fn().mockImplementation(() => ({
             observe: jest.fn(),
             unobserve: jest.fn(),
@@ -135,7 +135,7 @@ describe('ModelViewer Component', () => {
     });
 
     afterEach(() => {
-        // Restore original functions
+        // Восстанавливаем оригинальные функции
         window.requestAnimationFrame = originalRequestAnimationFrame;
         window.cancelAnimationFrame = originalCancelAnimationFrame;
     });
@@ -149,7 +149,7 @@ describe('ModelViewer Component', () => {
             </Provider>
         );
 
-        // Check for 3D viewport presence
+        // Проверяем наличие 3D-вьюпорта
         await waitFor(() => {
             expect(screen.getByTestId('model-viewport')).toBeInTheDocument();
         });
@@ -185,18 +185,18 @@ describe('ModelViewer Component', () => {
             </Provider>
         );
 
-        // Wait for model list to load
+        // Ждем загрузки списка моделей
         await waitFor(() => {
             expect(screen.getByText('Male Dancer')).toBeInTheDocument();
         });
 
-        // Select a model
+        // Выбираем модель
         fireEvent.click(screen.getByText('Male Dancer'));
 
-        // Check if the model is loaded
+        // Проверяем, что модель загружается
         expect(getModelById).toHaveBeenCalledWith('model1');
 
-        // Verify loading indicator appears
+        // Проверяем появление индикатора загрузки
         await waitFor(() => {
             expect(screen.getByText(/Loading model/i)).toBeInTheDocument();
         });
@@ -211,23 +211,23 @@ describe('ModelViewer Component', () => {
             </Provider>
         );
 
-        // Wait for component to load
+        // Ждем загрузки компонента
         await waitFor(() => {
             expect(screen.getByTestId('model-viewport')).toBeInTheDocument();
         });
 
-        // Check animation controls
+        // Проверяем элементы управления анимацией
         const playButton = screen.getByRole('button', { name: /play/i });
         expect(playButton).toBeInTheDocument();
 
-        // Toggle animation
+        // Переключаем анимацию
         fireEvent.click(playButton);
 
-        // Check animation speed control
+        // Проверяем управление скоростью анимации
         const speedSlider = screen.getByRole('slider');
         expect(speedSlider).toBeInTheDocument();
 
-        // Change animation speed
+        // Меняем скорость анимации
         fireEvent.change(speedSlider, { target: { value: 1.5 } });
     });
 
@@ -240,16 +240,16 @@ describe('ModelViewer Component', () => {
             </Provider>
         );
 
-        // Wait for component to load
+        // Ждем загрузки компонента
         await waitFor(() => {
             expect(screen.getByTestId('model-viewport')).toBeInTheDocument();
         });
 
-        // Check for reset view button
+        // Проверяем наличие кнопки сброса вида
         const resetViewButton = screen.getByRole('button', { name: /reset view/i });
         expect(resetViewButton).toBeInTheDocument();
 
-        // Reset camera view
+        // Сбрасываем вид камеры
         fireEvent.click(resetViewButton);
     });
 }); 

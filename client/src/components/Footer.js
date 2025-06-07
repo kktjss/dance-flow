@@ -27,7 +27,7 @@ const LogoDanceFlow = ({ variant = "h6", component = "span", color = "primary", 
         >
             Dance
             <Box component="span" sx={{
-                background: `linear-gradient(90deg, ${COLORS[color]}, ${COLORS.tertiary})`,
+                background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -42,7 +42,7 @@ const LogoDanceFlow = ({ variant = "h6", component = "span", color = "primary", 
                     left: 0,
                     width: '100%',
                     height: '2px',
-                    background: `linear-gradient(90deg, ${COLORS[color]}, ${COLORS.tertiary})`,
+                    background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
                     opacity: 0.5,
                     borderRadius: '2px',
                     transform: 'translateY(3px)',

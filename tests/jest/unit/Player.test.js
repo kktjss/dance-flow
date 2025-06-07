@@ -7,7 +7,7 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import Player from '../../../client/src/components/Player';
 
-// Mock video element behavior
+// Мокаем поведение видео-элемента
 Object.defineProperty(window.HTMLMediaElement.prototype, 'play', {
     configurable: true,
     writable: true,
@@ -27,7 +27,7 @@ Object.defineProperty(window.HTMLMediaElement.prototype, 'pause', {
     })
 });
 
-// Add missing properties to HTMLMediaElement
+// Добавляем отсутствующие свойства в HTMLMediaElement
 Object.defineProperty(window.HTMLMediaElement.prototype, 'duration', {
     configurable: true,
     writable: true,
@@ -69,7 +69,7 @@ Object.defineProperty(window.HTMLMediaElement.prototype, 'paused', {
     value: true
 });
 
-// Mock requestVideoFrameCallback for modern browsers
+// Мокаем requestVideoFrameCallback для современных браузеров
 if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype)) {
     Object.defineProperty(HTMLVideoElement.prototype, 'requestVideoFrameCallback', {
         configurable: true,
@@ -80,11 +80,11 @@ if (!('requestVideoFrameCallback' in HTMLVideoElement.prototype)) {
     });
 }
 
-// Mock URL object for video source
+// Мокаем объект URL для источника видео
 window.URL.createObjectURL = jest.fn().mockReturnValue('blob:https://example.com/mock-video');
 window.URL.revokeObjectURL = jest.fn();
 
-// Configure mock store
+// Настраиваем мок-стор
 const middlewares = [thunk];
 const mockStore = configureStore(middlewares);
 
@@ -93,10 +93,10 @@ describe('Player Component', () => {
     let mockVideo;
 
     beforeEach(() => {
-        // Create mock video file
+        // Создаем мок-файл видео
         mockVideo = new File(['test video content'], 'test-video.mp4', { type: 'video/mp4' });
 
-        // Create store with initial state
+        // Создаем стор с начальным состоянием
         store = mockStore({
             auth: {
                 isAuthenticated: true,
@@ -133,11 +133,11 @@ describe('Player Component', () => {
             </Provider>
         );
 
-        // Check for video element
+        // Проверяем наличие видео-элемента
         const videoElement = await screen.findByTestId('video-player');
         expect(videoElement).toBeInTheDocument();
 
-        // Check for video controls
+        // Проверяем наличие элементов управления видео
         expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
         expect(screen.getByRole('slider', { name: /time slider/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /volume/i })).toBeInTheDocument();
@@ -153,28 +153,28 @@ describe('Player Component', () => {
             </Provider>
         );
 
-        // Get video element and play button
+        // Получаем видео-элемент и кнопку воспроизведения
         const videoElement = await screen.findByTestId('video-player');
         const playButton = screen.getByRole('button', { name: /play/i });
 
-        // Initially video should be paused
+        // Изначально видео должно быть на паузе
         expect(videoElement.paused).toBe(true);
 
-        // Click play button
+        // Нажимаем кнопку воспроизведения
         fireEvent.click(playButton);
 
-        // Video should be playing
+        // Видео должно воспроизводиться
         expect(videoElement.play).toHaveBeenCalled();
         expect(videoElement.paused).toBe(false);
 
-        // Button should change to pause
+        // Кнопка должна измениться на паузу
         const pauseButton = screen.getByRole('button', { name: /pause/i });
         expect(pauseButton).toBeInTheDocument();
 
-        // Click pause button
+        // Нажимаем кнопку паузы
         fireEvent.click(pauseButton);
 
-        // Video should be paused
+        // Видео должно быть на паузе
         expect(videoElement.pause).toHaveBeenCalled();
         expect(videoElement.paused).toBe(true);
     });
@@ -188,17 +188,17 @@ describe('Player Component', () => {
             </Provider>
         );
 
-        // Get video element and time slider
+        // Получаем видео-элемент и ползунок времени
         const videoElement = await screen.findByTestId('video-player');
         const timeSlider = screen.getByRole('slider', { name: /time slider/i });
 
-        // Initially time should be 0
+        // Изначально время должно быть 0
         expect(videoElement.currentTime).toBe(0);
 
-        // Change time slider value to 50% (50 seconds for a 100-second video)
+        // Меняем значение ползунка времени на 50% (50 секунд для 100-секундного видео)
         fireEvent.change(timeSlider, { target: { value: '50' } });
 
-        // Video should seek to new time
+        // Видео должно перейти к новому времени
         expect(videoElement.currentTime).toBe(50);
     });
 
@@ -211,49 +211,49 @@ describe('Player Component', () => {
             </Provider>
         );
 
-        // Get video element and volume button
+        // Получаем видео-элемент и кнопку громкости
         const videoElement = await screen.findByTestId('video-player');
         const volumeButton = screen.getByRole('button', { name: /volume/i });
 
-        // Initially volume should be 1 (max)
+        // Изначально громкость должна быть 1 (максимум)
         expect(videoElement.volume).toBe(1);
         expect(videoElement.muted).toBe(false);
 
-        // Click volume button to show volume slider
+        // Нажимаем кнопку громкости для отображения ползунка
         fireEvent.click(volumeButton);
 
-        // Find volume slider
+        // Находим ползунок громкости
         const volumeSlider = screen.getByRole('slider', { name: /volume slider/i });
         expect(volumeSlider).toBeInTheDocument();
 
-        // Change volume to 50%
+        // Меняем громкость на 50%
         fireEvent.change(volumeSlider, { target: { value: '0.5' } });
 
-        // Video volume should change
+        // Громкость видео должна измениться
         expect(videoElement.volume).toBe(0.5);
 
-        // Click volume button again to mute
+        // Нажимаем кнопку громкости снова для отключения звука
         fireEvent.click(volumeButton);
 
-        // Video should be muted
+        // Видео должно быть без звука
         expect(videoElement.muted).toBe(true);
 
-        // Click again to unmute
+        // Нажимаем еще раз для включения звука
         fireEvent.click(volumeButton);
 
-        // Video should be unmuted
+        // Звук должен быть включен
         expect(videoElement.muted).toBe(false);
     });
 
     test('toggles fullscreen mode', async () => {
-        // Mock fullscreen API
+        // Мокаем API полноэкранного режима
         const mockRequestFullscreen = jest.fn();
         const mockExitFullscreen = jest.fn();
 
         document.documentElement.requestFullscreen = mockRequestFullscreen;
         document.exitFullscreen = mockExitFullscreen;
 
-        // Mock fullscreen state
+        // Мокаем состояние полноэкранного режима
         let isFullscreen = false;
         Object.defineProperty(document, 'fullscreenElement', {
             configurable: true,
@@ -268,25 +268,25 @@ describe('Player Component', () => {
             </Provider>
         );
 
-        // Get fullscreen button
+        // Получаем кнопку полноэкранного режима
         const fullscreenButton = screen.getByRole('button', { name: /fullscreen/i });
 
-        // Click to enter fullscreen
+        // Нажимаем для входа в полноэкранный режим
         fireEvent.click(fullscreenButton);
 
-        // Request fullscreen should be called
+        // Должен быть вызван запрос на полноэкранный режим
         expect(mockRequestFullscreen).toHaveBeenCalled();
 
-        // Simulate entering fullscreen
+        // Имитируем вход в полноэкранный режим
         isFullscreen = true;
 
-        // Dispatch fullscreen change event
+        // Отправляем событие изменения полноэкранного режима
         fireEvent(document, new Event('fullscreenchange'));
 
-        // Click to exit fullscreen
+        // Нажимаем для выхода из полноэкранного режима
         fireEvent.click(fullscreenButton);
 
-        // Exit fullscreen should be called
+        // Должен быть вызван выход из полноэкранного режима
         expect(mockExitFullscreen).toHaveBeenCalled();
     });
 
@@ -299,28 +299,28 @@ describe('Player Component', () => {
             </Provider>
         );
 
-        // Get video element
+        // Получаем видео-элемент
         const videoElement = await screen.findByTestId('video-player');
 
-        // Initial time display should be 0:00 / 1:40 (for 100 second video)
+        // Начальное отображение времени должно быть 0:00 / 1:40 (для 100-секундного видео)
         expect(screen.getByText('0:00 / 1:40')).toBeInTheDocument();
 
-        // Update current time to 30 seconds
+        // Обновляем текущее время до 30 секунд
         act(() => {
             videoElement.currentTime = 30;
             videoElement.dispatchEvent(new Event('timeupdate'));
         });
 
-        // Time display should update
+        // Отображение времени должно обновиться
         expect(screen.getByText('0:30 / 1:40')).toBeInTheDocument();
 
-        // Update current time to 70 seconds
+        // Обновляем текущее время до 70 секунд
         act(() => {
             videoElement.currentTime = 70;
             videoElement.dispatchEvent(new Event('timeupdate'));
         });
 
-        // Time display should update to 1:10 / 1:40
+        // Отображение времени должно обновиться до 1:10 / 1:40
         expect(screen.getByText('1:10 / 1:40')).toBeInTheDocument();
     });
 
@@ -333,32 +333,32 @@ describe('Player Component', () => {
             </Provider>
         );
 
-        // Get video element
+        // Получаем видео-элемент
         const videoElement = await screen.findByTestId('video-player');
 
-        // Initial playback rate should be 1x
+        // Изначальная скорость воспроизведения должна быть 1x
         expect(videoElement.playbackRate).toBe(1);
 
-        // Find playback speed button
+        // Находим кнопку скорости воспроизведения
         const speedButton = screen.getByRole('button', { name: /1x/i });
 
-        // Click to change speed to 1.5x
+        // Нажимаем для изменения скорости на 1.5x
         fireEvent.click(speedButton);
 
-        // Playback rate should change
+        // Скорость воспроизведения должна измениться
         expect(videoElement.playbackRate).toBe(1.5);
 
-        // Button should update to show new speed
+        // Кнопка должна обновиться и показать новую скорость
         expect(screen.getByRole('button', { name: /1.5x/i })).toBeInTheDocument();
 
-        // Click again to change to 2x
+        // Нажимаем снова для изменения на 2x
         const speed1_5Button = screen.getByRole('button', { name: /1.5x/i });
         fireEvent.click(speed1_5Button);
 
-        // Playback rate should change
+        // Скорость воспроизведения должна измениться
         expect(videoElement.playbackRate).toBe(2);
 
-        // Button should update
+        // Кнопка должна обновиться
         expect(screen.getByRole('button', { name: /2x/i })).toBeInTheDocument();
     });
 
@@ -371,50 +371,50 @@ describe('Player Component', () => {
             </Provider>
         );
 
-        // Get video element
+        // Получаем видео-элемент
         const videoElement = await screen.findByTestId('video-player');
 
-        // Initially video should be paused
+        // Изначально видео должно быть на паузе
         expect(videoElement.paused).toBe(true);
 
-        // Press space key to play
+        // Нажимаем пробел для воспроизведения
         fireEvent.keyDown(document, { key: ' ' });
 
-        // Video should play
+        // Видео должно воспроизводиться
         expect(videoElement.play).toHaveBeenCalled();
         expect(videoElement.paused).toBe(false);
 
-        // Press space key to pause
+        // Нажимаем пробел для паузы
         fireEvent.keyDown(document, { key: ' ' });
 
-        // Video should pause
+        // Видео должно быть на паузе
         expect(videoElement.pause).toHaveBeenCalled();
         expect(videoElement.paused).toBe(true);
 
-        // Press right arrow to seek forward
+        // Нажимаем стрелку вправо для перемотки вперед
         const initialTime = videoElement.currentTime;
         fireEvent.keyDown(document, { key: 'ArrowRight' });
 
-        // Time should increase
+        // Время должно увеличиться
         expect(videoElement.currentTime).toBeGreaterThan(initialTime);
 
-        // Press left arrow to seek backward
+        // Нажимаем стрелку влево для перемотки назад
         const currentTime = videoElement.currentTime;
         fireEvent.keyDown(document, { key: 'ArrowLeft' });
 
-        // Time should decrease
+        // Время должно уменьшиться
         expect(videoElement.currentTime).toBeLessThan(currentTime);
 
-        // Press 'm' to mute
+        // Нажимаем 'm' для отключения звука
         fireEvent.keyDown(document, { key: 'm' });
 
-        // Video should be muted
+        // Видео должно быть без звука
         expect(videoElement.muted).toBe(true);
 
-        // Press 'm' again to unmute
+        // Нажимаем 'm' снова для включения звука
         fireEvent.keyDown(document, { key: 'm' });
 
-        // Video should be unmuted
+        // Звук должен быть включен
         expect(videoElement.muted).toBe(false);
     });
 
@@ -427,18 +427,18 @@ describe('Player Component', () => {
             </Provider>
         );
 
-        // Get video element
+        // Получаем видео-элемент
         const videoElement = await screen.findByTestId('video-player');
 
-        // Simulate video end
+        // Имитируем окончание видео
         act(() => {
             videoElement.dispatchEvent(new Event('ended'));
         });
 
-        // Play button should be shown
+        // Должна отображаться кнопка воспроизведения
         expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
 
-        // Dispatch actions should include video end event
+        // Экшены должны включать событие окончания видео
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'VIDEO_ENDED')).toBe(true);
     });

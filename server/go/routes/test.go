@@ -16,22 +16,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// RegisterTestRoutes registers the test-related routes
+// Регистрирует тестовые маршруты
 func RegisterTestRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	testGroup := router.Group("/test")
 	testGroup.Use(middleware.AuthMiddleware(cfg))
 
 	testGroup.POST("/test-save-keyframes", testSaveKeyframes)
 	
-	// Add proxy route for process-frame
+	// Добавляем прокси-маршрут для process-frame
 	router.POST("/process-frame", proxyProcessFrame)
 }
 
-// proxyProcessFrame forwards requests to the Python server
+// proxyProcessFrame перенаправляет запросы на Python сервер
 func proxyProcessFrame(c *gin.Context) {
 	log.Println("[PROXY] Forwarding /api/process-frame request to Python server")
 	
-	// Create target URL
+	// Создаем целевой URL
 	target, err := url.Parse("http://127.0.0.1:8000/process-frame")
 	if err != nil {
 		log.Printf("[PROXY] Error parsing target URL: %v", err)
@@ -39,7 +39,7 @@ func proxyProcessFrame(c *gin.Context) {
 		return
 	}
 	
-	// Copy query parameters
+	// Копируем параметры запроса
 	query := target.Query()
 	for k, v := range c.Request.URL.Query() {
 		for _, vv := range v {
@@ -48,12 +48,12 @@ func proxyProcessFrame(c *gin.Context) {
 	}
 	target.RawQuery = query.Encode()
 	
-	// Create HTTP client
+	// Создаем HTTP клиент
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 	}
 	
-	// Create new request
+	// Создаем новый запрос
 	req, err := http.NewRequest(c.Request.Method, target.String(), c.Request.Body)
 	if err != nil {
 		log.Printf("[PROXY] Error creating request: %v", err)
@@ -61,16 +61,16 @@ func proxyProcessFrame(c *gin.Context) {
 		return
 	}
 	
-	// Copy headers
+	// Копируем заголовки
 	for k, v := range c.Request.Header {
-		if k != "Content-Length" { // Skip content length as it will be set automatically
+		if k != "Content-Length" { // Пропускаем Content-Length, так как он будет установлен автоматически
 			for _, vv := range v {
 				req.Header.Add(k, vv)
 			}
 		}
 	}
 	
-	// Send request
+	// Отправляем запрос
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("[PROXY] Error forwarding request: %v", err)
@@ -79,28 +79,28 @@ func proxyProcessFrame(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 	
-	// Copy response headers
+	// Копируем заголовки ответа
 	for k, v := range resp.Header {
 		for _, vv := range v {
 			c.Header(k, vv)
 		}
 	}
 	
-	// Set status code
+	// Устанавливаем код состояния
 	c.Status(resp.StatusCode)
 	
-	// Copy response body
+	// Копируем тело ответа
 	_, err = io.Copy(c.Writer, resp.Body)
 	if err != nil {
 		log.Printf("[PROXY] Error copying response: %v", err)
 	}
 }
 
-// testSaveKeyframes handles direct test operations for saving keyframes
+// testSaveKeyframes обрабатывает прямые тестовые операции для сохранения ключевых кадров
 func testSaveKeyframes(c *gin.Context) {
 	log.Println("[TEST ROUTE] Test-save-keyframes endpoint called")
 
-	// Parse request
+	// Разбираем запрос
 	var requestBody struct {
 		ProjectID string        `json:"projectId"`
 		ElementID string        `json:"elementId"`
@@ -116,7 +116,7 @@ func testSaveKeyframes(c *gin.Context) {
 		return
 	}
 
-	// Validate required fields
+	// Проверяем обязательные поля
 	if requestBody.ProjectID == "" || requestBody.ElementID == "" || requestBody.Keyframes == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Missing required data",
@@ -133,12 +133,12 @@ func testSaveKeyframes(c *gin.Context) {
 	log.Printf("[TEST ROUTE] Received request to save %d keyframes for element %s in project %s",
 		len(requestBody.Keyframes), requestBody.ElementID, requestBody.ProjectID)
 
-	// Create keyframes data structure
+	// Создаем структуру данных для ключевых кадров
 	keyframesData := map[string]interface{}{
 		requestBody.ElementID: requestBody.Keyframes,
 	}
 
-	// Convert to JSON string
+	// Конвертируем в JSON строку
 	keyframesJSON, err := json.Marshal(keyframesData)
 	if err != nil {
 		log.Printf("[TEST ROUTE] Error serializing keyframes: %v", err)
@@ -147,7 +147,7 @@ func testSaveKeyframes(c *gin.Context) {
 	}
 	log.Printf("[TEST ROUTE] Created keyframesJson with length %d", len(keyframesJSON))
 
-	// Convert project ID to ObjectID
+	// Конвертируем ID проекта в ObjectID
 	projectObjID, err := primitive.ObjectIDFromHex(requestBody.ProjectID)
 	if err != nil {
 		log.Printf("[TEST ROUTE] Invalid project ID: %v", err)
@@ -155,7 +155,7 @@ func testSaveKeyframes(c *gin.Context) {
 		return
 	}
 
-	// DIRECT DATABASE UPDATE using low-level MongoDB operations
+	// ПРЯМОЕ ОБНОВЛЕНИЕ БАЗЫ ДАННЫХ с использованием низкоуровневых операций MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -185,7 +185,7 @@ func testSaveKeyframes(c *gin.Context) {
 		return
 	}
 
-	// Verify the update
+	// Проверяем обновление
 	var verifyResult struct {
 		KeyframesJSON string `bson:"keyframesJson"`
 	}

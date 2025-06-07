@@ -16,21 +16,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// RegisterDirectKeyframesRoutes registers the direct keyframes route
+// Регистрирует маршрут прямого обновления ключевых кадров
 func RegisterDirectKeyframesRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	directKFGroup := router.Group("/direct-keyframes")
 	directKFGroup.Use(middleware.AuthMiddleware(cfg))
 
-	// Route for direct keyframe updates
+	// Маршрут для прямого обновления ключевых кадров
 	directKFGroup.POST("/:id", updateDirectKeyframes)
 }
 
-// updateDirectKeyframes handles direct updates to project keyframes
+// Обрабатывает прямые обновления ключевых кадров проекта
 func updateDirectKeyframes(c *gin.Context) {
 	projectID := c.Param("id")
 	log.Printf("[DIRECT KF] Processing direct keyframe update for project ID: %s", projectID)
 
-	// Parse request body
+	// Разбираем тело запроса
 	var requestBody struct {
 		ElementID string        `json:"elementId"`
 		Keyframes []interface{} `json:"keyframes"`
@@ -45,7 +45,7 @@ func updateDirectKeyframes(c *gin.Context) {
 		return
 	}
 
-	// Validate required fields
+	// Проверяем обязательные поля
 	if requestBody.ElementID == "" || requestBody.Keyframes == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Invalid data. Required: elementId and keyframes array",
@@ -60,7 +60,7 @@ func updateDirectKeyframes(c *gin.Context) {
 
 	log.Printf("[DIRECT KF] Received %d keyframes for element %s", len(requestBody.Keyframes), requestBody.ElementID)
 
-	// Convert project ID to ObjectID
+	// Преобразуем ID проекта в ObjectID
 	projectObjID, err := primitive.ObjectIDFromHex(projectID)
 	if err != nil {
 		log.Printf("[DIRECT KF] Invalid project ID: %v", err)
@@ -68,7 +68,7 @@ func updateDirectKeyframes(c *gin.Context) {
 		return
 	}
 
-	// First, get the current project to check existing keyframesJson
+	// Сначала получаем текущий проект для проверки существующих keyframesJson
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -86,13 +86,13 @@ func updateDirectKeyframes(c *gin.Context) {
 		return
 	}
 
-	// Parse existing keyframes or create new object
+	// Разбираем существующие ключевые кадры или создаем новый объект
 	keyframesData := make(map[string]interface{})
 	if project.KeyframesJSON != "" && project.KeyframesJSON != "{}" {
 		err = json.Unmarshal([]byte(project.KeyframesJSON), &keyframesData)
 		if err != nil {
 			log.Printf("[DIRECT KF] Error parsing existing keyframesJson: %v", err)
-			// Continue with empty object
+			// Продолжаем с пустым объектом
 		} else {
 			log.Printf("[DIRECT KF] Parsed existing keyframesJson with %d elements", len(keyframesData))
 		}
@@ -100,10 +100,10 @@ func updateDirectKeyframes(c *gin.Context) {
 		log.Printf("[DIRECT KF] No existing keyframes, creating new object")
 	}
 
-	// Add the new keyframes
+	// Добавляем новые ключевые кадры
 	keyframesData[requestBody.ElementID] = requestBody.Keyframes
 
-	// Serialize to JSON
+	// Сериализуем в JSON
 	keyframesJSON, err := json.Marshal(keyframesData)
 	if err != nil {
 		log.Printf("[DIRECT KF] Error serializing keyframes: %v", err)
@@ -113,7 +113,7 @@ func updateDirectKeyframes(c *gin.Context) {
 
 	log.Printf("[DIRECT KF] Updated keyframesJson, length: %d", len(keyframesJSON))
 
-	// Update only the keyframesJson field
+	// Обновляем только поле keyframesJson
 	updateResult, err := projectsCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": projectObjID},
@@ -139,7 +139,7 @@ func updateDirectKeyframes(c *gin.Context) {
 		return
 	}
 
-	// Verify the update worked
+	// Проверяем, что обновление сработало
 	var verifyProject models.Project
 	err = projectsCollection.FindOne(ctx, bson.M{"_id": projectObjID}).Decode(&verifyProject)
 	if err != nil {
@@ -161,7 +161,7 @@ func updateDirectKeyframes(c *gin.Context) {
 		return
 	}
 
-	// Verify the keyframes count
+	// Проверяем количество ключевых кадров
 	verifyCount := 0
 	verifiedData := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(verifyProject.KeyframesJSON), &verifiedData); err == nil {

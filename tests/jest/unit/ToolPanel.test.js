@@ -7,7 +7,7 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import ToolPanel from '../../../client/src/components/ToolPanel';
 
-// Mock material UI icons to avoid issues
+// Мокаем иконки Material UI во избежание проблем
 jest.mock('@mui/icons-material/Undo', () => () => <div data-testid="undo-icon">Undo</div>);
 jest.mock('@mui/icons-material/Redo', () => () => <div data-testid="redo-icon">Redo</div>);
 jest.mock('@mui/icons-material/Delete', () => () => <div data-testid="delete-icon">Delete</div>);
@@ -27,7 +27,7 @@ jest.mock('@mui/icons-material/TextFields', () => () => <div data-testid="text-i
 jest.mock('@mui/icons-material/Image', () => () => <div data-testid="image-icon">Image</div>);
 jest.mock('@mui/icons-material/Layers', () => () => <div data-testid="layers-icon">Layers</div>);
 
-// Configure mock store
+// Настраиваем мок-стор
 const middlewares = [thunk];
 const mockStore = configureStore(middlewares);
 
@@ -35,7 +35,7 @@ describe('ToolPanel Component', () => {
     let store;
 
     beforeEach(() => {
-        // Create store with initial state
+        // Создаем стор с начальным состоянием
         store = mockStore({
             auth: {
                 isAuthenticated: true,
@@ -79,10 +79,10 @@ describe('ToolPanel Component', () => {
             </Provider>
         );
 
-        // Check for main tool panel container
+        // Проверяем наличие основного контейнера панели инструментов
         expect(screen.getByTestId('tool-panel')).toBeInTheDocument();
 
-        // Check for tool groups
+        // Проверяем наличие групп инструментов
         expect(screen.getByTestId('edit-tools')).toBeInTheDocument();
         expect(screen.getByTestId('drawing-tools')).toBeInTheDocument();
         expect(screen.getByTestId('view-tools')).toBeInTheDocument();
@@ -97,33 +97,33 @@ describe('ToolPanel Component', () => {
             </Provider>
         );
 
-        // Find selection tool buttons
+        // Находим кнопки инструментов выбора
         const selectButton = screen.getByRole('button', { name: /select/i });
         const rectangleButton = screen.getByRole('button', { name: /rectangle/i });
         const circleButton = screen.getByRole('button', { name: /circle/i });
         const lineButton = screen.getByRole('button', { name: /line/i });
         const textButton = screen.getByRole('button', { name: /text/i });
 
-        // Click on rectangle tool
+        // Нажимаем на инструмент прямоугольника
         fireEvent.click(rectangleButton);
 
-        // Check if mode change action was dispatched
+        // Проверяем, что действие смены режима было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'rectangle')).toBe(true);
 
-        // Click on circle tool
+        // Нажимаем на инструмент круга
         fireEvent.click(circleButton);
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'circle')).toBe(true);
 
-        // Click on line tool
+        // Нажимаем на инструмент линии
         fireEvent.click(lineButton);
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'line')).toBe(true);
 
-        // Click on text tool
+        // Нажимаем на инструмент текста
         fireEvent.click(textButton);
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'text')).toBe(true);
 
-        // Click on select tool
+        // Нажимаем на инструмент выделения
         fireEvent.click(selectButton);
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'select')).toBe(true);
     });
@@ -137,31 +137,31 @@ describe('ToolPanel Component', () => {
             </Provider>
         );
 
-        // Find edit tool buttons
+        // Находим кнопки инструментов редактирования
         const undoButton = screen.getByRole('button', { name: /undo/i });
         const redoButton = screen.getByRole('button', { name: /redo/i });
         const deleteButton = screen.getByRole('button', { name: /delete/i });
 
-        // Undo button should be enabled (we have past actions)
+        // Кнопка отмены должна быть активна (есть прошлые действия)
         expect(undoButton).not.toBeDisabled();
 
-        // Redo button should be disabled (no future actions)
+        // Кнопка повтора должна быть неактивна (нет будущих действий)
         expect(redoButton).toBeDisabled();
 
-        // Delete button should be enabled (we have selected elements)
+        // Кнопка удаления должна быть активна (есть выбранные элементы)
         expect(deleteButton).not.toBeDisabled();
 
-        // Click undo
+        // Нажимаем отмену
         fireEvent.click(undoButton);
 
-        // Check if undo action was dispatched
+        // Проверяем, что действие отмены было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'UNDO')).toBe(true);
 
-        // Click delete
+        // Нажимаем удаление
         fireEvent.click(deleteButton);
 
-        // Check if delete action was dispatched for the selected element
+        // Проверяем, что действие удаления было отправлено для выбранного элемента
         expect(actions.some(action => action.type === 'DELETE_ELEMENTS' &&
             action.payload.includes('element1'))).toBe(true);
     });
@@ -175,27 +175,27 @@ describe('ToolPanel Component', () => {
             </Provider>
         );
 
-        // Find clipboard tool buttons
+        // Находим кнопки буфера обмена
         const cutButton = screen.getByRole('button', { name: /cut/i });
         const copyButton = screen.getByRole('button', { name: /copy/i });
         const pasteButton = screen.getByRole('button', { name: /paste/i });
 
-        // Cut/copy buttons should be enabled (we have selected elements)
+        // Кнопки вырезать/копировать должны быть активны (есть выбранные элементы)
         expect(cutButton).not.toBeDisabled();
         expect(copyButton).not.toBeDisabled();
 
-        // Paste button should be disabled (clipboard is empty)
+        // Кнопка вставки должна быть неактивна (буфер обмена пуст)
         expect(pasteButton).toBeDisabled();
 
-        // Click copy
+        // Нажимаем копировать
         fireEvent.click(copyButton);
 
-        // Check if copy action was dispatched
+        // Проверяем, что действие копирования было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'COPY_ELEMENTS' &&
             action.payload.includes('element1'))).toBe(true);
 
-        // Update store to simulate element in clipboard
+        // Обновляем стор для имитации элемента в буфере обмена
         store = mockStore({
             ...store.getState(),
             canvas: {
@@ -211,7 +211,7 @@ describe('ToolPanel Component', () => {
             }
         });
 
-        // Re-render with updated store
+        // Перерендериваем с обновленным стором
         render(
             <Provider store={store}>
                 <BrowserRouter>
@@ -220,16 +220,16 @@ describe('ToolPanel Component', () => {
             </Provider>
         );
 
-        // Find paste button again
+        // Находим кнопку вставки снова
         const pasteButtonEnabled = screen.getByRole('button', { name: /paste/i });
 
-        // Paste button should now be enabled
+        // Кнопка вставки теперь должна быть активна
         expect(pasteButtonEnabled).not.toBeDisabled();
 
-        // Click paste
+        // Нажимаем вставить
         fireEvent.click(pasteButtonEnabled);
 
-        // Check if paste action was dispatched
+        // Проверяем, что действие вставки было отправлено
         const updatedActions = store.getActions();
         expect(updatedActions.some(action => action.type === 'PASTE_ELEMENTS')).toBe(true);
     });
@@ -243,35 +243,35 @@ describe('ToolPanel Component', () => {
             </Provider>
         );
 
-        // Find view tool buttons
+        // Находим кнопки инструментов просмотра
         const gridButton = screen.getByRole('button', { name: /grid/i });
         const zoomInButton = screen.getByRole('button', { name: /zoom in/i });
         const zoomOutButton = screen.getByRole('button', { name: /zoom out/i });
         const panButton = screen.getByRole('button', { name: /pan/i });
 
-        // Click grid button to toggle grid off
+        // Нажимаем кнопку сетки для её отключения
         fireEvent.click(gridButton);
 
-        // Check if grid toggle action was dispatched
+        // Проверяем, что действие переключения сетки было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'TOGGLE_GRID')).toBe(true);
 
-        // Click zoom in
+        // Нажимаем увеличить масштаб
         fireEvent.click(zoomInButton);
 
-        // Check if zoom in action was dispatched
+        // Проверяем, что действие увеличения масштаба было отправлено
         expect(actions.some(action => action.type === 'ZOOM_IN')).toBe(true);
 
-        // Click zoom out
+        // Нажимаем уменьшить масштаб
         fireEvent.click(zoomOutButton);
 
-        // Check if zoom out action was dispatched
+        // Проверяем, что действие уменьшения масштаба было отправлено
         expect(actions.some(action => action.type === 'ZOOM_OUT')).toBe(true);
 
-        // Click pan tool
+        // Нажимаем инструмент панорамирования
         fireEvent.click(panButton);
 
-        // Check if pan mode action was dispatched
+        // Проверяем, что действие режима панорамирования было отправлено
         expect(actions.some(action => action.type === 'TOGGLE_PAN_MODE')).toBe(true);
     });
 
@@ -284,20 +284,20 @@ describe('ToolPanel Component', () => {
             </Provider>
         );
 
-        // Hover over select tool
+        // Наводим на инструмент выделения
         const selectButton = screen.getByRole('button', { name: /select/i });
         fireEvent.mouseOver(selectButton);
 
-        // Wait for tooltip to appear
+        // Ждем появления подсказки
         await waitFor(() => {
             expect(screen.getByText('Select (V)')).toBeInTheDocument();
         });
 
-        // Hover over rectangle tool
+        // Наводим на инструмент прямоугольника
         const rectangleButton = screen.getByRole('button', { name: /rectangle/i });
         fireEvent.mouseOver(rectangleButton);
 
-        // Wait for tooltip to appear
+        // Ждем появления подсказки
         await waitFor(() => {
             expect(screen.getByText('Rectangle (R)')).toBeInTheDocument();
         });
@@ -312,47 +312,47 @@ describe('ToolPanel Component', () => {
             </Provider>
         );
 
-        // Simulate keyboard shortcuts
-        // Press 'v' for select tool
+        // Симулируем горячие клавиши
+        // Нажимаем 'v' для инструмента выделения
         fireEvent.keyDown(document, { key: 'v' });
 
-        // Check if select mode was activated
+        // Проверяем, что режим выделения был активирован
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'select')).toBe(true);
 
-        // Press 'r' for rectangle tool
+        // Нажимаем 'r' для инструмента прямоугольника
         fireEvent.keyDown(document, { key: 'r' });
 
-        // Check if rectangle mode was activated
+        // Проверяем, что режим прямоугольника был активирован
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'rectangle')).toBe(true);
 
-        // Press 'c' for circle tool
+        // Нажимаем 'c' для инструмента круга
         fireEvent.keyDown(document, { key: 'c' });
 
-        // Check if circle mode was activated
+        // Проверяем, что режим круга был активирован
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'circle')).toBe(true);
 
-        // Press 'z' with ctrl for undo
+        // Нажимаем 'z' с ctrl для отмены
         fireEvent.keyDown(document, { key: 'z', ctrlKey: true });
 
-        // Check if undo action was dispatched
+        // Проверяем, что действие отмены было отправлено
         expect(actions.some(action => action.type === 'UNDO')).toBe(true);
 
-        // Press 'y' with ctrl for redo
+        // Нажимаем 'y' с ctrl для повтора
         fireEvent.keyDown(document, { key: 'y', ctrlKey: true });
 
-        // Check if redo action was dispatched
+        // Проверяем, что действие повтора было отправлено
         expect(actions.some(action => action.type === 'REDO')).toBe(true);
 
-        // Press 'Delete' for delete
+        // Нажимаем 'Delete' для удаления
         fireEvent.keyDown(document, { key: 'Delete' });
 
-        // Check if delete action was dispatched
+        // Проверяем, что действие удаления было отправлено
         expect(actions.some(action => action.type === 'DELETE_ELEMENTS')).toBe(true);
     });
 
     test('disables tools when appropriate', () => {
-        // Update store to have no selected elements and empty history
+        // Обновляем стор, чтобы не было выбранных элементов и история была пуста
         store = mockStore({
             ...store.getState(),
             canvas: {
@@ -373,23 +373,23 @@ describe('ToolPanel Component', () => {
             </Provider>
         );
 
-        // Find edit tool buttons
+        // Находим кнопки инструментов редактирования
         const undoButton = screen.getByRole('button', { name: /undo/i });
         const redoButton = screen.getByRole('button', { name: /redo/i });
         const deleteButton = screen.getByRole('button', { name: /delete/i });
         const cutButton = screen.getByRole('button', { name: /cut/i });
         const copyButton = screen.getByRole('button', { name: /copy/i });
 
-        // Undo button should be disabled (no past actions)
+        // Кнопка отмены должна быть неактивна (нет прошлых действий)
         expect(undoButton).toBeDisabled();
 
-        // Redo button should be disabled (no future actions)
+        // Кнопка повтора должна быть неактивна (нет будущих действий)
         expect(redoButton).toBeDisabled();
 
-        // Delete button should be disabled (no selected elements)
+        // Кнопка удаления должна быть неактивна (нет выбранных элементов)
         expect(deleteButton).toBeDisabled();
 
-        // Cut/copy buttons should be disabled (no selected elements)
+        // Кнопки вырезать/копировать должны быть неактивны (нет выбранных элементов)
         expect(cutButton).toBeDisabled();
         expect(copyButton).toBeDisabled();
     });

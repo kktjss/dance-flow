@@ -18,7 +18,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// RegisterUserRoutes registers all user routes
+// Регистрирует все маршруты пользователей
 func RegisterUserRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	users := router.Group("/users")
 	users.Use(middleware.JWTMiddleware(cfg))
@@ -29,27 +29,27 @@ func RegisterUserRoutes(router *gin.RouterGroup, cfg *config.Config) {
 		users.GET("/me", getCurrentUser)
 		users.DELETE("/me", deleteCurrentUser)
 		
-		// Add a test endpoint
+		// Добавляет тестовый эндпоинт
 		users.GET("/test", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"message": "User routes are working"})
 		})
 	}
 }
 
-// getUsers searches for users, with optional filters
+// getUsers ищет пользователей с опциональными фильтрами
 func getUsers(c *gin.Context) {
-	// Get query parameters
+	// Получаем параметры запроса
 	search := c.Query("search")
 	teamID := c.Query("teamId")
 	
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Build the filter
+	// Создаем фильтр
 	filter := bson.M{}
 	
-	// Add search filter if provided
+	// Добавляем фильтр поиска, если он указан
 	if search != "" {
 		filter["$or"] = []bson.M{
 			{"username": bson.M{"$regex": search, "$options": "i"}},
@@ -58,7 +58,7 @@ func getUsers(c *gin.Context) {
 		}
 	}
 	
-	// Add team filter if provided
+	// Добавляем фильтр по команде, если он указан
 	if teamID != "" {
 		teamObjID, err := primitive.ObjectIDFromHex(teamID)
 		if err == nil {
@@ -66,12 +66,12 @@ func getUsers(c *gin.Context) {
 		}
 	}
 	
-	// Find options
+	// Настройки поиска
 	findOptions := options.Find().
 		SetSort(bson.M{"username": 1}).
-		SetLimit(50) // Limit to 50 results for safety
+		SetLimit(50) // Ограничиваем до 50 результатов для безопасности
 	
-	// Execute query
+	// Выполняем запрос
 	cursor, err := config.UsersCollection.Find(ctx, filter, findOptions)
 	if err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to get users: %w", err))
@@ -80,7 +80,7 @@ func getUsers(c *gin.Context) {
 	}
 	defer cursor.Close(ctx)
 
-	// Decode users
+	// Декодируем пользователей
 	var users []models.User
 	if err := cursor.All(ctx, &users); err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to decode users: %w", err))
@@ -88,7 +88,7 @@ func getUsers(c *gin.Context) {
 		return
 	}
 	
-	// Convert to safe response objects
+	// Преобразуем в безопасные объекты ответа
 	var userResponses []models.UserResponse
 	for _, user := range users {
 		userResponses = append(userResponses, user.ToResponse())
@@ -97,7 +97,7 @@ func getUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, userResponses)
 }
 
-// getUserByID returns a specific user by ID
+// getUserByID возвращает конкретного пользователя по ID
 func getUserByID(c *gin.Context) {
 	userID := c.Param("id")
 	if userID == "" {
@@ -105,18 +105,18 @@ func getUserByID(c *gin.Context) {
 		return
 	}
 
-	// Convert user ID to ObjectID
+	// Преобразуем ID пользователя в ObjectID
 	userObjID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Find user by ID
+	// Ищем пользователя по ID
 	var user models.User
 	err = config.UsersCollection.FindOne(ctx, bson.M{"_id": userObjID}).Decode(&user)
 	if err != nil {
@@ -125,25 +125,25 @@ func getUserByID(c *gin.Context) {
 		return
 	}
 
-	// Convert to safe response object
+	// Преобразуем в безопасный объект ответа
 	userResponse := user.ToResponse()
 	c.JSON(http.StatusOK, userResponse)
 }
 
-// getCurrentUser returns the current authenticated user
+// getCurrentUser возвращает текущего аутентифицированного пользователя
 func getCurrentUser(c *gin.Context) {
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Find user by ID
+	// Ищем пользователя по ID
 	var user models.User
 	err = config.UsersCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
 	if err != nil {
@@ -152,12 +152,12 @@ func getCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// Convert to safe response object
+	// Преобразуем в безопасный объект ответа
 	userResponse := user.ToResponse()
 	c.JSON(http.StatusOK, userResponse)
 }
 
-// updateCurrentUser updates the current authenticated user
+// updateCurrentUser обновляет текущего аутентифицированного пользователя
 func updateCurrentUser(c *gin.Context) {
 	var input struct {
 		Name     string `json:"name"`
@@ -169,18 +169,18 @@ func updateCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Find user by ID
+	// Ищем пользователя по ID
 	var user models.User
 	err = config.UsersCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
 	if err != nil {
@@ -189,7 +189,7 @@ func updateCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// Update fields
+	// Обновляем поля
 	update := bson.M{
 		"$set": bson.M{
 			"updatedAt": time.Now(),
@@ -201,7 +201,7 @@ func updateCurrentUser(c *gin.Context) {
 	}
 
 	if input.Email != "" {
-		// Check if email is already in use
+		// Проверяем, не используется ли уже этот email
 		var existingUser models.User
 		err = config.UsersCollection.FindOne(ctx, bson.M{
 			"_id":   bson.M{"$ne": userID},
@@ -217,7 +217,7 @@ func updateCurrentUser(c *gin.Context) {
 	}
 
 	if input.Password != "" {
-		// Hash password using bcrypt directly
+		// Хешируем пароль с помощью bcrypt напрямую
 		hashedBytes, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 		if err != nil {
 			config.LogError("USERS", fmt.Errorf("failed to hash password: %w", err))
@@ -227,7 +227,7 @@ func updateCurrentUser(c *gin.Context) {
 		update["$set"].(bson.M)["password"] = string(hashedBytes)
 	}
 
-	// Update user
+	// Обновляем пользователя
 	_, err = config.UsersCollection.UpdateOne(ctx, bson.M{"_id": userID}, update)
 	if err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to update user: %w", err))
@@ -235,7 +235,7 @@ func updateCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// Get updated user
+	// Получаем обновленного пользователя
 	err = config.UsersCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
 	if err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to get updated user: %w", err))
@@ -243,25 +243,25 @@ func updateCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// Convert to safe response object
+	// Преобразуем в безопасный объект ответа
 	userResponse := user.ToResponse()
 	c.JSON(http.StatusOK, userResponse)
 }
 
-// deleteCurrentUser deletes the current authenticated user and all associated data
+// deleteCurrentUser удаляет текущего аутентифицированного пользователя и все связанные данные
 func deleteCurrentUser(c *gin.Context) {
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// 1. Remove user from all teams they are a member of
+	// 1. Удаляем пользователя из всех команд, где он является участником
 	_, err = config.TeamsCollection.UpdateMany(
 		ctx,
 		bson.M{"members.userId": userID},
@@ -273,8 +273,8 @@ func deleteCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// 2. Delete all user's models
-	// First, get all user's models to delete files
+	// 2. Удаляем все модели пользователя
+	// Сначала получаем все модели пользователя для удаления файлов
 	cursor, err := config.GetCollection("models").Find(ctx, bson.M{"userId": userID})
 	if err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to find user's models: %w", err))
@@ -290,16 +290,16 @@ func deleteCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// Delete model files
+	// Удаляем файлы моделей
 	for _, model := range models {
 		filePath := filepath.Join("uploads/models", model.Filename)
 		if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
 			config.LogError("USERS", fmt.Errorf("failed to delete model file %s: %w", filePath, err))
-			// Continue with deletion even if file removal fails
+			// Продолжаем удаление даже если удаление файла не удалось
 		}
 	}
 
-	// Delete model records
+	// Удаляем записи моделей
 	_, err = config.GetCollection("models").DeleteMany(ctx, bson.M{"userId": userID})
 	if err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to delete user's models: %w", err))
@@ -307,7 +307,7 @@ func deleteCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// 3. Delete all user's projects
+	// 3. Удаляем все проекты пользователя
 	_, err = config.ProjectsCollection.DeleteMany(ctx, bson.M{"owner": userID})
 	if err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to delete user's projects: %w", err))
@@ -315,7 +315,7 @@ func deleteCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// 4. Delete user's history records
+	// 4. Удаляем записи истории пользователя
 	_, err = config.GetCollection("history").DeleteMany(ctx, bson.M{"userId": userID})
 	if err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to delete user's history: %w", err))
@@ -323,7 +323,7 @@ func deleteCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// 5. Delete teams where user is the owner
+	// 5. Удаляем команды, где пользователь является владельцем
 	_, err = config.TeamsCollection.DeleteMany(ctx, bson.M{"owner": userID})
 	if err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to delete user's teams: %w", err))
@@ -331,7 +331,7 @@ func deleteCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// 6. Finally, delete the user
+	// 6. Наконец, удаляем самого пользователя
 	_, err = config.UsersCollection.DeleteOne(ctx, bson.M{"_id": userID})
 	if err != nil {
 		config.LogError("USERS", fmt.Errorf("failed to delete user: %w", err))

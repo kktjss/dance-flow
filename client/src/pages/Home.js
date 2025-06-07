@@ -19,17 +19,26 @@ import { COLORS } from '../constants/colors';
 
 // Анимации keyframes
 const glowingBorder = keyframes`
-  0% { border-image-source: linear-gradient(45deg, ${COLORS.primary}, ${COLORS.tertiary}, ${COLORS.primary}); }
-  25% { border-image-source: linear-gradient(90deg, ${COLORS.tertiary}, ${COLORS.primary}, ${COLORS.tertiary}); }
-  50% { border-image-source: linear-gradient(135deg, ${COLORS.primary}, ${COLORS.tertiary}, ${COLORS.primary}); }
-  75% { border-image-source: linear-gradient(180deg, ${COLORS.tertiary}, ${COLORS.primary}, ${COLORS.tertiary}); }
-  100% { border-image-source: linear-gradient(225deg, ${COLORS.primary}, ${COLORS.tertiary}, ${COLORS.primary}); }
+  0% { border-image-source: linear-gradient(45deg, ${COLORS.secondary}, ${COLORS.tertiary}, ${COLORS.secondary}); }
+  25% { border-image-source: linear-gradient(90deg, ${COLORS.tertiary}, ${COLORS.secondary}, ${COLORS.tertiary}); }
+  50% { border-image-source: linear-gradient(135deg, ${COLORS.secondary}, ${COLORS.tertiary}, ${COLORS.secondary}); }
+  75% { border-image-source: linear-gradient(180deg, ${COLORS.tertiary}, ${COLORS.secondary}, ${COLORS.tertiary}); }
+  100% { border-image-source: linear-gradient(225deg, ${COLORS.secondary}, ${COLORS.tertiary}, ${COLORS.secondary}); }
 `;
 
 const floatAnimation = keyframes`
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+  75% {
+    transform: translateY(10px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
 `;
 
 const pulseAnimation = keyframes`
@@ -65,13 +74,134 @@ const fadeIn = keyframes`
   100% { opacity: 1; }
 `;
 
+// Добавим новые анимации для SVG
+const dancerPathAnimation = keyframes`
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
+`;
+
+const glowAnimation = keyframes`
+  0% {
+    filter: drop-shadow(0 0 2px ${COLORS.secondary});
+  }
+  50% {
+    filter: drop-shadow(0 0 10px ${COLORS.tertiary});
+  }
+  100% {
+    filter: drop-shadow(0 0 2px ${COLORS.secondary});
+  }
+`;
+
+const waveAnimation = keyframes`
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+`;
+
+const pulseGlow = keyframes`
+  0% {
+    box-shadow: 0 0 10px ${COLORS.secondary}40;
+  }
+  50% {
+    box-shadow: 0 0 30px ${COLORS.secondary}80;
+  }
+  100% {
+    box-shadow: 0 0 10px ${COLORS.secondary}40;
+  }
+`;
+
+const scanAnimation = keyframes`
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+`;
+
+const analyzeAnimation = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+`;
+
+const moveAnimation = keyframes`
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(-1%) rotate(-1deg) scale(1.01);
+  }
+  75% {
+    transform: translateY(1%) rotate(1deg) scale(0.99);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+`;
+
+const glowPulse = keyframes`
+  0% {
+    filter: drop-shadow(0 0 8px ${COLORS.secondary}40);
+  }
+  50% {
+    filter: drop-shadow(0 0 15px ${COLORS.secondary}80);
+  }
+  100% {
+    filter: drop-shadow(0 0 8px ${COLORS.secondary}40);
+  }
+`;
+
+const dataFlowAnimation = keyframes`
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
+`;
+
 // Стилизованные компоненты с анимациями
 const StyledCard = styled(Card)(({ theme }) => ({
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
     transition: 'all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67)',
-    backgroundColor: 'rgba(30, 15, 55, 0.95)', // Темно-фиолетовый фон
+    backgroundColor: 'rgba(17, 21, 54, 0.95)', // Темный фон
     color: COLORS.white,
     border: `1px solid rgba(255, 255, 255, 0.1)`,
     borderRadius: '16px',
@@ -84,7 +214,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
         left: 0,
         width: '4px',
         height: '100%',
-        background: `linear-gradient(180deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+        background: `linear-gradient(180deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
         transition: 'all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67)',
         borderTopLeftRadius: '16px',
         borderBottomLeftRadius: '16px',
@@ -96,12 +226,12 @@ const StyledCard = styled(Card)(({ theme }) => ({
         left: '0',
         width: '0%',
         height: '3px',
-        background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+        background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
         transition: 'width 0.4s ease-out',
     },
     '&:hover': {
         transform: 'translateY(-12px) scale(1.02)',
-        boxShadow: `0 20px 30px rgba(138, 43, 226, 0.3)`,
+        boxShadow: `0 20px 30px rgba(30, 144, 255, 0.3)`,
         '&::before': {
             width: '100%',
             opacity: 0.1,
@@ -113,7 +243,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
     },
 }));
 
-const AnimatedDot = styled(Box)(({ size = 6, delay = 0, color = COLORS.primary }) => ({
+const AnimatedDot = styled(Box)(({ size = 6, delay = 0, color = COLORS.secondary }) => ({
     position: 'absolute',
     width: `${size}px`,
     height: `${size}px`,
@@ -174,7 +304,7 @@ const GlowingButton = styled(Button)(({ theme }) => ({
         right: '-2px',
         bottom: '-2px',
         zIndex: -1,
-        background: `linear-gradient(45deg, ${COLORS.primary}, ${COLORS.tertiary}, ${COLORS.secondary})`,
+        background: `linear-gradient(45deg, ${COLORS.secondary}, ${COLORS.tertiary}, ${COLORS.secondaryLight})`,
         backgroundSize: '400% 400%',
         animation: `${gradientShift} 3s ease infinite`,
         borderRadius: '14px',
@@ -208,7 +338,7 @@ const HeroSection = styled(Paper)(({ theme }) => ({
         left: 0,
         right: 0,
         bottom: 0,
-        background: `linear-gradient(135deg, rgba(10, 14, 36, 0.8) 0%, rgba(138, 43, 226, 0.7) 100%)`,
+        background: `linear-gradient(135deg, rgba(10, 14, 36, 0.8) 0%, rgba(30, 144, 255, 0.7) 100%)`,
         zIndex: 1,
     },
     '&::after': {
@@ -258,7 +388,7 @@ const HeroTitle = styled(Typography)(({ theme, inView }) => ({
         left: '0',
         width: '0%',
         height: '3px',
-        background: 'linear-gradient(90deg, #6366F1, #3B82F6)',
+        background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
         transition: 'width 1s ease-out',
         transitionDelay: '0.8s',
     },
@@ -332,7 +462,7 @@ const SectionTitle = styled(Typography)(({ theme, inView = false }) => ({
         transform: 'translateX(-50%)',
         width: inView ? '40px' : '0px',
         height: '3px',
-        background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+        background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
         transition: 'width 0.8s ease-out',
         transitionDelay: '0.3s',
     }
@@ -387,7 +517,7 @@ const WaveBox = styled(Box)(({ theme }) => ({
     }
 }));
 
-// Стилизованный компонент для логотипа DanceFlow
+// Компонент логотипа
 const LogoDanceFlow = ({ variant = "h1", component = "span", color = "primary", ...props }) => (
     <Typography
         variant={variant}
@@ -397,6 +527,7 @@ const LogoDanceFlow = ({ variant = "h1", component = "span", color = "primary", 
             fontFamily: '"Inter", "Golos Text", sans-serif',
             letterSpacing: '-0.02em',
             display: 'inline-block',
+            color: COLORS.white,
             ...props.sx
         }}
     >
@@ -404,7 +535,7 @@ const LogoDanceFlow = ({ variant = "h1", component = "span", color = "primary", 
         <Box
             component="span"
             sx={{
-                background: `linear-gradient(90deg, ${COLORS[color]}, ${COLORS.tertiary})`,
+                background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -417,7 +548,7 @@ const LogoDanceFlow = ({ variant = "h1", component = "span", color = "primary", 
                     left: 0,
                     width: '100%',
                     height: '3px',
-                    background: `linear-gradient(90deg, ${COLORS[color]}, ${COLORS.tertiary})`,
+                    background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
                     opacity: 0.5,
                     borderRadius: '2px',
                     transform: 'translateY(5px)',
@@ -459,7 +590,7 @@ const FeatureCard = ({ title, description, onClick }) => {
                             width: '4px',
                             height: '70%',
                             transform: 'translateY(-50%)',
-                            background: `linear-gradient(180deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+                            background: `linear-gradient(180deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
                             borderRadius: '4px',
                         }
                     }}
@@ -486,7 +617,7 @@ const FeatureCard = ({ title, description, onClick }) => {
                             height: '2px',
                             bottom: '-2px',
                             left: '0',
-                            background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+                            background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
                             transition: 'width 0.2s',
                             borderRadius: '2px',
                         },
@@ -506,9 +637,529 @@ const FeatureCard = ({ title, description, onClick }) => {
     );
 };
 
+// Добавим компонент анимированной иллюстрации
+const DanceAnimation = () => {
+    return (
+        <Box
+            sx={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                animation: `${floatAnimation} 6s ease-in-out infinite`
+            }}
+        >
+            <svg
+                viewBox="0 0 200 200"
+                style={{
+                    width: '80%',
+                    height: '80%',
+                    animation: `${glowAnimation} 3s ease-in-out infinite`
+                }}
+            >
+                {/* Стилизованная фигура танцора */}
+                <path
+                    d="M100,20 C120,20 130,40 130,60 C130,80 120,90 100,90 C80,90 70,80 70,60 C70,40 80,20 100,20"
+                    fill="none"
+                    stroke={COLORS.secondary}
+                    strokeWidth="2"
+                    strokeDasharray="1000"
+                    style={{ animation: `${dancerPathAnimation} 4s ease-in-out infinite` }}
+                />
+                <path
+                    d="M100,90 L100,140 M80,170 L100,140 L120,170 M70,120 L100,100 L130,120"
+                    fill="none"
+                    stroke={COLORS.tertiary}
+                    strokeWidth="2"
+                    strokeDasharray="1000"
+                    style={{ animation: `${dancerPathAnimation} 4s ease-in-out infinite` }}
+                />
+                {/* Декоративные элементы */}
+                <circle
+                    cx="100"
+                    cy="60"
+                    r="5"
+                    fill={COLORS.secondary}
+                    style={{ animation: `${pulseAnimation} 2s ease-in-out infinite` }}
+                />
+                <circle
+                    cx="85"
+                    cy="120"
+                    r="3"
+                    fill={COLORS.tertiary}
+                    style={{ animation: `${pulseAnimation} 2s ease-in-out infinite 0.3s` }}
+                />
+                <circle
+                    cx="115"
+                    cy="120"
+                    r="3"
+                    fill={COLORS.tertiary}
+                    style={{ animation: `${pulseAnimation} 2s ease-in-out infinite 0.6s` }}
+                />
+            </svg>
+            {/* Декоративные линии */}
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    zIndex: -1,
+                    '&::before, &::after': {
+                        content: '""',
+                        position: 'absolute',
+                        width: '100%',
+                        height: '1px',
+                        background: `linear-gradient(90deg, transparent, ${COLORS.secondary}, transparent)`,
+                        animation: `${gradientShift} 3s linear infinite`
+                    },
+                    '&::before': {
+                        top: '30%'
+                    },
+                    '&::after': {
+                        bottom: '30%'
+                    }
+                }}
+            />
+            {/* Фоновые частицы */}
+            {Array.from({ length: 20 }).map((_, i) => (
+                <Box
+                    key={i}
+                    sx={{
+                        position: 'absolute',
+                        width: '4px',
+                        height: '4px',
+                        borderRadius: '50%',
+                        background: i % 2 ? COLORS.secondary : COLORS.tertiary,
+                        top: `${Math.random() * 100}%`,
+                        left: `${Math.random() * 100}%`,
+                        animation: `${pulseAnimation} ${2 + Math.random() * 2}s ease-in-out infinite ${Math.random() * 2}s`
+                    }}
+                />
+            ))}
+        </Box>
+    );
+};
+
+const MotionCapture = () => {
+    const [frame, setFrame] = useState(0);
+
+    // Базовые точки для фигуры человека
+    const basePoints = {
+        head: { x: 50, y: 15 },
+        neck: { x: 50, y: 25 },
+        shoulderLeft: { x: 35, y: 30 },
+        shoulderRight: { x: 65, y: 30 },
+        elbowLeft: { x: 25, y: 45 },
+        elbowRight: { x: 75, y: 45 },
+        handLeft: { x: 20, y: 60 },
+        handRight: { x: 80, y: 60 },
+        hip: { x: 50, y: 50 },
+        kneeLeft: { x: 40, y: 70 },
+        kneeRight: { x: 60, y: 70 },
+        footLeft: { x: 35, y: 90 },
+        footRight: { x: 65, y: 90 },
+    };
+
+    // Улучшенная анимация точек с более плавными движениями
+    const points = Object.entries(basePoints).reduce((acc, [key, point]) => {
+        // Более тонкая настройка движения для разных частей тела
+        const xFreq = key.includes('Hand') ? 45 : key.includes('Foot') ? 55 : 50;
+        const yFreq = key.includes('Hand') ? 50 : key.includes('Foot') ? 60 : 55;
+
+        // Еще более уменьшенные амплитуды для более тонких движений
+        const xAmp = key.includes('Hand') ? 0.8 :
+            key.includes('Foot') ? 0.5 :
+                key.includes('elbow') ? 0.6 :
+                    key.includes('shoulder') ? 0.4 :
+                        0.2;
+
+        const yAmp = key.includes('Hand') ? 0.7 :
+            key.includes('Foot') ? 0.4 :
+                key.includes('elbow') ? 0.5 :
+                    key.includes('shoulder') ? 0.3 :
+                        0.15;
+
+        // Добавляем небольшой фазовый сдвиг для более естественного движения
+        const phaseShift = (point.x + point.y) / 50;
+
+        // Добавляем плавное возвращение в начальную позицию
+        const progress = (frame % 360) / 360;
+        const easeInOut = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+        const xOffset = Math.sin((frame + point.y * 2 + phaseShift) / xFreq) * xAmp * (1 - easeInOut);
+        const yOffset = Math.cos((frame + point.x * 2 + phaseShift) / yFreq) * yAmp * (1 - easeInOut);
+
+        return {
+            ...acc,
+            [key]: {
+                x: point.x + (key.includes('Left') ? -xOffset : key.includes('Right') ? xOffset : 0),
+                y: point.y + yOffset
+            }
+        };
+    }, {});
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setFrame(f => (f + 1) % 360);
+        }, 20); // Еще более плавная анимация
+        return () => clearInterval(interval);
+    }, []);
+
+    const connections = [
+        ['head', 'neck'],
+        ['neck', 'shoulderLeft'],
+        ['neck', 'shoulderRight'],
+        ['shoulderLeft', 'elbowLeft'],
+        ['shoulderRight', 'elbowRight'],
+        ['elbowLeft', 'handLeft'],
+        ['elbowRight', 'handRight'],
+        ['neck', 'hip'],
+        ['hip', 'kneeLeft'],
+        ['hip', 'kneeRight'],
+        ['kneeLeft', 'footLeft'],
+        ['kneeRight', 'footRight'],
+    ];
+
+    return (
+        <Box
+            sx={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: COLORS.dark,
+                overflow: 'hidden',
+            }}
+        >
+            {/* Фигура */}
+            <Box
+                sx={{
+                    animation: `${moveAnimation} 8s ease-in-out infinite`, // Увеличили длительность для более плавного движения
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    filter: 'drop-shadow(0 0 20px rgba(99, 102, 241, 0.2))',
+                }}
+            >
+                <svg
+                    width="100%"
+                    height="100%"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="xMidYMid meet"
+                    style={{
+                        animation: `${glowPulse} 4s ease-in-out infinite`,
+                    }}
+                >
+                    {/* Соединительные линии */}
+                    {connections.map(([from, to], index) => (
+                        <g key={index}>
+                            <line
+                                x1={`${points[from].x}%`}
+                                y1={`${points[from].y}%`}
+                                x2={`${points[to].x}%`}
+                                y2={`${points[to].y}%`}
+                                stroke={COLORS.secondary}
+                                strokeWidth="0.8"
+                                strokeDasharray="2"
+                                style={{
+                                    animation: `${pulseAnimation} 2s ease-in-out infinite`,
+                                }}
+                            />
+                            <line
+                                x1={`${points[from].x}%`}
+                                y1={`${points[from].y}%`}
+                                x2={`${points[to].x}%`}
+                                y2={`${points[to].y}%`}
+                                stroke={COLORS.tertiary}
+                                strokeWidth="0.4"
+                                strokeDasharray="1 5"
+                                style={{
+                                    animation: `${dataFlowAnimation} ${1 + index * 0.2}s linear infinite`,
+                                }}
+                            />
+                        </g>
+                    ))}
+
+                    {/* Точки */}
+                    {Object.entries(points).map(([key, { x, y }]) => (
+                        <g key={key}>
+                            <circle
+                                cx={`${x}%`}
+                                cy={`${y}%`}
+                                r="1.8"
+                                fill={COLORS.tertiary}
+                                style={{
+                                    animation: `${analyzeAnimation} ${2 + Math.random()}s ease-in-out infinite`,
+                                }}
+                            />
+                            <circle
+                                cx={`${x}%`}
+                                cy={`${y}%`}
+                                r="3.5"
+                                fill="none"
+                                stroke={COLORS.secondary}
+                                strokeWidth="0.3"
+                                style={{
+                                    animation: `${pulseAnimation} ${2 + Math.random()}s ease-in-out infinite`,
+                                }}
+                            />
+                            <circle
+                                cx={`${x}%`}
+                                cy={`${y}%`}
+                                r="5"
+                                fill="none"
+                                stroke={COLORS.secondary}
+                                strokeWidth="0.1"
+                                style={{
+                                    animation: `${pulseAnimation} ${3 + Math.random()}s ease-in-out infinite`,
+                                }}
+                            />
+                        </g>
+                    ))}
+                </svg>
+            </Box>
+
+            {/* Эффект сканирования */}
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '20px',
+                    background: `linear-gradient(180deg, 
+                        transparent,
+                        ${COLORS.secondary}40,
+                        ${COLORS.secondary}80,
+                        ${COLORS.secondary}40,
+                        transparent
+                    )`,
+                    animation: `${scanAnimation} 3s linear infinite`,
+                    opacity: 0.5,
+                    filter: 'blur(4px)',
+                }}
+            />
+
+            {/* Круговые индикаторы */}
+            {[1.2, 1.4, 1.6, 1.8].map((size, index) => (
+                <Box
+                    key={index}
+                    sx={{
+                        position: 'absolute',
+                        width: `${100 * size}%`,
+                        height: `${100 * size}%`,
+                        border: `1px solid ${COLORS.secondary}${20 - index * 5}`,
+                        borderRadius: '50%',
+                        animation: `${pulseAnimation} ${6 + index * 2}s ease-in-out infinite`,
+                        opacity: 0.8 - index * 0.2,
+                    }}
+                />
+            ))}
+
+            {/* Координатные линии */}
+            <Box
+                sx={{
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.15,
+                    '&::before, &::after': {
+                        content: '""',
+                        position: 'absolute',
+                        background: `linear-gradient(90deg, transparent, ${COLORS.secondary}, transparent)`,
+                    },
+                    '&::before': {
+                        width: '100%',
+                        height: '1px',
+                        top: '50%',
+                        animation: `${pulseAnimation} 4s ease-in-out infinite`,
+                    },
+                    '&::after': {
+                        width: '1px',
+                        height: '100%',
+                        left: '50%',
+                        background: `linear-gradient(180deg, transparent, ${COLORS.secondary}, transparent)`,
+                        animation: `${pulseAnimation} 4s ease-in-out infinite`,
+                    },
+                }}
+            />
+
+            {/* Текстовые метки */}
+            {['ANALYZING MOVEMENT', 'CAPTURING DATA', 'PROCESSING'].map((text, index) => (
+                <Typography
+                    key={index}
+                    variant="caption"
+                    sx={{
+                        position: 'absolute',
+                        color: COLORS.secondary,
+                        opacity: 0.7,
+                        fontSize: '0.7rem',
+                        fontFamily: 'monospace',
+                        animation: `${pulseAnimation} ${2 + index}s ease-in-out infinite`,
+                        top: `${20 + index * 20}%`,
+                        right: '10%',
+                        textShadow: `0 0 10px ${COLORS.secondary}40`,
+                        '&::before': {
+                            content: '"[ "',
+                            color: COLORS.tertiary,
+                        },
+                        '&::after': {
+                            content: '" ]"',
+                            color: COLORS.tertiary,
+                        },
+                        zIndex: 2,
+                    }}
+                >
+                    {text}
+                </Typography>
+            ))}
+        </Box>
+    );
+};
+
+const TechGrid = () => {
+    const gridSize = 12;
+    const [activePoints, setActivePoints] = useState([]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const newPoints = [];
+            const numPoints = Math.floor(Math.random() * 3) + 1;
+
+            for (let i = 0; i < numPoints; i++) {
+                newPoints.push({
+                    x: Math.floor(Math.random() * gridSize),
+                    y: Math.floor(Math.random() * gridSize),
+                    scale: Math.random() * 0.5 + 1
+                });
+            }
+
+            setActivePoints(newPoints);
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const getPointStyle = (x, y) => {
+        const isActive = activePoints.find(p => p.x === x && p.y === y);
+        const baseStyle = {
+            width: '4px',
+            height: '4px',
+            backgroundColor: COLORS.secondary,
+            borderRadius: '50%',
+            transition: 'all 0.5s ease-out',
+        };
+
+        if (isActive) {
+            return {
+                ...baseStyle,
+                transform: `scale(${isActive.scale})`,
+                boxShadow: `0 0 20px ${COLORS.secondary}`,
+                backgroundColor: COLORS.tertiary,
+            };
+        }
+
+        return baseStyle;
+    };
+
+    const getLineOpacity = (x, y) => {
+        const distances = activePoints.map(point =>
+            Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2))
+        );
+        const minDistance = Math.min(...distances);
+        return Math.max(0.1, 1 - minDistance / 5);
+    };
+
+    return (
+        <Box
+            sx={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                perspective: '1000px',
+            }}
+        >
+            <Box
+                sx={{
+                    position: 'relative',
+                    transform: 'rotateX(60deg) rotateZ(45deg)',
+                    transformStyle: 'preserve-3d',
+                    animation: `${waveAnimation} 8s ease-in-out infinite`,
+                }}
+            >
+                {Array.from({ length: gridSize }).map((_, y) => (
+                    <Box
+                        key={y}
+                        sx={{
+                            display: 'flex',
+                            gap: '20px',
+                            mb: '20px',
+                        }}
+                    >
+                        {Array.from({ length: gridSize }).map((_, x) => (
+                            <Box
+                                key={x}
+                                sx={{
+                                    position: 'relative',
+                                    '&::before': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        right: '-20px',
+                                        top: '2px',
+                                        width: '20px',
+                                        height: '1px',
+                                        background: `rgba(99, 102, 241, ${getLineOpacity(x, y)})`,
+                                        transformOrigin: 'left center',
+                                    },
+                                    '&::after': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        bottom: '-20px',
+                                        left: '2px',
+                                        width: '1px',
+                                        height: '20px',
+                                        background: `rgba(99, 102, 241, ${getLineOpacity(x, y)})`,
+                                        transformOrigin: 'top center',
+                                    },
+                                }}
+                            >
+                                <Box sx={getPointStyle(x, y)} />
+                            </Box>
+                        ))}
+                    </Box>
+                ))}
+            </Box>
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'radial-gradient(circle at center, transparent 0%, rgba(10, 14, 36, 0.8) 100%)',
+                    animation: `${pulseGlow} 4s ease-in-out infinite`,
+                    pointerEvents: 'none',
+                }}
+            />
+        </Box>
+    );
+};
+
 function Home() {
     const navigate = useNavigate();
-    const canvasRef = useRef(null);
     const [heroInView, setHeroInView] = useState(false);
     const heroTitleRef = useRef(null);
     const [featureSectionInView, setFeatureSectionInView] = useState(false);
@@ -520,7 +1171,6 @@ function Home() {
     const finalSectionRef = useRef(null);
 
     useEffect(() => {
-        // Устанавливаем hero in view сразу для лучшего UX
         setHeroInView(true);
 
         setTimeout(() => {
@@ -529,7 +1179,6 @@ function Home() {
             }
         }, 500);
 
-        // Создаем наблюдатели пересечения для секций
         const createObserver = (ref, setInView) => {
             const observer = new IntersectionObserver(
                 (entries) => {
@@ -552,121 +1201,7 @@ function Home() {
         const animatedObserver = createObserver(animatedSectionRef, setAnimatedSectionInView);
         const finalObserver = createObserver(finalSectionRef, setFinalSectionInView);
 
-        // Код анимации холста без изменений
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width = window.innerWidth;
-        const height = canvas.height = 400;
-
-        // Настройки частиц потока
-        const particles = [];
-        const particleCount = 120;
-
-        // Создаем частицы - код без изменений
-        for (let i = 0; i < particleCount; i++) {
-            particles.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                size: Math.random() * 4 + 1,
-                speedX: Math.random() * 3 - 1.5,
-                speedY: Math.random() * 3 - 1.5,
-                color: i % 5 === 0 ? '#6366F1' : i % 7 === 0 ? '#3B82F6' : '#ffffff',
-                opacity: Math.random() * 0.7 + 0.3,
-                edges: Math.floor(Math.random() * 3) + 3, // 3-5 граней для угловатых форм
-            });
-        }
-
-        // Функция анимации отрисовки без изменений
-        function draw() {
-            // Устанавливаем полупрозрачный фон
-            ctx.fillStyle = 'rgba(10, 14, 36, 0.15)';
-            ctx.fillRect(0, 0, width, height);
-
-            // Рисуем каждую частицу
-            particles.forEach(particle => {
-                ctx.save();
-                ctx.beginPath();
-
-                // Создаем угловатые формы вместо кругов
-                if (particle.edges === 3) { // Треугольник
-                    const size = particle.size * 1.5;
-                    ctx.moveTo(particle.x, particle.y - size);
-                    ctx.lineTo(particle.x + size, particle.y + size);
-                    ctx.lineTo(particle.x - size, particle.y + size);
-                } else if (particle.edges === 4) { // Квадрат/Ромб
-                    const rotation = Date.now() * 0.001 % (Math.PI * 2);
-                    ctx.translate(particle.x, particle.y);
-                    ctx.rotate(rotation);
-                    ctx.rect(-particle.size, -particle.size, particle.size * 2, particle.size * 2);
-                    ctx.translate(-particle.x, -particle.y);
-                } else { // Пятиугольник
-                    const size = particle.size;
-                    ctx.moveTo(particle.x + size * Math.cos(0), particle.y + size * Math.sin(0));
-                    for (let i = 1; i <= 5; i++) {
-                        const angle = i * 2 * Math.PI / 5;
-                        ctx.lineTo(particle.x + size * Math.cos(angle), particle.y + size * Math.sin(angle));
-                    }
-                }
-
-                ctx.closePath();
-                ctx.fillStyle = `${particle.color}${Math.floor(particle.opacity * 255).toString(16).padStart(2, '0')}`;
-                ctx.fill();
-                ctx.restore();
-
-                // Обновляем позицию с небольшим ускорением для более динамичного движения
-                particle.speedX += (Math.random() - 0.5) * 0.1;
-                particle.speedY += (Math.random() - 0.5) * 0.1;
-
-                // Ограничиваем скорость
-                particle.speedX = Math.max(-2.5, Math.min(2.5, particle.speedX));
-                particle.speedY = Math.max(-2.5, Math.min(2.5, particle.speedY));
-
-                particle.x += particle.speedX;
-                particle.y += particle.speedY;
-
-                // Отскок от краёв с небольшими случайными вариациями
-                if (particle.x < 0 || particle.x > width) {
-                    particle.speedX *= -1;
-                    particle.speedX += (Math.random() - 0.5) * 0.5;
-                }
-                if (particle.y < 0 || particle.y > height) {
-                    particle.speedY *= -1;
-                    particle.speedY += (Math.random() - 0.5) * 0.5;
-                }
-            });
-
-            // Рисуем соединения между близкими частицами с более угловатым стилем линий
-            particles.forEach((particle, i) => {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particle.x - particles[j].x;
-                    const dy = particle.y - particles[j].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < 80) {
-                        ctx.beginPath();
-
-                        // Более угловатые линии соединений
-                        const midX = (particle.x + particles[j].x) / 2;
-                        const midY = (particle.y + particles[j].y) / 2 + (Math.random() * 10 - 5);
-
-                        ctx.moveTo(particle.x, particle.y);
-                        ctx.lineTo(midX, midY);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-
-                        ctx.strokeStyle = `rgba(99, 102, 241, ${0.3 * (1 - distance / 80)})`;
-                        ctx.lineWidth = 0.8;
-                        ctx.stroke();
-                    }
-                }
-            });
-        }
-
-        const interval = setInterval(draw, 30);
-
         return () => {
-            clearInterval(interval);
             featureObserver.disconnect();
             animatedObserver.disconnect();
             finalObserver.disconnect();
@@ -680,10 +1215,10 @@ function Home() {
                 <HeroSection>
                     {/* Декоративные элементы */}
                     <DecorativeGrid />
-                    <AnimatedDot size={10} delay={0.2} color={COLORS.primary} sx={{ top: '15%', left: '10%' }} />
-                    <AnimatedDot size={16} delay={0.5} color={COLORS.secondary} sx={{ top: '60%', left: '85%' }} />
-                    <AnimatedDot size={12} delay={0.8} color={COLORS.tertiary} sx={{ top: '25%', left: '80%' }} />
-                    <AnimatedDot size={8} delay={1.2} color={COLORS.primary} sx={{ top: '70%', left: '20%' }} />
+                    <AnimatedDot size={10} delay={0.2} color={COLORS.secondary} sx={{ top: '15%', left: '10%' }} />
+                    <AnimatedDot size={16} delay={0.5} color={COLORS.tertiary} sx={{ top: '60%', left: '85%' }} />
+                    <AnimatedDot size={12} delay={0.8} color={COLORS.secondaryLight} sx={{ top: '25%', left: '80%' }} />
+                    <AnimatedDot size={8} delay={1.2} color={COLORS.secondary} sx={{ top: '70%', left: '20%' }} />
 
                     <AnimatedLine>
                         <svg>
@@ -710,7 +1245,7 @@ function Home() {
                                 left: '0',
                                 width: '0%',
                                 height: '3px',
-                                background: 'linear-gradient(90deg, #6366F1, #3B82F6)',
+                                background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
                                 transition: 'width 1s ease-out',
                                 transitionDelay: '0.8s',
                             }
@@ -718,7 +1253,7 @@ function Home() {
                             <LogoDanceFlow
                                 variant="h1"
                                 component="h1"
-                                color="primary"
+                                color="secondary"
                                 sx={{
                                     fontSize: { xs: '2.5rem', md: '5rem' },
                                     textTransform: 'uppercase',
@@ -743,12 +1278,12 @@ function Home() {
                                 py: 1.5,
                                 px: 5,
                                 borderRadius: '12px',
-                                background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+                                background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
                                 color: COLORS.white,
                                 fontWeight: 600,
                                 textTransform: 'none',
                                 fontFamily: '"Inter", "Golos Text", sans-serif',
-                                boxShadow: `0 10px 25px rgba(138, 43, 226, 0.5)`,
+                                boxShadow: `0 10px 25px rgba(30, 144, 255, 0.5)`,
                                 transition: 'all 0.3s ease',
                                 position: 'relative',
                                 overflow: 'hidden',
@@ -766,7 +1301,7 @@ function Home() {
                                     transition: 'all 0.5s ease',
                                 },
                                 '&:hover': {
-                                    boxShadow: `0 15px 30px rgba(138, 43, 226, 0.7)`,
+                                    boxShadow: `0 15px 30px rgba(30, 144, 255, 0.7)`,
                                     transform: 'translateY(-3px)',
                                     '&::after': {
                                         left: '100%',
@@ -781,94 +1316,6 @@ function Home() {
 
                 <DiagonalDivider position="top" color={COLORS.darkLight} bgColor={COLORS.dark} />
 
-                <FeatureSection ref={featureSectionRef}>
-                    <Container maxWidth="lg">
-                        <Box sx={{ textAlign: 'center', mb: 8 }}>
-                            <SectionTitle
-                                variant="h3"
-                                component="h2"
-                                gutterBottom
-                                inView={featureSectionInView}
-                            >
-                                Возможности
-                            </SectionTitle>
-                            <Typography
-                                variant="h6"
-                                sx={{
-                                    color: 'rgba(255, 255, 255, 0.8)',
-                                    maxWidth: '700px',
-                                    mx: 'auto',
-                                    fontFamily: '"Inter", "Golos Text", sans-serif',
-                                    fontWeight: 400,
-                                    mt: 3,
-                                    opacity: featureSectionInView ? 1 : 0,
-                                    transform: featureSectionInView ? 'translateY(0)' : 'translateY(20px)',
-                                    transition: 'opacity 0.6s ease, transform 0.6s ease',
-                                    transitionDelay: '0.3s',
-                                }}
-                            >
-                                Инструменты, которые помогут воплотить ваши идеи в движение
-                            </Typography>
-                        </Box>
-
-                        <Grid container spacing={5}>
-                            <Grid item xs={12} md={4}>
-                                <Box
-                                    sx={{
-                                        opacity: featureSectionInView ? 1 : 0,
-                                        transform: featureSectionInView ? 'translateY(0)' : 'translateY(50px)',
-                                        transition: 'opacity 0.8s ease, transform 0.8s ease',
-                                        transitionDelay: '0.2s',
-                                        height: '100%'
-                                    }}
-                                >
-                                    <FeatureCard
-                                        title="Конструктор хореографии"
-                                        description="Создавайте и визуализируйте танцевальные постановки с помощью продвинутых инструментов 3D-анимации. Загружайте видео и преобразуйте их в анимированные последовательности."
-                                        onClick={() => navigate('/constructor')}
-                                    />
-                                </Box>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <Box
-                                    sx={{
-                                        opacity: featureSectionInView ? 1 : 0,
-                                        transform: featureSectionInView ? 'translateY(0)' : 'translateY(50px)',
-                                        transition: 'opacity 0.8s ease, transform 0.8s ease',
-                                        transitionDelay: '0.4s',
-                                        height: '100%'
-                                    }}
-                                >
-                                    <FeatureCard
-                                        title="Управление командами"
-                                        description="Создавайте команды, делитесь хореографией и сотрудничайте с танцорами. Управляйте правами доступа и отслеживайте прогресс участников."
-                                        onClick={() => navigate('/teams')}
-                                    />
-                                </Box>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <Box
-                                    sx={{
-                                        opacity: featureSectionInView ? 1 : 0,
-                                        transform: featureSectionInView ? 'translateY(0)' : 'translateY(50px)',
-                                        transition: 'opacity 0.8s ease, transform 0.8s ease',
-                                        transitionDelay: '0.6s',
-                                        height: '100%'
-                                    }}
-                                >
-                                    <FeatureCard
-                                        title="3D Визуализация"
-                                        description="Преобразуйте ваши танцевальные движения в 3D-анимации. Применяйте движения к разным моделям и смотрите, как они будут выглядеть в пространстве."
-                                        onClick={() => navigate('/constructor')}
-                                    />
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    </Container>
-                </FeatureSection>
-
-                <DiagonalDivider position="bottom" color={COLORS.darkLight} bgColor={COLORS.dark} />
-
                 <AnimatedSection ref={animatedSectionRef}>
                     <Container maxWidth="lg">
                         <Box sx={{ position: 'relative', zIndex: 2 }}>
@@ -878,217 +1325,265 @@ function Home() {
                                     component="h2"
                                     inView={animatedSectionInView}
                                 >
-                                    Погружение в танец
+                                    Революция в создании хореографии
                                 </SectionTitle>
+                                <Typography
+                                    variant="h6"
+                                    sx={{
+                                        color: 'rgba(255, 255, 255, 0.8)',
+                                        maxWidth: '800px',
+                                        mx: 'auto',
+                                        mt: 3,
+                                        fontFamily: '"Inter", "Golos Text", sans-serif',
+                                        opacity: animatedSectionInView ? 1 : 0,
+                                        transform: animatedSectionInView ? 'translateY(0)' : 'translateY(20px)',
+                                        transition: 'opacity 0.6s ease, transform 0.6s ease',
+                                        transitionDelay: '0.3s',
+                                    }}
+                                >
+                                    Профессиональные инструменты для создания и визуализации танцевальных постановок
+                                </Typography>
                             </Box>
+
+                            <Grid container spacing={4} sx={{ mb: 8 }}>
+                                <Grid item xs={12} md={4}>
+                                    <Box sx={{
+                                        textAlign: 'center',
+                                        p: 3,
+                                        opacity: animatedSectionInView ? 1 : 0,
+                                        transform: animatedSectionInView ? 'translateY(0)' : 'translateY(30px)',
+                                        transition: 'opacity 0.8s ease, transform 0.8s ease',
+                                        transitionDelay: '0.3s',
+                                    }}>
+                                        <Box sx={{
+                                            width: '80px',
+                                            height: '80px',
+                                            borderRadius: '20px',
+                                            background: `linear-gradient(135deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            margin: '0 auto 20px',
+                                            position: 'relative',
+                                            '&::after': {
+                                                content: '""',
+                                                position: 'absolute',
+                                                width: '100%',
+                                                height: '100%',
+                                                borderRadius: '20px',
+                                                background: 'inherit',
+                                                filter: 'blur(20px)',
+                                                opacity: 0.5,
+                                                zIndex: -1,
+                                            }
+                                        }}>
+                                            <Typography variant="h4" sx={{ color: COLORS.white, fontWeight: 'bold' }}>⚙️</Typography>
+                                        </Box>
+                                        <Typography variant="h6" sx={{ color: COLORS.white, mb: 2, fontWeight: 600 }}>
+                                            Конструктор хореографии
+                                        </Typography>
+                                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                            Создавайте и визуализируйте положение танцоров на сцене. Загружайте видео хореографий и храните их в одном месте.
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <Box sx={{
+                                        textAlign: 'center',
+                                        p: 3,
+                                        opacity: animatedSectionInView ? 1 : 0,
+                                        transform: animatedSectionInView ? 'translateY(0)' : 'translateY(30px)',
+                                        transition: 'opacity 0.8s ease, transform 0.8s ease',
+                                        transitionDelay: '0.5s',
+                                    }}>
+                                        <Box sx={{
+                                            width: '80px',
+                                            height: '80px',
+                                            borderRadius: '20px',
+                                            background: `linear-gradient(135deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            margin: '0 auto 20px',
+                                            position: 'relative',
+                                            '&::after': {
+                                                content: '""',
+                                                position: 'absolute',
+                                                width: '100%',
+                                                height: '100%',
+                                                borderRadius: '20px',
+                                                background: 'inherit',
+                                                filter: 'blur(20px)',
+                                                opacity: 0.5,
+                                                zIndex: -1,
+                                            }
+                                        }}>
+                                            <Typography variant="h4" sx={{ color: COLORS.white, fontWeight: 'bold' }}>👥</Typography>
+                                        </Box>
+                                        <Typography variant="h6" sx={{ color: COLORS.white, mb: 2, fontWeight: 600 }}>
+                                            Управление командами
+                                        </Typography>
+                                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                            Создавайте команды, делитесь проектами с хореографиями и сотрудничайте с танцорами.
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <Box sx={{
+                                        textAlign: 'center',
+                                        p: 3,
+                                        opacity: animatedSectionInView ? 1 : 0,
+                                        transform: animatedSectionInView ? 'translateY(0)' : 'translateY(30px)',
+                                        transition: 'opacity 0.8s ease, transform 0.8s ease',
+                                        transitionDelay: '0.7s',
+                                    }}>
+                                        <Box sx={{
+                                            width: '80px',
+                                            height: '80px',
+                                            borderRadius: '20px',
+                                            background: `linear-gradient(135deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            margin: '0 auto 20px',
+                                            position: 'relative',
+                                            '&::after': {
+                                                content: '""',
+                                                position: 'absolute',
+                                                width: '100%',
+                                                height: '100%',
+                                                borderRadius: '20px',
+                                                background: 'inherit',
+                                                filter: 'blur(20px)',
+                                                opacity: 0.5,
+                                                zIndex: -1,
+                                            }
+                                        }}>
+                                            <Typography variant="h4" sx={{ color: COLORS.white, fontWeight: 'bold' }}>3D</Typography>
+                                        </Box>
+                                        <Typography variant="h6" sx={{ color: COLORS.white, mb: 2, fontWeight: 600 }}>
+                                            3D Визуализация
+                                        </Typography>
+                                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                                            Преобразуйте ваши движения в 3D-анимации.
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                            </Grid>
 
                             <Box
                                 sx={{
-                                    height: 400,
-                                    mb: 4,
+                                    p: 4,
                                     borderRadius: '24px',
-                                    overflow: 'hidden',
-                                    boxShadow: `0 10px 30px rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.3)`,
-                                    border: `1px solid rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.2)`,
+                                    background: `linear-gradient(135deg, rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.1), rgba(${parseInt(COLORS.tertiary.slice(1, 3), 16)}, ${parseInt(COLORS.tertiary.slice(3, 5), 16)}, ${parseInt(COLORS.tertiary.slice(5, 7), 16)}, 0.1))`,
+                                    border: `1px solid rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.2)`,
                                     position: 'relative',
+                                    overflow: 'hidden',
                                     opacity: animatedSectionInView ? 1 : 0,
                                     transform: animatedSectionInView ? 'translateY(0)' : 'translateY(30px)',
                                     transition: 'opacity 0.8s ease, transform 0.8s ease',
-                                    transitionDelay: '0.3s',
+                                    transitionDelay: '0.9s',
                                 }}
                             >
-                                <WaveBox />
-                                <canvas
-                                    ref={canvasRef}
-                                    style={{ width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
-                                />
-                            </Box>
-
-                            <Box sx={{
-                                textAlign: 'center',
-                                maxWidth: '800px',
-                                mx: 'auto',
-                                mt: 6,
-                                position: 'relative',
-                                opacity: animatedSectionInView ? 1 : 0,
-                                transform: animatedSectionInView ? 'translateY(0)' : 'translateY(20px)',
-                                transition: 'opacity 0.8s ease, transform 0.8s ease',
-                                transitionDelay: '0.6s',
-                            }}>
-                                <Typography
-                                    variant="h5"
-                                    sx={{
-                                        color: 'rgba(255, 255, 255, 0.9)',
-                                        fontFamily: '"Inter", "Golos Text", sans-serif',
-                                        fontWeight: 500,
-                                        position: 'relative',
-                                        display: 'inline-block',
-                                        '&::before, &::after': {
-                                            content: '""',
-                                            position: 'absolute',
-                                            width: '20px',
-                                            height: '2px',
-                                            background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
-                                            top: '50%',
-                                        },
-                                        '&::before': {
-                                            left: '-30px',
-                                        },
-                                        '&::after': {
-                                            right: '-30px',
-                                        }
-                                    }}
-                                >
-                                    "Танец — это тайный язык души"
-                                </Typography>
+                                <Grid container spacing={4} alignItems="center">
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="h4" sx={{ color: COLORS.white, mb: 3, fontWeight: 700 }}>
+                                            Почему хореографы выбирают DanceFlow?
+                                        </Typography>
+                                        <Box sx={{ mb: 3 }}>
+                                            <Typography sx={{
+                                                color: 'rgba(255, 255, 255, 0.9)',
+                                                mb: 2,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                '&::before': {
+                                                    content: '""',
+                                                    width: '8px',
+                                                    height: '8px',
+                                                    borderRadius: '50%',
+                                                    background: `linear-gradient(135deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+                                                    marginRight: '12px',
+                                                }
+                                            }}>
+                                                Экономия времени на 70% при создании и визуализации постановок
+                                            </Typography>
+                                            <Typography sx={{
+                                                color: 'rgba(255, 255, 255, 0.9)',
+                                                mb: 2,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                '&::before': {
+                                                    content: '""',
+                                                    width: '8px',
+                                                    height: '8px',
+                                                    borderRadius: '50%',
+                                                    background: `linear-gradient(135deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+                                                    marginRight: '12px',
+                                                }
+                                            }}>
+                                                Улучшение качества постановок благодаря 3D-предпросмотру
+                                            </Typography>
+                                            <Typography sx={{
+                                                color: 'rgba(255, 255, 255, 0.9)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                '&::before': {
+                                                    content: '""',
+                                                    width: '8px',
+                                                    height: '8px',
+                                                    borderRadius: '50%',
+                                                    background: `linear-gradient(135deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+                                                    marginRight: '12px',
+                                                }
+                                            }}>
+                                                Эффективная коммуникация с командой в одном приложении
+                                            </Typography>
+                                        </Box>
+                                        <Button
+                                            variant="contained"
+                                            size="large"
+                                            onClick={() => navigate('/register')}
+                                            sx={{
+                                                mt: 2,
+                                                background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+                                                borderRadius: '12px',
+                                                textTransform: 'none',
+                                                fontSize: '1.1rem',
+                                                fontWeight: 600,
+                                                padding: '12px 30px',
+                                                '&:hover': {
+                                                    background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: `0 8px 20px rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.4)`,
+                                                }
+                                            }}
+                                        >
+                                            Попробовать бесплатно
+                                        </Button>
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Box sx={{
+                                            position: 'relative',
+                                            height: '400px',
+                                            borderRadius: '16px',
+                                            overflow: 'hidden',
+                                            background: COLORS.dark,
+                                            border: `1px solid ${COLORS.secondary}20`,
+                                            boxShadow: `0 0 30px ${COLORS.secondary}20`,
+                                        }}>
+                                            <MotionCapture />
+                                        </Box>
+                                    </Grid>
+                                </Grid>
                             </Box>
                         </Box>
                     </Container>
                 </AnimatedSection>
 
-                <DiagonalDivider position="top" color={COLORS.dark} bgColor={COLORS.darkLight} />
+                <DiagonalDivider position="bottom" color={COLORS.dark} bgColor={COLORS.darkLight} />
 
-                <Box sx={{ background: `linear-gradient(135deg, ${COLORS.darkLight} 0%, ${COLORS.dark} 100%)`, py: 8 }} ref={finalSectionRef}>
-                    <Container maxWidth="lg">
-                        <Grid container spacing={5} alignItems="center">
-                            <Grid item xs={12} md={6}>
-                                <Box sx={{
-                                    opacity: finalSectionInView ? 1 : 0,
-                                    transform: finalSectionInView ? 'translateX(0)' : 'translateX(-30px)',
-                                    transition: 'opacity 0.8s ease, transform 0.8s ease',
-                                }}>
-                                    <Typography
-                                        variant="h4"
-                                        gutterBottom
-                                        sx={{
-                                            fontWeight: 700,
-                                            fontFamily: '"Inter", "Golos Text", sans-serif',
-                                            color: COLORS.white,
-                                            position: 'relative',
-                                            display: 'inline-block',
-                                            mb: 3,
-                                            '&::after': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                bottom: '-8px',
-                                                left: 0,
-                                                width: '60px',
-                                                height: '3px',
-                                                background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
-                                            }
-                                        }}
-                                    >
-                                        <LogoDanceFlow
-                                            variant="h4"
-                                            component="span"
-                                            color="primary"
-                                            sx={{ fontWeight: 700 }}
-                                        />
-                                        <Typography variant="h4" component="span" sx={{ ml: 2 }}>
-                                            - Готовы начать?
-                                        </Typography>
-                                    </Typography>
-                                    <Typography
-                                        variant="h6"
-                                        paragraph
-                                        sx={{
-                                            fontWeight: 400,
-                                            color: 'rgba(255, 255, 255, 0.8)',
-                                            fontFamily: '"Inter", "Golos Text", sans-serif',
-                                            mb: 4,
-                                            mt: 3
-                                        }}
-                                    >
-                                        Создайте свою первую танцевальную постановку прямо сейчас
-                                    </Typography>
-                                    <GlowingButton
-                                        variant="contained"
-                                        size="large"
-                                        sx={{
-                                            background: `linear-gradient(90deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)`,
-                                            color: COLORS.white,
-                                            borderRadius: '12px',
-                                            fontFamily: '"Inter", "Golos Text", sans-serif',
-                                            textTransform: 'none',
-                                            fontWeight: 600,
-                                            py: 1.5,
-                                            px: 4,
-                                            boxShadow: `0 10px 25px rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.4)`,
-                                            transition: 'all 0.3s ease',
-                                            position: 'relative',
-                                            overflow: 'hidden',
-                                            '&::after': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                top: 0,
-                                                left: '-100%',
-                                                width: '100%',
-                                                height: '100%',
-                                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-                                                transition: 'all 0.5s ease',
-                                            },
-                                            '&:hover': {
-                                                boxShadow: `0 15px 30px rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.6)`,
-                                                transform: 'translateY(-3px)',
-                                                '&::after': {
-                                                    left: '100%',
-                                                }
-                                            }
-                                        }}
-                                        onClick={() => navigate('/constructor')}
-                                    >
-                                        Начать бесплатно
-                                    </GlowingButton>
-                                </Box>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <Box
-                                    sx={{
-                                        p: 4,
-                                        borderRadius: '20px',
-                                        background: `rgba(${parseInt(COLORS.darkLight.slice(1, 3), 16)}, ${parseInt(COLORS.darkLight.slice(3, 5), 16)}, ${parseInt(COLORS.darkLight.slice(5, 7), 16)}, 0.9)`,
-                                        border: `1px solid rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.2)`,
-                                        position: 'relative',
-                                        '&::before': {
-                                            content: '""',
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            width: '4px',
-                                            height: '100%',
-                                            background: `linear-gradient(180deg, ${COLORS.primary} 0%, ${COLORS.tertiary} 100%)`,
-                                            borderTopLeftRadius: '20px',
-                                            borderBottomLeftRadius: '20px',
-                                        },
-                                        opacity: finalSectionInView ? 1 : 0,
-                                        transform: finalSectionInView ? 'translateX(0)' : 'translateX(30px)',
-                                        transition: 'opacity 0.8s ease, transform 0.8s ease',
-                                        transitionDelay: '0.3s',
-                                    }}
-                                >
-                                    <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.9)', mb: 2.5, fontFamily: '"Inter", "Golos Text", sans-serif', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                                        <Box component="span" sx={{ color: COLORS.primary, mr: 2, fontSize: '1.2rem', fontWeight: 'bold' }}>—</Box>
-                                        Создавайте хореографию с помощью 3D-анимации
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.9)', mb: 2.5, fontFamily: '"Inter", "Golos Text", sans-serif', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                                        <Box component="span" sx={{ color: COLORS.primary, mr: 2, fontSize: '1.2rem', fontWeight: 'bold' }}>—</Box>
-                                        Управляйте командами и доступом
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.9)', mb: 2.5, fontFamily: '"Inter", "Golos Text", sans-serif', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                                        <Box component="span" sx={{ color: COLORS.primary, mr: 2, fontSize: '1.2rem', fontWeight: 'bold' }}>—</Box>
-                                        Делитесь постановками с другими
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: '"Inter", "Golos Text", sans-serif', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                                        <Box component="span" sx={{ color: COLORS.primary, mr: 2, fontSize: '1.2rem', fontWeight: 'bold' }}>—</Box>
-                                        Отслеживайте прогресс и вносите изменения
-                                    </Typography>
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    </Container>
-                </Box>
+                <Footer />
             </Box>
-            <Footer />
         </Box>
     );
 }

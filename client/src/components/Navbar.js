@@ -28,7 +28,7 @@ const LogoDanceFlow = ({ variant = "h6", component = "span", color = "primary", 
         <Box
             component="span"
             sx={{
-                background: `linear-gradient(90deg, ${COLORS[color]}, ${COLORS.tertiary})`,
+                background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -41,7 +41,7 @@ const LogoDanceFlow = ({ variant = "h6", component = "span", color = "primary", 
                     left: 0,
                     width: '100%',
                     height: '2px',
-                    background: `linear-gradient(90deg, ${COLORS[color]}, ${COLORS.tertiary})`,
+                    background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
                     opacity: 0.5,
                     borderRadius: '2px',
                     transform: 'translateY(3px)',
@@ -79,11 +79,11 @@ const StyledButton = styled(Button)(({ theme }) => ({
     padding: '8px 16px',
     transition: 'all 0.3s ease',
     '&.MuiButton-contained': {
-        background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.primaryLight})`,
+        background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.secondaryLight})`,
         color: COLORS.white,
-        boxShadow: `0 6px 15px rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.3)`,
+        boxShadow: `0 6px 15px rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.3)`,
         '&:hover': {
-            boxShadow: `0 8px 20px rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.5)`,
+            boxShadow: `0 8px 20px rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.5)`,
             transform: 'translateY(-2px)'
         }
     },
@@ -103,7 +103,7 @@ const NavButton = styled(Button)(({ theme, active }) => ({
     fontWeight: 600,
     fontFamily: '"Inter", "Golos Text", sans-serif',
     padding: '8px 16px',
-    backgroundColor: active === 'true' ? `rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.2)` : 'transparent',
+    backgroundColor: active === 'true' ? `rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.2)` : 'transparent',
     color: active === 'true' ? COLORS.white : 'rgba(255, 255, 255, 0.85)',
     position: 'relative',
     transition: 'all 0.3s ease',
@@ -115,13 +115,13 @@ const NavButton = styled(Button)(({ theme, active }) => ({
         width: active === 'true' ? '40px' : '0',
         height: '2px',
         transform: 'translateX(-50%)',
-        background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.tertiary})`,
+        background: `linear-gradient(90deg, ${COLORS.secondary}, ${COLORS.tertiary})`,
         transition: 'width 0.3s ease',
         opacity: 0.7,
         borderRadius: '2px'
     },
     '&:hover': {
-        backgroundColor: active === 'true' ? `rgba(${parseInt(COLORS.primary.slice(1, 3), 16)}, ${parseInt(COLORS.primary.slice(3, 5), 16)}, ${parseInt(COLORS.primary.slice(5, 7), 16)}, 0.3)` : 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: active === 'true' ? `rgba(${parseInt(COLORS.secondary.slice(1, 3), 16)}, ${parseInt(COLORS.secondary.slice(3, 5), 16)}, ${parseInt(COLORS.secondary.slice(5, 7), 16)}, 0.3)` : 'rgba(255, 255, 255, 0.1)',
         '&::after': {
             width: '30px'
         }
@@ -153,7 +153,7 @@ function Navbar() {
                             display: 'flex',
                             alignItems: 'center'
                         }}
-                        onClick={() => navigate(isAuthenticated ? '/auth-home' : '/')}
+                        onClick={() => navigate(isAuthenticated ? '/dashboard' : '/')}
                     >
                         <LogoDanceFlow
                             variant="h6"

@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// RegisterTeamRoutes registers all team routes
+// Регистрирует все маршруты команд
 func RegisterTeamRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	teams := router.Group("/teams")
 	teams.Use(middleware.JWTMiddleware(cfg))
@@ -26,46 +26,46 @@ func RegisterTeamRoutes(router *gin.RouterGroup, cfg *config.Config) {
 		teams.PUT("/:id", middleware.CheckTeamAccess(), updateTeam)
 		teams.DELETE("/:id", middleware.CheckTeamAccess(), deleteTeam)
 		
-		// Team members management
+		// Управление участниками команды
 		teams.GET("/:id/members", middleware.CheckTeamAccess(), getTeamMembers)
 		teams.POST("/:id/members", middleware.CheckTeamAccess(), addTeamMember)
 		teams.DELETE("/:id/members/:userId", middleware.CheckTeamAccess(), removeTeamMember)
 		
-		// Team projects management
+		// Управление проектами команды
 		teams.GET("/:id/projects", middleware.CheckTeamAccess(), getTeamProjects)
 		teams.POST("/:id/projects", middleware.CheckTeamAccess(), addProjectToTeam)
 		teams.DELETE("/:id/projects/:projectId", middleware.CheckTeamAccess(), removeProjectFromTeam)
 		teams.GET("/:id/projects/:projectId/viewer", middleware.CheckTeamAccess(), getTeamProjectViewer)
 		
-		// Add a test endpoint
+		// Добавляем тестовый эндпоинт
 		teams.GET("/test", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"message": "Team routes are working"})
 		})
 	}
 }
 
-// getTeams returns all teams accessible by the authenticated user
+// Возвращает все команды, доступные аутентифицированному пользователю
 func getTeams(c *gin.Context) {
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Query filter: teams where user is owner OR member
+	// Фильтр запроса: команды, где пользователь является владельцем ИЛИ участником
 	filter := bson.M{
 		"$or": []bson.M{
-			{"owner": userID},           // User is team owner
-			{"members.userId": userID},  // User is team member
+			{"owner": userID},           // Пользователь является владельцем команды
+			{"members.userId": userID},  // Пользователь является участником команды
 		},
 	}
 
-	// Get all matching teams
+	// Получаем все подходящие команды
 	findOptions := options.Find().SetSort(bson.M{"name": 1})
 	cursor, err := config.TeamsCollection.Find(ctx, filter, findOptions)
 	if err != nil {
@@ -75,7 +75,7 @@ func getTeams(c *gin.Context) {
 	}
 	defer cursor.Close(ctx)
 
-	// Decode teams
+	// Декодируем команды
 	var teams []models.Team
 	if err := cursor.All(ctx, &teams); err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to decode teams: %w", err))
@@ -86,7 +86,7 @@ func getTeams(c *gin.Context) {
 	c.JSON(http.StatusOK, teams)
 }
 
-// getTeam returns a single team by ID if the user has access
+// Возвращает одну команду по ID, если у пользователя есть доступ
 func getTeam(c *gin.Context) {
 	teamID := c.Param("id")
 	if teamID == "" {
@@ -94,31 +94,31 @@ func getTeam(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Convert team ID to ObjectID
+	// Преобразуем ID команды в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Find team by ID, ensuring user has access
+	// Находим команду по ID, проверяя доступ пользователя
 	var team models.Team
 	err = config.TeamsCollection.FindOne(ctx, bson.M{
 		"_id": teamObjID,
 		"$or": []bson.M{
-			{"owner": userID},           // User is owner
-			{"members.userId": userID},  // User is member
+			{"owner": userID},           // Пользователь является владельцем
+			{"members.userId": userID},  // Пользователь является участником
 		},
 	}).Decode(&team)
 
@@ -128,19 +128,19 @@ func getTeam(c *gin.Context) {
 		return
 	}
 
-	// Populate projects with full project objects
+	// Заполняем проекты полными объектами проектов
 	if len(team.Projects) > 0 {
 		var projectIDs []primitive.ObjectID
 		for _, projectIDStr := range team.Projects {
 			projectID, err := primitive.ObjectIDFromHex(projectIDStr)
 			if err != nil {
-				continue // Skip invalid IDs
+				continue // Пропускаем неверные ID
 			}
 			projectIDs = append(projectIDs, projectID)
 		}
 
 		if len(projectIDs) > 0 {
-			// Find all projects for this team
+			// Находим все проекты для этой команды
 			cursor, err := config.ProjectsCollection.Find(ctx, bson.M{
 				"_id": bson.M{"$in": projectIDs},
 			})
@@ -148,7 +148,7 @@ func getTeam(c *gin.Context) {
 			if err == nil {
 				defer cursor.Close(ctx)
 				
-				// Create a response structure with projects as full objects
+				// Создаем структуру ответа с проектами как полными объектами
 				type TeamResponse struct {
 					models.Team
 					ProjectObjects []models.Project `json:"projectObjects"`
@@ -167,11 +167,11 @@ func getTeam(c *gin.Context) {
 		}
 	}
 
-	// If we couldn't populate projects or there are no projects, return the team as is
+	// Если мы не смогли заполнить проекты или проектов нет, возвращаем команду как есть
 	c.JSON(http.StatusOK, team)
 }
 
-// createTeam creates a new team
+// Создает новую команду
 func createTeam(c *gin.Context) {
 	var input models.TeamCreateInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -179,14 +179,14 @@ func createTeam(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Create team
+	// Создаем команду
 	team := models.Team{
 		ID:          primitive.NewObjectID(),
 		Name:        input.Name,
@@ -198,7 +198,7 @@ func createTeam(c *gin.Context) {
 		UpdatedAt:   time.Now(),
 	}
 
-	// Insert team into database
+	// Вставляем команду в базу данных
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -209,7 +209,7 @@ func createTeam(c *gin.Context) {
 		return
 	}
 
-	// Add team to user's teams
+	// Добавляем команду в список команд пользователя
 	_, err = config.UsersCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": userID},
@@ -217,13 +217,13 @@ func createTeam(c *gin.Context) {
 	)
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to update user teams: %w", err))
-		// Log error but continue - we still created the team
+		// Логируем ошибку, но продолжаем - мы все еще создали команду
 	}
 
 	c.JSON(http.StatusCreated, team)
 }
 
-// updateTeam updates a team if the user is the owner
+// Обновляет команду, если пользователь является владельцем
 func updateTeam(c *gin.Context) {
 	teamID := c.Param("id")
 	if teamID == "" {
@@ -237,25 +237,25 @@ func updateTeam(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Convert team ID to ObjectID
+	// Преобразуем ID команды в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Check if user is the team owner
+	// Проверяем, является ли пользователь владельцем команды
 	var team models.Team
 	err = config.TeamsCollection.FindOne(ctx, bson.M{
 		"_id": teamObjID,
@@ -267,7 +267,7 @@ func updateTeam(c *gin.Context) {
 		return
 	}
 
-	// Update team
+	// Обновляем команду
 	update := bson.M{
 		"$set": bson.M{
 			"updatedAt": time.Now(),
@@ -288,7 +288,7 @@ func updateTeam(c *gin.Context) {
 		return
 	}
 
-	// Return updated team
+	// Возвращаем обновленную команду
 	err = config.TeamsCollection.FindOne(ctx, bson.M{"_id": teamObjID}).Decode(&team)
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to get updated team: %w", err))
@@ -299,7 +299,7 @@ func updateTeam(c *gin.Context) {
 	c.JSON(http.StatusOK, team)
 }
 
-// deleteTeam deletes a team if the user is the owner
+// Удаляет команду, если пользователь является владельцем
 func deleteTeam(c *gin.Context) {
 	teamID := c.Param("id")
 	if teamID == "" {
@@ -307,25 +307,25 @@ func deleteTeam(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Convert team ID to ObjectID
+	// Преобразуем ID команды в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Check if user is the team owner
+	// Проверяем, является ли пользователь владельцем команды
 	var team models.Team
 	err = config.TeamsCollection.FindOne(ctx, bson.M{
 		"_id": teamObjID,
@@ -337,7 +337,7 @@ func deleteTeam(c *gin.Context) {
 		return
 	}
 
-	// Remove team from all users' teams arrays
+	// Удаляем команду из списков команд всех пользователей
 	_, err = config.UsersCollection.UpdateMany(
 		ctx,
 		bson.M{"teams": teamObjID},
@@ -345,10 +345,10 @@ func deleteTeam(c *gin.Context) {
 	)
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to update users' teams: %w", err))
-		// Log error but continue with deletion
+		// Логируем ошибку, но продолжаем удаление
 	}
 
-	// Delete team
+	// Удаляем команду
 	_, err = config.TeamsCollection.DeleteOne(ctx, bson.M{"_id": teamObjID})
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to delete team: %w", err))
@@ -359,7 +359,7 @@ func deleteTeam(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Team deleted successfully"})
 }
 
-// getTeamMembers returns all members of a team
+// Возвращает всех участников команды
 func getTeamMembers(c *gin.Context) {
 	teamID := c.Param("id")
 	if teamID == "" {
@@ -367,18 +367,18 @@ func getTeamMembers(c *gin.Context) {
 		return
 	}
 
-	// Convert team ID to ObjectID
+	// Преобразуем ID команды в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Find team by ID
+	// Находим команду по ID
 	var team models.Team
 	err = config.TeamsCollection.FindOne(ctx, bson.M{"_id": teamObjID}).Decode(&team)
 	if err != nil {
@@ -390,7 +390,7 @@ func getTeamMembers(c *gin.Context) {
 	c.JSON(http.StatusOK, team.Members)
 }
 
-// addTeamMember adds a user to a team
+// Добавляет пользователя в команду
 func addTeamMember(c *gin.Context) {
 	teamID := c.Param("id")
 	if teamID == "" {
@@ -407,20 +407,20 @@ func addTeamMember(c *gin.Context) {
 		return
 	}
 
-	// Validate role
+	// Проверяем роль
 	if input.Role != "editor" && input.Role != "viewer" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Role must be either 'editor' or 'viewer'"})
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID текущего пользователя из контекста
 	currentUserID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Convert IDs to ObjectIDs
+	// Преобразуем ID в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
@@ -433,11 +433,11 @@ func addTeamMember(c *gin.Context) {
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Check if user is the team owner or an editor
+	// Проверяем, является ли пользователь владельцем команды или редактором
 	var team models.Team
 	err = config.TeamsCollection.FindOne(ctx, bson.M{
 		"_id": teamObjID,
@@ -452,7 +452,7 @@ func addTeamMember(c *gin.Context) {
 		return
 	}
 	
-	// Check if user is already a member of the team
+	// Проверяем, не является ли пользователь уже участником команды
 	if team.Owner == userObjID {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User is already the team owner"})
 		return
@@ -465,7 +465,7 @@ func addTeamMember(c *gin.Context) {
 		}
 	}
 
-	// Check if the user to add exists
+	// Проверяем, существует ли пользователь, которого нужно добавить
 	var userToAdd models.User
 	err = config.UsersCollection.FindOne(ctx, bson.M{"_id": userObjID}).Decode(&userToAdd)
 	if err != nil {
@@ -473,7 +473,7 @@ func addTeamMember(c *gin.Context) {
 		return
 	}
 
-	// Add member to team
+	// Добавляем участника в команду
 	member := models.Member{
 		UserID: userObjID,
 		Role:   input.Role,
@@ -481,6 +481,7 @@ func addTeamMember(c *gin.Context) {
 		Email:  userToAdd.Email,
 	}
 
+	// Обновляем команду, добавляя нового участника
 	_, err = config.TeamsCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": teamObjID},
@@ -495,7 +496,7 @@ func addTeamMember(c *gin.Context) {
 		return
 	}
 
-	// Add team to user's teams list
+	// Добавляем команду в список команд пользователя
 	_, err = config.UsersCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": userObjID},
@@ -503,10 +504,10 @@ func addTeamMember(c *gin.Context) {
 	)
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to update user teams: %w", err))
-		// Log error but continue - we still added the member to the team
+		// Логируем ошибку, но продолжаем - мы все еще добавили участника в команду
 	}
 
-	// Return updated team
+	// Возвращаем обновленную команду
 	err = config.TeamsCollection.FindOne(ctx, bson.M{"_id": teamObjID}).Decode(&team)
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to get updated team: %w", err))
@@ -517,7 +518,7 @@ func addTeamMember(c *gin.Context) {
 	c.JSON(http.StatusOK, team)
 }
 
-// removeTeamMember removes a user from a team
+// Удаляет пользователя из команды
 func removeTeamMember(c *gin.Context) {
 	teamID := c.Param("id")
 	userIDToRemove := c.Param("userId")
@@ -526,14 +527,14 @@ func removeTeamMember(c *gin.Context) {
 		return
 	}
 
-	// Get current user ID from context
+	// Получаем текущий ID пользователя из контекста
 	currentUserID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Convert IDs to ObjectIDs
+	// Преобразуем ID в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
@@ -546,11 +547,11 @@ func removeTeamMember(c *gin.Context) {
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Check if user is the team owner or an editor
+	// Проверяем, является ли пользователь владельцем команды или редактором
 	var team models.Team
 	err = config.TeamsCollection.FindOne(ctx, bson.M{
 		"_id": teamObjID,
@@ -565,13 +566,13 @@ func removeTeamMember(c *gin.Context) {
 		return
 	}
 
-	// Cannot remove the owner
+	// Нельзя удалить владельца
 	if team.Owner == userObjIDToRemove {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Cannot remove the team owner"})
 		return
 	}
 
-	// Remove member from team
+	// Удаляем участника из команды
 	_, err = config.TeamsCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": teamObjID},
@@ -586,7 +587,7 @@ func removeTeamMember(c *gin.Context) {
 		return
 	}
 
-	// Remove team from user's teams list
+	// Удаляем команду из списка команд пользователя
 	_, err = config.UsersCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": userObjIDToRemove},
@@ -594,10 +595,10 @@ func removeTeamMember(c *gin.Context) {
 	)
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to update user teams: %w", err))
-		// Log error but continue - we still removed the member from the team
+		// Логируем ошибку, но продолжаем - мы все еще удалили участника из команды
 	}
 
-	// Return updated team
+	// Возвращаем обновленную команду
 	err = config.TeamsCollection.FindOne(ctx, bson.M{"_id": teamObjID}).Decode(&team)
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to get updated team: %w", err))
@@ -608,7 +609,7 @@ func removeTeamMember(c *gin.Context) {
 	c.JSON(http.StatusOK, team)
 }
 
-// getTeamProjects returns all projects of a team
+// Возвращает все проекты команды
 func getTeamProjects(c *gin.Context) {
 	teamID := c.Param("id")
 	if teamID == "" {
@@ -616,18 +617,18 @@ func getTeamProjects(c *gin.Context) {
 		return
 	}
 
-	// Convert team ID to ObjectID
+	// Преобразуем ID команды в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Find team projects
+	// Находим проекты команды
 	cursor, err := config.ProjectsCollection.Find(ctx, bson.M{"teamId": teamObjID})
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to get team projects: %w", err))
@@ -636,7 +637,7 @@ func getTeamProjects(c *gin.Context) {
 	}
 	defer cursor.Close(ctx)
 
-	// Decode projects
+	// Декодируем проекты
 	var projects []models.Project
 	if err := cursor.All(ctx, &projects); err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to decode projects: %w", err))
@@ -647,7 +648,7 @@ func getTeamProjects(c *gin.Context) {
 	c.JSON(http.StatusOK, projects)
 }
 
-// addProjectToTeam adds a project to a team
+// Добавляет проект в команду
 func addProjectToTeam(c *gin.Context) {
 	teamID := c.Param("id")
 	if teamID == "" {
@@ -663,14 +664,14 @@ func addProjectToTeam(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Convert IDs to ObjectIDs
+	// Преобразуем ID команды в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
@@ -683,11 +684,11 @@ func addProjectToTeam(c *gin.Context) {
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Check if user has access to the team
+	// Проверяем, есть ли у пользователя доступ к команде
 	var team models.Team
 	err = config.TeamsCollection.FindOne(ctx, bson.M{
 		"_id": teamObjID,
@@ -702,7 +703,7 @@ func addProjectToTeam(c *gin.Context) {
 		return
 	}
 
-	// Check if project exists and user has access to it
+	// Проверяем, существует ли проект и есть ли у пользователя доступ к нему
 	var project models.Project
 	err = config.ProjectsCollection.FindOne(ctx, bson.M{
 		"_id": projectObjID,
@@ -714,7 +715,7 @@ func addProjectToTeam(c *gin.Context) {
 		return
 	}
 
-	// Add project to team
+	// Добавляем проект в команду
 	_, err = config.TeamsCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": teamObjID},
@@ -729,7 +730,7 @@ func addProjectToTeam(c *gin.Context) {
 		return
 	}
 
-	// Update project to belong to team
+	// Обновляем проект, чтобы он принадлежал команде
 	_, err = config.ProjectsCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": projectObjID},
@@ -741,7 +742,7 @@ func addProjectToTeam(c *gin.Context) {
 		return
 	}
 
-	// Return updated team
+	// Возвращаем обновленную команду
 	err = config.TeamsCollection.FindOne(ctx, bson.M{"_id": teamObjID}).Decode(&team)
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to get updated team: %w", err))
@@ -752,7 +753,7 @@ func addProjectToTeam(c *gin.Context) {
 	c.JSON(http.StatusOK, team)
 }
 
-// removeProjectFromTeam removes a project from a team
+// Удаляет проект из команды
 func removeProjectFromTeam(c *gin.Context) {
 	teamID := c.Param("id")
 	projectID := c.Param("projectId")
@@ -761,14 +762,14 @@ func removeProjectFromTeam(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Convert IDs to ObjectIDs
+	// Преобразуем ID команды в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
@@ -781,11 +782,11 @@ func removeProjectFromTeam(c *gin.Context) {
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Check if user has access to the team
+	// Проверяем, есть ли у пользователя доступ к команде
 	var team models.Team
 	err = config.TeamsCollection.FindOne(ctx, bson.M{
 		"_id": teamObjID,
@@ -800,7 +801,7 @@ func removeProjectFromTeam(c *gin.Context) {
 		return
 	}
 
-	// Remove project from team
+	// Удаляем проект из команды
 	_, err = config.TeamsCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": teamObjID},
@@ -815,7 +816,7 @@ func removeProjectFromTeam(c *gin.Context) {
 		return
 	}
 
-	// Update project to no longer belong to team
+	// Обновляем проект, чтобы он больше не принадлежал команде
 	_, err = config.ProjectsCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": projectObjID},
@@ -827,7 +828,7 @@ func removeProjectFromTeam(c *gin.Context) {
 		return
 	}
 
-	// Return updated team
+	// Возвращаем обновленную команду
 	err = config.TeamsCollection.FindOne(ctx, bson.M{"_id": teamObjID}).Decode(&team)
 	if err != nil {
 		config.LogError("TEAMS", fmt.Errorf("failed to get updated team: %w", err))
@@ -838,19 +839,19 @@ func removeProjectFromTeam(c *gin.Context) {
 	c.JSON(http.StatusOK, team)
 }
 
-// getTeamProjectViewer returns the viewer for a team project
+// Возвращает просмотрщик для проекта команды
 func getTeamProjectViewer(c *gin.Context) {
 	teamID := c.Param("id")
 	projectID := c.Param("projectId")
 	
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 	
-	// Convert IDs to ObjectIDs
+	// Преобразуем ID команды в ObjectID
 	teamObjID, err := primitive.ObjectIDFromHex(teamID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid team ID format"})
@@ -863,11 +864,11 @@ func getTeamProjectViewer(c *gin.Context) {
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Check if user has access to the team
+	// Проверяем, есть ли у пользователя доступ к команде
 	var team models.Team
 	err = config.TeamsCollection.FindOne(ctx, bson.M{
 		"_id": teamObjID,
@@ -882,7 +883,7 @@ func getTeamProjectViewer(c *gin.Context) {
 		return
 	}
 	
-	// Check if project exists in this team's projects list
+	// Проверяем, существует ли проект в списке проектов этой команды
 	projectFound := false
 	for _, p := range team.Projects {
 		if p == projectID {
@@ -896,7 +897,7 @@ func getTeamProjectViewer(c *gin.Context) {
 		return
 	}
 	
-	// Use a raw bson.M to retrieve the project first
+	// Используем bson.M для первоначального получения проекта
 	var rawProject bson.M
 	err = config.ProjectsCollection.FindOne(ctx, bson.M{"_id": projectObjID}).Decode(&rawProject)
 	if err != nil {
@@ -904,14 +905,14 @@ func getTeamProjectViewer(c *gin.Context) {
 		return
 	}
 	
-	// Convert to a Project struct, but handle elements separately
+	// Преобразуем в структуру Project, но обрабатываем элементы отдельно
 	var project models.Project
 	
-	// Remove elements from raw data to avoid unmarshaling errors
+	// Удаляем элементы из сырых данных, чтобы избежать ошибок при анмаршалинге
 	elementsRaw, hasElements := rawProject["elements"]
 	delete(rawProject, "elements")
 	
-	// Convert the remaining fields to Project struct
+	// Преобразуем оставшиеся поля в структуру Project
 	projectBytes, err := bson.Marshal(rawProject)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error processing project data"})
@@ -923,24 +924,24 @@ func getTeamProjectViewer(c *gin.Context) {
 		return
 	}
 	
-	// Handle elements separately - store as raw interface{}
+	// Обрабатываем элементы отдельно - сохраняем как raw interface{}
 	if hasElements {
 		project.Elements = []interface{}{}
 		
-		// Check if elements is an array
+		// Проверяем, является ли elements массивом
 		if elemArray, ok := elementsRaw.(primitive.A); ok {
 			for _, elem := range elemArray {
 				project.Elements = append(project.Elements, elem)
 			}
 		} else {
-			// If not an array, add as a single element
+			// Если не массив, добавляем как одиночный элемент
 			project.Elements = append(project.Elements, elementsRaw)
 		}
 	}
 
-	// Normalize elements to ensure they have all required fields
+	// Нормализуем элементы, чтобы убедиться, что они имеют все необходимые поля
 	project.NormalizeElements()
 	
-	// Return the project directly, just like getProject does
+	// Возвращаем проект напрямую, как это делает getProject
 	c.JSON(http.StatusOK, project)
 } 

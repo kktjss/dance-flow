@@ -7,7 +7,6 @@ import TeamManagement from './pages/TeamManagement';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard';
-import AuthHome from './pages/AuthHome';
 import ConstructorPage from './pages/ConstructorPage';
 import ProjectViewPage from './pages/ProjectViewPage';
 import ProjectsPage from './pages/ProjectsPage';
@@ -77,7 +76,7 @@ const PublicRoute = ({ children }) => {
     const isAuthenticated = !!localStorage.getItem('token');
 
     if (isAuthenticated) {
-        return <Navigate to="/auth-home" />;
+        return <Navigate to="/dashboard" />;
     }
 
     return children;
@@ -116,14 +115,6 @@ function App() {
                     />
 
                     {/* Защищенные маршруты */}
-                    <Route
-                        path="/auth-home"
-                        element={
-                            <ProtectedRoute>
-                                <AuthHome />
-                            </ProtectedRoute>
-                        }
-                    />
                     <Route
                         path="/dashboard"
                         element={

@@ -198,13 +198,13 @@ describe('Login Component', () => {
     });
 
     test('shows loading state during authentication', async () => {
-        // Mock login as pending
+        // Мокаем вход как ожидающий
         const { login } = require('../../../client/src/actions/authActions');
         login.mockImplementationOnce(() => {
             return (dispatch) => {
                 dispatch({ type: 'LOGIN_REQUEST' });
                 return new Promise(resolve => {
-                    // Simulate delay
+                    // Имитируем задержку
                     setTimeout(() => {
                         dispatch({ type: 'LOGIN_SUCCESS', payload: { token: 'test.token', user: { _id: 'user1' } } });
                         resolve();
@@ -213,7 +213,7 @@ describe('Login Component', () => {
             };
         });
 
-        // Setup store with loading state
+        // Настраиваем стор с состоянием загрузки
         store = mockStore({
             auth: {
                 isAuthenticated: false,
@@ -232,7 +232,7 @@ describe('Login Component', () => {
             </Provider>
         );
 
-        // Fill and submit form
+        // Заполняем и отправляем форму
         const emailInput = screen.getByLabelText(/Email/i);
         const passwordInput = screen.getByLabelText(/Password/i);
 
@@ -242,7 +242,7 @@ describe('Login Component', () => {
         const submitButton = screen.getByRole('button', { name: /Sign In/i });
         fireEvent.click(submitButton);
 
-        // Check for loading indicator
+        // Проверяем индикатор загрузки
         expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
         expect(submitButton).toBeDisabled();
     });

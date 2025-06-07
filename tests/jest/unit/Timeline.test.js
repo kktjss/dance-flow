@@ -7,7 +7,7 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import Timeline from '../../../client/src/components/Timeline';
 
-// Mock material UI components
+// Мокаем компоненты Material UI
 jest.mock('@mui/material/Slider', () => props => (
     <div data-testid="mock-slider" onClick={props.onChange}>
         <input
@@ -29,7 +29,7 @@ jest.mock('@mui/icons-material/Delete', () => () => <div data-testid="delete-ico
 jest.mock('@mui/icons-material/KeyboardArrowLeft', () => () => <div data-testid="prev-icon">←</div>);
 jest.mock('@mui/icons-material/KeyboardArrowRight', () => () => <div data-testid="next-icon">→</div>);
 
-// Configure mock store
+// Настраиваем мок-стор
 const middlewares = [thunk];
 const mockStore = configureStore(middlewares);
 
@@ -37,7 +37,7 @@ describe('Timeline Component', () => {
     let store;
 
     beforeEach(() => {
-        // Create store with initial state
+        // Создаем стор с начальным состоянием
         store = mockStore({
             auth: {
                 isAuthenticated: true,
@@ -49,18 +49,18 @@ describe('Timeline Component', () => {
                     _id: 'project1',
                     name: 'Test Project',
                     timeline: {
-                        duration: 60, // 60 seconds duration
+                        duration: 60, // 60 секунд длительность
                         keyframes: [
                             {
                                 id: 'keyframe1',
-                                time: 10, // at 10 seconds
+                                time: 10, // на 10 секунде
                                 elements: [
                                     { elementId: 'element1', properties: { position: { x: 100, y: 100 } } }
                                 ]
                             },
                             {
                                 id: 'keyframe2',
-                                time: 30, // at 30 seconds
+                                time: 30, // на 30 секунде
                                 elements: [
                                     { elementId: 'element1', properties: { position: { x: 200, y: 200 } } }
                                 ]
@@ -83,22 +83,22 @@ describe('Timeline Component', () => {
 
         jest.clearAllMocks();
 
-        // Mock requestAnimationFrame and cancelAnimationFrame
+        // Мокаем requestAnimationFrame и cancelAnimationFrame
         window.requestAnimationFrame = jest.fn().mockReturnValue(1);
         window.cancelAnimationFrame = jest.fn();
 
-        // Mock performance.now
+        // Мокаем performance.now
         window.performance.now = jest.fn().mockReturnValue(0);
 
-        // Mock Date.now
+        // Мокаем Date.now
         const originalNow = Date.now;
         let currentTime = 0;
         Date.now = jest.fn().mockImplementation(() => {
-            currentTime += 100; // Increment by 100ms on each call
+            currentTime += 100; // Увеличиваем на 100мс при каждом вызове
             return currentTime;
         });
 
-        // Restore after tests
+        // Восстанавливаем после тестов
         afterEach(() => {
             Date.now = originalNow;
         });
@@ -113,19 +113,19 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Check for main timeline container
+        // Проверяем наличие основного контейнера таймлайна
         expect(screen.getByTestId('timeline-container')).toBeInTheDocument();
 
-        // Check for timeline slider
+        // Проверяем наличие слайдера таймлайна
         expect(screen.getByTestId('timeline-slider')).toBeInTheDocument();
 
-        // Check for play button
+        // Проверяем наличие кнопки воспроизведения
         expect(screen.getByTestId('play-icon')).toBeInTheDocument();
 
-        // Check for add keyframe button
+        // Проверяем наличие кнопки добавления ключевого кадра
         expect(screen.getByTestId('add-icon')).toBeInTheDocument();
 
-        // Check that keyframes are displayed
+        // Проверяем, что ключевые кадры отображаются
         expect(screen.getByText('00:10')).toBeInTheDocument();
         expect(screen.getByText('00:30')).toBeInTheDocument();
     });
@@ -139,23 +139,23 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Find play button
+        // Находим кнопку воспроизведения
         const playButton = screen.getByRole('button', { name: /play/i });
 
-        // Click to start playback
+        // Нажимаем для начала воспроизведения
         fireEvent.click(playButton);
 
-        // Check if play action was dispatched
+        // Проверяем, что действие воспроизведения было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'SET_TIMELINE_PLAYING' && action.payload === true)).toBe(true);
 
-        // Should now show pause button
+        // Теперь должна отображаться кнопка паузы
         const pauseButton = screen.getByRole('button', { name: /pause/i });
 
-        // Click to pause playback
+        // Нажимаем для паузы воспроизведения
         fireEvent.click(pauseButton);
 
-        // Check if pause action was dispatched
+        // Проверяем, что действие паузы было отправлено
         expect(actions.some(action => action.type === 'SET_TIMELINE_PLAYING' && action.payload === false)).toBe(true);
     });
 
@@ -168,13 +168,13 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Find timeline slider
+        // Находим слайдер таймлайна
         const timelineSlider = screen.getByTestId('timeline-slider');
 
-        // Change time to 20 seconds
+        // Меняем время на 20 секунд
         fireEvent.change(timelineSlider, { target: { value: '20' } });
 
-        // Check if set time action was dispatched
+        // Проверяем, что действие установки времени было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'SET_TIMELINE_CURRENT_TIME' && action.payload === 20)).toBe(true);
     });
@@ -188,17 +188,17 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // First set current time to 15 seconds
+        // Сначала устанавливаем текущее время на 15 секунд
         const timelineSlider = screen.getByTestId('timeline-slider');
         fireEvent.change(timelineSlider, { target: { value: '15' } });
 
-        // Find add keyframe button
+        // Находим кнопку добавления ключевого кадра
         const addKeyframeButton = screen.getByRole('button', { name: /add keyframe/i });
 
-        // Click to add a keyframe at the current time
+        // Нажимаем для добавления ключевого кадра на текущем времени
         fireEvent.click(addKeyframeButton);
 
-        // Check if add keyframe action was dispatched
+        // Проверяем, что действие добавления ключевого кадра было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'ADD_KEYFRAME' && action.payload.time === 15)).toBe(true);
     });
@@ -212,19 +212,19 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Find keyframe marker
-        const keyframeMarker = screen.getByText('00:10'); // 10 second keyframe
+        // Находим маркер ключевого кадра
+        const keyframeMarker = screen.getByText('00:10'); // ключевой кадр на 10 секунде
 
-        // Click on the keyframe
+        // Нажимаем на ключевой кадр
         fireEvent.click(keyframeMarker);
 
-        // Check if select keyframe action was dispatched
+        // Проверяем, что действие выбора ключевого кадра было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'SELECT_KEYFRAME' && action.payload === 'keyframe1')).toBe(true);
     });
 
     test('deletes a keyframe', () => {
-        // Update store to have a selected keyframe
+        // Обновляем стор с выбранным ключевым кадром
         store = mockStore({
             ...store.getState(),
             timeline: {
@@ -241,19 +241,19 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Find delete keyframe button (should be visible when a keyframe is selected)
+        // Находим кнопку удаления ключевого кадра (должна быть видима, когда кадр выбран)
         const deleteKeyframeButton = screen.getByRole('button', { name: /delete keyframe/i });
 
-        // Click to delete the selected keyframe
+        // Нажимаем для удаления выбранного ключевого кадра
         fireEvent.click(deleteKeyframeButton);
 
-        // Check if delete keyframe action was dispatched
+        // Проверяем, что действие удаления ключевого кадра было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'DELETE_KEYFRAME' && action.payload === 'keyframe1')).toBe(true);
     });
 
     test('navigates to previous keyframe', () => {
-        // Set current time to be between keyframes
+        // Устанавливаем текущее время между ключевыми кадрами
         store = mockStore({
             ...store.getState(),
             timeline: {
@@ -270,19 +270,19 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Find prev keyframe button
+        // Находим кнопку предыдущего ключевого кадра
         const prevKeyframeButton = screen.getByRole('button', { name: /previous keyframe/i });
 
-        // Click to go to previous keyframe
+        // Нажимаем для перехода к предыдущему ключевому кадру
         fireEvent.click(prevKeyframeButton);
 
-        // Check if set time action was dispatched with previous keyframe time
+        // Проверяем, что действие установки времени было отправлено со временем предыдущего кадра
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'SET_TIMELINE_CURRENT_TIME' && action.payload === 10)).toBe(true);
     });
 
     test('navigates to next keyframe', () => {
-        // Set current time to be between keyframes
+        // Устанавливаем текущее время между ключевыми кадрами
         store = mockStore({
             ...store.getState(),
             timeline: {
@@ -299,13 +299,13 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Find next keyframe button
+        // Находим кнопку следующего ключевого кадра
         const nextKeyframeButton = screen.getByRole('button', { name: /next keyframe/i });
 
-        // Click to go to next keyframe
+        // Нажимаем для перехода к следующему ключевому кадру
         fireEvent.click(nextKeyframeButton);
 
-        // Check if set time action was dispatched with next keyframe time
+        // Проверяем, что действие установки времени было отправлено со временем следующего кадра
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'SET_TIMELINE_CURRENT_TIME' && action.payload === 30)).toBe(true);
     });
@@ -319,20 +319,20 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Time should be displayed as 00:00 initially
+        // Время должно отображаться как 00:00 изначально
         expect(screen.getByText('00:00 / 01:00')).toBeInTheDocument();
 
-        // Change time to 25 seconds
+        // Меняем время на 25 секунд
         const timelineSlider = screen.getByTestId('timeline-slider');
         fireEvent.change(timelineSlider, { target: { value: '25' } });
 
-        // Time display should update
+        // Отображение времени должно обновиться
         expect(screen.getByText('00:25 / 01:00')).toBeInTheDocument();
 
-        // Change time to 65 seconds (beyond duration)
+        // Меняем время на 65 секунд (больше длительности)
         fireEvent.change(timelineSlider, { target: { value: '65' } });
 
-        // Time should be capped at duration
+        // Время должно быть ограничено длительностью
         expect(screen.getByText('01:00 / 01:00')).toBeInTheDocument();
     });
 
@@ -345,20 +345,20 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Find duration input
+        // Находим поле ввода длительности
         const durationInput = screen.getByLabelText(/duration/i);
 
-        // Change duration to 120 seconds
+        // Меняем длительность на 120 секунд
         fireEvent.change(durationInput, { target: { value: '120' } });
         fireEvent.blur(durationInput);
 
-        // Check if update timeline action was dispatched
+        // Проверяем, что действие обновления таймлайна было отправлено
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'UPDATE_TIMELINE' && action.payload.duration === 120)).toBe(true);
     });
 
     test('handles playback with animation frame', async () => {
-        // Mock that timeline is playing
+        // Мокаем, что таймлайн воспроизводится
         store = mockStore({
             ...store.getState(),
             timeline: {
@@ -376,19 +376,19 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Simulate time passing
+        // Симулируем прошедшее время
         act(() => {
-            // Trigger animation frame callback
-            // Find the requestAnimationFrame call and execute its callback
+            // Запускаем колбэк анимации
+            // Находим вызов requestAnimationFrame и выполняем его колбэк
             const animationCallback = window.requestAnimationFrame.mock.calls[0][0];
-            // Simulate 1 second passed
+            // Симулируем прошедшую 1 секунду
             window.performance.now.mockReturnValue(1000);
             animationCallback(1000);
         });
 
-        // Check if current time was updated
+        // Проверяем, что текущее время было обновлено
         const actions = store.getActions();
-        // Should have advanced by ~1 second
+        // Должно увеличиться примерно на 1 секунду
         expect(actions.some(action =>
             action.type === 'SET_TIMELINE_CURRENT_TIME' &&
             action.payload > 5 &&
@@ -397,13 +397,13 @@ describe('Timeline Component', () => {
     });
 
     test('stops playback at the end of timeline', async () => {
-        // Mock that timeline is playing and near the end
+        // Мокаем, что таймлайн воспроизводится и близок к концу
         store = mockStore({
             ...store.getState(),
             timeline: {
                 ...store.getState().timeline,
                 isPlaying: true,
-                currentTime: 59 // 1 second from the end
+                currentTime: 59 // 1 секунда до конца
             }
         });
 
@@ -415,23 +415,23 @@ describe('Timeline Component', () => {
             </Provider>
         );
 
-        // Simulate time passing that would go beyond the end
+        // Симулируем прошедшее время, которое выйдет за пределы длительности
         act(() => {
             const animationCallback = window.requestAnimationFrame.mock.calls[0][0];
-            window.performance.now.mockReturnValue(2000); // 2 seconds passed
+            window.performance.now.mockReturnValue(2000); // прошло 2 секунды
             animationCallback(2000);
         });
 
-        // Check if it stopped at the end
+        // Проверяем, что воспроизведение остановилось в конце
         const actions = store.getActions();
 
-        // Should have set time to duration (60)
+        // Должно установить время на длительность (60)
         expect(actions.some(action =>
             action.type === 'SET_TIMELINE_CURRENT_TIME' &&
             action.payload === 60
         )).toBe(true);
 
-        // Should have set playing to false
+        // Должно установить воспроизведение в false
         expect(actions.some(action =>
             action.type === 'SET_TIMELINE_PLAYING' &&
             action.payload === false

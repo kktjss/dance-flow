@@ -7,7 +7,7 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import TeamManagement from '../../../client/src/pages/TeamManagement';
 
-// Mock services
+// Мокаем сервисы
 jest.mock('../../../client/src/services/teamService', () => ({
     getTeams: jest.fn().mockResolvedValue({
         data: [
@@ -71,7 +71,7 @@ jest.mock('../../../client/src/services/teamService', () => ({
     }))
 }));
 
-// Mock user service for searching members
+// Мокаем сервис пользователей для поиска участников
 jest.mock('../../../client/src/services/userService', () => ({
     searchUsers: jest.fn().mockResolvedValue({
         data: [
@@ -81,14 +81,14 @@ jest.mock('../../../client/src/services/userService', () => ({
     })
 }));
 
-// Mock navigate function
+// Мокаем функцию навигации
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useNavigate: () => mockNavigate
 }));
 
-// Configure mock store
+// Настраиваем мок-стор
 const middlewares = [thunk];
 const mockStore = configureStore(middlewares);
 
@@ -96,10 +96,10 @@ describe('TeamManagement Component', () => {
     let store;
 
     beforeEach(() => {
-        // Reset mocks
+        // Сбрасываем моки
         jest.clearAllMocks();
 
-        // Create store with initial state
+        // Создаем стор с начальным состоянием
         store = mockStore({
             auth: {
                 isAuthenticated: true,
@@ -130,28 +130,28 @@ describe('TeamManagement Component', () => {
             </Provider>
         );
 
-        // Check loading indicator displays initially
+        // Проверяем отображение индикатора загрузки изначально
         expect(screen.getByTestId('teams-loading')).toBeInTheDocument();
 
-        // Verify getTeams is called
+        // Проверяем вызов getTeams
         expect(getTeams).toHaveBeenCalled();
 
-        // Wait for teams to load
+        // Ждем загрузки команд
         await waitFor(() => {
             expect(screen.getByText('My Teams')).toBeInTheDocument();
         });
 
-        // Check team cards are displayed
+        // Проверяем отображение карточек команд
         await waitFor(() => {
             expect(screen.getByText('Dance Studio Team')).toBeInTheDocument();
             expect(screen.getByText('Dance Class')).toBeInTheDocument();
         });
 
-        // Check team descriptions
+        // Проверяем описания команд
         expect(screen.getByText('Professional dancers team')).toBeInTheDocument();
         expect(screen.getByText('Weekly dance class group')).toBeInTheDocument();
 
-        // Check member counts
+        // Проверяем количество участников
         const memberCounts = screen.getAllByText(/members/i);
         expect(memberCounts.length).toBe(2);
     });
@@ -167,38 +167,38 @@ describe('TeamManagement Component', () => {
             </Provider>
         );
 
-        // Wait for teams to load
+        // Ждем загрузки команд
         await waitFor(() => {
             expect(screen.getByText('My Teams')).toBeInTheDocument();
         });
 
-        // Click create team button
+        // Нажимаем кнопку создания команды
         const createButton = screen.getByText('Create Team');
         fireEvent.click(createButton);
 
-        // Check modal appears
+        // Проверяем появление модального окна
         await waitFor(() => {
             expect(screen.getByText('Create New Team')).toBeInTheDocument();
         });
 
-        // Fill out form
+        // Заполняем форму
         const nameInput = screen.getByLabelText('Team Name');
         const descriptionInput = screen.getByLabelText('Description');
 
         fireEvent.change(nameInput, { target: { value: 'New Dance Crew' } });
         fireEvent.change(descriptionInput, { target: { value: 'A fresh new dance team' } });
 
-        // Submit form
+        // Отправляем форму
         const submitButton = screen.getByRole('button', { name: 'Create' });
         fireEvent.click(submitButton);
 
-        // Verify createTeam was called with correct data
+        // Проверяем вызов createTeam с правильными данными
         expect(createTeam).toHaveBeenCalledWith({
             name: 'New Dance Crew',
             description: 'A fresh new dance team'
         });
 
-        // Check success message appears
+        // Проверяем появление сообщения об успехе
         await waitFor(() => {
             expect(screen.getByText('Team created successfully')).toBeInTheDocument();
         });
@@ -216,45 +216,45 @@ describe('TeamManagement Component', () => {
             </Provider>
         );
 
-        // Wait for teams to load
+        // Ждем загрузки команд
         await waitFor(() => {
             expect(screen.getByText('Dance Studio Team')).toBeInTheDocument();
         });
 
-        // Click on team card to view details
+        // Нажимаем на карточку команды для просмотра деталей
         const teamCard = screen.getByText('Dance Studio Team').closest('.team-card');
         fireEvent.click(teamCard);
 
-        // Check team details view shows up
+        // Проверяем отображение деталей команды
         await waitFor(() => {
             expect(screen.getByText('Team Details')).toBeInTheDocument();
             expect(screen.getByText('Members (3)')).toBeInTheDocument();
         });
 
-        // Check members list
+        // Проверяем список участников
         expect(screen.getByText('testuser (owner)')).toBeInTheDocument();
         expect(screen.getByText('member1')).toBeInTheDocument();
         expect(screen.getByText('member2')).toBeInTheDocument();
 
-        // Click add member button
+        // Нажимаем кнопку добавления участника
         const addMemberButton = screen.getByText('Add Member');
         fireEvent.click(addMemberButton);
 
-        // Check member search modal opens
+        // Проверяем открытие модального окна поиска участников
         await waitFor(() => {
             expect(screen.getByText('Add Team Member')).toBeInTheDocument();
         });
 
-        // Enter search term
+        // Вводим поисковый запрос
         const searchInput = screen.getByPlaceholderText('Search by username or email');
         fireEvent.change(searchInput, { target: { value: 'new' } });
 
-        // Wait for search results
+        // Ждем результатов поиска
         await waitFor(() => {
             expect(searchUsers).toHaveBeenCalledWith('new');
         });
 
-        // Select a user from results
+        // Выбираем пользователя из результатов
         await waitFor(() => {
             expect(screen.getByText('newmember1')).toBeInTheDocument();
         });
@@ -263,13 +263,13 @@ describe('TeamManagement Component', () => {
         const selectButton = within(userRow).getByRole('button', { name: 'Add' });
         fireEvent.click(selectButton);
 
-        // Verify addMember was called
+        // Проверяем вызов addMember
         expect(addMember).toHaveBeenCalledWith('team1', {
             userId: 'user4',
             username: 'newmember1'
         });
 
-        // Check success message
+        // Проверяем сообщение об успехе
         await waitFor(() => {
             expect(screen.getByText('Member added successfully')).toBeInTheDocument();
         });
@@ -286,40 +286,40 @@ describe('TeamManagement Component', () => {
             </Provider>
         );
 
-        // Wait for teams to load
+        // Ждем загрузки команд
         await waitFor(() => {
             expect(screen.getByText('Dance Studio Team')).toBeInTheDocument();
         });
 
-        // Click on team card
+        // Нажимаем на карточку команды
         const teamCard = screen.getByText('Dance Studio Team').closest('.team-card');
         fireEvent.click(teamCard);
 
-        // Wait for team details to load
+        // Ждем загрузки деталей команды
         await waitFor(() => {
             expect(screen.getByText('Members (3)')).toBeInTheDocument();
         });
 
-        // Find a member to remove (not the owner)
+        // Находим участника для удаления (не владельца)
         const memberItem = screen.getByText('member1').closest('.member-item');
         const removeButton = within(memberItem).getByRole('button', { name: 'Remove' });
 
-        // Click remove button
+        // Нажимаем кнопку удаления
         fireEvent.click(removeButton);
 
-        // Check confirmation dialog appears
+        // Проверяем появление диалога подтверждения
         await waitFor(() => {
             expect(screen.getByText('Are you sure you want to remove this member?')).toBeInTheDocument();
         });
 
-        // Confirm removal
+        // Подтверждаем удаление
         const confirmButton = screen.getByRole('button', { name: 'Confirm' });
         fireEvent.click(confirmButton);
 
-        // Verify removeMember was called
+        // Проверяем вызов removeMember
         expect(removeMember).toHaveBeenCalledWith('team1', 'user2');
 
-        // Check success message
+        // Проверяем сообщение об успехе
         await waitFor(() => {
             expect(screen.getByText('Member removed successfully')).toBeInTheDocument();
         });
@@ -336,29 +336,29 @@ describe('TeamManagement Component', () => {
             </Provider>
         );
 
-        // Wait for teams to load
+        // Ждем загрузки команд
         await waitFor(() => {
             expect(screen.getByText('Dance Studio Team')).toBeInTheDocument();
         });
 
-        // Click delete button on first team
+        // Нажимаем кнопку удаления на первой команде
         const teamCard = screen.getByText('Dance Studio Team').closest('.team-card');
         const deleteButton = within(teamCard).getByRole('button', { name: 'Delete' });
         fireEvent.click(deleteButton);
 
-        // Check confirmation dialog appears
+        // Проверяем появление диалога подтверждения
         await waitFor(() => {
             expect(screen.getByText('Are you sure you want to delete this team?')).toBeInTheDocument();
         });
 
-        // Confirm deletion
+        // Подтверждаем удаление
         const confirmButton = screen.getByRole('button', { name: 'Delete' });
         fireEvent.click(confirmButton);
 
-        // Verify deleteTeam was called
+        // Проверяем вызов deleteTeam
         expect(deleteTeam).toHaveBeenCalledWith('team1');
 
-        // Check success message
+        // Проверяем сообщение об успехе
         await waitFor(() => {
             expect(screen.getByText('Team deleted successfully')).toBeInTheDocument();
         });
@@ -375,47 +375,47 @@ describe('TeamManagement Component', () => {
             </Provider>
         );
 
-        // Wait for teams to load
+        // Ждем загрузки команд
         await waitFor(() => {
             expect(screen.getByText('Dance Studio Team')).toBeInTheDocument();
         });
 
-        // Click on team card
+        // Нажимаем на карточку команды
         const teamCard = screen.getByText('Dance Studio Team').closest('.team-card');
         fireEvent.click(teamCard);
 
-        // Wait for team details to load
+        // Ждем загрузки деталей команды
         await waitFor(() => {
             expect(screen.getByText('Team Details')).toBeInTheDocument();
         });
 
-        // Click edit button
+        // Нажимаем кнопку редактирования
         const editButton = screen.getByRole('button', { name: 'Edit Team' });
         fireEvent.click(editButton);
 
-        // Check edit form appears
+        // Проверяем появление формы редактирования
         await waitFor(() => {
             expect(screen.getByLabelText('Team Name')).toBeInTheDocument();
         });
 
-        // Update form fields
+        // Обновляем поля формы
         const nameInput = screen.getByLabelText('Team Name');
         const descriptionInput = screen.getByLabelText('Description');
 
         fireEvent.change(nameInput, { target: { value: 'Updated Dance Studio' } });
         fireEvent.change(descriptionInput, { target: { value: 'Updated description' } });
 
-        // Submit form
+        // Отправляем форму
         const saveButton = screen.getByRole('button', { name: 'Save Changes' });
         fireEvent.click(saveButton);
 
-        // Verify updateTeam was called with correct data
+        // Проверяем вызов updateTeam с правильными данными
         expect(updateTeam).toHaveBeenCalledWith('team1', {
             name: 'Updated Dance Studio',
             description: 'Updated description'
         });
 
-        // Check success message
+        // Проверяем сообщение об успехе
         await waitFor(() => {
             expect(screen.getByText('Team updated successfully')).toBeInTheDocument();
         });
@@ -430,25 +430,25 @@ describe('TeamManagement Component', () => {
             </Provider>
         );
 
-        // Wait for teams to load
+        // Ждем загрузки команд
         await waitFor(() => {
             expect(screen.getByText('Dance Studio Team')).toBeInTheDocument();
         });
 
-        // Click on team card
+        // Нажимаем на карточку команды
         const teamCard = screen.getByText('Dance Studio Team').closest('.team-card');
         fireEvent.click(teamCard);
 
-        // Wait for team details to load
+        // Ждем загрузки деталей команды
         await waitFor(() => {
             expect(screen.getByText('Projects (2)')).toBeInTheDocument();
         });
 
-        // Click view projects button
+        // Нажимаем кнопку просмотра проектов
         const viewProjectsButton = screen.getByRole('button', { name: 'View All Projects' });
         fireEvent.click(viewProjectsButton);
 
-        // Verify navigation
+        // Проверяем навигацию
         expect(mockNavigate).toHaveBeenCalledWith('/teams/team1/projects');
     });
 }); 

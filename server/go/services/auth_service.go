@@ -13,7 +13,7 @@ import (
 	"github.com/kktjss/dance-flow/repositories"
 )
 
-// Errors
+// Ошибки
 var (
 	ErrEmailAlreadyExists    = errors.New("email already exists")
 	ErrUsernameAlreadyExists = errors.New("username already exists")
@@ -21,14 +21,14 @@ var (
 	ErrInvalidToken         = errors.New("invalid token")
 )
 
-// AuthService handles authentication logic
+// AuthService обрабатывает логику аутентификации
 type AuthService struct {
 	userRepo       repositories.UserRepositoryInterface
 	projectService ProjectService
 	jwtSecret      string
 }
 
-// NewAuthService creates a new auth service
+// NewAuthService создает новый сервис аутентификации
 func NewAuthService(userRepo repositories.UserRepositoryInterface, projectService ProjectService, jwtSecret string) *AuthService {
 	return &AuthService{
 		userRepo:       userRepo,
@@ -37,9 +37,9 @@ func NewAuthService(userRepo repositories.UserRepositoryInterface, projectServic
 	}
 }
 
-// Register creates a new user
+// Register создает нового пользователя
 func (s *AuthService) Register(username, email, password string) (*models.User, error) {
-	// Check if email already exists
+	// Проверяем, существует ли email
 	_, err := s.userRepo.FindByEmail(email)
 	if err == nil {
 		return nil, ErrEmailAlreadyExists
@@ -48,7 +48,7 @@ func (s *AuthService) Register(username, email, password string) (*models.User, 
 		return nil, err
 	}
 
-	// Check if username already exists
+	// Проверяем, существует ли имя пользователя
 	_, err = s.userRepo.FindByUsername(username)
 	if err == nil {
 		return nil, ErrUsernameAlreadyExists
@@ -57,7 +57,7 @@ func (s *AuthService) Register(username, email, password string) (*models.User, 
 		return nil, err
 	}
 
-	// Create new user
+	// Создаем нового пользователя
 	user := &models.User{
 		ID:        primitive.NewObjectID(),
 		Username:  username,
@@ -67,30 +67,30 @@ func (s *AuthService) Register(username, email, password string) (*models.User, 
 		UpdatedAt: time.Now(),
 	}
 
-	// Hash password
+	// Хешируем пароль
 	if err := user.HashPassword(); err != nil {
 		return nil, err
 	}
 
-	// Save user
+	// Сохраняем пользователя
 	createdUser, err := s.userRepo.Create(user)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create default projects for the new user
+	// Создаем проекты по умолчанию для нового пользователя
 	err = s.projectService.CreateDefaultProjects(createdUser.ID.Hex())
 	if err != nil {
-		// Log the error but don't fail the registration
-		log.Printf("Failed to create default projects for user %s: %v", createdUser.ID.Hex(), err)
+		// Логируем ошибку, но не прерываем регистрацию
+		log.Printf("Не удалось создать проекты по умолчанию для пользователя %s: %v", createdUser.ID.Hex(), err)
 	}
 
 	return createdUser, nil
 }
 
-// Login authenticates a user and returns a token
+// Login аутентифицирует пользователя и возвращает токен
 func (s *AuthService) Login(email, password string) (string, *models.User, error) {
-	// Find user by email
+	// Ищем пользователя по email
 	user, err := s.userRepo.FindByEmail(email)
 	if err != nil {
 		if err == repositories.ErrUserNotFound {
@@ -99,12 +99,12 @@ func (s *AuthService) Login(email, password string) (string, *models.User, error
 		return "", nil, err
 	}
 
-	// Check password
+	// Проверяем пароль
 	if !user.ComparePassword(password) {
 		return "", nil, ErrInvalidCredentials
 	}
 
-	// Generate token
+	// Генерируем токен
 	token, err := s.GenerateToken(user)
 	if err != nil {
 		return "", nil, err
@@ -113,7 +113,7 @@ func (s *AuthService) Login(email, password string) (string, *models.User, error
 	return token, user, nil
 }
 
-// GenerateToken creates a JWT token for a user
+// GenerateToken создает JWT токен для пользователя
 func (s *AuthService) GenerateToken(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
 		"id":       user.ID.Hex(),
@@ -126,7 +126,7 @@ func (s *AuthService) GenerateToken(user *models.User) (string, error) {
 	return token.SignedString([]byte(s.jwtSecret))
 }
 
-// VerifyToken validates a JWT token and returns the claims
+// VerifyToken проверяет JWT токен и возвращает claims
 func (s *AuthService) VerifyToken(tokenString string) (jwt.MapClaims, error) {
 	claims := jwt.MapClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
@@ -144,7 +144,7 @@ func (s *AuthService) VerifyToken(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-// GetUserFromToken extracts user information from a JWT token
+// GetUserFromToken извлекает информацию о пользователе из JWT токена
 func (s *AuthService) GetUserFromToken(tokenString string) (*models.User, error) {
 	claims, err := s.VerifyToken(tokenString)
 	if err != nil {
@@ -159,15 +159,15 @@ func (s *AuthService) GetUserFromToken(tokenString string) (*models.User, error)
 	return s.userRepo.FindByID(userID)
 }
 
-// ResetPassword resets a user's password
+// ResetPassword сбрасывает пароль пользователя
 func (s *AuthService) ResetPassword(userID, newPassword string) error {
-	// Hash the new password
+	// Хешируем новый пароль
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	// Update the user's password
+	// Обновляем пароль пользователя
 	updates := map[string]interface{}{
 		"password":  string(hashedPassword),
 		"updatedAt": time.Now(),

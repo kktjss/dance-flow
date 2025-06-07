@@ -16,7 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// RegisterHistoryRoutes registers the history-related routes
+// Регистрирует маршруты, связанные с историей
 func RegisterHistoryRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	historyGroup := router.Group("/history")
 	historyGroup.Use(middleware.AuthMiddleware(cfg))
@@ -25,7 +25,7 @@ func RegisterHistoryRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	historyGroup.POST("", createHistoryEntry)
 }
 
-// getHistory retrieves a user's history entries
+// Получает записи истории пользователя
 func getHistory(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists || userID == nil {
@@ -41,17 +41,17 @@ func getHistory(c *gin.Context) {
 		return
 	}
 
-	// Set up query to fetch history for user
+	// Настраиваем запрос для получения истории пользователя
 	collection := config.GetCollection("histories")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Create options for sorting and limit
+	// Создаем параметры для сортировки и ограничения
 	findOptions := options.Find()
 	findOptions.SetSort(bson.M{"timestamp": -1})
 	findOptions.SetLimit(50)
 
-	// Find all history entries for this user
+	// Находим все записи истории для этого пользователя
 	cursor, err := collection.Find(ctx, bson.M{"userId": userObjID}, findOptions)
 	if err != nil {
 		log.Printf("[HISTORY] Error fetching history: %v", err)
@@ -60,7 +60,7 @@ func getHistory(c *gin.Context) {
 	}
 	defer cursor.Close(ctx)
 
-	// Decode results
+	// Декодируем результаты
 	var historyEntries []models.History
 	if err := cursor.All(ctx, &historyEntries); err != nil {
 		log.Printf("[HISTORY] Error decoding history entries: %v", err)
@@ -68,11 +68,11 @@ func getHistory(c *gin.Context) {
 		return
 	}
 
-	// Populate project titles (similar to populate in Mongoose)
+	// Заполняем заголовки проектов (аналогично populate в Mongoose)
 	populatedEntries, err := populateProjectTitles(ctx, historyEntries)
 	if err != nil {
 		log.Printf("[HISTORY] Error populating project titles: %v", err)
-		// Continue with unpopulated entries
+		// Продолжаем с незаполненными записями
 		c.JSON(http.StatusOK, historyEntries)
 		return
 	}
@@ -80,7 +80,7 @@ func getHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, populatedEntries)
 }
 
-// createHistoryEntry creates a new history entry
+// Создает новую запись в истории
 func createHistoryEntry(c *gin.Context) {
 	var requestBody struct {
 		ProjectID   string `json:"projectId"`
@@ -115,7 +115,7 @@ func createHistoryEntry(c *gin.Context) {
 		return
 	}
 
-	// Create history entry
+	// Создаем запись в истории
 	entry := models.CreateHistory(
 		userObjID,
 		projectObjID,
@@ -123,7 +123,7 @@ func createHistoryEntry(c *gin.Context) {
 		requestBody.Description,
 	)
 
-	// Save to database
+	// Сохраняем в базу данных
 	collection := config.GetCollection("histories")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -135,19 +135,19 @@ func createHistoryEntry(c *gin.Context) {
 		return
 	}
 
-	// Set the ID from the insert result
+	// Устанавливаем ID из результата вставки
 	entry.ID = result.InsertedID.(primitive.ObjectID)
 
 	c.JSON(http.StatusCreated, entry)
 }
 
-// Helper function to populate project titles for history entries
+// Вспомогательная функция для заполнения заголовков проектов для записей истории
 func populateProjectTitles(ctx context.Context, entries []models.History) ([]map[string]interface{}, error) {
 	projectsCollection := config.GetCollection("projects")
 	result := make([]map[string]interface{}, len(entries))
 
 	for i, entry := range entries {
-		// Convert the entry to a map so we can add populated fields
+		// Преобразуем запись в карту, чтобы можно было добавить заполненные поля
 		entryMap := map[string]interface{}{
 			"id":          entry.ID,
 			"userId":      entry.UserID,
@@ -157,14 +157,14 @@ func populateProjectTitles(ctx context.Context, entries []models.History) ([]map
 			"timestamp":   entry.Timestamp,
 		}
 
-		// Find the project to get its title
+		// Находим проект, чтобы получить его заголовок
 		var project models.Project
 		err := projectsCollection.FindOne(ctx, bson.M{"_id": entry.ProjectID}).Decode(&project)
 		if err != nil && err != mongo.ErrNoDocuments {
 			return nil, err
 		}
 
-		// Add the project title if found
+		// Добавляем заголовок проекта, если найден
 		if err != mongo.ErrNoDocuments {
 			entryMap["projectId"] = map[string]interface{}{
 				"_id":   project.ID,

@@ -204,29 +204,29 @@ describe('Canvas Component', () => {
             </Provider>
         );
 
-        // Find tool buttons
+        // Находим кнопки инструментов
         const rectangleButton = screen.getByRole('button', { name: /rectangle/i });
         const circleButton = screen.getByRole('button', { name: /circle/i });
         const selectButton = screen.getByRole('button', { name: /select/i });
 
-        // Switch to rectangle mode
+        // Переключаемся в режим прямоугольника
         fireEvent.click(rectangleButton);
 
-        // Dispatch action should have been called with the mode change
+        // Должен быть вызван экшен с изменением режима
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'rectangle')).toBe(true);
 
-        // Switch to circle mode
+        // Переключаемся в режим круга
         fireEvent.click(circleButton);
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'circle')).toBe(true);
 
-        // Switch back to select mode
+        // Возвращаемся в режим выделения
         fireEvent.click(selectButton);
         expect(actions.some(action => action.type === 'SET_CANVAS_MODE' && action.payload === 'select')).toBe(true);
     });
 
     test('handles element creation', async () => {
-        // Update store with rectangle mode
+        // Обновляем стор с режимом прямоугольника
         store = mockStore({
             ...store.getState(),
             canvas: {
@@ -243,25 +243,25 @@ describe('Canvas Component', () => {
             </Provider>
         );
 
-        // Find canvas element
+        // Находим элемент canvas
         const canvasElement = screen.getByTestId('canvas-container');
 
-        // Simulate drawing a rectangle
+        // Симулируем рисование прямоугольника
         fireEvent.mouseDown(canvasElement, { clientX: 100, clientY: 100 });
         fireEvent.mouseMove(canvasElement, { clientX: 200, clientY: 200 });
         fireEvent.mouseUp(canvasElement);
 
-        // Element creation should have been triggered
+        // Должно быть вызвано создание элемента
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'ADD_ELEMENT')).toBe(true);
 
-        // Service should have been called
+        // Сервис должен быть вызван
         const { createElement } = require('../../../client/src/services/designElementService');
         expect(createElement).toHaveBeenCalled();
     });
 
     test('handles element selection', async () => {
-        // Update store with elements
+        // Обновляем стор с элементами
         store = mockStore({
             ...store.getState(),
             project: {
@@ -283,20 +283,20 @@ describe('Canvas Component', () => {
             </Provider>
         );
 
-        // Find canvas element
+        // Находим элемент canvas
         const canvasElement = screen.getByTestId('canvas-container');
 
-        // Simulate clicking on an element
+        // Симулируем клик по элементу
         fireEvent.mouseDown(canvasElement, { clientX: 50, clientY: 30 });
         fireEvent.mouseUp(canvasElement);
 
-        // Selection action should have been dispatched
+        // Должен быть вызван экшен выделения
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'SELECT_ELEMENT')).toBe(true);
     });
 
     test('handles element movement', async () => {
-        // Update store with selected element
+        // Обновляем стор с выделенным элементом
         store = mockStore({
             ...store.getState(),
             project: {
@@ -322,25 +322,25 @@ describe('Canvas Component', () => {
             </Provider>
         );
 
-        // Find canvas element
+        // Находим элемент canvas
         const canvasElement = screen.getByTestId('canvas-container');
 
-        // Simulate moving a selected element
+        // Симулируем перемещение выделенного элемента
         fireEvent.mouseDown(canvasElement, { clientX: 50, clientY: 30 });
         fireEvent.mouseMove(canvasElement, { clientX: 100, clientY: 80 });
         fireEvent.mouseUp(canvasElement);
 
-        // Update action should have been dispatched
+        // Должен быть вызван экшен обновления
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'UPDATE_ELEMENT')).toBe(true);
 
-        // Service should have been called
+        // Сервис должен быть вызван
         const { updateElement } = require('../../../client/src/services/designElementService');
         expect(updateElement).toHaveBeenCalled();
     });
 
     test('handles element deletion', async () => {
-        // Update store with selected element
+        // Обновляем стор с выделенным элементом
         store = mockStore({
             ...store.getState(),
             project: {
@@ -366,14 +366,14 @@ describe('Canvas Component', () => {
             </Provider>
         );
 
-        // Simulate pressing delete key
+        // Симулируем нажатие клавиши Delete
         fireEvent.keyDown(document, { key: 'Delete' });
 
-        // Delete action should have been dispatched
+        // Должен быть вызван экшен удаления
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'DELETE_ELEMENT')).toBe(true);
 
-        // Service should have been called
+        // Сервис должен быть вызван
         const { deleteElement } = require('../../../client/src/services/designElementService');
         expect(deleteElement).toHaveBeenCalled();
     });
@@ -387,13 +387,13 @@ describe('Canvas Component', () => {
             </Provider>
         );
 
-        // Find grid toggle button
+        // Находим кнопку переключения сетки
         const gridToggleButton = screen.getByRole('button', { name: /toggle grid/i });
 
-        // Toggle grid off
+        // Выключаем сетку
         fireEvent.click(gridToggleButton);
 
-        // Action should have been dispatched
+        // Должен быть вызван экшен
         const actions = store.getActions();
         expect(actions.some(action => action.type === 'TOGGLE_GRID')).toBe(true);
     });
@@ -407,21 +407,21 @@ describe('Canvas Component', () => {
             </Provider>
         );
 
-        // Find zoom buttons
+        // Находим кнопки масштабирования
         const zoomInButton = screen.getByRole('button', { name: /zoom in/i });
         const zoomOutButton = screen.getByRole('button', { name: /zoom out/i });
 
-        // Zoom in
+        // Увеличиваем масштаб
         fireEvent.click(zoomInButton);
 
-        // Action should have been dispatched
+        // Должен быть вызван экшен
         let actions = store.getActions();
         expect(actions.some(action => action.type === 'SET_ZOOM' && action.payload > 1)).toBe(true);
 
-        // Zoom out
+        // Уменьшаем масштаб
         fireEvent.click(zoomOutButton);
 
-        // Action should have been dispatched
+        // Должен быть вызван экшен
         actions = store.getActions();
         expect(actions.some(action => action.type === 'SET_ZOOM' && action.payload < 1)).toBe(true);
     });
@@ -435,21 +435,21 @@ describe('Canvas Component', () => {
             </Provider>
         );
 
-        // Find undo/redo buttons
+        // Находим кнопки отмены/повтора
         const undoButton = screen.getByRole('button', { name: /undo/i });
         const redoButton = screen.getByRole('button', { name: /redo/i });
 
-        // Trigger undo
+        // Вызываем отмену
         fireEvent.click(undoButton);
 
-        // Action should have been dispatched
+        // Должен быть вызван экшен
         let actions = store.getActions();
         expect(actions.some(action => action.type === 'UNDO')).toBe(true);
 
-        // Trigger redo
+        // Вызываем повтор
         fireEvent.click(redoButton);
 
-        // Action should have been dispatched
+        // Должен быть вызван экшен
         actions = store.getActions();
         expect(actions.some(action => action.type === 'REDO')).toBe(true);
     });

@@ -230,7 +230,7 @@ describe('API Integration Tests', () => {
                         keypoints: [
                             { x: 0.5, y: 0.2, score: 0.99, name: 'nose' },
                             { x: 0.52, y: 0.2, score: 0.98, name: 'leftEye' },
-                            // More keypoints would be here
+                            // Здесь были бы другие ключевые точки
                         ]
                     }
                 ],
@@ -262,11 +262,11 @@ describe('API Integration Tests', () => {
                 frame_scores: [
                     { time: 1.2, score: 92 },
                     { time: 2.5, score: 78 },
-                    // More frame scores would be here
+                    // Здесь были бы другие оценки кадров
                 ]
             };
 
-            // Mock the file upload endpoint
+            // Мокируем эндпоинт загрузки файла
             mock.onPost(`${API_URL}/video/analyze`).reply(200, expectedResponse);
 
             const response = await analyzeDanceVideo(danceVideo, referenceVideo);
@@ -280,12 +280,12 @@ describe('API Integration Tests', () => {
                 keypoints: [
                     { x: 0.5, y: 0.2, score: 0.99, name: 'nose' },
                     { x: 0.52, y: 0.2, score: 0.98, name: 'leftEye' },
-                    // More keypoints would be here
+                    // Здесь были бы другие ключевые точки
                 ]
             };
 
             const referenceId = 'ref123';
-            const timestamp = 5.5; // seconds
+            const timestamp = 5.5; // секунды
 
             const expectedResponse = {
                 score: 87,

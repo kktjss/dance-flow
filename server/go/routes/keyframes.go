@@ -13,9 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// RegisterKeyframesRoutes registers all keyframe routes
+// Регистрирует все маршруты для ключевых кадров
 func RegisterKeyframesRoutes(router *gin.RouterGroup, cfg *config.Config) {
-	// Direct keyframes endpoint (matches the Node.js endpoint)
+	// Эндпоинт для прямого управления ключевыми кадрами 
 	direct := router.Group("/direct-keyframes")
 	direct.Use(middleware.JWTMiddleware(cfg))
 	{
@@ -26,7 +26,7 @@ func RegisterKeyframesRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	}
 }
 
-// createDirectKeyframe adds a new keyframe directly
+// Добавляет новый ключевой кадр напрямую
 func createDirectKeyframe(c *gin.Context) {
 	var input models.KeyframeCreateInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -34,21 +34,21 @@ func createDirectKeyframe(c *gin.Context) {
 		return
 	}
 
-	// Get user ID from context
+	// Получаем ID пользователя из контекста
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Convert project ID to ObjectID
+	// Преобразуем ID проекта в ObjectID
 	projectObjID, err := primitive.ObjectIDFromHex(input.ProjectID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID format"})
 		return
 	}
 
-	// Create keyframe
+	// Создаем ключевой кадр
 	keyframe := models.Keyframe{
 		ID:        primitive.NewObjectID(),
 		ProjectID: projectObjID,
@@ -61,7 +61,7 @@ func createDirectKeyframe(c *gin.Context) {
 		UpdatedAt: time.Now(),
 	}
 
-	// Insert keyframe into database
+	// Вставляем ключевой кадр в базу данных
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -71,7 +71,7 @@ func createDirectKeyframe(c *gin.Context) {
 		return
 	}
 
-	// Update project to include the keyframe reference
+	// Обновляем проект, добавляя ссылку на ключевой кадр
 	keyframeRef := models.KeyframeRef{
 		KeyframeID: keyframe.ID,
 		Timestamp:  keyframe.Timestamp,
@@ -95,7 +95,7 @@ func createDirectKeyframe(c *gin.Context) {
 	c.JSON(http.StatusCreated, keyframe)
 }
 
-// getProjectKeyframes gets all keyframes for a project
+// Получает все ключевые кадры для проекта
 func getProjectKeyframes(c *gin.Context) {
 	projectID := c.Param("projectId")
 	if projectID == "" {
@@ -109,11 +109,11 @@ func getProjectKeyframes(c *gin.Context) {
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Check if project exists and user has access
+	// Проверяем, существует ли проект и есть ли у пользователя доступ
 	var project models.Project
 	err = config.ProjectsCollection.FindOne(ctx, bson.M{"_id": projectObjID}).Decode(&project)
 	if err != nil {
@@ -121,7 +121,7 @@ func getProjectKeyframes(c *gin.Context) {
 		return
 	}
 
-	// Get keyframes for project
+	// Получаем ключевые кадры для проекта
 	cursor, err := config.KeyframesCollection.Find(
 		ctx,
 		bson.M{"projectId": projectObjID},
@@ -141,7 +141,7 @@ func getProjectKeyframes(c *gin.Context) {
 	c.JSON(http.StatusOK, keyframes)
 }
 
-// updateKeyframe updates a keyframe
+// Обновляет ключевой кадр
 func updateKeyframe(c *gin.Context) {
 	keyframeID := c.Param("id")
 	if keyframeID == "" {
@@ -161,14 +161,14 @@ func updateKeyframe(c *gin.Context) {
 		return
 	}
 
-	// Create update document
+	// Создаем документ обновления
 	update := bson.M{
 		"$set": bson.M{
 			"updatedAt": time.Now(),
 		},
 	}
 
-	// Add optional fields if provided
+	// Добавляем опциональные поля, если они предоставлены
 	if input.Label != "" {
 		update["$set"].(bson.M)["label"] = input.Label
 	}
@@ -179,11 +179,11 @@ func updateKeyframe(c *gin.Context) {
 		update["$set"].(bson.M)["imageData"] = input.ImageData
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Update keyframe
+	// Обновляем ключевой кадр
 	result, err := config.KeyframesCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": keyframeObjID},
@@ -199,7 +199,7 @@ func updateKeyframe(c *gin.Context) {
 		return
 	}
 
-	// Get updated keyframe
+	// Получаем обновленный ключевой кадр
 	var updatedKeyframe models.Keyframe
 	err = config.KeyframesCollection.FindOne(ctx, bson.M{"_id": keyframeObjID}).Decode(&updatedKeyframe)
 	if err != nil {
@@ -207,7 +207,7 @@ func updateKeyframe(c *gin.Context) {
 		return
 	}
 
-	// Update keyframe reference in project if label changed
+	// Обновляем ссылку на ключевой кадр в проекте, если изменилась метка
 	if input.Label != "" {
 		_, err = config.ProjectsCollection.UpdateOne(
 			ctx,
@@ -228,7 +228,7 @@ func updateKeyframe(c *gin.Context) {
 	c.JSON(http.StatusOK, updatedKeyframe)
 }
 
-// deleteKeyframe deletes a keyframe
+// Удаляет ключевой кадр
 func deleteKeyframe(c *gin.Context) {
 	keyframeID := c.Param("id")
 	if keyframeID == "" {
@@ -242,11 +242,11 @@ func deleteKeyframe(c *gin.Context) {
 		return
 	}
 
-	// Create context with timeout
+	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// First, get the keyframe to get the project ID
+	// Сначала получаем ключевой кадр, чтобы получить ID проекта
 	var keyframe models.Keyframe
 	err = config.KeyframesCollection.FindOne(ctx, bson.M{"_id": keyframeObjID}).Decode(&keyframe)
 	if err != nil {
@@ -254,7 +254,7 @@ func deleteKeyframe(c *gin.Context) {
 		return
 	}
 
-	// Delete keyframe
+	// Удаляем ключевой кадр
 	result, err := config.KeyframesCollection.DeleteOne(ctx, bson.M{"_id": keyframeObjID})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete keyframe"})
@@ -266,7 +266,7 @@ func deleteKeyframe(c *gin.Context) {
 		return
 	}
 
-	// Remove keyframe reference from project
+	// Удаляем ссылку на ключевой кадр из проекта
 	_, err = config.ProjectsCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": keyframe.ProjectID},

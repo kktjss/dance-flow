@@ -5,24 +5,24 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockProjectService is a mock implementation of the ProjectService interface
+// MockProjectService это мок-реализация интерфейса ProjectService
 type MockProjectService struct {
 	mock.Mock
 }
 
-// GetProjects returns all projects for the authenticated user
+// GetProjects возвращает все проекты для аутентифицированного пользователя
 func (m *MockProjectService) GetProjects(userID string) ([]models.Project, error) {
 	args := m.Called(userID)
 	return args.Get(0).([]models.Project), args.Error(1)
 }
 
-// GetUserProjects returns all projects for a specific user
+// GetUserProjects возвращает все проекты для конкретного пользователя
 func (m *MockProjectService) GetUserProjects(userID string) ([]models.Project, error) {
 	args := m.Called(userID)
 	return args.Get(0).([]models.Project), args.Error(1)
 }
 
-// GetProjectByID returns a project by ID
+// GetProjectByID возвращает проект по ID
 func (m *MockProjectService) GetProjectByID(projectID string) (*models.Project, error) {
 	args := m.Called(projectID)
 	if args.Get(0) == nil {
@@ -31,13 +31,13 @@ func (m *MockProjectService) GetProjectByID(projectID string) (*models.Project, 
 	return args.Get(0).(*models.Project), args.Error(1)
 }
 
-// CreateProject creates a new project
+// CreateProject создает новый проект
 func (m *MockProjectService) CreateProject(project *models.Project) (*models.Project, error) {
 	args := m.Called(project)
 	return args.Get(0).(*models.Project), args.Error(1)
 }
 
-// UpdateProject updates an existing project
+// UpdateProject обновляет существующий проект
 func (m *MockProjectService) UpdateProject(projectID string, updates map[string]interface{}) (*models.Project, error) {
 	args := m.Called(projectID, updates)
 	if args.Get(0) == nil {
@@ -46,7 +46,7 @@ func (m *MockProjectService) UpdateProject(projectID string, updates map[string]
 	return args.Get(0).(*models.Project), args.Error(1)
 }
 
-// DeleteProject deletes a project
+// DeleteProject удаляет проект
 func (m *MockProjectService) DeleteProject(projectID string) error {
 	args := m.Called(projectID)
 	return args.Error(0)

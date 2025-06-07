@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Project represents a dance project
+// Project представляет танцевальный проект
 type Project struct {
 	ID          string   `json:"id" bson:"_id,omitempty"`
 	Name        string   `json:"name" bson:"name"`
@@ -23,24 +23,24 @@ type Project struct {
 	IsPrivate   bool     `json:"isPrivate" bson:"isPrivate"`
 }
 
-// MockProjectService is a mock implementation of the ProjectService interface
+// MockProjectService это мок-реализация интерфейса ProjectService
 type MockProjectService struct {
 	mock.Mock
 }
 
-// GetProjects returns all projects for the authenticated user
+// GetProjects возвращает все проекты для аутентифицированного пользователя
 func (m *MockProjectService) GetProjects(userID string) ([]Project, error) {
 	args := m.Called(userID)
 	return args.Get(0).([]Project), args.Error(1)
 }
 
-// GetUserProjects returns all projects for a specific user
+// GetUserProjects возвращает все проекты для конкретного пользователя
 func (m *MockProjectService) GetUserProjects(userID string) ([]Project, error) {
 	args := m.Called(userID)
 	return args.Get(0).([]Project), args.Error(1)
 }
 
-// GetProjectByID returns a project by ID
+// GetProjectByID возвращает проект по ID
 func (m *MockProjectService) GetProjectByID(projectID string) (*Project, error) {
 	args := m.Called(projectID)
 	if args.Get(0) == nil {
@@ -49,13 +49,13 @@ func (m *MockProjectService) GetProjectByID(projectID string) (*Project, error) 
 	return args.Get(0).(*Project), args.Error(1)
 }
 
-// CreateProject creates a new project
+// CreateProject создает новый проект
 func (m *MockProjectService) CreateProject(project *Project) (*Project, error) {
 	args := m.Called(project)
 	return args.Get(0).(*Project), args.Error(1)
 }
 
-// UpdateProject updates an existing project
+// UpdateProject обновляет существующий проект
 func (m *MockProjectService) UpdateProject(projectID string, updates map[string]interface{}) (*Project, error) {
 	args := m.Called(projectID, updates)
 	if args.Get(0) == nil {
@@ -64,25 +64,25 @@ func (m *MockProjectService) UpdateProject(projectID string, updates map[string]
 	return args.Get(0).(*Project), args.Error(1)
 }
 
-// DeleteProject deletes a project
+// DeleteProject удаляет проект
 func (m *MockProjectService) DeleteProject(projectID string) error {
 	args := m.Called(projectID)
 	return args.Error(0)
 }
 
-// ProjectController handles HTTP requests related to projects
+// ProjectController обрабатывает HTTP запросы, связанные с проектами
 type ProjectController struct {
 	projectService MockProjectService
 }
 
-// NewProjectController creates a new project controller
+// NewProjectController создает новый контроллер проектов
 func NewProjectController(projectService *MockProjectService) *ProjectController {
 	return &ProjectController{
 		projectService: *projectService,
 	}
 }
 
-// GetProjects returns all projects for the authenticated user
+// GetProjects возвращает все проекты для аутентифицированного пользователя
 func (pc *ProjectController) GetProjects(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -99,7 +99,7 @@ func (pc *ProjectController) GetProjects(c *gin.Context) {
 	c.JSON(http.StatusOK, projects)
 }
 
-// GetProjectByID returns a project by ID
+// GetProjectByID возвращает проект по ID
 func (pc *ProjectController) GetProjectByID(c *gin.Context) {
 	projectID := c.Param("id")
 	project, err := pc.projectService.GetProjectByID(projectID)
@@ -112,7 +112,7 @@ func (pc *ProjectController) GetProjectByID(c *gin.Context) {
 	c.JSON(http.StatusOK, project)
 }
 
-// CreateProject creates a new project
+// CreateProject создает новый проект
 func (pc *ProjectController) CreateProject(c *gin.Context) {
 	var project Project
 	if err := c.ShouldBindJSON(&project); err != nil {
@@ -136,7 +136,7 @@ func (pc *ProjectController) CreateProject(c *gin.Context) {
 	c.JSON(http.StatusCreated, savedProject)
 }
 
-// UpdateProject updates an existing project
+// UpdateProject обновляет существующий проект
 func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	projectID := c.Param("id")
 	var updates map[string]interface{}
@@ -155,7 +155,7 @@ func (pc *ProjectController) UpdateProject(c *gin.Context) {
 	c.JSON(http.StatusOK, updatedProject)
 }
 
-// DeleteProject deletes a project
+// DeleteProject удаляет проект
 func (pc *ProjectController) DeleteProject(c *gin.Context) {
 	projectID := c.Param("id")
 	
@@ -168,7 +168,7 @@ func (pc *ProjectController) DeleteProject(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Project deleted successfully"})
 }
 
-// GetUserProjects returns all projects for a specific user
+// GetUserProjects возвращает все проекты для конкретного пользователя
 func (pc *ProjectController) GetUserProjects(c *gin.Context) {
 	userID := c.Param("userId")
 	
