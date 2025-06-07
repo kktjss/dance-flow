@@ -28,45 +28,45 @@ type Model struct {
 	URL          string             `json:"url" bson:"-"` // URL не хранится в базе данных
 }
 
-// Регистрирует маршруты для 3D моделей
+// RegisterModelRoutes registers the routes for 3D models
 func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 	models := api.Group("/models")
 	
-	// Создаем директорию для моделей, если она не существует
+	// Create models directory if it doesn't exist
 	modelsDir := "./uploads/models"
 	if err := os.MkdirAll(modelsDir, 0755); err != nil {
 		config.LogError("MODELS", fmt.Errorf("failed to create models directory: %w", err))
 	}
 	
-	// Публичный эндпоинт для доступа к файлам моделей без аутентификации
+	// Public endpoint for accessing model files without authentication
 	models.GET("/file/:filename", func(c *gin.Context) {
 		filename := c.Param("filename")
 		filePath := filepath.Join(modelsDir, filename)
 		
-		// Логируем запрос
+		// Log the request
 		fmt.Printf("Accessing model file: %s\n", filePath)
 		
-		// Проверяем, существует ли файл
+		// Check if file exists
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			fmt.Printf("Model file not found: %s\n", filePath)
 			c.JSON(http.StatusNotFound, gin.H{"error": "Model file not found"})
 			return
 		}
 		
-		// Устанавливаем соответствующие заголовки для GLB файлов
+		// Set appropriate headers for GLB files
 		c.Header("Content-Type", "model/gltf-binary")
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Cache-Control", "public, max-age=3600")
 		
-		// Отдаем файл
+		// Serve the file
 		c.File(filePath)
 	})
 
-	// Следующие маршруты требуют аутентификации
+	// The following routes require authentication
 	authenticated := models.Group("")
 	authenticated.Use(middleware.JWTMiddleware(cfg))
 
-	// Получаем все модели для текущего пользователя
+	// Get all models for the current user
 	authenticated.GET("", func(c *gin.Context) {
 		userID, exists := c.Get("userID")
 		if !exists {
@@ -74,14 +74,14 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			return
 		}
 
-		// Преобразуем userID в ObjectID
+		// Convert userID to ObjectID
 		objectID, err := primitive.ObjectIDFromHex(userID.(string))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 			return
 		}
 
-		// Получаем модели из базы данных
+		// Get models from database
 		collection := config.GetCollection("models")
 		cursor, err := collection.Find(c, bson.M{"userId": objectID})
 		if err != nil {
@@ -91,7 +91,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 		}
 		defer cursor.Close(c)
 
-		// Декодируем модели
+		// Decode models
 		var modelsList []Model
 		if err := cursor.All(c, &modelsList); err != nil {
 			config.LogError("MODELS", fmt.Errorf("error decoding models: %w", err))
@@ -99,7 +99,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			return
 		}
 
-		// Добавляем URL к каждой модели
+		// Add URL to each model
 		for i := range modelsList {
 			modelsList[i].URL = fmt.Sprintf("/uploads/models/%s", modelsList[i].Filename)
 		}
@@ -107,7 +107,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 		c.JSON(http.StatusOK, modelsList)
 	})
 
-	// Загружаем новую модель
+	// Upload a new model
 	authenticated.POST("/upload", func(c *gin.Context) {
 		userID, exists := c.Get("userID")
 		if !exists {
@@ -115,48 +115,48 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			return
 		}
 
-		// Преобразуем userID в ObjectID
+		// Convert userID to ObjectID
 		objectID, err := primitive.ObjectIDFromHex(userID.(string))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 			return
 		}
 
-		// Получаем файл из запроса
+		// Get the file from the request
 		file, err := c.FormFile("model")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
 			return
 		}
 
-		// Проверяем тип файла
+		// Validate file type
 		ext := filepath.Ext(file.Filename)
 		if ext != ".glb" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Only .glb files are allowed"})
 			return
 		}
 
-		// Генерируем уникальное имя файла
+		// Generate unique filename
 		uniqueID := uuid.New().String()
 		filename := uniqueID + ext
 		filePath := filepath.Join(modelsDir, filename)
 
-		// Сохраняем файл
+		// Save the file
 		if err := c.SaveUploadedFile(file, filePath); err != nil {
 			config.LogError("MODELS", fmt.Errorf("error saving file: %w", err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
 			return
 		}
 
-		// Получаем имя модели из формы
+		// Get model name from form
 		modelName := c.PostForm("name")
 		if modelName == "" {
-			// Используем оригинальное имя файла без расширения как имя по умолчанию
+			// Use original filename without extension as default name
 			modelName = filepath.Base(file.Filename)
 			modelName = modelName[:len(modelName)-len(ext)]
 		}
 
-		// Создаем запись модели
+		// Create model record
 		model := Model{
 			ID:           primitive.NewObjectID(),
 			Name:         modelName,
@@ -168,7 +168,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			URL:          fmt.Sprintf("/uploads/models/%s", filename),
 		}
 
-		// Сохраняем в базу данных
+		// Save to database
 		collection := config.GetCollection("models")
 		_, err = collection.InsertOne(c, model)
 		if err != nil {
@@ -180,7 +180,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 		c.JSON(http.StatusCreated, model)
 	})
 
-	// Получаем конкретную модель
+	// Get a specific model
 	authenticated.GET("/:id", func(c *gin.Context) {
 		userID, exists := c.Get("userID")
 		if !exists {
@@ -188,14 +188,14 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			return
 		}
 
-		// Преобразуем userID в ObjectID
+		// Convert userID to ObjectID
 		userObjectID, err := primitive.ObjectIDFromHex(userID.(string))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 			return
 		}
 
-		// Получаем ID модели из URL
+		// Get model ID from URL
 		modelID := c.Param("id")
 		modelObjectID, err := primitive.ObjectIDFromHex(modelID)
 		if err != nil {
@@ -203,7 +203,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			return
 		}
 
-		// Получаем модель из базы данных
+		// Get model from database
 		collection := config.GetCollection("models")
 		var model Model
 		err = collection.FindOne(c, bson.M{"_id": modelObjectID}).Decode(&model)
@@ -217,19 +217,19 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			return
 		}
 
-		// Проверяем, владеет ли пользователь этой моделью
+		// Check if user owns this model
 		if model.UserID != userObjectID {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Not authorized to access this model"})
 			return
 		}
 
-		// Добавляем URL к модели
+		// Add URL to model
 		model.URL = fmt.Sprintf("/uploads/models/%s", model.Filename)
 
 		c.JSON(http.StatusOK, model)
 	})
 
-	// Удаляем модель
+	// Delete a model
 	authenticated.DELETE("/:id", func(c *gin.Context) {
 		userID, exists := c.Get("userID")
 		if !exists {
@@ -237,14 +237,14 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			return
 		}
 
-		// Преобразуем userID в ObjectID
+		// Convert userID to ObjectID
 		userObjectID, err := primitive.ObjectIDFromHex(userID.(string))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 			return
 		}
 
-		// Получаем ID модели из URL
+		// Get model ID from URL
 		modelID := c.Param("id")
 		modelObjectID, err := primitive.ObjectIDFromHex(modelID)
 		if err != nil {
@@ -252,7 +252,7 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			return
 		}
 
-		// Получаем модель из базы данных
+		// Get model from database
 		collection := config.GetCollection("models")
 		var model Model
 		err = collection.FindOne(c, bson.M{"_id": modelObjectID}).Decode(&model)
@@ -266,20 +266,20 @@ func RegisterModelRoutes(api *gin.RouterGroup, cfg *config.Config) {
 			return
 		}
 
-		// Проверяем, владеет ли пользователь этой моделью
+		// Check if user owns this model
 		if model.UserID != userObjectID {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Not authorized to delete this model"})
 			return
 		}
 
-		// Удаляем файл с диска
+		// Delete file from disk
 		filePath := filepath.Join(modelsDir, model.Filename)
 		if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
 			config.LogError("MODELS", fmt.Errorf("error deleting file: %w", err))
-			// Продолжаем удаление из базы данных, даже если удаление файла не удалось
+			// Continue with deletion from database even if file deletion fails
 		}
 
-		// Удаляем из базы данных
+		// Delete from database
 		_, err = collection.DeleteOne(c, bson.M{"_id": modelObjectID})
 		if err != nil {
 			config.LogError("MODELS", fmt.Errorf("error deleting model from database: %w", err))

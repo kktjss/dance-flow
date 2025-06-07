@@ -14,7 +14,7 @@ import (
 	"github.com/kktjss/dance-flow/middleware"
 )
 
-// Регистрирует все маршруты загрузки
+// RegisterUploadRoutes registers all upload routes
 func RegisterUploadRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	uploads := router.Group("/upload")
 	uploads.Use(middleware.JWTMiddleware(cfg))
@@ -24,16 +24,16 @@ func RegisterUploadRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	}
 }
 
-// uploadVideo обрабатывает загрузку видео файлов
+// uploadVideo handles video file uploads
 func uploadVideo(c *gin.Context) {
-	// Проверяем существует ли директория загрузок, если нет - создаем её
+	// Check if the uploads directory exists, if not create it
 	uploadDir := "uploads/videos"
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
 		return
 	}
 
-	// Получаем файл из запроса
+	// Get the file from the request
 	file, header, err := c.Request.FormFile("video")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No file provided"})
@@ -41,7 +41,7 @@ func uploadVideo(c *gin.Context) {
 	}
 	defer file.Close()
 
-	// Проверяем тип файла
+	// Validate file type
 	filename := header.Filename
 	ext := strings.ToLower(filepath.Ext(filename))
 	allowedExts := map[string]bool{
@@ -57,11 +57,11 @@ func uploadVideo(c *gin.Context) {
 		return
 	}
 
-	// Создаем уникальное имя файла используя временную метку
+	// Create a unique filename using timestamp
 	newFilename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
 	filePath := filepath.Join(uploadDir, newFilename)
 
-	// Создаем файл на сервере
+	// Create the file on the server
 	out, err := os.Create(filePath)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create file"})
@@ -69,14 +69,14 @@ func uploadVideo(c *gin.Context) {
 	}
 	defer out.Close()
 
-	// Копируем данные файла в новый файл
+	// Copy the file data to the new file
 	_, err = io.Copy(out, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
 		return
 	}
 
-	// Возвращаем URL файла
+	// Return the file URL
 	fileURL := "/uploads/videos/" + newFilename
 	c.JSON(http.StatusOK, gin.H{
 		"url":      fileURL,
@@ -85,9 +85,9 @@ func uploadVideo(c *gin.Context) {
 	})
 }
 
-// uploadFile обрабатывает общую загрузку файлов, включая аудио
+// uploadFile handles general file uploads including audio
 func uploadFile(c *gin.Context) {
-	// Получаем файл из запроса
+	// Get the file from the request
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No file provided"})
@@ -95,15 +95,15 @@ func uploadFile(c *gin.Context) {
 	}
 	defer file.Close()
 
-	// Определяем тип файла и директорию
+	// Determine file type and directory
 	filename := header.Filename
 	ext := strings.ToLower(filepath.Ext(filename))
 	
-	// Проверяем тип файла и устанавливаем директорию загрузки
+	// Check file type and set upload directory
 	var uploadDir string
 	var allowedExts map[string]bool
 	
-	// Проверяем, является ли это аудио файлом
+	// Check if it's an audio file
 	audioExts := map[string]bool{
 		".mp3": true,
 		".wav": true,
@@ -117,29 +117,29 @@ func uploadFile(c *gin.Context) {
 		uploadDir = "uploads/audio"
 		allowedExts = audioExts
 	} else {
-		// Для других типов файлов
+		// For other file types
 		uploadDir = "uploads/files"
-		// Разрешаем все расширения для общих файлов
+		// Allow all extensions for general files
 		allowedExts = map[string]bool{ext: true}
 	}
 	
-	// Создаем директорию, если она не существует
+	// Create directory if it doesn't exist
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create upload directory"})
 		return
 	}
 	
-	// Проверяем тип файла
+	// Validate file type
 	if !allowedExts[ext] {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type"})
 		return
 	}
 	
-	// Создаем уникальное имя файла используя временную метку
+	// Create a unique filename using timestamp
 	newFilename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
 	filePath := filepath.Join(uploadDir, newFilename)
 	
-	// Создаем файл на сервере
+	// Create the file on the server
 	out, err := os.Create(filePath)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create file"})
@@ -147,14 +147,14 @@ func uploadFile(c *gin.Context) {
 	}
 	defer out.Close()
 	
-	// Копируем данные файла в новый файл
+	// Copy the file data to the new file
 	_, err = io.Copy(out, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
 		return
 	}
 	
-	// Возвращаем URL файла
+	// Return the file URL
 	fileURL := fmt.Sprintf("/%s/%s", uploadDir, newFilename)
 	c.JSON(http.StatusOK, gin.H{
 		"url":      fileURL,

@@ -1959,7 +1959,7 @@ See console for complete details.`);
                 {/* Wrap Canvas and Side panels in Grid container */}
                 <Grid container spacing={2}>
                     {/* Canvas and tools */}
-                    <Grid item xs={12} md={9}>
+                    <Grid item xs={12} md={viewMode === 'video' ? 12 : 9}>
                         {/* Canvas controls */}
                         <Box sx={{
                             mb: 1,
@@ -2185,60 +2185,62 @@ See console for complete details.`);
                     </Grid>
 
                     {/* Side panels */}
-                    <Grid item xs={12} md={3}>
-                        <StyledPaper sx={{ height: '100%', p: 0, overflow: 'hidden' }}>
-                            <Tabs
-                                value={tabIndex}
-                                onChange={(_, newValue) => setTabIndex(newValue)}
-                                variant="fullWidth"
-                                sx={{
-                                    borderBottom: 1,
-                                    borderColor: theme.palette.mode === 'dark'
-                                        ? 'rgba(30, 144, 255, 0.15)'
-                                        : 'rgba(30, 144, 255, 0.1)',
-                                    backgroundColor: theme.palette.mode === 'dark'
-                                        ? 'rgba(26, 32, 46, 0.95)' // Darker blue for contrast
-                                        : 'rgba(240, 245, 255, 0.95)'
-                                }}
-                                TabIndicatorProps={{
-                                    style: {
+                    {viewMode !== 'video' && (
+                        <Grid item xs={12} md={3}>
+                            <StyledPaper sx={{ height: '100%', p: 0, overflow: 'hidden' }}>
+                                <Tabs
+                                    value={tabIndex}
+                                    onChange={(_, newValue) => setTabIndex(newValue)}
+                                    variant="fullWidth"
+                                    sx={{
+                                        borderBottom: 1,
+                                        borderColor: theme.palette.mode === 'dark'
+                                            ? 'rgba(30, 144, 255, 0.15)'
+                                            : 'rgba(30, 144, 255, 0.1)',
                                         backgroundColor: theme.palette.mode === 'dark'
-                                            ? COLORS.secondary
-                                            : COLORS.secondary,
-                                        height: 3,
-                                        borderRadius: '3px 3px 0 0'
-                                    }
-                                }}
-                            >
-                                <StyledTab label="Инструменты" />
-                                <StyledTab label="Свойства" />
-                            </Tabs>
+                                            ? 'rgba(26, 32, 46, 0.95)' // Darker blue for contrast
+                                            : 'rgba(240, 245, 255, 0.95)'
+                                    }}
+                                    TabIndicatorProps={{
+                                        style: {
+                                            backgroundColor: theme.palette.mode === 'dark'
+                                                ? COLORS.secondary
+                                                : COLORS.secondary,
+                                            height: 3,
+                                            borderRadius: '3px 3px 0 0'
+                                        }
+                                    }}
+                                >
+                                    <StyledTab label="Инструменты" />
+                                    <StyledTab label="Свойства" />
+                                </Tabs>
 
-                            <Box sx={{ p: 0, height: 'calc(600px - 48px)', overflow: 'auto' }}>
-                                {tabIndex === 0 && (
-                                    <>
-                                        <ToolPanel onAddElement={handleAddElement} />
-                                        <Button
-                                            variant="contained"
-                                            color="secondary"
-                                            fullWidth
-                                            sx={{ mt: 2, mb: 1 }}
-                                            onClick={() => setShowCombinedViewer(true)}
-                                        >
-                                            Показать 3D
-                                        </Button>
-                                    </>
-                                )}
-                                {tabIndex === 1 && (
-                                    <PropertyPanel
-                                        selectedElement={selectedElement}
-                                        onElementUpdate={handleElementUpdate}
-                                        currentTime={currentTime}
-                                    />
-                                )}
-                            </Box>
-                        </StyledPaper>
-                    </Grid>
+                                <Box sx={{ p: 0, height: 'calc(600px - 48px)', overflow: 'auto' }}>
+                                    {tabIndex === 0 && (
+                                        <>
+                                            <ToolPanel onAddElement={handleAddElement} />
+                                            <Button
+                                                variant="contained"
+                                                color="secondary"
+                                                fullWidth
+                                                sx={{ mt: 2, mb: 1 }}
+                                                onClick={() => setShowCombinedViewer(true)}
+                                            >
+                                                Показать 3D
+                                            </Button>
+                                        </>
+                                    )}
+                                    {tabIndex === 1 && (
+                                        <PropertyPanel
+                                            selectedElement={selectedElement}
+                                            onElementUpdate={handleElementUpdate}
+                                            currentTime={currentTime}
+                                        />
+                                    )}
+                                </Box>
+                            </StyledPaper>
+                        </Grid>
+                    )}
                 </Grid>
 
                 {/* Custom notification */}
