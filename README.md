@@ -1,9 +1,6 @@
-<img style=" 
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: 50%;" 
-  src="banner.png"></img>
+<p align="center">
+  <img width="100%" src="banner.png">
+</p>
 
 DanceFlow — проект, разработанный для участия в проектном конкурсе от Центрального университета.
 
