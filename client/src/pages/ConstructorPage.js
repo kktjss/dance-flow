@@ -9,7 +9,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { COLORS } from '../constants/colors';
 
-// Import components
 import Player from '../components/Player';
 import Canvas from '../components/Canvas';
 import ToolPanel from '../components/ToolPanel';
@@ -1956,11 +1955,8 @@ See console for complete details.`);
                     </StyledPaper>
                 </Grid>
 
-                {/* Wrap Canvas and Side panels in Grid container */}
                 <Grid container spacing={2}>
-                    {/* Canvas and tools */}
                     <Grid item xs={12} md={9}>
-                        {/* Canvas controls */}
                         <Box sx={{
                             mb: 1,
                             display: 'flex',
@@ -2052,8 +2048,8 @@ See console for complete details.`);
                                     width: '100%',
                                     height: '100%',
                                     backgroundColor: theme.palette.mode === 'dark'
-                                        ? 'rgba(32, 38, 52, 0.85)'  // Lighter, more neutral dark blue
-                                        : 'rgba(240, 245, 255, 0.9)', // Very light blue-gray in light mode
+                                        ? 'rgba(32, 38, 52, 0.85)'
+                                        : 'rgba(240, 245, 255, 0.9)',
                                     backgroundImage: `
                                         linear-gradient(to right, ${theme.palette.mode === 'dark'
                                             ? 'rgba(160, 140, 255, 0.07)'
@@ -2064,12 +2060,11 @@ See console for complete details.`);
                                     `,
                                     backgroundSize: '20px 20px',
                                     borderRadius: 1,
-                                    overflow: 'visible' // Allow content to overflow
+                                    overflow: 'visible'
                                 }}
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={handleDrop}
                             >
-                                {/* Show different content based on view mode */}
                                 {viewMode === '2d' && (
                                     <Canvas
                                         elements={project.elements}
@@ -2098,7 +2093,6 @@ See console for complete details.`);
                                         zIndex: 100,
                                         boxShadow: '0 8px 40px rgba(0, 0, 0, 0.4)'
                                     }}>
-                                        {/* Video header with close button */}
                                         <Box sx={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
@@ -2117,7 +2111,6 @@ See console for complete details.`);
                                             </Typography>
                                         </Box>
 
-                                        {/* Video content */}
                                         <Box sx={{ height: 'calc(100% - 60px)' }}>
                                             <VideoViewer
                                                 isVisible={true}
@@ -2143,7 +2136,6 @@ See console for complete details.`);
                                         zIndex: 100,
                                         boxShadow: '0 8px 40px rgba(0, 0, 0, 0.4)'
                                     }}>
-                                        {/* 3D header with close button */}
                                         <Box sx={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
@@ -2162,7 +2154,6 @@ See console for complete details.`);
                                             </Typography>
                                         </Box>
 
-                                        {/* 3D content */}
                                         <Box sx={{ height: 'calc(100% - 60px)' }}>
                                             <ModelViewer
                                                 isVisible={true}
@@ -2184,7 +2175,6 @@ See console for complete details.`);
                         </StyledPaper>
                     </Grid>
 
-                    {/* Side panels */}
                     <Grid item xs={12} md={3}>
                         <StyledPaper sx={{ height: '100%', p: 0, overflow: 'hidden' }}>
                             <Tabs
@@ -2197,7 +2187,7 @@ See console for complete details.`);
                                         ? 'rgba(30, 144, 255, 0.15)'
                                         : 'rgba(30, 144, 255, 0.1)',
                                     backgroundColor: theme.palette.mode === 'dark'
-                                        ? 'rgba(26, 32, 46, 0.95)' // Darker blue for contrast
+                                        ? 'rgba(26, 32, 46, 0.95)'
                                         : 'rgba(240, 245, 255, 0.95)'
                                 }}
                                 TabIndicatorProps={{
@@ -2241,7 +2231,6 @@ See console for complete details.`);
                     </Grid>
                 </Grid>
 
-                {/* Custom notification */}
                 <StyledConstructorSnackbar
                     open={notification.open}
                     autoHideDuration={6000}

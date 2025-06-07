@@ -248,7 +248,7 @@ const Player = ({
         }
     };
 
-    // Skip backward 5 seconds
+    // Перемотка назад на 5 секунд
     const handleSkipBackward = () => {
         const newTime = Math.max(0, safeCurrentTime - 5);
         onTimeUpdate(newTime);
@@ -257,7 +257,7 @@ const Player = ({
         }
     };
 
-    // Skip forward 5 seconds
+    // Перемотка вперед на 5 секунд
     const handleSkipForward = () => {
         const newTime = Math.min(safeDuration, safeCurrentTime + 5);
         onTimeUpdate(newTime);
@@ -266,10 +266,10 @@ const Player = ({
         }
     };
 
-    // Millisecond precision controls
+    // Управление с точностью до миллисекунд
     const handleMillisecondStep = (direction) => {
         // Уменьшаем шаг для сверхточного контроля
-        const step = 0.001; // 1ms шаг для максимально точного позиционирования
+        const step = 0.001; // 1мс шаг для максимально точного позиционирования
         const newTime = Math.max(0, Math.min(safeDuration, safeCurrentTime + (direction * step)));
 
         // Обновляем как отображение, так и внутреннее состояние
@@ -285,71 +285,54 @@ const Player = ({
         }
     };
 
-    // Animation timer function - used when no audio is available
-    const animateTime = useCallback((timestamp) => {
-        if (!lastTimeRef.current) {
-            lastTimeRef.current = timestamp;
-        }
-
-        const elapsed = timestamp - lastTimeRef.current;
-
-        // Обновление времени с высокой частотой (~120fps) для сверхплавной анимации
-        if (elapsed > 8) { // примерно 120fps для максимальной плавности
-            // Рассчитываем точное приращение времени на основе фактического времени
-            const deltaTime = elapsed / 1000;
-            const newTime = Math.min(currentTimeRef.current + deltaTime, safeDuration);
-
-            // Сохраняем текущее время для следующего кадра
-            currentTimeRef.current = newTime;
-
-            // Обновляем время локально и передаем каждый кадр наверх для плавной анимации
-            setDisplayTime(newTime);
-            onTimeUpdate(newTime);
-
-            // Reset if we reach the end
-            if (newTime >= safeDuration) {
-                onPlayPause(false);
-                onTimeUpdate(0);
-                setDisplayTime(0);
-                currentTimeRef.current = 0;
-            }
-
-            lastTimeRef.current = timestamp;
-        }
-
-        if (isPlaying) {
-            animationRef.current = requestAnimationFrame(animateTime);
-        }
-    }, [safeDuration, isPlaying, onPlayPause, onTimeUpdate]);
-
-    // Millsecond display update (separate from the main animation)
+    // Обновление отображения миллисекунд (отдельно от основной анимации)
     useEffect(() => {
         let frameId;
         let lastTimestamp = 0;
 
         // Функция для высокочастотного обновления времени для плавной анимации
         const updateHighPrecisionTime = (timestamp) => {
-            if (isPlaying && audioRef.current) {
-                // Ограничиваем частоту до ~120fps для максимальной плавности
-                if (timestamp - lastTimestamp > 8 || lastTimestamp === 0) {
-                    // Получаем точное время из аудио
-                    const preciseTime = audioRef.current.currentTime;
-
-                    // Обновляем локальное отображение
-                    setDisplayTime(preciseTime);
-
-                    // Важно: передаем каждое обновление времени наверх для плавной анимации объектов
-                    // Это обеспечит промежуточные кадры между ключевыми точками
-                    onTimeUpdate(preciseTime);
-
-                    lastTimestamp = timestamp;
-                }
+            if (!lastTimestamp) {
+                lastTimestamp = timestamp;
             }
-            frameId = requestAnimationFrame(updateHighPrecisionTime);
+
+            const elapsed = timestamp - lastTimestamp;
+
+            // Обновляем с частотой ~120fps для максимальной плавности
+            if (elapsed > 8) {
+                // Рассчитываем точное приращение времени
+                const deltaTime = elapsed / 1000;
+                const newTime = Math.min(currentTimeRef.current + deltaTime, safeDuration);
+
+                // Обновляем время
+                currentTimeRef.current = newTime;
+                setDisplayTime(newTime);
+                onTimeUpdate(newTime);
+
+                // Синхронизируем аудио, если оно есть
+                if (audioRef.current) {
+                    audioRef.current.currentTime = newTime;
+                }
+
+                // Сбрасываем, если достигли конца
+                if (newTime >= safeDuration) {
+                    onPlayPause(false);
+                    onTimeUpdate(0);
+                    setDisplayTime(0);
+                    currentTimeRef.current = 0;
+                }
+
+                lastTimestamp = timestamp;
+            }
+
+            if (isPlaying) {
+                frameId = requestAnimationFrame(updateHighPrecisionTime);
+            }
         };
 
-        // Запускаем только если воспроизводится аудио
-        if (isPlaying && audioRef.current) {
+        // Запускаем анимацию только если воспроизведение активно
+        if (isPlaying) {
+            lastTimestamp = 0;
             frameId = requestAnimationFrame(updateHighPrecisionTime);
         }
 
@@ -358,25 +341,9 @@ const Player = ({
                 cancelAnimationFrame(frameId);
             }
         };
-    }, [isPlaying, onTimeUpdate]);
+    }, [isPlaying, onTimeUpdate, safeDuration, onPlayPause]);
 
-    // Setup and cleanup animation frame (only when no audio present)
-    useEffect(() => {
-        // Handle animation when no audio is present
-        if (!audioUrl && isPlaying) {
-            lastTimeRef.current = null;
-            animationRef.current = requestAnimationFrame(animateTime);
-        }
-
-        return () => {
-            if (animationRef.current) {
-                cancelAnimationFrame(animationRef.current);
-                animationRef.current = null;
-            }
-        };
-    }, [isPlaying, audioUrl, animateTime]);
-
-    // Sync audio with player
+    // Удаляем отдельный эффект анимации для проектов без аудио, так как теперь используем одну и ту же логику для всех
     useEffect(() => {
         if (audioRef.current && audioUrl) {
             if (isPlaying) {
@@ -388,33 +355,18 @@ const Player = ({
             } else {
                 audioRef.current.pause();
             }
-
-            // Get duration from audio element
-            if (audioRef.current.duration && !isNaN(audioRef.current.duration) &&
-                audioRef.current.duration !== Infinity && audioRef.current.duration > 0) {
-                const newDuration = Math.ceil(audioRef.current.duration);
-                if (newDuration !== audioDuration) {
-                    console.log('Player: Found duration from audioRef:', newDuration);
-                    setAudioDuration(newDuration);
-
-                    // Notify parent component
-                    if (onDurationChange) {
-                        onDurationChange(newDuration);
-                    }
-                }
-            }
         }
-    }, [isPlaying, audioUrl, onPlayPause, audioDuration, onDurationChange]);
+    }, [isPlaying, audioUrl, onPlayPause]);
 
-    // Sync audio time with player time
+    // Синхронизируем время аудио со временем плеера
     useEffect(() => {
         if (audioRef.current && audioUrl && Math.abs(audioRef.current.currentTime - safeCurrentTime) > 0.5) {
             audioRef.current.currentTime = safeCurrentTime;
         }
     }, [safeCurrentTime, audioUrl]);
 
-    // Determine if we have any media to show buttons for
-    const hasMedia = true; // Always show media controls section, regardless of media presence
+    // Определяем, есть ли медиа для отображения кнопок
+    const hasMedia = true; // Всегда показываем секцию управления медиа, независимо от наличия медиа
 
     return (
         <Paper elevation={0} sx={{
@@ -435,7 +387,7 @@ const Player = ({
             position: 'relative',
             overflow: 'hidden'
         }}>
-            {/* Audio element */}
+            {/* Элемент аудио */}
             {audioUrl && (
                 <audio
                     ref={audioRef}
@@ -463,7 +415,7 @@ const Player = ({
                 />
             )}
 
-            {/* Gradient decoration */}
+            {/* Декоративный градиент */}
             <Box
                 sx={{
                     position: 'absolute',
@@ -476,7 +428,7 @@ const Player = ({
                 }}
             />
 
-            {/* Time bar */}
+            {/* Временная шкала */}
             <Box sx={{ width: '100%', mb: 1 }}>
                 <Slider
                     value={displayTime}
@@ -515,7 +467,7 @@ const Player = ({
                 />
             </Box>
 
-            {/* Controls */}
+            {/* Элементы управления */}
             <Stack
                 direction="row"
                 spacing={1}
@@ -523,7 +475,7 @@ const Player = ({
                 justifyContent="space-between"
             >
                 <Stack direction="row" spacing={1} alignItems="center">
-                    {/* Playback controls */}
+                    {/* Элементы управления воспроизведением */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Tooltip title="Назад 5 секунд">
                             <IconButton
@@ -574,7 +526,7 @@ const Player = ({
                         </Tooltip>
                     </Box>
 
-                    {/* Time display */}
+                    {/* Отображение времени */}
                     <Box sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -628,7 +580,7 @@ const Player = ({
                         </Tooltip>
                     </Box>
 
-                    {/* Millisecond step controls */}
+                    {/* Управление с точностью до миллисекунд */}
                     <Box sx={{
                         display: 'flex',
                         alignItems: 'center',
@@ -666,7 +618,7 @@ const Player = ({
                 </Stack>
 
                 <Stack direction="row" spacing={1} alignItems="center">
-                    {/* Keyframe recording toggle */}
+                    {/* Переключатель записи ключевых кадров */}
                     {toggleKeyframeRecording && (
                         <Tooltip title={keyframeRecording ? "Остановить запись кадров" : "Начать запись кадров"}>
                             <IconButton
@@ -695,7 +647,7 @@ const Player = ({
                         </Tooltip>
                     )}
 
-                    {/* Volume controls */}
+                    {/* Управление громкостью */}
                     {audioUrl && !readOnly && (
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <IconButton
@@ -730,7 +682,7 @@ const Player = ({
                 </Stack>
             </Stack>
 
-            {/* Media file indicators with delete buttons - now positioned below controls instead of absolute */}
+            {/* Индикаторы медиафайлов с кнопками удаления - теперь расположены под элементами управления вместо абсолютного позиционирования */}
             {hasMedia && (
                 <Box sx={{
                     display: 'flex',
@@ -742,7 +694,7 @@ const Player = ({
                         ? 'rgba(255, 255, 255, 0.08)'
                         : 'rgba(0, 0, 0, 0.06)'}`
                 }}>
-                    {/* Audio file indicator */}
+                    {/* Индикатор аудиофайла */}
                     {onRemoveAudio && (
                         <Chip
                             icon={<AudioFile fontSize="small" />}
@@ -773,7 +725,7 @@ const Player = ({
                         />
                     )}
 
-                    {/* Video file indicator */}
+                    {/* Индикатор видеофайла */}
                     {onRemoveVideo && (
                         <Chip
                             icon={<Videocam fontSize="small" />}
